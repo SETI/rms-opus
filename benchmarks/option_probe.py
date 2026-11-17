@@ -24,33 +24,39 @@ searches' ids, and are written to no capture file. The pairs:
     details say so.
 
 On a schema without an option's prototype the probe times the option's captured shapes
-alone and says the option is not carried; that is not a failure. So a floor session on
-the unmodified schema measures the noise of the captured shapes.
+alone and says the option is not carried; that is not a failure. So a floor session on a
+copy without either option (`benchmarks.option_prototypes`, ``none``) measures the noise
+of the captured shapes.
 
 **Cold and warm.** Each shape is timed by restarting the server (a cold start, with
 ``O_DIRECT`` and no buffer pool dump), then running its ``SELECT`` under ``EXPLAIN
 ANALYZE`` once on a new connection, its **cold** time, and `EXPLAIN_RUNS` more times on
 the same connection, whose median is its **warm** time. A round times every shape so; a
-probe makes ``rounds`` rounds, and each metric is the median over them, with every value
-in the run's samples. After the timed runs each shape's rows are read once: a page or a
-count is fetched whole and compared with its pair's, row for row (in order for a page),
-and a build, too large to fetch, is counted with ``SELECT COUNT(*)`` over it, since
-``EXPLAIN ANALYZE`` prints a large count rounded.
+probe makes ``rounds`` rounds, and each metric is the median of the rounds' values, each
+round's value in the run's samples (for the warm figures, each round's median; every
+execution is in the details). After the timed runs each shape's rows are read once: a page
+or a count is fetched whole and compared with its pair's, row for row (in order for a
+page), and a build, too large to fetch, is reduced on the server to its row count and two
+checksums of the numbering it gives each observation (`build_checksum`), so a rank that
+numbers the rows otherwise than ``(time1, opus_id)`` does not pass.
 
 **Metrics**, under ``db.option_probe.<option>.<pair>.``: ``cold_s``, ``warm_s``,
 ``cold_analyze_ms`` and ``warm_analyze_ms`` (the server's time to its top iterator's
 last row), ``rows_examined`` (from its plans) and ``rows_returned``, of the shape the
 schema answers the pair with: the prototype shape where the schema carries the option,
-the captured one otherwise. So `benchmarks.compare` compares a floor session on the
-unmodified schema with a run on a prototype's copy pair by pair, and ``compare --floors``
-takes the floors of the captured shapes. Where the prototype shape is timed, the
+the captured one otherwise. So `benchmarks.compare` compares a floor session on a copy
+without the option with a run on a prototype's copy pair by pair, and ``compare
+--floors`` takes the floors of the captured shapes. Where the prototype shape is timed, the
 captured shape's figures on the same schema are under ``.captured.``, with
 ``cold_ratio`` and ``warm_ratio``, the prototype's time over the captured one's. Each
-pair has ``valid``, 1 or 0, and each option ``db.option_probe.<option>.valid``.
+pair has ``valid``, 1 or 0, and each option ``db.option_probe.<option>.valid`` and
+``db.option_probe.<option>.carried``, 1 where the schema carries its prototype.
 
 A pair is a failed measurement when a shape returned no rows, the two shapes returned
-different numbers of rows or different rows, or a statement failed; an option whose
-captured shapes the capture lacks fails as a whole. Every problem is in the details.
+different numbers of rows or different rows, or a statement failed in any round; an
+option whose captured shapes the capture lacks fails as a whole. A failed pair records
+``valid`` at 0 and no other metric, so nothing ``compare`` judges comes from it; its
+figures are in the details with every problem.
 """
 
 from __future__ import annotations
@@ -78,7 +84,6 @@ from benchmarks.resort_probe import (
     SEARCH_ID_READ,
     WHERE_KEYWORD,
     ProbeError,
-    count_rows,
     search_build,
     tagged_block,
     top_level,
@@ -108,8 +113,11 @@ BUILD_TAG = 'search.broad/result_count'
 MULTS_SEARCHES = ('broad', 'selective')
 
 #: How a pair's rows are compared: a page in order, a count as a set of rows, and a
-#: build, too large to fetch, by its count alone.
+#: build, too large to fetch, by its count and checksums (`build_checksum`).
 ORDERED, UNORDERED, COUNTED = 'ordered', 'unordered', 'counted'
+
+#: The columns a search build's ``SELECT`` gives, those of ``search_results`` it fills.
+BUILD_COLUMNS = ('search_id', 'sort_order', 'obs_general_id')
 
 #: An empty-search page read: the page's rows of the search's ``search_results`` rows,
 #: joined to ``obs_general`` and ordered by their place in the search.
@@ -174,6 +182,26 @@ class Pair:
     def prefix(self) -> str:
         """The pair's metric prefix."""
         return f'{METRIC_PREFIX}.{self.option}.{self.name}'
+
+
+@dataclass(frozen=True)
+class Checksum:
+    """A search build's rows, reduced on the server.
+
+    Attributes:
+        rows: How many rows the build numbers.
+        weighted: The sum over the rows of each row's number times its observation's id.
+        hashed: The ``BIT_XOR`` over the rows of the first 64 bits of the ``MD5`` of
+            ``<number>,<id>``.
+    """
+
+    rows: int
+    weighted: int
+    hashed: int
+
+
+#: What a shape's rows are read as: the rows of a page or a count, a build's checksum.
+Rows = list[tuple[Any, ...]] | Checksum
 
 
 @dataclass(frozen=True)
@@ -375,6 +403,28 @@ def carried_options(connection: Any) -> dict[str, set[str] | None]:
     }
 
 
+def require_carried(connection: Any, options: Sequence[str]) -> None:
+    """Refuse a schema that lacks an option it is meant to carry.
+
+    Parameters:
+        connection: A connection with the side's schema as its default.
+        options: The options whose prototypes the schema is meant to carry, such as those
+            the label's ``prototype`` runs built.
+
+    Raises:
+        ProbeError: Naming each of those options the schema does not carry
+            (`carried_options`), whose pairs would otherwise be timed in their captured
+            shape under the names a prototype's figures take.
+    """
+    carried = carried_options(connection)
+    missing = [option for option in options if option in carried and carried[option] is None]
+    if len(missing) > 0:
+        raise ProbeError(
+            f'the schema is meant to carry the {", ".join(missing)} prototype but does not; '
+            "measure the copy the label's prototype run built"
+        )
+
+
 def rank_pairs(blocks: Sequence[Block], carried: set[str] | None) -> list[Pair]:
     """Return the rank option's pairs.
 
@@ -480,29 +530,57 @@ def time_shape(session: ProbeSession, statement: str) -> dict[str, Any]:
     }
 
 
-def _rows(connection: Any, pair: Pair, statement: str) -> list[tuple[Any, ...]] | int:
-    """Return a shape's rows, or for a build its exact count of them."""
+def build_checksum(connection: Any, statement: str) -> Checksum:
+    """Reduce a search build's rows to their count and two checksums, on the server.
+
+    Parameters:
+        connection: A connection with the side's schema as its default.
+        statement: The build's ``SELECT``, whose columns are `BUILD_COLUMNS`.
+
+    Returns:
+        The count, ``SUM(sort_order * obs_general_id)``, and the ``BIT_XOR`` of the first
+        64 bits of ``MD5(CONCAT(sort_order, ',', obs_general_id))``: two builds agree on
+        all three only when they number the same observations alike. The hash is MD5's,
+        not ``CRC32``'s: a CRC is affine over XOR, so two rows exchanging their numbers
+        between equal-length texts leave an XOR of CRCs unchanged.
+    """
+    names = ', '.join(quote_identifier(name) for name in BUILD_COLUMNS)
+    reduced = (
+        'SELECT COUNT(*), COALESCE(SUM(`sort_order` * `obs_general_id`), 0), '  # nosec B608 - the capture's statement or one generated from it
+        "COALESCE(BIT_XOR(CAST(CONV(LEFT(MD5(CONCAT(`sort_order`, ',', `obs_general_id`)), "
+        '16), 16, 10) AS UNSIGNED)), 0) '
+        f'FROM ({statement}) AS `numbered` ({names})'
+    )
+    rows, weighted, hashed = query(connection, reduced)[0]
+    return Checksum(int(rows), int(weighted), int(hashed))
+
+
+def _rows(connection: Any, pair: Pair, statement: str) -> Rows:
+    """Return a shape's rows, or for a build its checksum."""
     if pair.rows == COUNTED:
-        return count_rows(connection, statement)
+        return build_checksum(connection, statement)
     return [tuple(row) for row in query(connection, statement)]
 
 
-def pair_problems(pair: Pair, rows: dict[str, list[tuple[Any, ...]] | int]) -> list[str]:
+def _row_count(found: Rows) -> int:
+    """Return how many rows a shape returned."""
+    return found.rows if isinstance(found, Checksum) else len(found)
+
+
+def pair_problems(pair: Pair, rows: dict[str, Rows]) -> list[str]:
     """Return why a pair's measurement is not valid; none for a valid one.
 
     Parameters:
         pair: The pair.
         rows: Each timed shape's rows (`_rows`): the rows themselves, or for a build
-            their count.
+            their checksum.
 
     Returns:
         A sentence for each shape that returned no rows, and one when the two shapes
-        returned different numbers of rows or, where the rows are compared, different
-        rows.
+        returned different numbers of rows, different rows, or for a build a different
+        numbering.
     """
-    counts = {
-        shape: found if isinstance(found, int) else len(found) for shape, found in rows.items()
-    }
+    counts = {shape: _row_count(found) for shape, found in rows.items()}
     problems = [
         f'the {shape} shape returned no rows' for shape, count in counts.items() if count == 0
     ]
@@ -514,12 +592,18 @@ def pair_problems(pair: Pair, rows: dict[str, list[tuple[Any, ...]] | int]) -> l
             f'the prototype shape returned {counts["prototype"]} rows, not the captured '
             f"shape's {counts['captured']}"
         )
-    elif pair.rows == ORDERED and captured != prototype:
-        problems.append('the prototype shape returned other rows than the captured shape')
-    elif pair.rows == UNORDERED:
-        assert not isinstance(captured, int)
-        assert not isinstance(prototype, int)
-        if collections.Counter(captured) != collections.Counter(prototype):
+    elif isinstance(captured, Checksum) or isinstance(prototype, Checksum):
+        if captured != prototype:
+            problems.append(
+                'the prototype shape numbered its rows otherwise than the captured shape'
+            )
+    else:
+        same = (
+            captured == prototype
+            if pair.rows == ORDERED
+            else collections.Counter(captured) == collections.Counter(prototype)
+        )
+        if not same:
             problems.append('the prototype shape returned other rows than the captured shape')
     return problems
 
@@ -530,22 +614,42 @@ def _spread(values: Sequence[float]) -> float:
     return (max(values) - min(values)) / middle if middle > 0 else 0.0
 
 
-def _record_pair(
+def record_pair(
     pair: Pair,
     timings: dict[str, list[dict[str, Any]]],
-    rows: dict[str, list[tuple[Any, ...]] | int],
+    rows: dict[str, Rows],
     problems: list[str],
 ) -> tuple[dict[str, float], dict[str, list[float]], dict[str, Any]]:
-    """Turn a pair's timed rounds and rows into its metrics, samples and details."""
+    """Turn a pair's timed rounds and rows into its metrics, samples and details.
+
+    Parameters:
+        pair: The pair.
+        timings: Each timed shape's rounds, each what `time_shape` returned.
+        rows: Each shape's rows as read after the timed runs (`pair_problems`).
+        problems: Why the pair is not valid; empty for a valid pair.
+
+    Returns:
+        The metrics: for a valid pair, each shape's ``cold_s``, ``cold_analyze_ms``,
+        ``warm_s`` and ``warm_analyze_ms`` (the median of one value per round, a warm
+        value being its round's median), ``rows_examined`` and ``rows_returned``, under
+        the pair's prefix for the shape the schema answers with and under ``.captured.``
+        for the other, with ``cold_ratio`` and ``warm_ratio`` where both were timed; for a
+        pair with a problem, none of those. Always ``valid``. The samples: each timed
+        figure's values per round, under its metric's name, for a valid pair only. The
+        details: every figure of every round, every warm execution, a build's checksums,
+        the statements and the problems.
+    """
     metrics: dict[str, float] = {}
     samples: dict[str, list[float]] = {}
     shapes: dict[str, Any] = {}
     for shape, rounds in timings.items():
+        # One value per round: a warm figure is its round's median, so the samples hold
+        # what compare summarizes over, round by round.
         figures = {
             'cold_s': [run['cold_s'] for run in rounds],
             'cold_analyze_ms': [run['cold_analyze_ms'] for run in rounds],
-            'warm_s': [value for run in rounds for value in run['warm_s']],
-            'warm_analyze_ms': [value for run in rounds for value in run['warm_analyze_ms']],
+            'warm_s': [statistics.median(run['warm_s']) for run in rounds],
+            'warm_analyze_ms': [statistics.median(run['warm_analyze_ms']) for run in rounds],
         }
         examined = [value for run in rounds for value in run['rows_examined']]
         prefix = pair.prefix if shape == pair.answer else f'{pair.prefix}.{shape}'
@@ -555,9 +659,13 @@ def _record_pair(
         metrics[f'{prefix}.rows_examined'] = statistics.median(examined)
         found = rows.get(shape)
         if found is not None:
-            metrics[f'{prefix}.rows_returned'] = found if isinstance(found, int) else len(found)
+            metrics[f'{prefix}.rows_returned'] = _row_count(found)
         shapes[shape] = {
             **figures,
+            'warm_executions_s': [value for run in rounds for value in run['warm_s']],
+            'warm_executions_analyze_ms': [
+                value for run in rounds for value in run['warm_analyze_ms']
+            ],
             'rows_examined': examined,
             'plan_rows': [value for run in rounds for value in run['plan_rows']],
             'cold_spread': _spread(figures['cold_s']),
@@ -571,7 +679,12 @@ def _record_pair(
                 metrics[f'{pair.prefix}.{state}_ratio'] = (
                     metrics[f'{pair.prefix}.{state}_s'] / captured
                 )
+    if len(problems) > 0:
+        metrics, samples = {}, {}
     metrics[f'{pair.prefix}.valid'] = 0.0 if len(problems) > 0 else 1.0
+    if isinstance(rows.get('captured'), Checksum):
+        for shape, found in rows.items():
+            shapes.setdefault(shape, {})['checksum'] = vars(found)
     details = {
         'answer': pair.answer,
         'statements': pair.statements,
@@ -654,7 +767,7 @@ def probe(
     samples: dict[str, list[float]] = {}
     with contextlib.closing(session.connect()) as connection:
         for pair in pairs:
-            rows: dict[str, list[tuple[Any, ...]] | int] = {}
+            rows: dict[str, Rows] = {}
             problems = []
             if pair.prefix in failures:
                 problems.append(failures[pair.prefix])
@@ -668,7 +781,7 @@ def probe(
                     problems.append(f'reading the rows failed: {err}')
                 else:
                     problems = pair_problems(pair, rows)
-            pair_metrics, pair_samples, details = _record_pair(
+            pair_metrics, pair_samples, details = record_pair(
                 pair, timings[pair.prefix], rows, problems
             )
             metrics.update(pair_metrics)
@@ -684,6 +797,7 @@ def probe(
             for problem in details['problems']
         ]
         metrics[f'{METRIC_PREFIX}.{option}.valid'] = 0.0 if len(own) > 0 else 1.0
+        metrics[f'{METRIC_PREFIX}.{option}.carried'] = 1.0 if entry['carried'] else 0.0
         every_problem += own
     details = {'rounds': rounds, 'options': entries, 'problems': every_problem}
     return metrics, samples, details

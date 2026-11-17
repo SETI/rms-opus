@@ -35,7 +35,10 @@ from a cold start of the server, on new connections after the replay's;
 ``--option-probe-rounds`` says how many cold starts each shape is timed from. A schema
 without an option's prototype has that option's captured shapes timed alone. A pair whose
 shapes returned no rows or different rows, or a probe that could not run, is recorded with
-the rest of the run, and then the command exits with an error.
+the rest of the run, and then the command exits with an error. The probe is refused before
+anything runs when the label's result file holds a ``prototype`` run of an option the schema
+does not carry (`prototype_options`), since its pairs would be timed in their captured shape
+under the names the prototype's figures take.
 
 ``--ascii-columns`` counts, for every column whose form type is ``STRING``, the values
 that do not survive conversion to ASCII.
@@ -77,15 +80,19 @@ from benchmarks.bench_web import (
     run_sequence,
     side_schema,
 )
+from benchmarks.option_prototypes import PROTOTYPE_KIND
 from benchmarks.opus_config_file import write_opus_config
+from benchmarks.resort_probe import ProbeError
 from benchmarks.results import (
     REPO_ROOT,
+    RESULTS_DIR,
     SCALES,
     SCENARIOS_DIR,
     SIDES,
     Label,
     append_runs,
     host_environment,
+    load_result,
     make_label,
     median,
     new_run,
@@ -512,6 +519,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     environment: dict[str, Any] = {**host_environment(), **side.environment()}
     with server.running():
         environment.update(server_environment(server))
+        if args.option_probe:
+            with contextlib.closing(server.connect(schema)) as connection:
+                try:
+                    option_probe.require_carried(connection, prototype_options(label))
+                except ProbeError as err:
+                    raise SystemExit(f'{schema}: {err}') from err
         # The per-search tables an earlier web run left behind are not part of what
         # the import built, so they are emptied before anything is measured.
         reset_config = write_opus_config(
@@ -606,6 +619,28 @@ def record_resort_probe(
     run['metrics'].update(metrics)
     run['samples'].update(samples)
     run['details']['resort_probe'] = details
+
+
+def prototype_options(label: Label) -> list[str]:
+    """Return the options whose prototypes a label's ``prototype`` runs built.
+
+    Parameters:
+        label: The label, whose result file may hold ``prototype`` runs
+            (`benchmarks.option_prototypes`).
+
+    Returns:
+        The options among `benchmarks.option_probe.OPTIONS` those runs name, in order;
+        none when the file does not exist.
+    """
+    path = RESULTS_DIR / label.file_name
+    if not path.exists():
+        return []
+    built = {
+        str(run['details'].get('option'))
+        for run in load_result(path)['runs']
+        if run['kind'] == PROTOTYPE_KIND
+    }
+    return [option for option in option_probe.OPTIONS if option in built]
 
 
 def record_option_probe(

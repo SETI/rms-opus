@@ -11,6 +11,7 @@ import pytest
 from benchmarks import option_prototypes
 from benchmarks.option_prototypes import FacetColumn, PrototypeError
 from opus_import import generations, import_util
+from opus_import.importdb import mysql
 
 
 def test_the_facet_table_holds_every_single_valued_mult_field_of_a_one_row_table() -> None:
@@ -74,7 +75,8 @@ def test_the_facet_table_is_keyed_by_the_observation() -> None:
     assert option_prototypes.facet_table_sql(_COLUMNS) == (
         'CREATE TABLE `obs_facet` (`obs_general_id` INT UNSIGNED NOT NULL PRIMARY KEY, '
         '`obs_general.planet_id` SMALLINT UNSIGNED, `obs_wavelength.spec_flag` SMALLINT UNSIGNED, '
-        '`obs_type_image.image_type_id` SMALLINT UNSIGNED) ENGINE=InnoDB'
+        '`obs_type_image.image_type_id` SMALLINT UNSIGNED) ENGINE=InnoDB '
+        f'STATS_SAMPLE_PAGES={mysql.STATS_SAMPLE_PAGES}'
     )
 
 
@@ -153,16 +155,23 @@ class _Copy:
         self,
         *,
         rows_table: bool = True,
-        hidden: int = 0,
         rank_present: bool = False,
         tables: tuple[str, ...] = ('obs_general', 'obs_wavelength', 'obs_type_image'),
+        view_columns: list[str] | None = None,
+        version_row: tuple[Any, Any] | None = (None, 0),
+        view_definition: str | None = 'select `id` AS `id` from `obs_general_rows`',
     ) -> None:
-        """Hold the copy's shape: whether obs_general is a view of obs_general_rows, how
-        many rows it hides, whether the rank exists, and its tables."""
+        """Hold the copy's shape: whether obs_general is a view of obs_general_rows, whether
+        the rank exists, its tables, the columns its view lists (obs_general.json's by
+        default), its version row's pending generation and revertible flag (None for no
+        such columns), and its view's definition (None for no view)."""
         self.rows_table = rows_table
-        self.hidden = hidden
         self.rank_present = rank_present
         self.tables = tables
+        packaged = generations.view_columns(option_prototypes.view_schema_with_rank()[:-1])
+        self.view_columns = packaged if view_columns is None else view_columns
+        self.version_row = version_row
+        self.view_definition = view_definition
         self.executed: list[str] = []
         self.sizes = iter([(1000, 200), (1100, 400), (5000, 0)])
         self._answer: list[tuple[Any, ...]] = []
@@ -179,8 +188,13 @@ class _Copy:
         self.executed.append(statement)
         answers: list[tuple[str, list[tuple[Any, ...]]]] = [
             ('SELECT COUNT(*) FROM information_schema.TABLES', [(1 if self.rows_table else 0,)]),
-            ('SELECT (SELECT COUNT(*)', [(399, 399 - self.hidden)]),
             ('SELECT COUNT(*) FROM information_schema.COLUMNS', [(1 if self.rank_present else 0,)]),
+            (
+                'SELECT VIEW_DEFINITION',
+                [] if self.view_definition is None else [(self.view_definition,)],
+            ),
+            ('SELECT `pending_generation`', [] if self.version_row is None else [self.version_row]),
+            ('SELECT @@GLOBAL.innodb_fast_shutdown', [(1,)]),
             ('SELECT TABLE_NAME FROM', [(table,) for table in self.tables]),
             ('SELECT stat_value', [(16384,)]),
             ('SELECT COUNT(`default_rank`)', [(399,)]),
@@ -188,6 +202,14 @@ class _Copy:
         ]
         if statement.startswith('SELECT DATA_LENGTH'):
             self._answer = [next(self.sizes)]
+            return
+        if statement.startswith('SELECT COLUMN_NAME FROM information_schema.COLUMNS'):
+            if 'ORDER BY ORDINAL_POSITION' in statement:
+                self._answer = [(name,) for name in self.view_columns]
+            elif self.version_row is None:
+                self._answer = []
+            else:
+                self._answer = [('version',), ('pending_generation',), ('revertible',)]
             return
         self._answer = next((rows for start, rows in answers if statement.startswith(start)), [])
 
@@ -231,10 +253,48 @@ def test_a_schema_whose_obs_general_is_a_table_is_ranked_without_a_view() -> Non
     assert details['statements']['alter'].startswith('ALTER TABLE `obs_general` ADD')
 
 
-def test_a_copy_hiding_rows_is_refused() -> None:
-    """A schema with a generation pending would rank rows no visitor sees."""
-    with pytest.raises(PrototypeError, match='shows 398 of the 399 rows'):
-        option_prototypes.build_default_rank(_Copy(hidden=1), 'copy', make_view=print)
+@pytest.mark.parametrize(
+    ('copy', 'message'),
+    [
+        (_Copy(version_row=(2, 0)), r'pending generation \(2\)'),
+        (_Copy(version_row=(None, 1)), r'revertible switch \(True\)'),
+        (
+            _Copy(
+                view_definition='select `id` AS `id` from `obs_general_rows` where '
+                '(`obs_general_rows`.`added_generation` <= 1)'
+            ),
+            'is a view with a condition',
+        ),
+    ],
+    ids=['pending-generation', 'revertible-switch', 'view-condition'],
+)
+def test_a_source_that_may_hide_rows_is_refused(copy: _Copy, message: str) -> None:
+    """A pending generation (even one with no rows yet), a revertible switch, or a view
+    with a condition: the rank's view, made again, would drop what it hides."""
+    with pytest.raises(PrototypeError, match=message):
+        option_prototypes.require_served_view(copy, 'full')
+
+
+@pytest.mark.parametrize(
+    'copy',
+    [
+        _Copy(),
+        _Copy(version_row=None, view_definition=None),
+        _Copy(view_definition="select 'where' AS `w`, `id` AS `id` from `obs_general_rows`"),
+    ],
+    ids=['served', 'no-generations', 'where-in-a-literal'],
+)
+def test_a_source_serving_every_row_is_accepted(copy: _Copy) -> None:
+    """No pending generation, no revertible switch, and no condition outside quotes."""
+    option_prototypes.require_served_view(copy, 'full')
+
+
+def test_a_copy_whose_view_lists_other_columns_is_refused() -> None:
+    """The view made again would silently differ from the one copied."""
+    copy = _Copy(view_columns=['id', 'opus_id'])
+    with pytest.raises(PrototypeError, match=r'lists other columns than obs_general\.json'):
+        option_prototypes.build_default_rank(copy, 'copy', make_view=print)
+    assert not any(text.startswith('ALTER') for text in copy.executed)
 
 
 def test_a_copy_already_ranked_is_refused() -> None:
@@ -279,32 +339,81 @@ class _Server:
         self.schemas.append(schema)
         return self.copy
 
+    def restart(self) -> None:
+        """Note the restart among the copy's statements."""
+        self.copy.executed.append('restart')
 
-def test_a_prototype_is_built_on_a_copy_of_the_source(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The source is cloned into the target with the version given, and the build runs on
-    the target, whose name the run's details keep."""
-    cloned: list[tuple[str, str, int | None]] = []
 
-    def clone(_server: Any, source: str, target: str, *, version: int | None) -> float:
-        cloned.append((source, target, version))
+def _build(
+    monkeypatch: pytest.MonkeyPatch, option: str, copy: _Copy | None = None
+) -> tuple[dict[str, Any], _Server, list[tuple[Any, ...]]]:
+    """Build one option with the clone stood in for; return the run, server and clones."""
+    cloned: list[tuple[Any, ...]] = []
+
+    def clone(
+        _server: Any, source: str, target: str, *, version: int | None, defer_keys: bool
+    ) -> float:
+        cloned.append((source, target, version, defer_keys))
         return 2.5
 
     monkeypatch.setattr(option_prototypes, 'clone_schema', clone)
-    server = _Server(_Copy())
+    server = _Server(_Copy() if copy is None else copy)
     run = option_prototypes.build_prototype(
         server,  # type: ignore[arg-type]
         source='full',
         target='copy',
-        option='facet',
+        option=option,
         version=13,
+        make_view=print,
     )
-    assert cloned == [('full', 'copy', 13)]
-    assert server.schemas == ['copy']
+    return run, server, cloned
+
+
+def test_a_prototype_is_built_on_a_copy_laid_out_as_the_import_lays_out(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The source is checked, then cloned with its keys built after its rows, with the
+    version given, and the build runs on the target, whose name the run keeps."""
+    run, server, cloned = _build(monkeypatch, 'facet')
+    assert cloned == [('full', 'copy', 13, True)]
+    assert server.schemas[:2] == [None, 'copy']
+    assert server.copy.executed[0].startswith('SELECT COLUMN_NAME FROM information_schema.COLUMNS')
     assert run['kind'] == 'prototype'
     assert run['metrics']['prototype.facet.clone_s'] == 2.5
     assert run['details']['source'] == 'full'
     assert run['details']['schema'] == 'copy'
-    assert server.copy.executed[0] == 'SET SESSION information_schema_stats_expiry = 0'
+    assert 'SET SESSION information_schema_stats_expiry = 0' in server.copy.executed
+
+
+def test_a_built_copy_is_settled_by_one_slow_shutdown(monkeypatch: pytest.MonkeyPatch) -> None:
+    """After the build, the server restarts with innodb_fast_shutdown 0, which is then put
+    back as it was."""
+    run, server, _cloned = _build(monkeypatch, 'facet')
+    executed = server.copy.executed
+    restart = executed.index('restart')
+    assert executed[restart - 1] == 'SET GLOBAL innodb_fast_shutdown = 0'
+    assert executed[restart + 1] == 'SET GLOBAL innodb_fast_shutdown = %s'
+    assert max(i for i, text in enumerate(executed) if text.startswith('INSERT')) < restart
+    assert 'prototype.facet.settle_s' in run['metrics']
+
+
+def test_the_bare_copy_adds_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The none option is the copy alone, settled like the others."""
+    run, server, cloned = _build(monkeypatch, 'none')
+    assert cloned == [('full', 'copy', 13, True)]
+    assert not any(
+        text.startswith(('ALTER', 'UPDATE', 'CREATE', 'INSERT')) for text in server.copy.executed
+    )
+    assert sorted(run['metrics']) == ['prototype.none.clone_s', 'prototype.none.settle_s']
+    assert run['details']['option'] == 'none'
+
+
+def test_a_source_that_may_hide_rows_is_refused_before_it_is_copied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The refusal comes before the clone, which would otherwise copy the whole schema."""
+    with pytest.raises(PrototypeError, match='pending generation'):
+        _build(monkeypatch, 'facet', _Copy(version_row=(2, 0)))
 
 
 @pytest.mark.parametrize(

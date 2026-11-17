@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import re
+from pathlib import Path
 from typing import Any
 
 import MySQLdb
@@ -10,9 +12,10 @@ import pytest
 
 from benchmarks import bench_db, option_probe, web_scenarios
 from benchmarks.app_servers import ServerError
-from benchmarks.option_probe import ORDERED, UNORDERED, Pair, ProbeSession
+from benchmarks.option_probe import COUNTED, ORDERED, UNORDERED, Checksum, Pair, ProbeSession
 from benchmarks.query_capture import EXPLAIN_RUNS, Block, Statement
 from benchmarks.resort_probe import ProbeError
+from benchmarks.results import FORMAT_VERSION, make_label
 
 #: The broad search's build, as the application issues it.
 _BUILD = (
@@ -264,13 +267,16 @@ class _Server:
         facet: bool = False,
         rows: dict[str, Any] | None = None,
         refuse: str | None = None,
+        refuse_after: int = 0,
     ) -> None:
         """Hold which prototypes the schema carries, each shape's rows by a text it
-        contains, and a text whose statements the server refuses."""
+        contains, and a text whose statements the server refuses once it has answered
+        `refuse_after` of them."""
         self.rank = rank
         self.facet = facet
         self.rows = rows or {}
         self.refuse = refuse
+        self.refuse_after = refuse_after
         self.log: list[str] = []
         self.connections = 0
         self._answer: list[tuple[Any, ...]] = []
@@ -305,13 +311,15 @@ class _Server:
             return [(1, 10), (2, 5)]
         if 'BETWEEN' in statement:
             return [('a', 'x'), ('b', 'y')]
-        return 30
+        return (30, 1000, 77)
 
     def execute(self, statement: str, parameters: Any) -> None:
         """Answer the prototype lookups, a shape's EXPLAIN ANALYZE, its count or its rows."""
         self.log.append(statement)
         if self.refuse is not None and self.refuse in statement:
-            raise MySQLdb.OperationalError(1054, f'refused {self.refuse}')
+            if self.refuse_after == 0:
+                raise MySQLdb.OperationalError(1054, f'refused {self.refuse}')
+            self.refuse_after -= 1
         if statement.startswith('SELECT COUNT(*) FROM information_schema.COLUMNS'):
             self._answer = [(1 if self.rank else 0,)]
             return
@@ -328,8 +336,9 @@ class _Server:
                 )
             ]
             return
-        if statement.startswith('SELECT COUNT(*) FROM ('):
-            self._answer = [(self._rows_of(statement),)]
+        if statement.startswith('SELECT COUNT(*), COALESCE(SUM(`sort_order`'):
+            assert statement.endswith('AS `numbered` (`search_id`, `sort_order`, `obs_general_id`)')
+            self._answer = [self._rows_of(statement)]
             return
         self._answer = list(self._rows_of(statement))
 
@@ -350,9 +359,11 @@ def test_a_schema_without_the_prototypes_times_the_captured_shapes_alone() -> No
     assert not any('.captured.' in name for name in metrics)
     assert not any(name.endswith('_ratio') for name in metrics)
     assert len(samples['db.option_probe.facet.broad.mults_instrument.cold_s']) == 1
-    assert len(samples['db.option_probe.facet.broad.mults_instrument.warm_s']) == EXPLAIN_RUNS
+    assert len(samples['db.option_probe.facet.broad.mults_instrument.warm_s']) == 1
     assert metrics['db.option_probe.default_rank.valid'] == 1.0
     assert metrics['db.option_probe.facet.valid'] == 1.0
+    assert metrics['db.option_probe.default_rank.carried'] == 0.0
+    assert metrics['db.option_probe.facet.carried'] == 0.0
     assert details['problems'] == []
     assert details['options']['default_rank']['carried'] is False
     assert 'no default_rank prototype' in details['options']['default_rank']['skipped']
@@ -390,16 +401,22 @@ def test_a_schema_carrying_both_prototypes_times_both_shapes_of_every_pair() -> 
     facet = details['options']['facet']['pairs']['selective.mults_imagetype']
     assert '`obs_facet`' in facet['statements']['prototype']
     assert details['problems'] == []
+    assert metrics['db.option_probe.default_rank.carried'] == 1.0
+    assert metrics['db.option_probe.facet.carried'] == 1.0
 
 
 def test_rounds_time_every_shape_from_that_many_cold_starts() -> None:
-    """Each round restarts once per shape; the samples hold every round's figures."""
+    """Each round restarts once per shape; the samples hold one value per round, and the
+    details every execution."""
     server = _Server()
     metrics, samples, details = option_probe.probe(server.session(), _blocks(), rounds=3)
     assert server.log.count('restart') == 3 * 7
     name = 'db.option_probe.default_rank.broad_build'
     assert len(samples[f'{name}.cold_s']) == 3
-    assert len(samples[f'{name}.warm_s']) == 3 * EXPLAIN_RUNS
+    assert len(samples[f'{name}.warm_s']) == 3
+    assert len(samples[f'{name}.warm_analyze_ms']) == 3
+    shape = details['options']['default_rank']['pairs']['broad_build']['shapes']['captured']
+    assert len(shape['warm_executions_s']) == 3 * EXPLAIN_RUNS
     assert metrics[f'{name}.warm_analyze_ms'] == 2.5
     assert metrics[f'{name}.rows_examined'] == 40
     assert details['rounds'] == 3
@@ -423,14 +440,37 @@ def _pair(rows: str) -> Pair:
         (UNORDERED, {'captured': [(1, 2)], 'prototype': [(1, 2), (3, 4)]}, 'returned 2 rows, not'),
         (UNORDERED, {'captured': [(1, 2)], 'prototype': [(1, 3)]}, 'other rows'),
         (ORDERED, {'captured': [(1,), (2,)], 'prototype': [(2,), (1,)]}, 'other rows'),
-        (option_probe.COUNTED, {'captured': 30, 'prototype': 29}, 'returned 29 rows, not'),
         (
-            option_probe.COUNTED,
-            {'captured': 30, 'prototype': 0},
+            COUNTED,
+            {'captured': Checksum(30, 9, 7), 'prototype': Checksum(29, 9, 7)},
+            'returned 29 rows, not',
+        ),
+        (
+            COUNTED,
+            {'captured': Checksum(30, 9, 7), 'prototype': Checksum(0, 0, 0)},
             'prototype shape returned no rows',
         ),
+        (
+            COUNTED,
+            {'captured': Checksum(30, 9, 7), 'prototype': Checksum(30, 8, 7)},
+            'numbered its rows otherwise',
+        ),
+        (
+            COUNTED,
+            {'captured': Checksum(30, 9, 7), 'prototype': Checksum(30, 9, 6)},
+            'numbered its rows otherwise',
+        ),
     ],
-    ids=['no-rows', 'more-rows', 'other-counts', 'other-order', 'other-count', 'no-count'],
+    ids=[
+        'no-rows',
+        'more-rows',
+        'other-counts',
+        'other-order',
+        'other-count',
+        'no-count',
+        'other-weighted-sum',
+        'other-hash',
+    ],
 )
 def test_a_pair_whose_shapes_disagree_or_return_nothing_is_a_failed_measurement(
     rows: str, found: dict[str, Any], problem: str
@@ -445,7 +485,7 @@ def test_a_pair_whose_shapes_disagree_or_return_nothing_is_a_failed_measurement(
     [
         (UNORDERED, {'captured': [(1, 2), (3, 4)], 'prototype': [(3, 4), (1, 2)]}),
         (ORDERED, {'captured': [(1,), (2,)], 'prototype': [(1,), (2,)]}),
-        (option_probe.COUNTED, {'captured': 30, 'prototype': 30}),
+        (COUNTED, {'captured': Checksum(30, 9, 7), 'prototype': Checksum(30, 9, 7)}),
         (UNORDERED, {'captured': [(1, 2)]}),
     ],
     ids=['counts-in-any-order', 'pages-in-order', 'builds-of-one-count', 'captured-alone'],
@@ -483,7 +523,100 @@ def test_a_refused_statement_fails_its_pair_and_the_others_are_still_timed() -> 
     assert metrics['db.option_probe.default_rank.empty_page_1.valid'] == 1.0
     problems = details['options']['default_rank']['pairs']['broad_build']['problems']
     assert problems[0].startswith('the prototype shape failed: ')
-    assert 'db.option_probe.default_rank.broad_build.captured.cold_s' in metrics
+    timed = details['options']['default_rank']['pairs']['broad_build']['shapes']
+    assert len(timed['captured']['cold_s']) == 1
+
+
+def _pair_metrics(metrics: dict[str, float], prefix: str) -> list[str]:
+    """Return the names of a pair's metrics."""
+    return sorted(name for name in metrics if name.startswith(f'{prefix}.'))
+
+
+def test_an_invalid_pair_records_only_its_validity() -> None:
+    """Nothing compare would judge comes from a failed pair; its figures stay in the
+    details."""
+    server = _Server(facet=True, rows={'`obs_facet`.`obs_general.instrument_id`': [(1, 99)]})
+    metrics, samples, details = option_probe.probe(server.session(), _blocks())
+    prefix = 'db.option_probe.facet.broad.mults_instrument'
+    assert _pair_metrics(metrics, prefix) == [f'{prefix}.valid']
+    assert not any(name.startswith(f'{prefix}.') for name in samples)
+    shapes = details['options']['facet']['pairs']['broad.mults_instrument']['shapes']
+    assert len(shapes['prototype']['cold_s']) == 1
+
+
+def test_a_failure_in_a_later_round_leaves_no_earlier_figures_under_judged_names() -> None:
+    """The first round's figures of a pair that failed in its second are details only."""
+    server = _Server(rank=True, refuse='`default_rank` ASC', refuse_after=1 + EXPLAIN_RUNS)
+    metrics, _samples, details = option_probe.probe(
+        server.session(), _blocks(mults=False), rounds=2
+    )
+    prefix = 'db.option_probe.default_rank.broad_build'
+    assert _pair_metrics(metrics, prefix) == [f'{prefix}.valid']
+    assert metrics[f'{prefix}.valid'] == 0.0
+    shapes = details['options']['default_rank']['pairs']['broad_build']['shapes']
+    assert len(shapes['prototype']['cold_s']) == 1
+    assert len(shapes['captured']['cold_s']) == 2
+
+
+def test_a_rank_that_numbers_the_build_otherwise_is_recorded_invalid() -> None:
+    """The same rows numbered otherwise give another checksum, which fails the pair."""
+    server = _Server(rank=True, rows={'`default_rank` ASC': (30, 999, 77)})
+    metrics, _samples, details = option_probe.probe(server.session(), _blocks(mults=False))
+    assert metrics['db.option_probe.default_rank.broad_build.valid'] == 0.0
+    problems = details['options']['default_rank']['pairs']['broad_build']['problems']
+    assert problems == ['the prototype shape numbered its rows otherwise than the captured shape']
+    assert metrics['db.option_probe.default_rank.empty_page_1.valid'] == 1.0
+
+
+def test_a_build_is_checksummed_on_the_server() -> None:
+    """The count, the weighted sum and the hash of the numbering, of the build's rows."""
+    server = _Server()
+    found = option_probe.build_checksum(server, _BUILD)
+    assert found == Checksum(30, 1000, 77)
+    assert server.log[-1] == (
+        'SELECT COUNT(*), COALESCE(SUM(`sort_order` * `obs_general_id`), 0), '
+        "COALESCE(BIT_XOR(CAST(CONV(LEFT(MD5(CONCAT(`sort_order`, ',', `obs_general_id`)), "
+        '16), 16, 10) AS UNSIGNED)), 0) '
+        f'FROM ({_BUILD}) AS `numbered` (`search_id`, `sort_order`, `obs_general_id`)'
+    )
+
+
+def test_each_warm_figure_is_its_rounds_median_and_the_metric_their_median() -> None:
+    """The samples hold one warm median per round, not every execution pooled."""
+    pair = Pair('default_rank', 'broad_build', 'SELECT 1', None, COUNTED)
+    runs = [
+        {
+            'cold_s': cold,
+            'cold_analyze_ms': cold,
+            'warm_s': warm,
+            'warm_analyze_ms': warm,
+            'rows_examined': [1.0] * 6,
+            'plan_rows': [1.0] * 6,
+            'explain_analyze': 'tree',
+        }
+        for cold, warm in ((1.0, [1.0, 1.0, 1.0, 1.0, 9.0]), (2.0, [5.0] * 5))
+    ]
+    metrics, samples, details = option_probe.record_pair(
+        pair, {'captured': runs}, {'captured': Checksum(3, 4, 5)}, []
+    )
+    prefix = 'db.option_probe.default_rank.broad_build'
+    assert samples[f'{prefix}.warm_s'] == [1.0, 5.0]
+    assert metrics[f'{prefix}.warm_s'] == 3.0
+    assert samples[f'{prefix}.warm_analyze_ms'] == [1.0, 5.0]
+    assert details['shapes']['captured']['warm_executions_s'] == [1.0] * 4 + [9.0] + [5.0] * 5
+    assert details['shapes']['captured']['checksum'] == {'rows': 3, 'weighted': 4, 'hashed': 5}
+
+
+def test_a_schema_lacking_an_option_it_is_meant_to_carry_is_refused() -> None:
+    """A copy whose label built the rank, but whose obs_general lacks it, is refused."""
+    with pytest.raises(ProbeError, match='meant to carry the default_rank prototype'):
+        option_probe.require_carried(_Server(facet=True), ['default_rank', 'facet'])
+
+
+def test_a_schema_carrying_what_it_is_meant_to_is_accepted() -> None:
+    """A copy carrying its label's option, or a label that built none, passes."""
+    option_probe.require_carried(_Server(rank=True), ['default_rank'])
+    option_probe.require_carried(_Server(), [])
 
 
 def test_a_capture_without_an_options_shapes_fails_that_option_alone() -> None:
@@ -560,3 +693,37 @@ def test_bench_db_records_a_failed_probe_and_then_fails() -> None:
     assert 'the re-sort probe is not a valid measurement: shapes differ' in failure
     assert 'the option probe is not a valid measurement: facet.broad.mults_instrument' in failure
     assert bench_db.probe_failure({'details': {'option_probe': {'problems': []}}}) is None
+
+
+def _result_file(directory: Path, label: Any, runs: list[tuple[str, str]]) -> None:
+    """Write a label's result file holding a run of each kind, naming each option."""
+    content = {
+        'format': FORMAT_VERSION,
+        'environment': {},
+        'runs': [
+            {
+                'kind': kind,
+                'index': index + 1,
+                'metrics': {},
+                'samples': {},
+                'details': {'option': option},
+            }
+            for index, (kind, option) in enumerate(runs)
+        ],
+    }
+    (directory / label.file_name).write_text(json.dumps(content), encoding='utf-8')
+
+
+def test_the_options_a_label_built_are_read_from_its_prototype_runs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The probed options its prototype runs name: none for the bare copy, another kind of
+    run, or no file."""
+    monkeypatch.setattr(bench_db, 'RESULTS_DIR', tmp_path)
+    label = make_label(pr='PR-nn', side='after', scale='fixture', session='rank')
+    assert bench_db.prototype_options(label) == []
+    _result_file(tmp_path, label, [('prototype', 'none'), ('db', 'default_rank')])
+    assert bench_db.prototype_options(label) == []
+    built = [('prototype', 'none'), ('prototype', 'facet'), ('prototype', 'default_rank')]
+    _result_file(tmp_path, label, built)
+    assert bench_db.prototype_options(label) == ['default_rank', 'facet']

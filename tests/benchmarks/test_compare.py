@@ -426,6 +426,22 @@ def test_a_family_s_jitter_is_the_median_absolute_floor_of_its_times() -> None:
     assert compare.family_jitter(floors) == {'web': 0.010, 'db': 0.0002}
 
 
+def test_the_option_probe_s_times_have_a_jitter_of_their_own() -> None:
+    """Its cold times stay out of the db family's jitter, and are judged by their own."""
+    floors = {
+        'db.plan.x.time_s': {'floor_abs': 0.0002},
+        'db.option_probe.default_rank.broad_build.cold_s': {'floor_abs': 0.5},
+        'db.option_probe.facet.broad.mults_instrument.cold_s': {'floor_abs': 0.3},
+    }
+    jitter = compare.family_jitter(floors)
+    assert jitter == {'db': 0.0002, 'db.option_probe': 0.4}
+    entry = {'floor': 0.0, 'floor_abs': 0.0}
+    assert compare.effective_floor('db.plan.y.time_s', entry, jitter, 0.002) == pytest.approx(0.1)
+    assert compare.effective_floor(
+        'db.option_probe.facet.selective.mults_instrument.cold_s', entry, jitter, 4.0
+    ) == pytest.approx(0.1)
+
+
 def test_sessions_whose_medians_differ_by_less_than_the_jitter_agree() -> None:
     """Tiny steady times in two sessions a few milliseconds apart are not a disagreement."""
 

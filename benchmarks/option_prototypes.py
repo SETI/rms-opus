@@ -2,8 +2,11 @@
 
 Two schema options are measured on real data before either is implemented, each by a
 prototype built on a scratch copy of a finished schema (`benchmarks.option_probe` times
-the statements the application would issue against it):
+the statements the application would issue against it). A third, ``none``, is the copy
+alone, which the prototypes' copies are compared with:
 
+``none``
+    The copy, with nothing added.
 ``default_rank``
     A rank of every observation in the default sort order, ``(time1, opus_id)``, held in
     a keyed column of the base table holding ``obs_general``'s rows: ``ALTER TABLE ...
@@ -21,16 +24,22 @@ the statements the application would issue against it):
     ``obs_general`` joined to each of those tables. A list column, held in a junction
     table, and a table with several rows per observation hold no column of it.
 
-The command copies the source schema into the target with `bench_server.clone_schema`,
-views included, and builds one option on the copy; the source is only read. The copy
-must serve every row it holds (``obs_general`` shows every row of its base table), since
-a rank or a facet row of an observation the view hides would measure rows no visitor
-sees. The build is timed step by step, and its cost in bytes is read after ``ANALYZE
-TABLE`` with the statistics cache off: for ``default_rank``, the change in the base
-table's data and index bytes and the new key's own size; for ``facet``, the table's
-data and index bytes. The run (kind ``prototype``) goes into the label's result file,
-whose environment then names the copy as the label's schema, so ``bench_db`` and
-``bench_web`` given the same label measure the copy.
+The command copies the source schema into the target with
+`benchmarks.schema_copy.clone_schema`, views included, laid out as the import lays out a
+schema (``defer_keys``: each table filled in primary-key order, then its secondary keys
+built), so every copy compared has the same layout; the source is only read. The source
+must serve every row it holds (`require_served_view`): no generation pending, no switch
+still revertible, and an ``obs_general`` view without a condition, since a rank or a facet
+row of an observation the view hides would measure rows no visitor sees, and the rank's
+view, made again, would lose the condition. The build is timed step by step, and its
+cost in bytes is read after ``ANALYZE TABLE`` with the statistics cache off: for
+``default_rank``, the new key's own size, and the change in the base table's data and
+index bytes; for ``facet``, the table's data and index bytes. Last, the server is
+restarted once with ``innodb_fast_shutdown = 0``, so InnoDB merges its change buffer and
+writes every page before anything is timed on the copy (`settle_server`). The run (kind
+``prototype``) goes into the label's result file, whose environment then names the copy
+as the label's schema, so ``bench_db`` and ``bench_web`` given the same label measure the
+copy.
 
 The prototypes are built with this checkout's import code, so the side given must be
 this checkout.
@@ -60,8 +69,8 @@ from benchmarks.bench_server import (
     DB_USER,
     OBS_GENERAL_ROWS_TABLE,
     OBS_GENERAL_TABLE,
+    SCHEMA_VERSION_TABLE,
     MysqlServer,
-    clone_schema,
     load_server_config,
     obs_general_table,
     query,
@@ -69,6 +78,7 @@ from benchmarks.bench_server import (
     reexec_with_socket,
     server_environment,
 )
+from benchmarks.resort_probe import WHERE_KEYWORD, top_level
 from benchmarks.results import (
     REPO_ROOT,
     SCALES,
@@ -78,15 +88,16 @@ from benchmarks.results import (
     make_label,
     new_run,
 )
+from benchmarks.schema_copy import clone_schema
 from benchmarks.sides import Side, require_no_pythonpath
-from opus_import import import_util, mult_fields, table_keys
-from opus_import.importdb.mysql import MYSQL_FIELD_TYPE_SQL, ImportDBMySQL
+from opus_import import generations, import_util, mult_fields, table_keys
+from opus_import.importdb.mysql import MYSQL_FIELD_TYPE_SQL, STATS_SAMPLE_PAGES, ImportDBMySQL
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-#: The options a prototype can be built for.
-OPTIONS = ('default_rank', 'facet')
+#: The options a prototype can be built for: ``none`` is the copy with nothing added.
+OPTIONS = ('none', 'default_rank', 'facet')
 
 #: The column holding each observation's rank in the default sort order, and its type.
 DEFAULT_RANK_COLUMN = 'default_rank'
@@ -196,12 +207,16 @@ def facet_table_sql(columns: Sequence[FacetColumn]) -> str:
         columns: Its columns after the key.
 
     Returns:
-        The ``CREATE TABLE``.
+        The ``CREATE TABLE``, with the statistics sample the import gives every table it
+        creates (`opus_import.importdb.mysql.STATS_SAMPLE_PAGES`).
     """
     q = quote_identifier
     definitions = [f'{q(FACET_KEY_COLUMN)} {FACET_KEY_SQL_TYPE} NOT NULL PRIMARY KEY']
     definitions += [f'{q(column.name)} {column.sql_type.upper()}' for column in columns]
-    return f'CREATE TABLE {q(FACET_TABLE)} ({", ".join(definitions)}) ENGINE=InnoDB'
+    return (
+        f'CREATE TABLE {q(FACET_TABLE)} ({", ".join(definitions)}) ENGINE=InnoDB '
+        f'STATS_SAMPLE_PAGES={STATS_SAMPLE_PAGES}'
+    )
 
 
 def facet_fill_sql(columns: Sequence[FacetColumn]) -> str:
@@ -334,35 +349,111 @@ def key_bytes(connection: Any, schema: str, table: str, key: str) -> int:
     return int(rows[0][0]) if len(rows) > 0 else 0
 
 
-def require_every_row_served(connection: Any, schema: str) -> str:
-    """Refuse a schema whose ``obs_general`` hides some of its base table's rows.
+def require_served_view(connection: Any, schema: str) -> None:
+    """Refuse a schema whose ``obs_general`` may hide some of its base table's rows.
+
+    Parameters:
+        connection: A connection; the schema is only read.
+        schema: The schema.
+
+    Raises:
+        PrototypeError: If its ``schema_version`` row records a pending generation or a
+            switch that can still be reverted, or its ``obs_general`` is a view whose
+            definition has a condition.
+    """
+    q = quote_identifier
+    pending = generations.PENDING_GENERATION_COLUMN
+    revertible = generations.REVERTIBLE_COLUMN
+    columns = {
+        str(row[0])
+        for row in query(
+            connection,
+            'SELECT COLUMN_NAME FROM information_schema.COLUMNS '
+            'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+            [schema, SCHEMA_VERSION_TABLE],
+        )
+    }
+    if {pending, revertible} <= columns:
+        rows = query(
+            connection,
+            f'SELECT {q(pending)}, {q(revertible)} FROM {q(schema)}.{q(SCHEMA_VERSION_TABLE)}',  # nosec B608 - quoted identifiers
+        )
+        for waiting, revert in rows:
+            if waiting is not None or bool(revert):
+                raise PrototypeError(
+                    f'{schema} records a pending generation ({waiting}) or a revertible '
+                    f'switch ({bool(revert)}); a prototype is built on a schema that serves '
+                    'every row it holds'
+                )
+    views = query(
+        connection,
+        'SELECT VIEW_DEFINITION FROM information_schema.VIEWS '
+        'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
+        [schema, OBS_GENERAL_TABLE],
+    )
+    if len(views) > 0 and len(top_level(str(views[0][0]), WHERE_KEYWORD.pattern)) > 0:
+        raise PrototypeError(
+            f'{schema}.{OBS_GENERAL_TABLE} is a view with a condition; a prototype is built '
+            'on a schema that serves every row it holds'
+        )
+
+
+def require_view_columns(connection: Any, schema: str) -> None:
+    """Refuse a copy whose ``obs_general`` view lists other columns than the import's.
+
+    The rank prototype makes the view again from ``obs_general.json``, so a view that
+    listed anything else would change silently.
 
     Parameters:
         connection: A connection.
-        schema: The schema.
-
-    Returns:
-        The base table holding ``obs_general``'s rows (`bench_server.obs_general_table`).
+        schema: The copy.
 
     Raises:
-        PrototypeError: If ``obs_general`` is a view showing fewer rows than its base table
-            holds, as while an import generation is pending or awaits its purge.
+        PrototypeError: If the view's columns, in order, are not those the import's view
+            code lists for ``obs_general.json`` (`opus_import.generations.view_columns`).
     """
-    base = obs_general_table(connection, schema)
-    if base == OBS_GENERAL_TABLE:
-        return base
-    q = quote_identifier
-    held, shown = query(
-        connection,
-        f'SELECT (SELECT COUNT(*) FROM {q(schema)}.{q(base)}), '  # nosec B608 - quoted identifiers
-        f'(SELECT COUNT(*) FROM {q(schema)}.{q(OBS_GENERAL_TABLE)})',
-    )[0]
-    if int(held) != int(shown):
-        raise PrototypeError(
-            f'{schema}.{OBS_GENERAL_TABLE} shows {shown} of the {held} rows of {base}; a '
-            'prototype is built on a schema that serves every row it holds'
+    listed = [
+        str(row[0])
+        for row in query(
+            connection,
+            'SELECT COLUMN_NAME FROM information_schema.COLUMNS '
+            'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION',
+            [schema, OBS_GENERAL_TABLE],
         )
-    return base
+    ]
+    expected = generations.view_columns(_table_schema(OBS_GENERAL_TABLE))
+    if listed != expected:
+        unlisted = sorted(set(expected) - set(listed))
+        extra = sorted(set(listed) - set(expected))
+        raise PrototypeError(
+            f'{schema}.{OBS_GENERAL_TABLE} lists other columns than obs_general.json gives '
+            f'it (missing {unlisted}, extra {extra}, or another order)'
+        )
+
+
+def settle_server(server: MysqlServer) -> float:
+    """Restart the server with a slow shutdown, so nothing waits to be merged or written.
+
+    With ``innodb_fast_shutdown = 0`` InnoDB merges its change buffer and purges before it
+    stops, so a copy just built has no backlog left for a later cold start to work off.
+    The setting is put back afterwards.
+
+    Parameters:
+        server: The owned server, running.
+
+    Returns:
+        The restart's wall-clock seconds.
+    """
+    with contextlib.closing(server.connect()) as connection:
+        previous = int(query(connection, 'SELECT @@GLOBAL.innodb_fast_shutdown')[0][0])
+        query(connection, 'SET GLOBAL innodb_fast_shutdown = 0')
+    started = time.perf_counter()
+    try:
+        server.restart()
+    finally:
+        with contextlib.closing(server.connect()) as connection:
+            query(connection, 'SET GLOBAL innodb_fast_shutdown = %s', [previous])
+    return time.perf_counter() - started
 
 
 def _timed(connection: Any, statement: str) -> float:
@@ -387,14 +478,16 @@ def build_default_rank(
     Returns:
         The metrics, under ``prototype.default_rank.``: ``alter_s``, ``fill_s`` and
         ``view_s`` (0 where ``obs_general`` is a base table), their sum ``build_s``, the
-        rows ranked as ``rows``, the base table's change in ``data_bytes`` and
-        ``index_bytes``, and the new key's own ``key_bytes``. The details: the base
-        table, both statements, and the table's bytes before and after.
+        rows ranked as ``rows``, the new key's own ``key_bytes``, and the base table's
+        change in ``data_bytes`` and ``index_bytes``, each side read after ``ANALYZE
+        TABLE``. The details: the base table, both statements, and the table's bytes
+        before and after.
 
     Raises:
-        PrototypeError: If the copy hides some of its rows, or already has the column.
+        PrototypeError: If the copy already has the column, or its view lists other
+            columns than the import's (`require_view_columns`).
     """
-    base = require_every_row_served(connection, schema)
+    base = obs_general_table(connection, schema)
     present = query(
         connection,
         'SELECT COUNT(*) FROM information_schema.COLUMNS '
@@ -403,6 +496,8 @@ def build_default_rank(
     )[0][0]
     if int(present) > 0:
         raise PrototypeError(f'{schema}.{base} already has the column {DEFAULT_RANK_COLUMN}')
+    if base == OBS_GENERAL_ROWS_TABLE:
+        require_view_columns(connection, schema)
     before = table_bytes(connection, schema, base)
     statements = {'alter': rank_alter_sql(base), 'fill': rank_fill_sql(base)}
     prefix = f'{METRIC_PREFIX}.default_rank'
@@ -449,9 +544,8 @@ def build_facet(connection: Any, schema: str) -> tuple[dict[str, float], dict[st
         which are left out.
 
     Raises:
-        PrototypeError: If the copy hides some of its rows, or already has the table.
+        PrototypeError: If the copy already has the table.
     """
-    require_every_row_served(connection, schema)
     tables = {
         str(row[0])
         for row in query(
@@ -493,7 +587,7 @@ def build_prototype(
     version: int | None,
     make_view: Callable[[str], None] = recreate_view,
 ) -> dict[str, Any]:
-    """Copy a schema and build one option's prototype on the copy.
+    """Copy a schema in the import's layout, build one option on the copy, and settle it.
 
     Parameters:
         server: The owned server, running.
@@ -501,32 +595,38 @@ def build_prototype(
         target: The copy, dropped first if it exists.
         option: One of `OPTIONS`.
         version: The ``SCHEMA_VERSION`` the copy's version row is restamped to, or None
-            to leave it as copied (`bench_server.clone_schema`).
+            to leave it as copied (`benchmarks.schema_copy.clone_schema`).
         make_view: What creates ``obs_general`` again for the rank prototype.
 
     Returns:
-        A ``prototype`` run: the build's metrics (`build_default_rank`, `build_facet`)
-        with the copy's ``clone_s``, and its details, which name the option, the source
-        and the copy.
+        A ``prototype`` run: the build's metrics (`build_default_rank`, `build_facet`;
+        none for ``none``) with the copy's ``clone_s`` and the restart's ``settle_s``
+        (`settle_server`), and its details, which name the option, the source and the
+        copy.
 
     Raises:
-        PrototypeError: If the option is unknown, the target is the source, or the build
-            refuses the copy.
+        PrototypeError: If the option is unknown, the target is the source, the source
+            may hide rows (`require_served_view`), or the build refuses the copy.
     """
     if option not in OPTIONS:
         raise PrototypeError(f'unknown option {option!r}, not one of {list(OPTIONS)}')
     if target == source:
         raise PrototypeError(f'the copy cannot be the source schema {source!r}')
+    with contextlib.closing(server.connect()) as connection:
+        require_served_view(connection, source)
     run = new_run(PROTOTYPE_KIND)
-    clone_s = clone_schema(server, source, target, version=version)
+    clone_s = clone_schema(server, source, target, version=version, defer_keys=True)
+    metrics: dict[str, float] = {}
+    details: dict[str, Any] = {}
     with contextlib.closing(server.connect(target)) as connection:
         query(connection, 'SET SESSION information_schema_stats_expiry = 0')
         if option == 'default_rank':
             metrics, details = build_default_rank(connection, target, make_view=make_view)
-        else:
+        elif option == 'facet':
             metrics, details = build_facet(connection, target)
     run['metrics'].update(metrics)
     run['metrics'][f'{METRIC_PREFIX}.{option}.clone_s'] = clone_s
+    run['metrics'][f'{METRIC_PREFIX}.{option}.settle_s'] = settle_server(server)
     run['details'].update(details)
     run['details'].update({'option': option, 'source': source, 'schema': target})
     return run

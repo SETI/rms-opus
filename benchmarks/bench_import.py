@@ -14,7 +14,7 @@ The fixture scale runs through `import_tests.tools.build_run.perform_run`; the t
 complete scales run the groups of their scenario file through
 `import_tests.tools.build_run.run_pipeline_step`. At test scale a full run is followed
 by the scenario's largest bundle imported alone into a fresh schema, and by the
-incremental group: a copy of the finished schema (`benchmarks.bench_server.clone_schema`),
+incremental group: a copy of the finished schema (`benchmarks.schema_copy.clone_schema`),
 the largest bundle imported into it again, and the finalization sequence after.
 
 Two more modes serve a change measured on clones, whose only change to the schema is
@@ -83,7 +83,6 @@ from benchmarks.bench_server import (
     DB_PASSWORD,
     DB_USER,
     MysqlServer,
-    clone_schema,
     counter_deltas,
     drop_schema,
     global_status,
@@ -114,6 +113,7 @@ from benchmarks.results import (
     new_run,
     scenario_hash,
 )
+from benchmarks.schema_copy import clone_schema
 from benchmarks.sides import Side, Spelling, require_no_pythonpath
 from import_tests.tools import build_run, run_logs
 from import_tests.tools.golden_io import DatabaseCredentials

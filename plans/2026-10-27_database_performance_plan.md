@@ -9109,3 +9109,73 @@ Nothing above this line is rewritten by an executor.
 - Results: `run-all-checks.sh` passes (ruff, ruff format, mypy, pytest 3,592 passed, pyroma,
   bandit, vulture, Sphinx, PyMarkdown). The import suite was not run: nothing under `src/`
   or `import_tests/` changed.
+
+### 2026-11-16, PR-24 review fixes (written against this file at 0bd89ee6)
+
+An independent review and CodeRabbit reviewed 0bd89ee6. The orchestrator's decisions
+below are each fixed with a test that fails with the fix reverted (mutation-checked: 23
+reversions, each failing a test).
+
+- **The copies' layout.** `clone_schema` created each table with every secondary key, then
+  filled it, so the copy's secondary keys were built by random inserts (fragmented, with a
+  change-buffer backlog merging during the cold timings), where the import builds them
+  sorted after its load. `clone_schema` gains `defer_keys` (default off, so its other
+  callers are unchanged): each table is created from `SHOW CREATE TABLE` with its plain,
+  unique, `FULLTEXT` and `SPATIAL` keys and its foreign keys set apart
+  (`schema_copy.split_secondary_keys`, which reads one element per line), filled ordered by
+  its primary key, then given its plain and unique keys in one `ALTER` and each `FULLTEXT`
+  or `SPATIAL` key in its own, then, once every table has its keys, its foreign keys with
+  `foreign_key_checks` off. `option_prototypes` always copies so, and after the build
+  restarts the server once with `innodb_fast_shutdown = 0`, putting the setting back after
+  (`settle_server`, `prototype.<option>.settle_s`). A third option, `none`, is the copy
+  alone. At fixture scale the `none` copy's 48 tables' `SHOW CREATE TABLE` equal the
+  source's exactly (180 secondary keys, 35 foreign keys), the rank copy differs only by the
+  rank column and key, and the facet copy only by `obs_facet`.
+  - `bench_server.py` would have passed the module-size rule, so `clone_schema`,
+    `copy_views` and `portable_view_definition` move, unchanged otherwise, into
+    `benchmarks/schema_copy.py`; `bench_import` and the tests import them from there.
+  - The complete-scale floor sessions run on the `none` copy, so every schema compared
+    has one layout; no import runs in them (the source is any finished schema of this
+    import code, only read).
+- **The rank's bytes.** Both sides of the delta were already read after `ANALYZE TABLE`;
+  with the copies laid out as the import does, the delta compares like layouts. `key_bytes`
+  is the figure the guide and the runbook report.
+- **A copy run that is not what its label says.** `db.option_probe.<option>.carried` (0/1)
+  is recorded, and `bench_db --option-probe` refuses, before anything runs, when the
+  label's result file holds a `prototype` run of an option the schema does not carry
+  (`bench_db.prototype_options`, `option_probe.require_carried`). At fixture scale the
+  rank label given `--schema` of the `none` copy is refused.
+- **An invalid pair** records `.valid` = 0 and no other metric or sample; its figures stay
+  in the details. A failure in a later round leaves no earlier round's figures under the
+  judged names.
+- **The build's check** reduces each shape on the server to its row count,
+  `SUM(sort_order * obs_general_id)` and the `BIT_XOR` of the first 64 bits of
+  `MD5(CONCAT(sort_order, ',', obs_general_id))` (`option_probe.build_checksum`, through a
+  derived table's column list, `AS numbered (search_id, sort_order, obs_general_id)`).
+  The review's suggestion was `BIT_XOR(CRC32(...))`; at fixture scale, with two ranks of
+  the rank copy swapped, the weighted sum changed but the CRC XOR did not: a CRC is affine
+  over XOR, so two rows exchanging their numbers between texts of equal length leave the
+  XOR of their CRCs as it was. With MD5 both checksums changed and the pair failed; with
+  the ranks put back it passed.
+- **`obs_facet`** is created with `STATS_SAMPLE_PAGES` from
+  `opus_import.importdb.mysql.STATS_SAMPLE_PAGES`.
+- **The jitter.** `compare` treats the re-sort probe's metrics as ordinary `db` metrics, so
+  there was no precedent to follow; the option probe's metrics form a family of their own,
+  `db.option_probe` (`compare.metric_family`), so their cold times stay out of the `db`
+  family's jitter.
+- **The view.** The row-count refusal let through a pending generation with no rows yet.
+  `require_served_view` refuses a source whose `schema_version` records a pending
+  generation or a revertible switch, or whose `obs_general` view has a condition (a
+  top-level `WHERE` outside quotes), before it is copied; and `require_view_columns`
+  refuses a rank copy whose view lists other columns, in order, than
+  `generations.view_columns(obs_general.json)`, before anything is changed. The view is
+  still made from `obs_general.json` by the import's code.
+- **Warm figures per round** (CodeRabbit): each round's warm figure is the median of its
+  executions, and the metric and its samples are over those per-round values, which
+  `compare.summarize` recomputes from; every execution is in the details.
+- **Fixture scale** (the harness's own server; one import made for it and the three copies,
+  all dropped afterwards; timings are not a measurement): the `none`, `default_rank` and
+  `facet` copies built and settled; `bench_db --dump-queries --option-probe
+  --option-probe-rounds 2` on each recorded every pair valid, `carried` 0/0, 1/0 and 0/1,
+  two warm samples a figure with ten executions in the details, and the build's checksums
+  equal on the rank copy.

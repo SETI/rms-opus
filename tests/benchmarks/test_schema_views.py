@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from benchmarks import bench_import, bench_server, bench_web
+from benchmarks import bench_import, bench_server, bench_web, schema_copy
 from benchmarks.bench_import import ImportBench
 from benchmarks.monitor import (
     InvocationMonitor,
@@ -86,7 +86,7 @@ def _clone_statements() -> list[str]:
             'information_schema.COLUMNS': [('id',)],
         }
     )
-    bench_server.clone_schema(_Server(connection), 'src', 'dst', version=None, connections=1)  # type: ignore[arg-type]
+    schema_copy.clone_schema(_Server(connection), 'src', 'dst', version=None, connections=1)  # type: ignore[arg-type]
     return [statement for statement, _ in connection.statements]
 
 
@@ -113,7 +113,7 @@ def test_a_view_definition_keeps_its_algorithm_and_security() -> None:
         'CREATE ALGORITHM=MERGE DEFINER=`root`@`%` SQL SECURITY INVOKER VIEW `v` AS '
         'select `src`.`t`.`a` AS `a` from `src`.`t` join `other`.`u`'
     )
-    assert bench_server.portable_view_definition(definition, 'src', 'dst') == (
+    assert schema_copy.portable_view_definition(definition, 'src', 'dst') == (
         'CREATE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW `v` AS '
         'select `dst`.`t`.`a` AS `a` from `dst`.`t` join `other`.`u`'
     )
@@ -122,7 +122,7 @@ def test_a_view_definition_keeps_its_algorithm_and_security() -> None:
 def test_a_view_definition_keeps_the_source_name_inside_a_string_literal() -> None:
     """A literal holding the source's qualifier is data, so only the table moves."""
     definition = "CREATE VIEW `v` AS select '`src`.marker' AS `label` from `src`.`t`"
-    assert bench_server.portable_view_definition(definition, 'src', 'dst') == (
+    assert schema_copy.portable_view_definition(definition, 'src', 'dst') == (
         "CREATE VIEW `v` AS select '`src`.marker' AS `label` from `dst`.`t`"
     )
 
@@ -141,7 +141,7 @@ def test_views_are_created_after_the_views_they_read() -> None:
             'SHOW CREATE VIEW': [('v', 'CREATE VIEW `src`.`v` AS select 1', 'utf8mb4', 'c')],
         }
     )
-    created = bench_server.copy_views(connection, 'src', 'dst')
+    created = schema_copy.copy_views(connection, 'src', 'dst')
     assert created == ['b_other', 'z_rows', 'm_middle', 'a_summary']
     shown = [
         statement.rsplit('.', 1)[1]

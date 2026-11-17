@@ -573,9 +573,13 @@ What a prototype run is
 A schema option can be measured on real data before the application uses it: the
 option is built as a **prototype** on a copy of a finished schema, and ``bench_db
 --option-probe`` (below) times the statements the application would issue against it
-beside the ones it issues. ``option_prototypes`` builds one prototype per command, with
-``--source`` naming the schema to copy, ``--target`` the copy and ``--option`` the
-option:
+beside the ones it issues. ``option_prototypes`` builds one copy per command, with
+``--source`` naming the schema to copy, ``--target`` the copy and ``--option`` what is
+added to it:
+
+``none``
+    Nothing: the copy alone, which the prototypes' copies are compared with, so that
+    every schema compared is laid out the same way.
 
 ``default_rank``
     Each observation's place in the default sort order, ``(time1, opus_id)``, in a
@@ -584,7 +588,9 @@ option:
     ``ROW_NUMBER() OVER (ORDER BY time1, opus_id)``. Where ``obs_general`` is a view, the
     view is then created again listing the column, by the import's own
     :meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_obs_general_view` given
-    ``obs_general.json``'s columns with the rank declared after them.
+    ``obs_general.json``'s columns with the rank declared after them. A copy whose view
+    lists other columns than those is refused before anything is changed, so the view
+    made again cannot differ from the copied one silently.
 
 ``facet``
     A narrow table, ``obs_facet``, keyed by ``obs_general_id``, holding each
@@ -595,20 +601,36 @@ option:
     mult id. The columns come from the import's own field metadata
     (:func:`opus_import.mult_fields.packaged_mult_columns`), so a list column, held in a
     junction table, and a field of a table with several rows per observation have none.
-    One ``INSERT ... SELECT`` fills the table from ``obs_general`` left joined to each of
-    those tables; a field whose table the copy lacks is left out, and the run's details
-    name it.
+    The table takes the statistics sample the import gives every table it creates
+    (``STATS_SAMPLE_PAGES``). One ``INSERT ... SELECT`` fills it from ``obs_general``
+    left joined to each of those tables; a field whose table the copy lacks is left out,
+    and the run's details name it.
 
-The copy is made with ``bench_server.clone_schema``, views included, and the source is
-only read. The copy must show every row it holds: a schema whose ``obs_general`` hides
-rows of a pending generation is refused. Each step is timed (``clone_s``, then
-``alter_s``, ``fill_s`` and ``view_s`` or ``create_s`` and ``fill_s``, and their sum,
-``build_s``), and the option's cost in bytes is read after ``ANALYZE TABLE`` with the
-statistics cache off: for the rank, the change in the base table's data and index bytes
-(the ``ALTER`` rebuilds the table, since a column cannot be added in place together with
-a key, so the data bytes count that rebuild too) and the key's own size from InnoDB's
-persistent statistics, ``key_bytes``; for the facet table, its data and index bytes and
-its column count. The metrics are under ``prototype.<option>.`` in a run of kind
+The source is only read, and is refused unless it serves every row it holds: its
+``schema_version`` row records no pending generation (even one with no rows yet) and no
+switch that can still be reverted, and its ``obs_general`` view has no condition. A
+prototype on a schema that hides rows would measure rows no visitor sees, and the rank's
+view, made again, would lose the condition.
+
+The copy is made with ``schema_copy.clone_schema``, views included, laid out as the
+import lays out a schema (``defer_keys``): each table is created with its primary key
+alone, filled in primary-key order, then given its secondary keys, each built sorted from
+the rows already there, and last its foreign keys. A copy whose secondary keys were
+instead built by the rows' inserts would have fragmented keys, and a change buffer whose
+merging would fall into the cold timings, which the import's own schema has neither.
+Once the option is built, the server is restarted once with ``innodb_fast_shutdown = 0``,
+so InnoDB merges its change buffer and writes every page before anything is timed, and
+the setting is put back.
+
+Each step is timed (``clone_s``, then ``alter_s``, ``fill_s`` and ``view_s`` or
+``create_s`` and ``fill_s``, their sum ``build_s``, and the restart's ``settle_s``), and
+the option's cost in bytes is read after ``ANALYZE TABLE`` with the statistics cache off.
+For the rank the figure to report is ``key_bytes``, the key's own size from InnoDB's
+persistent statistics; the change in the base table's data and index bytes
+(``data_bytes``, ``index_bytes``, each side read after ``ANALYZE TABLE``) is kept beside
+it, and counts the table's rebuild too, since the ``ALTER`` rebuilds the table when it
+adds a column and a key together. For the facet table the figures are its data and index
+bytes and its column count. The metrics are under ``prototype.<option>.`` in a run of kind
 ``prototype``, which ``compare`` does not compare. The label's environment then names
 the copy as its schema, so ``bench_db`` and ``bench_web`` given the same label measure the
 copy. The prototype is built by the harness's own process, with the import code of the
@@ -681,7 +703,7 @@ import still writing the schema will finish it under, and ``bench_web`` refuses 
 it, since only a finished import may set ``ready``. A table holding more than one row is
 refused before anything is written. Two sides that serve one schema expect different
 versions whenever the change raises it. A side whose code has no version checks nothing
-and is left alone. ``bench_server.clone_schema`` restamps a copied ``ready`` row the same
+and is left alone. ``schema_copy.clone_schema`` restamps a copied ``ready`` row the same
 way, to the version of the side that will use the copy, and copies any other row as it
 is. It creates each of the source's views in the copy once the copy's tables exist,
 and after any view it reads, from the source's ``SHOW CREATE VIEW``, with every name the
@@ -843,32 +865,46 @@ from the built searches' ids and written into no capture file:
 Where the schema does not carry an option -- no ``default_rank`` column in
 ``obs_general``, no ``obs_facet`` table -- the option's captured shapes are timed alone
 and the details say the option was skipped; that is not a failure, so a floor session on
-the unmodified schema measures the captured shapes' noise.
+a copy without either option (``--option none``) measures the captured shapes' noise.
 
 Each shape is timed from a **cold start**: the server is restarted, and the shape's
 ``SELECT`` runs under ``EXPLAIN ANALYZE`` once on a connection opened after the restart,
 its cold time, then five more times on that connection, whose median is its warm time.
-``--option-probe-rounds`` times every shape that many times over, a restart before each;
-each figure is the median over the rounds, with every value kept in the run's
-``samples``. Then each shape's rows are read once: a page or a count is fetched and
-compared with the other shape's row for row (a page in order), and a build is counted
-with ``SELECT COUNT(*)`` over it.
+``--option-probe-rounds`` times every shape that many times over, a restart before each.
+Each round gives one value of each figure -- for the warm figures, the median of its
+round's executions -- and the metric is the median of those values, which the run's
+``samples`` keep under its name; every execution is in the details. Then each shape's rows
+are read once: a page or a count is fetched and compared with the other shape's row for
+row (a page in order), and a build, too large to fetch, is reduced on the server to its
+row count, ``SUM(sort_order * obs_general_id)``, and the ``BIT_XOR`` of the first 64
+bits of ``MD5(CONCAT(sort_order, ',', obs_general_id))``, so two builds agree only when
+they number the same observations alike. (A ``CRC32`` would not do for the hash: a CRC is
+affine over XOR, so two rows exchanging their numbers can leave an XOR of CRCs as it was.)
 
 The metrics are under ``db.option_probe.<option>.<pair>.``: ``cold_s``, ``warm_s``,
 ``cold_analyze_ms`` and ``warm_analyze_ms`` (the time to the last row the top iterator
 reports), ``rows_examined`` and ``rows_returned``, all of the shape the schema answers
 the pair with -- the prototype shape where it carries the option, the captured one where
-it does not. ``compare`` therefore compares a floor session on the unmodified schema
-with a run on a prototype's copy pair by pair, and judges a pair's ``cold_s`` against the
-captured shape's floor. Where the prototype shape is timed, the captured shape's figures
-on the same copy are under ``.captured.``, beside ``cold_ratio`` and ``warm_ratio``, the
-prototype's time over the captured one's. Each pair records ``valid``, and each option
-``db.option_probe.<option>.valid``. A pair is not valid when a shape returned no rows,
-when the two returned different numbers of rows or different rows, or when a statement
-failed; an option whose captured shapes the capture lacks is not valid as a whole. The
+it does not. ``compare`` therefore compares a floor session on a copy without the
+option (``option_prototypes --option none``) with a run on a prototype's copy pair by pair,
+and judges a pair's ``cold_s`` against the captured shape's floor. Where the prototype
+shape is timed, the captured shape's figures on the same copy are under ``.captured.``,
+beside ``cold_ratio`` and ``warm_ratio``, the prototype's time over the captured one's:
+the cross-check of the comparison, measured on one schema in one session. Each pair
+records ``valid``, and each option ``db.option_probe.<option>.valid`` and
+``db.option_probe.<option>.carried``, 1 where the schema carries its prototype. A pair is
+not valid when a shape returned no rows, when the two returned different numbers of rows,
+different rows or a different numbering, or when a statement failed in any round; such a
+pair records ``valid`` at 0 and no other metric, so nothing ``compare`` judges comes from
+it. An option whose captured shapes the capture lacks is not valid as a whole. The
 details keep each pair's statements, every execution's figures and the last ``EXPLAIN
-ANALYZE`` tree of each shape. A run holding a probe that is not valid is recorded, and
-the command then exits with an error naming every problem.
+ANALYZE`` tree of each shape, invalid pairs' included. A run holding a probe that is not
+valid is recorded, and the command then exits with an error naming every problem.
+
+Before anything runs, the probe is refused when the label's result file holds a
+``prototype`` run of an option the schema does not carry -- a wrong label, a wrong
+``--schema``, or a view that was not made again -- since that option's pairs would
+otherwise be timed in their captured shape under the names the prototype's figures take.
 
 Result files
 ------------
@@ -983,7 +1019,9 @@ session's runs, outliers left out, or the range of the session medians. Small ti
 scatter by a roughly fixed amount whatever their size -- a few milliseconds of scheduling
 on a web request, a fraction of a millisecond on a planned statement -- so a fraction
 measured on one median does not carry over to a much smaller one. The file records each
-family's **jitter** (``import``, ``db`` and ``web``): the median ``floor_abs`` of its
+family's **jitter** (``import``, ``db``, ``web``, and the option probe's own,
+``db.option_probe``, whose cold times would otherwise raise every ``db`` time's floor):
+the median ``floor_abs`` of its
 time metrics. Sessions agree on a metric when their medians lie within the widest range
 of a session's runs or, for a time metric, within its family's jitter where that is
 larger. Every metric any session recorded gets a floor, and

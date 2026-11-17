@@ -15,7 +15,7 @@ from typing import Any, ClassVar
 
 import pytest
 
-from benchmarks import bench_generation, bench_import, bench_server
+from benchmarks import bench_generation, bench_import, bench_server, schema_copy
 from benchmarks.app_servers import ServerError
 from benchmarks.bench_generation import GenerationBench, GenerationError, GenerationState
 from benchmarks.import_scenarios import load_scenario
@@ -208,6 +208,7 @@ def dropped_schemas(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     dropped: list[str] = []
     for module in (bench_import, bench_server):
         monkeypatch.setattr(module, 'drop_schema', lambda *args: dropped.append('drop'))
+    for module in (bench_import, schema_copy):
         monkeypatch.setattr(module, 'clone_schema', lambda *args, **kw: dropped.append('clone'))
     monkeypatch.setattr(bench_generation, 'require_empty_errors_log', lambda *a, **k: None)
     monkeypatch.setattr(bench_generation, 'bulk_load_paths', lambda log_dir: [])
