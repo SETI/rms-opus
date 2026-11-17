@@ -78,7 +78,7 @@ from benchmarks.bench_server import (
     reexec_with_socket,
     server_environment,
 )
-from benchmarks.resort_probe import WHERE_KEYWORD, top_level
+from benchmarks.resort_probe import top_level
 from benchmarks.results import (
     REPO_ROOT,
     SCALES,
@@ -123,6 +123,10 @@ OBSERVATION_COLUMN = table_keys.OBSERVATION_DELETE_COLUMN
 
 #: The run kind the command records, which `benchmarks.compare` does not compare.
 PROTOTYPE_KIND = 'prototype'
+
+#: The clauses that make an ``obs_general`` view show fewer rows than its base table holds,
+#: where they appear outside quotes and parentheses.
+_ROW_LIMITING_CLAUSE = r'\b(?:WHERE|LIMIT)\b'
 
 #: The metric names' prefix.
 METRIC_PREFIX = 'prototype'
@@ -359,7 +363,7 @@ def require_served_view(connection: Any, schema: str) -> None:
     Raises:
         PrototypeError: If its ``schema_version`` row records a pending generation or a
             switch that can still be reverted, or its ``obs_general`` is a view whose
-            definition has a condition.
+            definition has a top-level ``WHERE`` or ``LIMIT``.
     """
     q = quote_identifier
     pending = generations.PENDING_GENERATION_COLUMN
@@ -391,10 +395,10 @@ def require_served_view(connection: Any, schema: str) -> None:
         'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
         [schema, OBS_GENERAL_TABLE],
     )
-    if len(views) > 0 and len(top_level(str(views[0][0]), WHERE_KEYWORD.pattern)) > 0:
+    if len(views) > 0 and len(top_level(str(views[0][0]), _ROW_LIMITING_CLAUSE)) > 0:
         raise PrototypeError(
-            f'{schema}.{OBS_GENERAL_TABLE} is a view with a condition; a prototype is built '
-            'on a schema that serves every row it holds'
+            f'{schema}.{OBS_GENERAL_TABLE} is a view with a condition or a row limit; a '
+            'prototype is built on a schema that serves every row it holds'
         )
 
 

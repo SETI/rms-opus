@@ -9179,3 +9179,56 @@ reversions, each failing a test).
   --option-probe-rounds 2` on each recorded every pair valid, `carried` 0/0, 1/0 and 0/1,
   two warm samples a figure with ten executions in the details, and the build's checksums
   equal on the rank copy.
+
+### 2026-11-17, PR-24 complete-scale session (written against this file at 6da7388e)
+
+- **The session** (§2.6; the harness's own server, the machine idle before every phase):
+  - **The source** was PR-23's head import (`bench_complete_after_rings_1`, schema version
+    13, no generation pending), which `src/` here equals.
+  - **Floors:** two floor sessions, `f1` and `f2`, on the `none` copy, each running
+    `bench_web` three times and `bench_db --dump-queries --option-probe
+    --option-probe-rounds 3`.
+  - **Prototypes:** `rank` and `facet`, each building its copy, running the probe with
+    three rounds, then `bench_web` three times.
+  - **Warm-up:** one warmed `bench_web` run on the `none` copy, session `warm`.
+  - **Copy costs:** each copy took 37–38 minutes to clone and 1–2.5 minutes to settle.
+  - **Floor agreement:** `compare --floors` lists 91 metrics on which the two floor
+    sessions disagree. On the target shapes the sessions differ by 1.6% at most, against
+    spreads within a session of 0.5–2.6%, so no third session was taken.
+- **Option 1, the rank:**
+  - *Probe:* every pair valid.
+  - *Cold, against the floors:* the target, the broad build's cold time, is 1.204 s
+    against the floor sessions' 1.059 s (+13.7%, "not improved").
+  - *Cold, on the same copy:* the captured build takes 1.41 s cold, against 1.05 s on the
+    `none` copy. The `ALTER` rebuilt `obs_general_rows` 14% larger (325 MB against
+    285 MB), and the copy reads slower cold. The in-copy ratio is the like-for-like
+    figure: 0.85 cold (1.20 s against 1.41 s) and 0.78 warm (0.70 s against 0.91 s).
+  - *Pages:* the empty search's pages by `default_rank` take 17–21 ms cold against
+    25–29 ms.
+  - *Cost:* `key_bytes` 64.6 MB, and 39.8 MB more data. Build 292 s, of which the `ALTER`
+    is 259 s and the fill 33 s.
+  - *Guards:* all 22 held.
+- **Option 2, the facet table:**
+  - *Probe:* every pair valid. The copy's captured counts time like the floors.
+  - *Broad search:* counting from `obs_facet` is slower. Cold against the same copy's
+    captured counts: `instrument` 1.72 s against 1.50 s, `imagetype` 1.83 s against
+    1.44 s, `observationtype` 1.73 s against 1.73 s. Warm: 4–37% slower.
+  - *Why:* the captured count streams `obs_general_rows`' covering `instrument_id` key in
+    group order, while the facet count scans the 159 MB table and groups in a temporary
+    table. In both, about 0.9 s of the time is the 1.6 million lookups into
+    `search_results`.
+  - *Selective search:* counts are 40% faster cold, at 28–32 ms against 47–54 ms.
+  - *Cost:* 159 MB of data, 86 columns, and a 28 s fill.
+  - *Verdicts and guards:* against the floors, two targets are "not improved" and one
+    "improved" (−3.1%). 21 of 22 guards held. The one that regressed,
+    `app-cold.pages.empty`, is a request the facet table cannot reach.
+- **PR-22's confirmation:**
+  - The bundle-ID autocomplete answers with a prefix `LIKE` range on `obs_pds.bundle_id`
+    under `MAX_EXECUTION_TIME`, the branch without the join to the search, in 14–41 ms
+    cold.
+  - It had no timeouts in any of the six floor runs.
+  - Its warm requests take under 1.2 ms.
+- **`warm_search`'s wall-clock**, over 34 resets each: median 35.8 s after a restart
+  (34.3–37.6 s), and 39.0 s app-cold (34.7–40.7 s).
+- **CodeRabbit, on 6da7388e:** `require_served_view` also refuses a view with a top-level
+  `LIMIT`, which the import never makes.

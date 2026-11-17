@@ -265,12 +265,17 @@ def test_a_schema_whose_obs_general_is_a_table_is_ranked_without_a_view() -> Non
             ),
             'is a view with a condition',
         ),
+        (
+            _Copy(view_definition='select `id` AS `id` from `obs_general_rows` limit 10'),
+            'or a row limit',
+        ),
     ],
-    ids=['pending-generation', 'revertible-switch', 'view-condition'],
+    ids=['pending-generation', 'revertible-switch', 'view-condition', 'view-limit'],
 )
 def test_a_source_that_may_hide_rows_is_refused(copy: _Copy, message: str) -> None:
     """A pending generation (even one with no rows yet), a revertible switch, or a view
-    with a condition: the rank's view, made again, would drop what it hides."""
+    with a condition or a row limit: the rank's view, made again, would drop what it
+    hides."""
     with pytest.raises(PrototypeError, match=message):
         option_prototypes.require_served_view(copy, 'full')
 
@@ -281,8 +286,9 @@ def test_a_source_that_may_hide_rows_is_refused(copy: _Copy, message: str) -> No
         _Copy(),
         _Copy(version_row=None, view_definition=None),
         _Copy(view_definition="select 'where' AS `w`, `id` AS `id` from `obs_general_rows`"),
+        _Copy(view_definition="select 'limit' AS `l`, `id` AS `id` from `obs_general_rows`"),
     ],
-    ids=['served', 'no-generations', 'where-in-a-literal'],
+    ids=['served', 'no-generations', 'where-in-a-literal', 'limit-in-a-literal'],
 )
 def test_a_source_serving_every_row_is_accepted(copy: _Copy) -> None:
     """No pending generation, no revertible switch, and no condition outside quotes."""
