@@ -8923,3 +8923,32 @@ Nothing above this line is rewritten by an executor.
   scenario may name a column set from `[columns]`, asked for as `cols`;
   `pages.complex_geometry` asks for columns from the same four tables. At complete scale
   the search matches 51,068 observations, so its pages 10 and last exist.
+- **The complex search measured** (2026-11-16, complete scale), for PR-23 against
+  `db-perf`: a fresh import of PR-23's code (2,935.5 s) against the base schema of PR-23's
+  clean session, `bench_db` and `bench_web` alternated three runs a side with this
+  branch's harness at 84fb95bc; the machine idle between phases. The cold fan-out's mult
+  counts are unchanged (`instrument` 1.38 s against 1.40 s db-cold, `target` 1.43 s
+  against 1.46 s), and the result count and re-sort are within 3% at web level; in
+  `bench_db` every complex statement is within or near its spread, the count 6.2%
+  slower. The pages scenarios' cold medians came out 64–69% slower. That is one request
+  per run taking 50–60 ms more, handled by a gunicorn thread that had not yet opened its
+  database connection: the run has one more MySQL connection and 21–31 more statements.
+  Such runs are about as frequent on both sides across the session's cold scenario runs
+  (53 and 61 of 180; 44 and 46 of 150 in the clean session), but in
+  `pages.complex_geometry` they fell in 5 of PR-23's 6 cold runs and none of the base's.
+  The page statements are the same on both sides. PR-23's body has the tables.
+- **CodeRabbit's review (2026-11-17)**, of 84fb95bc, all fixed with a test that fails with
+  the fix reverted (mutation-checked):
+  - *Fixed:* the switch's refusal probed `bench_web`'s two ports one after the other, so
+    an app-cold reset, between restarting gunicorn and memcached, could find both quiet.
+    A lock file in the owned server's data root is held shared by every `bench_web`
+    command and exclusive by the switch through its purge, each without waiting; the
+    port probe stays for a server started outside the harness.
+  - *Fixed:* `bench_web --app-cold-only` started a stopped MySQL server and stopped it on
+    exit, which would stop an update that attached meanwhile; it needs the server running
+    and never starts or stops it, as `bench_generation` does.
+  - *Fixed:* `bench_generation` found a label whose file pins other bundles only when it
+    appended, after the update had run and left its generation pending; it checks first.
+  - *Fixed:* copying a schema's views rewrote the source qualifier inside string literals
+    too, and created views in name order; it rewrites identifiers only and creates each
+    view after the views it reads.
