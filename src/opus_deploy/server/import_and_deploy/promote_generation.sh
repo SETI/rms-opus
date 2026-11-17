@@ -103,7 +103,10 @@ if systemctl is-active --quiet "${OPUS_WEB_SERVICE}"; then
     WAS_SERVING=true
 fi
 
-sudo systemctl stop "${OPUS_WEB_SERVICE}"
+if ! service_action stop "${OPUS_WEB_SERVICE}"; then
+    echo "*** ABORTING: nothing was changed ***"
+    exit 1
+fi
 
 STATUS=0
 opus_import "${STEP}" || STATUS=$?
@@ -111,8 +114,8 @@ if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
     echo
     echo "ERROR: opus_import ${STEP} was refused, and changed nothing; its log says why."
     if ${WAS_SERVING}; then
-        echo "       The web service is started again, serving what it served before."
-        sudo systemctl start "${OPUS_WEB_SERVICE}"
+        echo "       Starting the web service again, to serve what it served before."
+        start_web_service_again
     else
         echo "       The web service was stopped before this ran, and stays stopped: an"
         echo "       earlier switch or revert may have stopped part way. Once the cause"
@@ -141,14 +144,20 @@ fi
 # than fatal, because the switch is made and stopping here would leave the site down; an
 # installation with no shared cache leaves OPUS_CACHE_SERVICE empty.
 if [[ -n ${OPUS_CACHE_SERVICE} ]]; then
-    if ! sudo systemctl restart "${OPUS_CACHE_SERVICE}"; then
+    if ! service_action restart "${OPUS_CACHE_SERVICE}"; then
         echo "WARNING: ${OPUS_CACHE_SERVICE} did not restart. If this installation"
         echo "         uses it, the shared cache still holds entries computed from the"
         echo "         generation that was replaced."
     fi
 fi
 
-sudo systemctl start "${OPUS_WEB_SERVICE}"
+# The step is made, so a web service that does not start leaves the site down, which is
+# said rather than left to set -e.
+if ! service_action start "${OPUS_WEB_SERVICE}"; then
+    echo "       opus_import ${STEP} succeeded, and the site is down."
+    echo "       Start it with: sudo systemctl start ${OPUS_WEB_SERVICE}"
+    exit 1
+fi
 
 warm_search
 
