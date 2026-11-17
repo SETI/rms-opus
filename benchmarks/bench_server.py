@@ -22,15 +22,11 @@ from __future__ import annotations
 import argparse
 import contextlib
 import fcntl
-import graphlib
 import math
 import os
-import re
 import subprocess  # nosec B404 - the harness starts and stops its own servers
 import sys
-import time
 import tomllib
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -739,95 +735,6 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> str | Non
         return state
 
 
-#: A view definition's ``DEFINER`` clause, as ``SHOW CREATE VIEW`` prints it: the
-#: account in backquotes, a backquote inside a name doubled, and the space after it.
-_DEFINER_CLAUSE = re.compile(r'DEFINER=`(?:[^`]|``)*`@`(?:[^`]|``)*`\s*')
-
-#: The quoted tokens of a view definition: a backquoted identifier, with a backquote
-#: inside it doubled, and a string literal in single or double quotes, with a quote
-#: inside it doubled or escaped by a backslash.
-_QUOTED_TOKEN = re.compile(r"`(?:[^`]|``)*`|'(?:[^'\\]|\\.|'')*'|\"(?:[^\"\\]|\\.|\"\")*\"")
-
-
-def portable_view_definition(definition: str, source: str, target: str) -> str:
-    """Rewrite a view's ``SHOW CREATE VIEW`` text so that it creates the view in another schema.
-
-    Every name the text qualifies with the source schema is qualified with the target
-    instead, so the view reads the target's tables; only the identifier is rewritten, so
-    a string literal holding the source's name is kept as it is. The ``DEFINER`` clause is dropped, so
-    the view is defined by the account that creates it and creating it needs no privilege
-    to name another account (``SET_USER_ID``); its algorithm and ``SQL SECURITY`` clause
-    are kept.
-
-    Parameters:
-        definition: The ``Create View`` column of ``SHOW CREATE VIEW`` on the source.
-        source: The schema the view was read from.
-        target: The schema it is created in.
-
-    Returns:
-        The ``CREATE VIEW`` statement for the target.
-    """
-    source_name = quote_identifier(source)
-    target_name = quote_identifier(target)
-
-    def relocate(match: re.Match[str]) -> str:
-        token = match.group(0)
-        if token == source_name and match.string.startswith('.', match.end()):
-            return target_name
-        return token
-
-    return _DEFINER_CLAUSE.sub('', _QUOTED_TOKEN.sub(relocate, definition), count=1)
-
-
-def copy_views(connection: Any, source: str, target: str) -> list[str]:
-    """Create every view of one schema in another, whose tables already exist.
-
-    Each view is created from ``SHOW CREATE VIEW`` on the source, rewritten for the target
-    (`portable_view_definition`), after every view of the source it reads, since MySQL
-    creates a view only when what it names exists; views that read none of each other
-    are created in name order.
-
-    Parameters:
-        connection: An open connection.
-        source: The schema whose views are copied.
-        target: The schema they are created in.
-
-    Returns:
-        The views created, in the order created.
-    """
-    views = [
-        str(row[0])
-        for row in query(
-            connection,
-            'SELECT TABLE_NAME FROM information_schema.TABLES '
-            "WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'VIEW' ORDER BY TABLE_NAME",
-            [source],
-        )
-    ]
-    reads: dict[str, set[str]] = {view: set() for view in views}
-    for view, table in query(
-        connection,
-        'SELECT VIEW_NAME, TABLE_NAME FROM information_schema.VIEW_TABLE_USAGE '
-        'WHERE VIEW_SCHEMA = %s AND TABLE_SCHEMA = %s',
-        [source, source],
-    ):
-        if str(view) in reads and str(table) in reads:
-            reads[str(view)].add(str(table))
-    order = graphlib.TopologicalSorter(reads)
-    order.prepare()
-    created: list[str] = []
-    while order.is_active():
-        ready = sorted(order.get_ready())
-        created.extend(ready)
-        order.done(*ready)
-    for view in created:
-        definition = query(
-            connection, f'SHOW CREATE VIEW {quote_identifier(source)}.{quote_identifier(view)}'
-        )[0][1]
-        query(connection, portable_view_definition(str(definition), source, target))
-    return created
-
-
 #: The base table holding the observations of a schema whose ``obs_general`` is a view of
 #: the rows in the import generation it serves. The harness reads the schema rather than
 #: importing a side's code, so it repeats the name.
@@ -864,96 +771,6 @@ def obs_general_table(connection: Any, schema: str) -> str:
         [schema, OBS_GENERAL_ROWS_TABLE],
     )
     return OBS_GENERAL_ROWS_TABLE if int(found[0][0]) > 0 else OBS_GENERAL_TABLE
-
-
-def clone_schema(
-    server: MysqlServer,
-    source: str,
-    target: str,
-    *,
-    version: int | None,
-    connections: int = 4,
-) -> float:
-    """Copy a schema table by table into a new one, and time the copy.
-
-    Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
-    keys and foreign keys (``CREATE TABLE ... LIKE`` does not copy foreign keys), with
-    ``foreign_key_checks`` off so that tables may be created and filled in any order;
-    then its rows are copied with ``INSERT ... SELECT``, naming the stored columns only,
-    since MySQL computes a generated column and refuses a value for one. The copies run
-    over several connections at once. Every view of the source is created in the target
-    once its tables exist (`copy_views`). The target is dropped first if it exists.
-    Last, a copied version row is restamped to `version` (`restamp_version`).
-
-    Parameters:
-        server: The owned server.
-        source: The schema to copy.
-        target: The new schema.
-        version: The ``SCHEMA_VERSION`` of the side that will use the copy, or None to
-            leave a copied version row as it was, for a side whose code has none. Every
-            call states it, since the right value depends on the side.
-        connections: How many tables are copied at once.
-
-    Returns:
-        The copy's wall-clock seconds, creation, views and restamp included.
-
-    Raises:
-        ServerError: If the source has no tables.
-    """
-    started = time.perf_counter()
-    with contextlib.closing(server.connect()) as connection:
-        tables = [
-            str(row[0])
-            for row in query(
-                connection,
-                'SELECT TABLE_NAME FROM information_schema.TABLES '
-                "WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME",
-                [source],
-            )
-        ]
-        if len(tables) == 0:
-            raise ServerError(f'schema {source!r} has no tables to clone')
-        query(connection, f'DROP DATABASE IF EXISTS {quote_identifier(target)}')
-        query(connection, f'CREATE DATABASE {quote_identifier(target)}')
-        query(connection, 'SET SESSION foreign_key_checks = 0')
-        query(connection, f'USE {quote_identifier(target)}')
-        for table in tables:
-            definition = query(
-                connection,
-                f'SHOW CREATE TABLE {quote_identifier(source)}.{quote_identifier(table)}',
-            )[0][1]
-            query(connection, definition)
-        copy_views(connection, source, target)
-
-    def copy(table: str) -> None:
-        """Copy one table's rows on a connection of its own.
-
-        Parameters:
-            table: The table.
-        """
-        with contextlib.closing(server.connect()) as sibling:
-            query(sibling, 'SET SESSION foreign_key_checks = 0')
-            columns = ', '.join(
-                quote_identifier(str(row[0]))
-                for row in query(
-                    sibling,
-                    'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s '
-                    "AND TABLE_NAME = %s AND GENERATION_EXPRESSION = '' "
-                    'ORDER BY ORDINAL_POSITION',
-                    [source, table],
-                )
-            )
-            query(
-                sibling,
-                f'INSERT INTO {quote_identifier(target)}.{quote_identifier(table)} ({columns}) '  # nosec B608 - quoted identifiers
-                f'SELECT {columns} FROM {quote_identifier(source)}.{quote_identifier(table)}',
-            )
-
-    with ThreadPoolExecutor(max_workers=max(1, connections)) as pool:
-        list(pool.map(copy, tables))
-    if version is not None:
-        restamp_version(server, target, version)
-    return time.perf_counter() - started
 
 
 def main(argv: Sequence[str] | None = None) -> None:

@@ -61,16 +61,16 @@ SHAPES = ('captured', 'generated')
 SET_ALIAS = 'probe_set'
 
 #: A read of one search's rows, which names the search by its id.
-_SEARCH_ID = re.compile(r'`search_results`\.`search_id` = (\d+)')
+SEARCH_ID_READ = re.compile(r'`search_results`\.`search_id` = (\d+)')
 
 #: The statement that builds a search's rows.
-_RESULTS_INSERT = re.compile(r'\AINSERT\s+INTO\s+`search_results`', re.IGNORECASE)
+RESULTS_INSERT = re.compile(r'\AINSERT\s+INTO\s+`search_results`', re.IGNORECASE)
 
 #: A quoted string or name, masked before the clauses are looked for.
 _QUOTED = re.compile(r"'(?:[^'\\]|\\.|'')*'|\"(?:[^\"\\]|\\.|\"\")*\"|`(?:[^`]|``)*`", re.DOTALL)
 
 #: The keyword of a statement's predicate.
-_WHERE = re.compile(r'\bWHERE\b', re.IGNORECASE)
+WHERE_KEYWORD = re.compile(r'\bWHERE\b', re.IGNORECASE)
 
 #: The clause keywords a top-level ``WHERE`` may be followed by.
 _TRAILING_CLAUSE = re.compile(r'\b(GROUP\s+BY|ORDER\s+BY|LIMIT|HAVING|WINDOW)\b', re.IGNORECASE)
@@ -86,7 +86,7 @@ class ProbeError(Exception):
     """Raised when the capture does not hold what the probe needs."""
 
 
-def _block(blocks: Sequence[Block], tag: str) -> Block:
+def tagged_block(blocks: Sequence[Block], tag: str) -> Block:
     """Return the one block with a tag.
 
     Parameters:
@@ -105,6 +105,30 @@ def _block(blocks: Sequence[Block], tag: str) -> Block:
     return found[0]
 
 
+def search_build(blocks: Sequence[Block], tag: str) -> str:
+    """Return the ``SELECT`` with which one request built a search.
+
+    Parameters:
+        blocks: The capture's blocks.
+        tag: The request's block, ``<scenario>/<request>``.
+
+    Returns:
+        The ``SELECT`` of the block's one ``INSERT INTO search_results``.
+
+    Raises:
+        ProbeError: If the capture holds no block of the tag or several, or the block
+            builds no search or more than one.
+    """
+    inserts = [
+        statement.text
+        for statement in tagged_block(blocks, tag).statements
+        if RESULTS_INSERT.match(statement.text)
+    ]
+    if len(inserts) != 1:
+        raise ProbeError(f'{tag}: {len(inserts)} statements build a search, not one')
+    return inner_select(inserts[0])
+
+
 def captured_resort(blocks: Sequence[Block], search: str) -> str:
     """Return the ``SELECT`` with which the application built a search's re-sort.
 
@@ -114,20 +138,12 @@ def captured_resort(blocks: Sequence[Block], search: str) -> str:
 
     Returns:
         The ``SELECT`` of the one ``INSERT INTO search_results`` of the re-sort
-        scenario's re-sorted request.
+        scenario's re-sorted request (`search_build`).
 
     Raises:
         ProbeError: If that block builds no search, or more than one.
     """
-    tag = f'resort.{search}/{RESORTED_REQUEST}'
-    inserts = [
-        statement.text
-        for statement in _block(blocks, tag).statements
-        if _RESULTS_INSERT.match(statement.text)
-    ]
-    if len(inserts) != 1:
-        raise ProbeError(f'{tag}: {len(inserts)} statements build a search, not one')
-    return inner_select(inserts[0])
+    return search_build(blocks, f'resort.{search}/{RESORTED_REQUEST}')
 
 
 def built_search_id(blocks: Sequence[Block], search: str) -> int:
@@ -146,15 +162,15 @@ def built_search_id(blocks: Sequence[Block], search: str) -> int:
     tag = f'resort.{search}/{DEFAULT_ORDER_REQUEST}'
     ids = {
         int(match)
-        for statement in _block(blocks, tag).statements
-        for match in _SEARCH_ID.findall(statement.text)
+        for statement in tagged_block(blocks, tag).statements
+        for match in SEARCH_ID_READ.findall(statement.text)
     }
     if len(ids) != 1:
         raise ProbeError(f'{tag}: reads the rows of searches {sorted(ids)}, not of one')
     return ids.pop()
 
 
-def _top_level(text: str, keyword: str) -> list[re.Match[str]]:
+def top_level(text: str, keyword: str) -> list[re.Match[str]]:
     """Find a keyword where it appears outside quotes and parentheses.
 
     Parameters:
@@ -201,11 +217,11 @@ def generated_resort(captured: str, search_id: int) -> str:
     """
     if not isinstance(search_id, int):
         raise TypeError(f'search_id {search_id!r} is not an int')
-    wheres = _top_level(captured, _WHERE.pattern)
+    wheres = top_level(captured, WHERE_KEYWORD.pattern)
     head = captured
     if wheres:
         head = captured[: wheres[0].start()].rstrip()
-        trailing = _top_level(captured[wheres[0].start() :], _TRAILING_CLAUSE.pattern)
+        trailing = top_level(captured[wheres[0].start() :], _TRAILING_CLAUSE.pattern)
         if trailing:
             raise ProbeError(
                 f'the captured re-sort has a {trailing[0].group()} clause after its WHERE'

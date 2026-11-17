@@ -62,7 +62,8 @@ the median of their medians, and its ``floor_abs`` the same in the metric's unit
 **agree** on a metric when their medians lie within the widest range of a session's
 runs, or for a time metric within its family's jitter where that is larger, and a
 metric three sessions still disagree on is **noisy**. A family's jitter is the median
-``floor_abs`` of its time metrics (`family_jitter`).
+``floor_abs`` of its time metrics (`family_jitter`); a metric's family is its name's first
+part, except the option probe's metrics, which form their own (`metric_family`).
 """
 
 from __future__ import annotations
@@ -137,8 +138,30 @@ CEILING_FRACTION = 0.10
 MATCHING_ENVIRONMENT_KEYS = ('server_model', 'server_owned', 'cache_backend', 'brand')
 
 #: The metric families whose time metrics share a jitter: each family's is the median of
-#: its time metrics' absolute floors (`family_jitter`).
-JITTER_FAMILIES = ('import', 'db', 'web')
+#: its time metrics' absolute floors (`family_jitter`). A metric's family is its name's
+#: first part, except the option probe's (`OPTION_PROBE_FAMILY`).
+JITTER_FAMILIES = ('import', 'db', 'web', 'db.option_probe')
+
+#: The option probe's metrics, which form a family of their own: their cold times, each
+#: after a server restart, scatter far more than a plan's warm executions, and would
+#: otherwise raise the jitter, and so the floor, of every other ``db`` time.
+OPTION_PROBE_FAMILY = 'db.option_probe'
+
+
+def metric_family(metric: str) -> str:
+    """Return the family whose jitter a metric shares.
+
+    Parameters:
+        metric: The metric.
+
+    Returns:
+        `OPTION_PROBE_FAMILY` for one of the option probe's metrics, otherwise the
+        name's first dot-separated part (``import``, ``db``, ``web``).
+    """
+    if metric.startswith(f'{OPTION_PROBE_FAMILY}.'):
+        return OPTION_PROBE_FAMILY
+    return metric.split('.')[0]
+
 
 _P95_SUFFIX = '.p95_s'
 _SAMPLES_SUFFIX = '.latency_s'
@@ -284,7 +307,7 @@ def absolute_noise(metric: str, entry: Mapping[str, Any], jitter: Mapping[str, f
     """
     noise = float(entry['floor_abs'])
     if is_time(metric):
-        noise = max(noise, float(jitter.get(metric.split('.')[0], 0.0)))
+        noise = max(noise, float(jitter.get(metric_family(metric), 0.0)))
     return noise
 
 
@@ -616,7 +639,7 @@ def floors_from_sessions(sessions: Sequence[Mapping[str, Any]]) -> dict[str, dic
         holding = [summary[name] for summary in summaries if name in summary]
         noise = max(entry.noise for entry in holding)
         if is_time(name):
-            noise = max(noise, jitter.get(name.split('.')[0], 0.0))
+            noise = max(noise, jitter.get(metric_family(name), 0.0))
         between = max(entry['medians']) - min(entry['medians'])
         agree = len(holding) >= 2 and len(holding) == len(summaries) and between <= noise
         entry['agree'] = agree
@@ -641,7 +664,7 @@ def family_jitter(floors: Mapping[str, Mapping[str, Any]]) -> dict[str, float]:
         values = [
             float(entry['floor_abs'])
             for name, entry in floors.items()
-            if name.split('.')[0] == family and is_time(name)
+            if metric_family(name) == family and is_time(name)
         ]
         if len(values) > 0:
             jitter[family] = median(values)
