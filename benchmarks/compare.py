@@ -27,6 +27,12 @@ guards, which are then reported rather than judged: the after side's finalizatio
 take at most `CEILING_FRACTION` of the before side's full import (its bundle imports
 plus its finalization) longer than the before side's.
 
+A replayed statement whose plan took more than one shape (`plan_changes`), between a
+side's ``db`` runs or between the executions of one run, is listed under the table with
+each run's shapes. Its block's ``db.plan`` rows are kept whatever their change, and their
+verdict says the plan changed: a median over executions of two plans describes neither,
+and may show as a regression, an improvement or nothing, by how the executions fell.
+
 A comparison refuses two files of different scales, an after file given before a before
 file, a target metric neither file holds, and a floors file of another scale or brand.
 
@@ -73,6 +79,7 @@ import json
 import math
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -163,6 +170,10 @@ def metric_family(metric: str) -> str:
     return metric.split('.')[0]
 
 
+#: A number in a statement's text, written as ``?`` where statements are matched across
+#: runs, which may build their searches under other ids.
+_STATEMENT_NUMBER = re.compile(r'\d+')
+
 _P95_SUFFIX = '.p95_s'
 _SAMPLES_SUFFIX = '.latency_s'
 
@@ -247,6 +258,70 @@ def summarize(content: Mapping[str, Any]) -> dict[str, MetricSummary]:
         else:
             summaries[name] = MetricSummary(tuple(values), median(values), run_spread(values))
     return summaries
+
+
+@dataclass(frozen=True)
+class PlanChange:
+    """A replayed statement whose plan took more than one shape in one result file.
+
+    Attributes:
+        tag: Its block's tag.
+        position: Its place in the block.
+        runs: Each ``db`` run's plan shapes, one per execution in order, by the run's place
+            among the file's runs.
+    """
+
+    tag: str
+    position: int
+    runs: tuple[tuple[int, tuple[str, ...]], ...]
+
+    @property
+    def shapes(self) -> int:
+        """How many shapes the plan took."""
+        return len({shape for _, shapes in self.runs for shape in shapes})
+
+    def describe(self) -> str:
+        """Return one line naming the statement and each run's shapes, with their counts."""
+        runs = '; '.join(
+            f'run {index + 1}: '
+            + ', '.join(f'{shape} x{count}' for shape, count in Counter(shapes).items())
+            for index, shapes in self.runs
+        )
+        return f'`{self.tag}` statement {self.position}: {self.shapes} shapes ({runs})'
+
+
+def plan_changes(content: Mapping[str, Any]) -> list[PlanChange]:
+    """Find the replayed statements whose plan took more than one shape.
+
+    A statement is matched across a file's ``db`` runs by its block's tag, its place in
+    the block, and its text with every number written as ``?``. A plan without recorded
+    shapes is passed over.
+
+    Parameters:
+        content: The result file.
+
+    Returns:
+        The statements whose plans took more than one shape, by tag and position.
+    """
+    seen: dict[tuple[str, int, str], list[tuple[int, tuple[str, ...]]]] = {}
+    for index, run in enumerate(content['runs']):
+        if run['kind'] != 'db':
+            continue
+        for entry in run['details'].get('plans', []):
+            plan = entry.get('plan')
+            if plan is None or 'shapes' not in plan:
+                continue
+            key = (
+                str(entry['tag']),
+                int(entry['position']),
+                _STATEMENT_NUMBER.sub('?', str(entry['statement'])),
+            )
+            seen.setdefault(key, []).append((index, tuple(str(shape) for shape in plan['shapes'])))
+    changes = [PlanChange(tag, position, tuple(runs)) for (tag, position, _), runs in seen.items()]
+    return sorted(
+        (change for change in changes if change.shapes > 1),
+        key=lambda change: (change.tag, change.position),
+    )
 
 
 def check_comparable(before: Mapping[str, Any], after: Mapping[str, Any]) -> None:
@@ -512,8 +587,9 @@ def render(
             than their floor, which are otherwise left out.
 
     Returns:
-        The Markdown table; then how many rows it left out; then the finalization
-        ceiling, where it applies; then the steps each side skipped.
+        The Markdown table; then how many rows it left out; then each side's statements
+        whose plan changed; then the finalization ceiling, where it applies; then the
+        steps each side skipped.
 
     Raises:
         ResultError: If the results are not comparable, or neither holds a target.
@@ -524,6 +600,10 @@ def render(
     if len(absent) > 0:
         raise ResultError(f'neither result holds the target metric(s) {absent}')
     ceiling = finalization_ceiling(before, after)
+    changed_plans = {'before': plan_changes(before), 'after': plan_changes(after)}
+    changed_blocks = tuple(
+        f'db.plan.{change.tag}.' for changes in changed_plans.values() for change in changes
+    )
     warm_statements = {
         name.removesuffix('.statements'): max(mine[name].center, theirs[name].center)
         for name in set(mine) & set(theirs)
@@ -546,8 +626,10 @@ def render(
         if left is not None and len(left.values) > 1:
             floor = left.spread if floor is None else max(floor, left.spread)
         metric_role = role(name, targets, warm_statements, import_guards=ceiling is None)
+        plan_changed = name.startswith(changed_blocks)
         if (
             not everything
+            and not plan_changed
             and metric_role == 'reported'
             and relative is not None
             and floor is not None
@@ -560,6 +642,8 @@ def render(
         judged = '-'
         if left is not None and right is not None:
             judged = judgement(metric_role, verdict(name, relative, floor))
+        if plan_changed:
+            judged += ' (plan changed)'
         spreads = (
             f'{_percent(None if left is None else left.spread)} / '
             f'{_percent(None if right is None else right.spread)}'
@@ -579,6 +663,12 @@ def render(
             f'{left_out} reported metrics that changed by no more than their floor are left '
             'out; --all shows them.'
         )
+    for side, changes in changed_plans.items():
+        if len(changes) > 0:
+            lines.append('')
+            lines.append(f'Statements whose plan changed on the {side} side:')
+            lines.append('')
+            lines.extend(f'- {change.describe()}' for change in changes)
     if ceiling is not None:
         outcome = 'within the ceiling' if ceiling['within'] else 'beyond the ceiling'
         lines.append('')

@@ -612,3 +612,96 @@ def test_the_import_guards_are_reported_where_the_ceiling_replaces_them() -> Non
         if '`import.peak_tree_pss_kb`' in line
     )
     assert row.endswith('| reported | reported |')
+
+
+def _replayed(statement: str, shapes: list[str], time_s: float) -> dict[str, Any]:
+    """Return a db run with one replayed read of the block ``search.x/count``."""
+    return {
+        'kind': 'db',
+        'index': 1,
+        'metrics': {'db.plan.search.x/count.time_s': time_s},
+        'samples': {},
+        'details': {
+            'plans': [
+                {
+                    'tag': 'search.x/count',
+                    'position': 0,
+                    'kind': 'execute',
+                    'statement': 'SET SESSION x = 1',
+                },
+                {
+                    'tag': 'search.x/count',
+                    'position': 1,
+                    'kind': 'read',
+                    'statement': statement,
+                    'plan': {'shapes': shapes},
+                },
+            ]
+        },
+    }
+
+
+def _db_result(*runs: dict[str, Any]) -> dict[str, Any]:
+    """Return a result file holding the given runs."""
+    return {'format': 1, 'environment': {}, 'runs': list(runs)}
+
+
+def test_a_plan_that_changed_between_runs_is_found() -> None:
+    """The same statement over another search id is matched, and its shapes counted."""
+    content = _db_result(
+        _replayed('SELECT 1 FROM cache_3', ['aaa'] * 5, 1.0),
+        _replayed('SELECT 1 FROM cache_7', ['bbb'] * 5, 2.0),
+    )
+    changes = compare.plan_changes(content)
+    assert [(change.tag, change.position, change.shapes) for change in changes] == [
+        ('search.x/count', 1, 2)
+    ]
+    assert changes[0].describe() == (
+        '`search.x/count` statement 1: 2 shapes (run 1: aaa x5; run 2: bbb x5)'
+    )
+
+
+def test_a_plan_that_changed_within_one_run_is_found() -> None:
+    """Executions of one replay that took two plans are a change too."""
+    content = _db_result(_replayed('SELECT 1', ['aaa', 'aaa', 'bbb', 'aaa', 'aaa'], 1.0))
+    assert compare.plan_changes(content)[0].describe() == (
+        '`search.x/count` statement 1: 2 shapes (run 1: aaa x4, bbb x1)'
+    )
+
+
+def test_a_steady_plan_or_one_without_shapes_is_not_a_change() -> None:
+    """One shape throughout, or no shapes recorded, flags nothing."""
+    steady = _db_result(
+        _replayed('SELECT 1', ['aaa'] * 5, 1.0), _replayed('SELECT 1', ['aaa'] * 5, 1.0)
+    )
+    assert compare.plan_changes(steady) == []
+    unshaped = _replayed('SELECT 1', [], 1.0)
+    del unshaped['details']['plans'][1]['plan']['shapes']
+    assert compare.plan_changes(_db_result(unshaped, _replayed('SELECT 1', ['bbb'] * 5, 1.0))) == []
+
+
+def test_another_statement_at_the_same_place_is_not_matched() -> None:
+    """Two runs that issued different statements have no plan to compare."""
+    content = _db_result(
+        _replayed('SELECT 1 FROM cache_3', ['aaa'] * 5, 1.0),
+        _replayed('SELECT 2 FROM obs_general', ['bbb'] * 5, 1.0),
+    )
+    assert compare.plan_changes(content) == []
+
+
+def test_a_block_whose_plan_changed_is_kept_and_marked() -> None:
+    """Its rows stay in the table within their floor, and the statements are listed."""
+    before = _db_result(
+        _replayed('SELECT 1', ['aaa'] * 5, 1.0), _replayed('SELECT 1', ['bbb'] * 5, 1.0)
+    )
+    after = _db_result(
+        _replayed('SELECT 1', ['aaa'] * 5, 1.0), _replayed('SELECT 1', ['aaa'] * 5, 1.0)
+    )
+    floors = {'db.plan.search.x/count.time_s': {'floor': 0.1, 'floor_abs': 0.0}}
+    table = compare.render(before, after, floors)
+    assert '| reported | reported (plan changed) |' in table
+    assert 'Statements whose plan changed on the before side:' in table
+    assert '- `search.x/count` statement 1: 2 shapes (run 1: aaa x5; run 2: bbb x5)' in table
+    assert 'on the after side' not in table
+    steady = compare.render(after, after, floors)
+    assert '`db.plan.search.x/count.time_s`' not in steady

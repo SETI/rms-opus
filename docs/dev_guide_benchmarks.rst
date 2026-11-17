@@ -810,7 +810,11 @@ times, whose median is the metric and whose range over that median is its spread
 all five kept in the run's ``samples``. ``rows_examined`` is the sum of the rows its
 statements examined, which does not change between executions. Two sides' blocks are
 compared by the request that issued them however their statements differ, and every
-statement's plans are kept whole in the run's details. A capture names the
+statement's plans are kept whole in the run's details. Each execution's plan is also
+recorded by its **shape**: the ``EXPLAIN ANALYZE`` tree's iterators and the tables,
+indexes and conditions they name, without estimates, measurements or numbers, named by
+the start of its SHA-256 digest. Another join order or access path is another shape;
+another search's rows or another literal is not. A capture names the
 tables of the commit and session that made it, so it is replayed only there.
 ``benchmarks/scenarios/queries.sql`` is a copy kept for a reader, written by
 ``--commit-capture``; nothing replays it.
@@ -993,6 +997,15 @@ module docstring defines the statistics:
 medians over runs, the spread as the range over the median, the change relative to the
 before median, and the verdict, which counts a change as an improvement only beyond the
 floor and as a regression only beyond the floor plus five percentage points.
+
+A replayed statement whose plan took more than one shape, between one side's ``bench_db``
+runs or between the executions of one run, is listed under the table with the shapes each
+run's executions took. Its block's rows stay in the table whatever their change, and their
+verdict says the plan changed: a median over executions of two plans describes neither of
+them, and can show as a regression, an improvement or nothing, by how the executions fell.
+The statement is matched across runs by its block, its place in the block, and its text
+with its numbers set aside. A plan changing between the sides is not flagged, since the
+sides may plan differently by design.
 
 A spread leaves out an **outlying run**: one more than three robust standard deviations
 (1.4826 times the median absolute deviation) from its session's median. The median every

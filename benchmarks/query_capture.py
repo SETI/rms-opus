@@ -18,7 +18,9 @@ changes only that connection's state (``SET``, ``CREATE TEMPORARY TABLE``, ``DRO
 TEMPORARY TABLE``, ``USE``) is executed, so a later statement that names its temporary
 table finds it; a ``CREATE TEMPORARY TABLE ... SELECT`` is planned first, by its
 ``SELECT``. A read (``SELECT``, ``WITH``, ``TABLE``) is planned with ``EXPLAIN
-ANALYZE``, `EXPLAIN_RUNS` times, and with ``EXPLAIN FORMAT=JSON`` once. A write that
+ANALYZE``, `EXPLAIN_RUNS` times, and with ``EXPLAIN FORMAT=JSON`` once; each execution's
+plan is recorded by its shape (`plan_shape`), so a statement whose plan changed from one
+execution to the next shows it. A write that
 reads (``INSERT ... SELECT``, ``CREATE TABLE ... SELECT``, ``REPLACE ... SELECT``) is
 planned by its ``SELECT``. Any other ``INSERT``, ``REPLACE``, ``UPDATE`` or ``DELETE`` is
 planned with ``EXPLAIN FORMAT=JSON`` only, never executed. Other DDL and ``SHOW`` are
@@ -29,6 +31,7 @@ transaction control is skipped. A statement that fails to replay fails the repla
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import json
 import re
 import statistics
@@ -63,6 +66,17 @@ _ANALYZE_LINE = re.compile(
     rf'(?P<last>{_NUMBER}) rows=(?P<rows>{_NUMBER}) loops=(?P<loops>\d+)\)'
 )
 _ON_TABLE = re.compile(r'\bon (?P<table>\w+)')
+#: One iterator of an ``EXPLAIN ANALYZE`` tree, its indentation and its description apart
+#: from the estimates and measurements that follow it.
+_PLAN_NODE = re.compile(
+    r'^(?P<indent>\s*)-> (?P<what>.*?)(?:\s+\((?:cost=|rows=|actual |never executed).*)?$'
+)
+#: A number in an iterator's description: a literal, a row limit, a search's id in a
+#: per-search table's name (``cache_12``). A digit ending a word, as in ``time1``, is not
+#: one.
+_LITERAL = re.compile(rf'(?<![A-Za-z0-9.]){_NUMBER}(?!\w)')
+#: How many hexadecimal digits of a plan shape's digest name it.
+SHAPE_ID_DIGITS = 12
 _INNER_SELECT = re.compile(r'\b(SELECT|WITH)\b', re.IGNORECASE)
 #: A quoted string or identifier: single- or double-quoted with backslash escapes and
 #: doubled quotes, or backquoted with doubled backquotes.
@@ -284,6 +298,41 @@ def summarize_analyze(plan: str) -> dict[str, Any]:
     }
 
 
+def plan_shape(plan: str) -> str:
+    """Return an ``EXPLAIN ANALYZE`` tree without what changes from one execution to the next.
+
+    The shape keeps each iterator, its place in the tree, and the tables, indexes and
+    conditions it names, so a different join order or access path gives a different
+    shape. It drops the cost and row estimates and the measured times and rows, and
+    writes every number in a description as ``?``, so the same plan over another search's
+    rows, in another search's table, or with another literal, has the same shape.
+
+    Parameters:
+        plan: The tree.
+
+    Returns:
+        One line per iterator, indented as in the tree.
+    """
+    lines = []
+    for line in plan.splitlines():
+        node = _PLAN_NODE.match(line)
+        if node is not None:
+            lines.append(f'{node["indent"]}-> {_LITERAL.sub("?", node["what"])}')
+    return '\n'.join(lines)
+
+
+def shape_id(shape: str) -> str:
+    """Return the name a plan shape is recorded by.
+
+    Parameters:
+        shape: What `plan_shape` returned.
+
+    Returns:
+        The first `SHAPE_ID_DIGITS` hexadecimal digits of the shape's SHA-256 digest.
+    """
+    return hashlib.sha256(shape.encode('utf-8')).hexdigest()[:SHAPE_ID_DIGITS]
+
+
 def access_types(plan_json: str) -> dict[str, str]:
     """Read each table's access type out of an ``EXPLAIN FORMAT=JSON`` plan.
 
@@ -318,21 +367,29 @@ def _plan_read(connection: Any, text: str) -> dict[str, Any]:
         text: The ``SELECT``.
 
     Returns:
-        Every execution's wall-clock in order, their median and spread, the top
-        iterator's rows, the rows examined, each table's access type and rows, and both
-        plans whole.
+        Every execution's wall-clock and plan shape in order, each shape by its name,
+        the times' median and spread, the top iterator's rows, the rows examined, each
+        table's access type and rows, and both plans whole. The rows and the whole
+        ``EXPLAIN ANALYZE`` tree are the last execution's.
     """
     times = []
+    shapes = []
+    shape_trees: dict[str, str] = {}
     analyzed = ''
     for _ in range(EXPLAIN_RUNS):
         started = time.perf_counter()
         analyzed = str(query(connection, f'EXPLAIN ANALYZE {text}')[0][0])
         times.append(time.perf_counter() - started)
+        shape = plan_shape(analyzed)
+        shapes.append(shape_id(shape))
+        shape_trees[shapes[-1]] = shape
     plan_json = str(query(connection, f'EXPLAIN FORMAT=JSON {text}')[0][0])
     middle = statistics.median(times)
     summary = summarize_analyze(analyzed)
     return {
         'times_s': times,
+        'shapes': shapes,
+        'shape_trees': shape_trees,
         'median_s': middle,
         'spread': (max(times) - min(times)) / middle if middle > 0 else 0.0,
         'top_rows': summary['top_rows'],

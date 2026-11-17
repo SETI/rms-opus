@@ -143,3 +143,60 @@ def test_a_write_select_after_a_quoted_keyword_is_planned_from_its_select() -> N
     """A keyword inside a quoted value does not start the planned SELECT."""
     text = "INSERT INTO cache_1 (note, id) SELECT 'with select', id FROM obs_general"
     assert query_capture.inner_select(text) == "SELECT 'with select', id FROM obs_general"
+
+
+def test_a_plan_shape_keeps_the_tree_and_drops_the_measurements() -> None:
+    """Estimates, times and numbers go; iterators, their order and their names stay."""
+    assert query_capture.plan_shape(ANALYZE_TREE) == (
+        '-> Limit: ? row(s)\n'
+        '    -> Nested loop inner join\n'
+        '        -> Table scan on cache_?\n'
+        '        -> Single-row index lookup on obs_general using PRIMARY (id=cache_?.id)'
+    )
+
+
+def test_a_plan_shape_tells_join_orders_apart_and_keeps_digits_in_names() -> None:
+    """The same tables joined the other way round are another shape."""
+    walk = (
+        '-> Nested loop inner join  (cost=9 rows=9) (actual time=1..2 rows=9 loops=1)\n'
+        '    -> Index scan on obs_general using time1  (cost=1 rows=9) (never executed)\n'
+        '    -> Filter: (obs_ring_geometry.ring_radius1 > 70000.5)  (rows=1)\n'
+    )
+    scan = (
+        '-> Nested loop inner join  (cost=9 rows=9) (actual time=1..2 rows=9 loops=1)\n'
+        '    -> Filter: (obs_ring_geometry.ring_radius1 > 80000)  (rows=1)\n'
+        '    -> Index scan on obs_general using time1  (cost=1 rows=9) (never executed)\n'
+    )
+    assert 'using time1' in query_capture.plan_shape(walk)
+    assert 'ring_radius1 > ?' in query_capture.plan_shape(walk)
+    assert query_capture.shape_id(query_capture.plan_shape(walk)) != query_capture.shape_id(
+        query_capture.plan_shape(scan)
+    )
+    assert len(query_capture.shape_id(query_capture.plan_shape(walk))) == (
+        query_capture.SHAPE_ID_DIGITS
+    )
+
+
+def test_each_execution_s_plan_shape_is_recorded(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A read whose plan changed between executions keeps every execution's shape."""
+    other = ANALYZE_TREE.replace('Nested loop inner join', 'Inner hash join')
+    trees = iter([ANALYZE_TREE, ANALYZE_TREE, other, ANALYZE_TREE, other])
+
+    def fake_query(_connection: object, text: str) -> list[tuple[str]]:
+        """Answer each EXPLAIN as the server would."""
+        if text.startswith('EXPLAIN ANALYZE'):
+            return [(next(trees),)]
+        if text.startswith('EXPLAIN FORMAT=JSON'):
+            return [('{}',)]
+        return []
+
+    monkeypatch.setattr(query_capture, 'query', fake_query)
+    block = Block('search.x/count', 'api/x', [Statement(1, 'SELECT 1 FROM cache_12')])
+    plan = query_capture.replay(object(), [block])[0]['plan']
+    first = query_capture.shape_id(query_capture.plan_shape(ANALYZE_TREE))
+    second = query_capture.shape_id(query_capture.plan_shape(other))
+    assert plan['shapes'] == [first, first, second, first, second]
+    assert plan['shape_trees'] == {
+        first: query_capture.plan_shape(ANALYZE_TREE),
+        second: query_capture.plan_shape(other),
+    }
