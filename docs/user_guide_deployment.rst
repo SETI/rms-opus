@@ -316,7 +316,9 @@ new database under its own name; an update dumps the served database under a new
 which its log gives, so a dump taken of the served database before the update is left as
 it was, and loads it under that name. The dump is one consistent snapshot that takes no table
 locks (``mysqldump --single-transaction``), so a database being served is dumped whole
-while the site goes on writing carts and searches to it.
+while the site goes on writing carts and searches to it, and it carries the database's
+range-search histograms (``--column-statistics``,
+:ref:`user_guide_database_server_histograms`), which the load builds again on the copy.
 ``scripts/import/clone_database.sh`` in the repository copies one database to another on
 the same server.
 

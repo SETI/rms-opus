@@ -1,20 +1,20 @@
 """The columns finalization gives a histogram: the range-searched columns no index leads.
 
-The optimizer estimates how many rows a range condition selects from the index the
+MySQL's optimizer estimates how many rows a range condition selects from the index the
 column leads, by looking into it. A column that leads no index has no such estimate, and
-the optimizer guesses a fixed share of the table's rows, which can make it read the
-wrong table of a search first. A histogram on the column (``ANALYZE TABLE ... UPDATE
-HISTOGRAM``) gives it a measured estimate instead. A column that leads an index gets
-none, since the optimizer reads the index rather than a histogram for it.
+the optimizer guesses a fixed share of the table's rows. A histogram on the column, which
+the brand builds (`ImportDBSuper.update_histograms`), gives it an estimate from the
+column's values instead. A column that leads an index gets none, since the optimizer
+reads the index rather than a histogram for it.
 
 The columns are derived, never listed: every row of ``param_info`` whose form type is a
 range (`RANGE_FORM_TYPE`), at the table its category's rows are written to
 (`opus_import.surface_geometry.physical_table`), less every column the server reports in
 the first position of a plain, unique or primary key. Every such row counts, displayed or
 not: a range search on the ``1`` column of a pair filters on its ``2`` partner too, whose
-row is often not displayed. A longitude (form type ``LONG``)
-is searched by its angular separation from the requested centre, an expression no
-histogram estimates, so it is not one of them.
+row is often not displayed. A longitude (form type ``LONG``) is searched by its angular
+separation from the requested centre, an expression no histogram estimates, so it is not
+one of them.
 """
 
 from __future__ import annotations

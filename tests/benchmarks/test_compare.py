@@ -468,6 +468,21 @@ def test_the_table_s_floor_counts_the_jitter() -> None:
     assert '| +50.0% (0.01) | target | not improved |' in table
 
 
+def test_a_time_the_floors_file_lacks_is_judged_against_its_family_s_jitter() -> None:
+    """A scenario newer than the floor sessions still scatters by the jitter."""
+    before = _result([{'web.new.wall_s': 0.120}, {'web.new.wall_s': 0.121}] * 2)
+    after = _result([{'web.new.wall_s': 0.112}] * 4)
+    floors = {'web.other.wall_s': {'floor': 0.0, 'floor_abs': 0.0}}
+    table = compare.render(before, after, floors, ['web.new.wall_s'], {'web': 0.012})
+    assert '| target | not improved |' in table
+    assert compare.unfloored_time_floor('web.new.wall_s', {'web': 0.012}, 0.120) == (
+        pytest.approx(0.1)
+    )
+    assert compare.unfloored_time_floor('web.new.statements', {'web': 0.012}, 10.0) is None
+    assert compare.unfloored_time_floor('web.new.wall_s', {}, 0.120) is None
+    assert compare.unfloored_time_floor('web.new.wall_s', {'web': 0.012}, 0.0) is None
+
+
 def test_a_run_whose_p95_is_an_outlier_is_left_out_of_the_pool() -> None:
     """One run with a slow tail would otherwise set the pooled p95 of the whole session."""
     name = 'web.warm.concurrency.shared'

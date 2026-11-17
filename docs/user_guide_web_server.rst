@@ -119,12 +119,15 @@ Three of those options are chosen rather than default. ``--threads 4`` gives eac
 four threads, which makes gunicorn use its threaded worker: a request spends most of its
 time waiting on the database, so while one thread waits, another can parse a request or
 render a response, and a worker serves several requests at once without a process of its
-own for each. **Four threads to a worker is what OPUS's request mix served best** when
-measured against two and eight: four answered new searches arriving at once about a
-third faster than two, and eight answered no faster than four while making each request
-wait longer. The same
-count is used for uWSGI and ``mod_wsgi`` below. Every thread keeps its own database
-connection open between requests (``[django] conn_max_age``), so the database server
+own for each. **Four threads to each of four workers** is the count chosen by measuring
+many users at once, each loading the search page, against two and eight threads: when
+every user asked for a search of their own, four answered about a third more of them a
+second than two; when they all asked for the same search, which one request builds while
+the others wait, two answered somewhat more a second than four; and eight was slower than
+four in both. Once the searches were built and answered from the cache, two and four
+were alike and eight was no faster. The same count is used for uWSGI and ``mod_wsgi``
+below; the number of workers is the machine's to choose (below). Every thread keeps its
+own database connection open between requests (``[django] conn_max_age``), so the database server
 must allow workers times threads connections from each web host, beside the others it
 serves (:ref:`user_guide_database_server_settings`). ``--timeout 300`` is generous
 because building a cart archive of thousands of files is a slow request. **The

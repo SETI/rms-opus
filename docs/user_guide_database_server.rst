@@ -129,10 +129,14 @@ The settings, and what each does for OPUS
        free pages. Set them from what the data directory's device sustains, measured
        with a disk benchmark, not from the device's rating.
    * - ``innodb_parallel_read_threads``
-     - both
-     - The threads the server reads one clustered index with in parallel. It speeds only
-       a ``COUNT(*)`` of a whole table with no ``WHERE`` clause, and ``CHECK TABLE``; no
-       search OPUS makes is either, so the default suits it.
+     - import
+     - The threads the server reads one clustered index with in parallel. For a query it
+       speeds only a ``COUNT(*)`` of a whole table with no ``WHERE`` clause, and ``CHECK
+       TABLE``; no search OPUS makes is either. From MySQL 8.0.27 it is also how many
+       threads scan a table's rows for an index build, beside ``innodb_ddl_threads``,
+       which sort them, so on a server that imports it bounds finalization's index builds
+       too: the threads of every build running at once compete for the server's cores, as
+       those of ``innodb_ddl_threads`` do.
    * - ``max_connections``
      - serve
      - Each web worker thread keeps its database connection open between requests
@@ -147,8 +151,8 @@ The settings, and what each does for OPUS
      - **Startup only.** How much of each statement the server keeps when it counts
        statements by shape (:ref:`user_guide_database_server_statistics`). At the default,
        1024 bytes, OPUS's wide search statements are cut off before the parts that tell
-       them apart and are counted as one; 4096 keeps them distinct. The second is capped
-       by the first, so raise both.
+       them apart and are counted as one; 4096 keeps them distinct. The first is capped
+       by the second, so raise both.
    * - ``performance_schema_digests_size``
      - serve
      - **Startup only.** How many statement shapes the server counts. Once the table is
@@ -180,7 +184,9 @@ an index. It removes any histogram on a column that has stopped being one of the
 column that gains an index loses its histogram. An indexed column gets none, since the
 optimizer estimates its ranges from the index itself. The histograms of a served database
 are rebuilt by running the step again, which an append or an incremental update does as
-part of its finalization. To see which columns carry one::
+part of its finalization, and a copy made by the deploy chain's ``dump_db.sh`` and
+``load_db.sh`` carries them, the load building them again on the copy. To see which
+columns carry one::
 
     SELECT table_name, column_name,
            JSON_EXTRACT(histogram, '$."last-updated"') AS updated
@@ -247,8 +253,8 @@ used no index at all, so a table with many such reads is searched by a column wi
   the list leaves out much of the traffic; raise ``performance_schema_digests_size``
   and collect again.
 
-**What to do with them.** The result is the input for removing indexes, and the rule is
-the one the current set of keys came from: a key goes when the window shows no read of
+**What to do with them.** The result is the input for removing indexes, by this rule: a
+key goes when the window shows no read of
 it, or when it leads a composite key on the same table (the composite answers everything
 the shorter key does), **unless** the import, or a part of the application the traffic in
 the window did not exercise, reads by it; a foreign key needs it; its column is one

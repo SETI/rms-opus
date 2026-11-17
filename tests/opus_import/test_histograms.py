@@ -7,15 +7,14 @@ from typing import Any
 import pytest
 
 from opus_import import histograms
+from opus_import.generations import GenerationState
+from opus_import.importdb.mysql import ImportDBMySQL
 from opus_import.importdb.super import ImportDBError, ImportDBSuper
+from opus_import.schema_version import SCHEMA_VERSION
 from opus_import.steps import do_import_tables
 from opus_import.table_keys import TableKey
 
 from .conftest import make_context
-
-MySQLdb = pytest.importorskip('MySQLdb')
-
-from opus_import.importdb.mysql import ImportDBMySQL  # noqa: E402 - follows the skip
 
 
 def test_every_range_row_names_its_column_at_the_table_its_rows_are_written_to() -> None:
@@ -73,20 +72,24 @@ def test_a_column_that_leads_an_index_gets_no_histogram() -> None:
 class _HistogramDB:
     """A database holding a ``param_info``, some keys, and some histograms."""
 
-    def __init__(self, histograms_now: dict[str, list[str]], *, param_info: bool = True) -> None:
+    def __init__(
+        self, histograms_now: dict[str, list[str]], *, param_info: tuple[str, ...] = ('param_info',)
+    ) -> None:
         self.histograms_now = histograms_now
         self.param_info = param_info
+        self.read_from: list[str] = []
         self.calls: list[tuple[str, str, list[str]]] = []
 
     def table_names(self, prefix: Any = None) -> list[str]:
-        names = ['obs_general', 'obs_ring_geometry', *(['param_info'] if self.param_info else [])]
+        names = ['obs_general', 'obs_ring_geometry', *self.param_info]
         if prefix is None:
             return names
         return [name for name in names if name.startswith(tuple(prefix))]
 
     def read_rows(self, table_name: str, column_names: Any) -> list[tuple[str, str, str]]:
-        assert table_name == 'param_info'
+        assert table_name in self.param_info
         assert tuple(column_names) == histograms.PARAM_INFO_COLUMNS
+        self.read_from.append(table_name)
         return [
             ('obs_general', 'time1', 'RANGE:datetime'),
             ('obs_ring_geometry', 'emission1', 'RANGE%.3f'),
@@ -125,10 +128,29 @@ def test_the_histograms_are_built_and_any_other_on_an_observation_table_dropped(
 
 def test_a_schema_without_param_info_gets_no_histogram_and_keeps_its_own() -> None:
     """Before its finalization a schema has no range columns to read."""
-    db = _HistogramDB({'obs_ring_geometry': ['emission1']}, param_info=False)
+    db = _HistogramDB({'obs_ring_geometry': ['emission1']}, param_info=())
     ctx = make_context(db=db)
     do_import_tables.update_histograms(ctx)
     assert db.calls == []
+
+
+@pytest.mark.parametrize(
+    ('pending', 'tables', 'expected'),
+    [
+        (None, ('param_info', 'param_info__new'), 'param_info'),
+        (2, ('param_info', 'param_info__new'), 'param_info__new'),
+        (2, ('param_info',), 'param_info'),
+    ],
+    ids=['served', 'pending-built', 'pending-not-built'],
+)
+def test_a_pending_generation_reads_the_param_info_built_for_its_switch(
+    pending: int | None, tables: tuple[str, ...], expected: str
+) -> None:
+    """A pending generation's finalization leaves its ``param_info`` as ``__new``."""
+    db = _HistogramDB({}, param_info=tables)
+    state = GenerationState(SCHEMA_VERSION, 'ready', 1, pending, None, False)
+    do_import_tables.update_histograms(make_context(db=db, generation_state=state))
+    assert db.read_from == [expected]
 
 
 def test_analyze_all_tables_analyzes_then_builds_the_histograms(

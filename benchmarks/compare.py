@@ -61,7 +61,10 @@ sessions' medians covers all of them.
 The **change** is ``(after - before) / before``. The **floor** of a metric is the
 floors file's ``floor``, or its absolute noise over the before median where that is
 larger (`effective_floor`), or the before side's own spread where that is larger
-still, or the before side's spread alone where there is no floors file. The absolute
+still, or the before side's spread alone where there is no floors file. A time metric
+the floors file has no entry for -- one newer than its sessions -- takes its family's
+jitter over the before median where that is larger than the spread
+(`unfloored_time_floor`). The absolute
 noise is the metric's ``floor_abs``, in its own units, or for a time metric its
 family's **jitter** where that is larger: small times scatter by a roughly fixed
 amount whatever their size, so a fraction measured on one median does not carry over
@@ -414,6 +417,28 @@ def effective_floor(
     return max(floor, absolute_noise(metric, entry, jitter) / abs(before))
 
 
+def unfloored_time_floor(metric: str, jitter: Mapping[str, float], before: float) -> float | None:
+    """Return the floor of a metric the floors file holds no entry for.
+
+    A metric newer than the floor sessions -- a scenario added since -- has no floor of
+    its own, and is judged against the before side's spread (`render`). A time metric
+    still scatters by its family's jitter whatever its size, so that is its floor too.
+
+    Parameters:
+        metric: The metric.
+        jitter: The floors file's ``jitter``, by family.
+        before: The before side's median.
+
+    Returns:
+        The family's jitter over ``before`` for a time metric whose family has one and
+        whose before median is not zero; otherwise None, leaving the spread alone.
+    """
+    family_jitter_s = jitter.get(metric_family(metric))
+    if not is_time(metric) or family_jitter_s is None or before == 0:
+        return None
+    return family_jitter_s / abs(before)
+
+
 def verdict(metric: str, relative: float | None, floor: float | None) -> str:
     """Judge one change against its floor.
 
@@ -627,6 +652,8 @@ def render(
             floor = effective_floor(
                 name, floors[name], {} if jitter is None else jitter, left.center if left else 0.0
             )
+        elif floors is not None and left is not None:
+            floor = unfloored_time_floor(name, {} if jitter is None else jitter, left.center)
         if left is not None and len(left.values) > 1:
             floor = left.spread if floor is None else max(floor, left.spread)
         metric_role = role(name, targets, warm_statements, import_guards=ceiling is None)

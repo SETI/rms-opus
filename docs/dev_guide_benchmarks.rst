@@ -1088,7 +1088,9 @@ larger. Every metric any session recorded gets a floor, and
 one that some session lacks is listed, with the sessions that lack it named in the
 file. A later comparison judges a metric against the largest of its floor, its absolute
 noise (``floor_abs``, or for a time metric its family's jitter where that is larger)
-over the before median, and the before side's own spread.
+over the before median, and the before side's own spread. A metric the floors file has no
+entry for -- a scenario added after the floor sessions -- is judged against the before
+side's spread and, for a time metric, its family's jitter over the before median.
 
 The idle rule
 -------------

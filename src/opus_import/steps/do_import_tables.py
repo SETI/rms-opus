@@ -36,6 +36,7 @@ from opus_import import (
     mult_fields,
     schema_version,
     table_keys,
+    table_swap,
 )
 from opus_import.mult_fields import MULT_TABLE
 
@@ -547,20 +548,27 @@ def update_histograms(ctx: ImportContext) -> None:
     """Build a histogram on every range-searched column that leads no index.
 
     The columns come from ``param_info`` and the keys the server reports
-    (`opus_import.histograms`). Each is built again, so an append's rows are counted, and
-    a histogram on any other column of an ``obs_`` table -- one that has since gained an
-    index, or stopped being range-searched -- is removed. A schema without ``param_info``,
-    whose finalization has not built it, gets none and keeps those it has.
+    (`opus_import.histograms`). With a pending generation the ``param_info`` read is the
+    one its finalization built for the switch, ``param_info__new``, where it exists. Each
+    histogram is built again, so an append's rows are counted, and a histogram on any
+    other column of an ``obs_`` table -- one that has since gained an index, or stopped
+    being range-searched -- is removed. A schema without ``param_info``, whose
+    finalization has not built it, gets none and keeps those it has.
 
     Parameters:
-        ctx: The import run's context, for the open database.
+        ctx: The import run's context, for the open database and its pending generation.
     """
     db = ctx.db
     assert db is not None
-    if histograms.PARAM_INFO_TABLE not in db.table_names():
+    tables = db.table_names()
+    source = histograms.PARAM_INFO_TABLE
+    pending_source = table_swap.swap_new_name(source)
+    if ctx.pending_generation is not None and pending_source in tables:
+        source = pending_source
+    if source not in tables:
         import_util.log_info(ctx, 'No param_info table, so no histogram is built')
         return
-    rows = db.read_rows(histograms.PARAM_INFO_TABLE, histograms.PARAM_INFO_COLUMNS)
+    rows = db.read_rows(source, histograms.PARAM_INFO_COLUMNS)
     wanted = histograms.histogram_columns(
         histograms.range_search_columns(rows), db.read_table_keys()
     )
