@@ -926,12 +926,12 @@ GitHub, and the installation reports a development version. For this branch, on 
 server, an import and a deploy of its database and then an incremental update::
 
     cd /opt/opus/deploy
-    /seti/newnav/capped-run.sh ./import_and_deploy/update_deploy_scripts.sh @db-perf-pr-23
-    /seti/newnav/capped-run.sh ./import_and_deploy/run_full_opus_import.sh @db-perf-pr-23
+    ./import_and_deploy/update_deploy_scripts.sh @db-perf-pr-23
+    ./import_and_deploy/run_full_opus_import.sh @db-perf-pr-23
     #    ... read the log, check ERRORS.log ...
-    /seti/newnav/capped-run.sh ./import_and_deploy/deploy_new_code_and_database.sh <database> @db-perf-pr-23
-    /seti/newnav/capped-run.sh ./import_and_deploy/run_incremental_opus_update.sh COISS_2001
-    /seti/newnav/capped-run.sh ./import_and_deploy/promote_generation.sh
+    ./import_and_deploy/deploy_new_code_and_database.sh <database> @db-perf-pr-23
+    ./import_and_deploy/run_incremental_opus_update.sh COISS_2001
+    ./import_and_deploy/promote_generation.sh
 
 The first command matters as it does for a release: the chain is part of the
 distribution, and a revision's deploy steps are its own. A branch moves, so each command
