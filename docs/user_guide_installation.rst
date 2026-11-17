@@ -444,7 +444,8 @@ done. :ref:`dev_guide_import_full_run` describes each step, and ``opus_import_al
 --dry-run`` prints what the given arguments would run without running it.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
-``==<release>`` for a particular release, omitted for the newest. Give this step and
+``==<release>`` for a particular release, omitted for the newest. ``@`` and a git branch,
+tag or commit installs that revision instead (:ref:`user_guide_deployment_revision`). Give this step and
 step 5 the same one -- they install ``rms-opus`` separately, so leaving it off both
 means "the newest release" twice, which is two different releases if one is published
 in between.

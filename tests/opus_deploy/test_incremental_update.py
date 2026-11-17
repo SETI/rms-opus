@@ -179,12 +179,24 @@ def test_the_update_installs_the_deployed_release_unless_given_another(
 def test_the_update_without_a_version_refuses_a_release_pypi_cannot_install(
     tmp_path: Path, release: str
 ) -> None:
-    """Nothing is run, and the operator is asked for a version specifier."""
+    """Nothing is run, and the operator is asked for a version spec."""
     status, output, ran = run_deploy(tmp_path, _UPDATE, 'COISS_2001', deployed_release=release)
     assert status == 1
     assert ran == []
-    assert 'version specifier' in output
+    assert 'version spec of what is being served' in output
     assert 'nothing was changed' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_the_update_installs_the_commit_a_git_installation_was_built_from(
+    tmp_path: Path,
+) -> None:
+    """A development build pip recorded a git commit for is installed again from it."""
+    status, output, _ran = run_deploy(
+        tmp_path, _UPDATE, 'COISS_2001', deployed_release='3.25.1.dev4+g208b19c\n208b19c0'
+    )
+    assert status == 0, output
+    assert re.search(r'^Version spec: @208b19c0$', output, re.M) is not None
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')

@@ -26,6 +26,7 @@ export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 export DATABASE_SCRIPT_DIR=${SCRIPT_DIR}/database
 
+source ${IMPORT_SCRIPT_DIR}/_version_spec.sh
 source ${IMPORT_SCRIPT_DIR}/_incremental_opus_update_steps.sh
 if ! parse_update_arguments "$@"; then
     exit 1
@@ -47,9 +48,9 @@ if ! OPUS_DB_NAME=$(served_schema_name "${OPUS_DIR}/deployed/opus.toml"); then
 fi
 export OPUS_DB_NAME
 
-# The generation is switched in and served by the deployed release, whose schema version
-# --begin-generation requires, so with no version specifier the update installs that
-# release rather than the newest.
+# The generation is switched in and served by the deployed installation, whose schema
+# version --begin-generation requires, so with no version spec the update installs what
+# it runs -- its release, or the git commit it was built from -- rather than the newest.
 if [[ -z ${OPUS_VERSION_SPEC} ]]; then
     if ! OPUS_VERSION_SPEC=$(deployed_release_spec "${OPUS_DIR}/deployed"); then
         echo "*** ABORTING: nothing was changed ***"
