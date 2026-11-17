@@ -47,7 +47,7 @@ no observation is in the data of every scale.
 from __future__ import annotations
 
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -398,3 +398,40 @@ def load_web_config(path: Path = WEB_TOML, *, scale: str = 'test') -> WebConfig:
         concurrency=concurrency,
         warm=frozenset(state for state, flag in warm_flags.items() if flag),
     )
+
+
+def with_overrides(
+    config: WebConfig,
+    *,
+    threads: int | None = None,
+    users: int | None = None,
+    concurrency_only: bool = False,
+) -> WebConfig:
+    """Return ``web.toml``'s settings with a thread sweep's changes made.
+
+    Parameters:
+        config: The settings as read.
+        threads: Threads per gunicorn worker in place of the file's, or None to keep them.
+        users: The concurrency scenario's simulated users in place of the file's, or None
+            to keep them.
+        concurrency_only: Whether to drop the sequential scenarios, leaving the
+            concurrency scenario alone.
+
+    Returns:
+        The settings with those changes.
+
+    Raises:
+        ScenarioError: If a count is not positive, or the users or the concurrency
+            scenario alone are asked of a file without a concurrency scenario.
+    """
+    if (users is not None or concurrency_only) and config.concurrency is None:
+        raise ScenarioError(f'{config.path} has no concurrency scenario')
+    for name, count in (('threads', threads), ('users', users)):
+        if count is not None and count < 1:
+            raise ScenarioError(f'{name} must be at least 1, not {count}')
+    server = config.server if threads is None else replace(config.server, threads=threads)
+    concurrency = config.concurrency
+    if users is not None and concurrency is not None:
+        concurrency = replace(concurrency, users=users)
+    scenarios = () if concurrency_only else config.scenarios
+    return replace(config, server=server, concurrency=concurrency, scenarios=scenarios)

@@ -1791,6 +1791,106 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 else:
                     self.logger.log('debug', f'Analyzed table "{table_name}"')
 
+    def read_histograms(self) -> dict[str, list[str]]:
+        """Return the columns of the schema that carry a histogram.
+
+        Read from ``information_schema.COLUMN_STATISTICS``, which lists every histogram
+        the server keeps.
+
+        Returns:
+            Per table (``obs_general`` for its base table), its columns with a histogram,
+            sorted; a table with none is absent.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        rows = self._execute_and_fetchall(
+            'SELECT `TABLE_NAME`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMN_STATISTICS` '
+            'WHERE `SCHEMA_NAME`=%s ORDER BY `TABLE_NAME`, `COLUMN_NAME`',
+            'read_histograms',
+            [self.db_schema],
+        )
+        histograms: dict[str, list[str]] = {}
+        for table_name, column_name in rows:
+            histograms.setdefault(generations.logical_table_name(str(table_name)), []).append(
+                str(column_name)
+            )
+        return histograms
+
+    def update_histograms(self, table_name: str, column_names: Sequence[str]) -> None:
+        """Build, or build again, a histogram on each of a table's columns.
+
+        One ``ANALYZE TABLE ... UPDATE HISTOGRAM ON`` statement, with the server's default
+        bucket count. The statement reports a failure as a row of its result rather than
+        as an error, so the result is read and an ``Error`` row raises.
+
+        Parameters:
+            table_name: The table.
+            column_names: Its columns, at least one.
+
+        Raises:
+            ImportDBError: If the server rejects the statement or reports an error for a
+                column.
+        """
+        self._histogram_statement(table_name, column_names, 'UPDATE', 'update_histograms')
+
+    def drop_histograms(self, table_name: str, column_names: Sequence[str]) -> None:
+        """Remove the histogram from each of a table's columns.
+
+        One ``ANALYZE TABLE ... DROP HISTOGRAM ON`` statement, its result read as
+        `update_histograms` reads its own.
+
+        Parameters:
+            table_name: The table.
+            column_names: Its columns, at least one.
+
+        Raises:
+            ImportDBError: If the server rejects the statement or reports an error for a
+                column.
+        """
+        self._histogram_statement(table_name, column_names, 'DROP', 'drop_histograms')
+
+    def _histogram_statement(
+        self, table_name: str, column_names: Sequence[str], action: str, func_name: str
+    ) -> None:
+        """Run one ``ANALYZE TABLE ... <action> HISTOGRAM ON`` statement and check it.
+
+        Parameters:
+            table_name: The table.
+            column_names: Its columns, at least one.
+            action: ``UPDATE`` or ``DROP``.
+            func_name: The calling method's name, for the failure message.
+
+        Raises:
+            ImportDBError: If no column is given, the server rejects the statement, or a
+                row of its result is an error.
+        """
+        if len(column_names) == 0:
+            raise ImportDBError(f'{func_name} needs at least one column of "{table_name}"')
+        with self._operation(func_name):
+            cmd = (
+                f'ANALYZE TABLE {self.quote_identifier(table_name)} {action} HISTOGRAM ON '
+                f'{self._quoted_column_list(column_names)}'
+            )
+            if self.read_only:
+                self._execute(cmd, mutates=True)
+                if self.logger:
+                    self.logger.log('debug', f'[SIM] {action} HISTOGRAM on "{table_name}"')
+                return
+            rows = self._execute_and_fetchall(cmd, func_name)
+            errors = [str(row[-1]) for row in rows if str(row[-2]).lower() == 'error']
+            if len(errors) > 0:
+                message = f'Failed to {action.lower()} histograms on "{table_name}": ' + '; '.join(
+                    errors
+                )
+                self._log_failure(message)
+                raise ImportDBError(message)
+            if self.logger:
+                self.logger.log(
+                    'debug',
+                    f'{action} HISTOGRAM on "{table_name}" ({", ".join(column_names)})',
+                )
+
     def insert_row(self, table_name: str, row: DBRow) -> None:
         """Insert one row.
 

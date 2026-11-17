@@ -36,6 +36,11 @@ and may show as a regression, an improvement or nothing, by how the executions f
 A comparison refuses two files of different scales, an after file given before a before
 file, a target metric neither file holds, and a floors file of another scale or brand.
 
+``python -m benchmarks.compare --sweep RESULT.json RESULT.json [RESULT.json ...]``
+prints the results of a thread sweep side by side, one column per thread count
+(`benchmarks.sweep`), refusing results that differ in anything but the threads per
+worker.
+
 ``python -m benchmarks.compare --floors SESSION.json SESSION.json [SESSION.json]``
 writes the floors file of the sessions' scale and brand into the results directory,
 and lists the metrics the sessions disagree on and those some session lacks. Every
@@ -99,6 +104,7 @@ from benchmarks.results import (
     spread,
     without_outliers,
 )
+from benchmarks.sweep import render_sweep
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -850,11 +856,17 @@ def main(argv: Sequence[str] | None = None) -> None:
     """
     parser = argparse.ArgumentParser(
         prog='python -m benchmarks.compare',
-        description='Compare two result files, or compute floors from floor sessions.',
+        description='Compare two result files, print a thread sweep, or compute floors from '
+        'floor sessions.',
     )
     parser.add_argument('results', nargs='+', type=Path, help='result files')
     parser.add_argument(
         '--floors', action='store_true', help='write the floors file of these floor sessions'
+    )
+    parser.add_argument(
+        '--sweep',
+        action='store_true',
+        help="print a thread sweep's results side by side, one column per thread count",
     )
     parser.add_argument('--floors-file', type=Path, default=None, help='judge against these floors')
     parser.add_argument(
@@ -871,6 +883,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         help='also show the reported metrics that changed by no more than their floor',
     )
     args = parser.parse_args(argv)
+    if args.floors and args.sweep:
+        parser.error('--floors and --sweep are two different commands; give one')
     if args.floors:
         output, disagreeing = write_floors(args.results)
         sys.stdout.write(f'wrote {output}\n')
@@ -886,6 +900,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                 f'{len(disagreeing)} metrics disagree between the sessions:\n'
                 + ''.join(f'  {name}\n' for name in disagreeing)
             )
+        return
+    if args.sweep:
+        if args.floors_file is not None or len(args.target) > 0:
+            parser.error('a sweep judges nothing; it takes neither --floors-file nor --target')
+        results = [(path, load_result(path)) for path in args.results]
+        summaries = [summarize(content) for _, content in results]
+        sys.stdout.write(render_sweep(results, summaries))
         return
     if len(args.results) != 2:
         parser.error('a comparison takes exactly two result files, before then after')

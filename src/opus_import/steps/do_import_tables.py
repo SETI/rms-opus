@@ -29,6 +29,7 @@ from opus_import import (
     config_bundle_info,
     config_data,
     generations,
+    histograms,
     import_processes,
     import_util,
     list_junctions,
@@ -528,6 +529,9 @@ def create_tables_for_import(
 def analyze_all_tables(ctx: ImportContext) -> None:
     """Recompute the key distribution statistics of every ``obs_`` and mult table.
 
+    Then give each range-searched column that leads no index a histogram
+    (`update_histograms`).
+
     Parameters:
         ctx: The import run's context, for the open database.
     """
@@ -536,3 +540,44 @@ def analyze_all_tables(ctx: ImportContext) -> None:
     table_names = sorted(db.table_names(prefix=['obs_', *mult_fields.MULT_TABLES]))
     for table_name in table_names:
         db.analyze_table(table_name)
+    update_histograms(ctx)
+
+
+def update_histograms(ctx: ImportContext) -> None:
+    """Build a histogram on every range-searched column that leads no index.
+
+    The columns come from ``param_info`` and the keys the server reports
+    (`opus_import.histograms`). Each is built again, so an append's rows are counted, and
+    a histogram on any other column of an ``obs_`` table -- one that has since gained an
+    index, or stopped being range-searched -- is removed. A schema without ``param_info``,
+    whose finalization has not built it, gets none and keeps those it has.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+    """
+    db = ctx.db
+    assert db is not None
+    if histograms.PARAM_INFO_TABLE not in db.table_names():
+        import_util.log_info(ctx, 'No param_info table, so no histogram is built')
+        return
+    rows = db.read_rows(histograms.PARAM_INFO_TABLE, histograms.PARAM_INFO_COLUMNS)
+    wanted = histograms.histogram_columns(
+        histograms.range_search_columns(rows), db.read_table_keys()
+    )
+    existing = {
+        table: columns
+        for table, columns in db.read_histograms().items()
+        if table.startswith('obs_')
+    }
+    for table_name in sorted(set(wanted) | set(existing)):
+        keep = wanted.get(table_name, [])
+        stale = sorted(set(existing.get(table_name, [])) - set(keep))
+        if len(stale) > 0:
+            db.drop_histograms(table_name, stale)
+        if len(keep) > 0:
+            db.update_histograms(table_name, keep)
+    import_util.log_info(
+        ctx,
+        f'Built histograms on {sum(len(columns) for columns in wanted.values())} columns of '
+        f'{len(wanted)} tables',
+    )

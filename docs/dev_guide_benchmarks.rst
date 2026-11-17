@@ -99,7 +99,9 @@ The harness-owned server runs ``benchmarks/scenarios/my.cnf.template``, filled i
 ``benchmarks/bench_server.py`` from ``benchmarks/scenarios/server.toml``. Results are
 judged against each other, not against this baseline; it exists so that every result is
 measured on a server configured by stated rules rather than by MySQL's defaults for a
-small machine.
+small machine. What each setting does for OPUS, and how to set a server that imports or
+serves OPUS, is :ref:`user_guide_database_server`; this baseline adds only what measuring
+needs, such as the exact cold start.
 
 The rules that MySQL's documentation gives in terms of the machine's memory are applied
 to ``memory_budget_gb`` in ``server.toml`` rather than to the machine's total, because

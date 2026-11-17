@@ -1442,6 +1442,42 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::analyze_table must be overridden')
 
+    def read_histograms(self) -> dict[str, list[str]]:
+        """Return the columns of the schema that carry a histogram.
+
+        Returns:
+            Per table (``obs_general`` for its base table), its columns with a histogram,
+            sorted; a table with none is absent.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::read_histograms must be overridden')
+
+    def update_histograms(self, table_name: str, column_names: Sequence[str]) -> None:
+        """Build, or build again, a histogram on each of a table's columns.
+
+        Parameters:
+            table_name: The table.
+            column_names: Its columns, at least one.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::update_histograms must be overridden')
+
+    def drop_histograms(self, table_name: str, column_names: Sequence[str]) -> None:
+        """Remove the histogram from each of a table's columns.
+
+        Parameters:
+            table_name: The table.
+            column_names: Its columns, at least one.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::drop_histograms must be overridden')
+
     def read_rows(
         self,
         table_name: str,

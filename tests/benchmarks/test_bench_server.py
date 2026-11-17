@@ -231,3 +231,37 @@ def test_a_web_command_is_refused_during_a_switch() -> None:
     with pytest.raises(ServerError, match='switch holds'):
         bench_web.hold_server(server, app_cold_only=False)  # type: ignore[arg-type]
     assert server.calls == []
+
+
+class _MaxConnections:
+    """A connection whose one query answers with a ``max_connections``."""
+
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        self.statements: list[str] = []
+
+    def cursor(self) -> '_MaxConnections':
+        return self
+
+    def execute(self, statement: str, parameters: object = None) -> None:
+        self.statements.append(statement)
+
+    def fetchall(self) -> list[tuple[int]]:
+        return [(self.limit,)]
+
+    def close(self) -> None:
+        pass
+
+
+def test_a_server_with_room_for_every_slot_and_the_harness_is_accepted() -> None:
+    """One connection more than the slots and the harness's own is enough."""
+    connection = _MaxConnections(32 + bench_server.HARNESS_CONNECTIONS + 1)
+    assert bench_server.require_connection_room(connection, 32) == connection.limit
+    assert connection.statements == ['SELECT @@GLOBAL.max_connections']
+
+
+def test_a_server_without_room_for_every_slot_and_the_harness_is_refused() -> None:
+    """A server at exactly the slots and the harness's own connections could refuse one."""
+    connection = _MaxConnections(32 + bench_server.HARNESS_CONNECTIONS)
+    with pytest.raises(ServerError, match='max_connections is 34'):
+        bench_server.require_connection_room(connection, 32)

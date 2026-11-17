@@ -21,15 +21,18 @@ application's internals, and no tests.
    :maxdepth: 1
 
    user_guide_installation
+   user_guide_database_server
    user_guide_web_server
    user_guide_deployment
 
 :ref:`user_guide_installation` is the whole of bringing one up from nothing, in six
 steps: the prerequisites, the environment the scripts come from, writing them out, the
 settings file, the first import, and the first deploy -- including what a full-holdings
-import involves and how to tell whether it succeeded. :ref:`user_guide_web_server` is the
-layer in front of the application: worked nginx configurations with gunicorn and with
-uWSGI, Apache with ``mod_wsgi``, and the three things any of them has to arrange.
+import involves and how to tell whether it succeeded. :ref:`user_guide_database_server`
+is the MySQL server underneath: the settings that matter to OPUS, sizing its memory from
+the imported database, and reading its index statistics. :ref:`user_guide_web_server` is
+the layer in front of the application: worked nginx configurations with gunicorn and
+with uWSGI, Apache with ``mod_wsgi``, and the three things any of them has to arrange.
 :ref:`user_guide_deployment` is the running of it afterwards: deploying a new release,
 replacing the database with a newly imported one, what must always be done after an
 import, and the log-analyzer cron jobs.
