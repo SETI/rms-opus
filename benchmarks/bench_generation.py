@@ -54,6 +54,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from benchmarks import web_scenarios
+from benchmarks.app_servers import ServerError
 from benchmarks.bench_import import (
     DEFAULT_BULK_LOAD_PATH,
     IMPORT_COUNTERS,
@@ -82,10 +83,12 @@ from benchmarks.results import (
     GENERATION_UPDATE_KIND,
     SCALES,
     SIDES,
+    ResultError,
     append_runs,
     host_environment,
     make_label,
     new_run,
+    require_appendable,
     scenario_hash,
 )
 from benchmarks.sides import (
@@ -430,9 +433,27 @@ class GenerationBench(ImportBench):
             The result run, of kind `GENERATION_SWITCH_KIND`.
 
         Raises:
-            RunFailedError: If anything listens on a ``bench_web`` port, the schema has no
-                generation ready to switch, an invocation fails, or the version row and
-                the rows do not show the generation served and the purge done.
+            RunFailedError: If a ``bench_web`` command holds the server's web-runs lock
+                (`MysqlServer.web_runs_held`) or anything listens on a ``bench_web``
+                port, the schema has no generation ready to switch, an invocation fails,
+                or the version row and the rows do not show the generation served and the
+                purge done.
+        """
+        with contextlib.ExitStack() as stack:
+            try:
+                stack.enter_context(self.server.web_runs_held(exclusive=True))
+            except ServerError as e:
+                raise RunFailedError(
+                    f'{e}: the switch empties the search tables and flushes the cache, so '
+                    'let bench_web finish before it'
+                ) from None
+            return self._switch()
+
+    def _switch(self) -> dict[str, Any]:
+        """Run `run_switch` with the web-runs lock held.
+
+        Returns:
+            The result run, of kind `GENERATION_SWITCH_KIND`.
         """
         busy = [port for port in self.web_ports if self._is_listening(port)]
         if len(busy) > 0:
@@ -669,6 +690,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     }
     if update is not None:
         environment['generation_update'] = update.environment()
+    try:
+        require_appendable(label, environment)
+    except ResultError as e:
+        sys.exit(str(e))
+    if update is not None:
         run = bench.run_update(update)
         environment['bulk_load_path'] = file_bulk_load_path(label, [run])
         path = append_runs(label, environment, [run])

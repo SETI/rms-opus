@@ -119,6 +119,38 @@ def test_a_view_definition_keeps_its_algorithm_and_security() -> None:
     )
 
 
+def test_a_view_definition_keeps_the_source_name_inside_a_string_literal() -> None:
+    """A literal holding the source's qualifier is data, so only the table moves."""
+    definition = "CREATE VIEW `v` AS select '`src`.marker' AS `label` from `src`.`t`"
+    assert bench_server.portable_view_definition(definition, 'src', 'dst') == (
+        "CREATE VIEW `v` AS select '`src`.marker' AS `label` from `dst`.`t`"
+    )
+
+
+def test_views_are_created_after_the_views_they_read() -> None:
+    """A view reading another is created after it, through a chain, whatever the names."""
+    connection = _Connection(
+        {
+            'VIEW_TABLE_USAGE': [
+                ('a_summary', 'm_middle'),
+                ('m_middle', 'z_rows'),
+                ('m_middle', 'base'),
+                ('b_other', 'base'),
+            ],
+            "TABLE_TYPE = 'VIEW'": [('a_summary',), ('b_other',), ('m_middle',), ('z_rows',)],
+            'SHOW CREATE VIEW': [('v', 'CREATE VIEW `src`.`v` AS select 1', 'utf8mb4', 'c')],
+        }
+    )
+    created = bench_server.copy_views(connection, 'src', 'dst')
+    assert created == ['b_other', 'z_rows', 'm_middle', 'a_summary']
+    shown = [
+        statement.rsplit('.', 1)[1]
+        for statement, _ in connection.statements
+        if statement.startswith('SHOW CREATE VIEW')
+    ]
+    assert shown == [f'`{view}`' for view in created]
+
+
 @pytest.mark.parametrize(
     ('found', 'table'), [(1, 'obs_general_rows'), (0, 'obs_general')], ids=['view', 'table']
 )

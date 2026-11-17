@@ -6,7 +6,9 @@ holds."""
 
 from __future__ import annotations
 
+import contextlib
 import socket
+from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, ClassVar
@@ -14,10 +16,11 @@ from typing import Any, ClassVar
 import pytest
 
 from benchmarks import bench_generation, bench_import, bench_server
+from benchmarks.app_servers import ServerError
 from benchmarks.bench_generation import GenerationBench, GenerationError, GenerationState
 from benchmarks.import_scenarios import load_scenario
 from benchmarks.monitor import InvocationRecord, RunFailedError
-from benchmarks.results import make_label
+from benchmarks.results import ResultError, make_label
 from benchmarks.sides import Side, Spelling
 
 #: The help of a side that can update a schema in a generation.
@@ -71,6 +74,19 @@ class _Server:
 
     def connect(self, *args: Any, **kwargs: Any) -> None:
         self.calls.append('connect')
+
+    #: Whether a bench_web command holds the web-runs lock.
+    web_running = False
+
+    @contextlib.contextmanager
+    def web_runs_held(self, *, exclusive: bool) -> Iterator[None]:
+        if self.web_running:
+            raise ServerError('a bench_web command or another generation switch holds lock')
+        self.calls.append(f'lock exclusive={exclusive}')
+        try:
+            yield
+        finally:
+            self.calls.append('unlock')
 
 
 class _Monitor:
@@ -350,8 +366,47 @@ def test_an_update_and_its_switch_neither_restart_nor_drop(
     bench.run_update(_update())
     bench._status = iter([{}, {}]).__next__  # type: ignore[method-assign]
     bench.run_switch()
-    assert stand.server.calls == []
+    assert stand.server.calls == ['lock exclusive=True', 'unlock']
     assert dropped_schemas == []
+
+
+def test_a_switch_is_refused_while_a_bench_web_command_holds_the_lock(tmp_path: Path) -> None:
+    """Its ports can all be quiet for a moment while a reset restarts the servers."""
+    stand = _Stand()
+    stand.state = _ready()
+    stand.server.web_running = True
+    with pytest.raises(RunFailedError, match='holds lock: the switch empties'):
+        _bench(stand, tmp_path).run_switch()
+    assert stand.invoked == []
+
+
+def test_a_switch_holds_the_lock_exclusive_through_the_purge(tmp_path: Path) -> None:
+    """Released only after the purge, and released when the switch fails too."""
+    stand = _Stand()
+    stand.state = _ready()
+    stand.server.calls = []
+    bench = _bench(stand, tmp_path)
+    bench._status = iter([{}] * 4).__next__  # type: ignore[method-assign]
+    invoked_while_locked: list[list[str]] = []
+    invoke = bench._invoke
+
+    def recording_invoke(*args: Any, **kwargs: Any) -> None:
+        invoke(*args, **kwargs)
+        assert stand.server.calls[-1] == 'lock exclusive=True'
+        invoked_while_locked.append(stand.invoked[-1])
+
+    bench._invoke = recording_invoke  # type: ignore[method-assign]
+    bench.run_switch()
+    assert [args[0] for args in invoked_while_locked] == [
+        '--switch-generation',
+        '--purge-generations',
+    ]
+    assert stand.server.calls[-1] == 'unlock'
+    stand.state = _ready()
+    stand.inert.add('switch_generation')
+    with pytest.raises(RunFailedError):
+        bench.run_switch()
+    assert stand.server.calls[-1] == 'unlock'
 
 
 def test_a_switch_is_refused_while_bench_web_listens(tmp_path: Path) -> None:
@@ -541,6 +596,7 @@ def _patch_main(
         return Path('result.json')
 
     monkeypatch.setattr(bench_generation, 'append_runs', append)
+    monkeypatch.setattr(bench_generation, 'require_appendable', lambda label, environment: None)
     return appended
 
 
@@ -588,6 +644,31 @@ def test_main_records_the_update_and_the_switch_asked_for(
     assert environment['schema'] == 'served'
     assert environment['generation_update'] == {'bundles': 'COISS_2002', 'drop': 'VG_28xx'}
     assert (environment['importers'], environment['coordinator_importers']) == (None, None)
+
+
+@pytest.mark.parametrize('mode', [(), ('--switch-only',)], ids=['update', 'switch-only'])
+def test_main_refuses_a_label_that_cannot_take_its_runs_before_any_work(
+    mode: tuple[str, ...], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A finished update whose runs the file refused would leave a pending generation
+    unrecorded, and block the rerun under a corrected label."""
+    appended = _patch_main(monkeypatch, tmp_path, _HELP)
+    checked: list[dict[str, Any]] = []
+    worked: list[str] = []
+
+    def refuse(label: Any, environment: dict[str, Any]) -> None:
+        checked.append(dict(environment))
+        raise ResultError('generation_update was something else')
+
+    monkeypatch.setattr(bench_generation, 'require_appendable', refuse)
+    monkeypatch.setattr(GenerationBench, 'run_update', lambda self, update: worked.append('u'))
+    monkeypatch.setattr(GenerationBench, 'run_switch', lambda self: worked.append('s'))
+    argv = _argv(*(mode or ('--bundles', 'COISS_2002')))
+    with pytest.raises(SystemExit, match='generation_update was'):
+        bench_generation.main(argv)
+    assert worked == []
+    assert appended == []
+    assert ('generation_update' in checked[0]) is (mode == ())
 
 
 def test_main_switches_alone_without_naming_bundles(

@@ -402,3 +402,20 @@ def test_web_runs_that_reset_to_other_states_are_refused_within_a_file(
     results.append_runs(label, {'cold_states': ['db-cold', 'app-cold']}, [_run()])
     with pytest.raises(ResultError, match='cold_states was'):
         results.append_runs(label, {'cold_states': ['app-cold']}, [_run()])
+
+
+def test_a_label_is_checked_before_the_runs_exist(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The check refuses what the append would, and changes nothing; no file takes all."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-14', 'PR-23', 'after', 'test', 'mysql', 'g')
+    update = {'generation_schema': 'served', 'generation_update': {'bundles': 'A', 'drop': None}}
+    other = {**update, 'generation_update': {'bundles': 'B', 'drop': None}}
+    results.require_appendable(label, other)
+    results.append_runs(label, update, [_run('generation_update')])
+    before = (tmp_path / label.file_name).read_text()
+    results.require_appendable(label, update)
+    with pytest.raises(ResultError, match='generation_update was'):
+        results.require_appendable(label, other)
+    assert (tmp_path / label.file_name).read_text() == before

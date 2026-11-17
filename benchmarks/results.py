@@ -314,6 +314,32 @@ def merge_environment(
     existing.update(update)
 
 
+def require_appendable(label: Label, environment: dict[str, Any]) -> None:
+    """Check that `append_runs` would add runs with this environment to a label's file.
+
+    A command whose runs change what they measure, such as an incremental update, checks
+    before it starts, so a label that cannot take its runs is refused before the work
+    rather than after it; `append_runs` checks again.
+
+    Parameters:
+        label: The file the runs would be added to.
+        environment: The environment entries they would merge in.
+
+    Raises:
+        ResultError: If the file exists and `merge_environment` refuses the entries.
+    """
+    path = RESULTS_DIR / label.file_name
+    if not path.exists():
+        return
+    content = load_result(path)
+    merge_environment(
+        dict(content['environment']),
+        portable(environment),
+        str(path),
+        earlier_runs=bool(content['runs']),
+    )
+
+
 def append_runs(label: Label, environment: dict[str, Any], runs: Sequence[dict[str, Any]]) -> Path:
     """Add runs to a label's result file, creating it if needed.
 

@@ -41,9 +41,12 @@ it has not put back: the next promotion puts them back first. A side without the
 or the option skips the step, and the result names it among its skipped steps.
 
 **Beside another process.** ``--app-cold-only`` makes each run the app-cold pass alone,
-with its warm repetitions, so the run never restarts the MySQL server, and another
-process can use the server meanwhile: an incremental update importing into the served
-schema (`benchmarks.bench_generation`), say.
+with its warm repetitions, against a MySQL server already running, which the command
+never starts, restarts or stops, so another process can use the server meanwhile: an
+incremental update importing into the served schema (`benchmarks.bench_generation`), say.
+Every command holds the server's web-runs lock shared while it runs, and a generation
+switch holds it exclusive (`benchmarks.bench_server.MysqlServer.web_runs_held`), so a
+switch never empties the tables a web run is measuring.
 
 Example, one side's web runs at fixture scale against the schema its import built::
 
@@ -1312,6 +1315,44 @@ def deploy_steps(
     return DeploySteps(warm_states, promotion_carts, tuple(skipped))
 
 
+def hold_server(server: MysqlServer, *, app_cold_only: bool) -> contextlib.ExitStack:
+    """Take what a command's web runs need of the owned MySQL server.
+
+    The server's web-runs lock is held shared (`MysqlServer.web_runs_held`), so no
+    generation switch runs meanwhile. A command making every pass is the server's user:
+    it starts the server if it is down, and stops it on exit if so. An app-cold-only
+    command shares the server with another process, an incremental update say, so it
+    needs the server running already and never stops it, since stopping it would stop
+    that process's work.
+
+    Parameters:
+        server: The owned server.
+        app_cold_only: Whether the command makes only the app-cold pass.
+
+    Returns:
+        A stack that releases what was taken when it closes.
+
+    Raises:
+        ServerError: If an app-cold-only command finds the server down, a generation
+            switch holds the lock, or the server cannot be started.
+    """
+    if app_cold_only and not server.is_running():
+        raise ServerError(
+            'the owned MySQL server is not running: start it with '
+            '`python -m benchmarks.bench_server start`; with --app-cold-only this command '
+            'never starts or stops it'
+        )
+    stack = contextlib.ExitStack()
+    try:
+        stack.enter_context(server.web_runs_held(exclusive=False))
+        if not app_cold_only:
+            stack.enter_context(server.running())
+    except BaseException:
+        stack.close()
+        raise
+    return stack
+
+
 def cold_states(*, app_cold_only: bool) -> tuple[str, ...]:
     """Return the cold states a run's passes reset to.
 
@@ -1392,8 +1433,9 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument(
         '--app-cold-only',
         action='store_true',
-        help='make each run the app-cold pass alone, with its warm repetitions, never '
-        'restarting the MySQL server, so another process can use it meanwhile',
+        help='make each run the app-cold pass alone, with its warm repetitions, against a '
+        'MySQL server already running, which the command never starts, restarts or stops, '
+        'so another process can use it meanwhile',
     )
     return parser.parse_args(argv)
 
@@ -1441,7 +1483,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         cold_states=cold_states(app_cold_only=args.app_cold_only),
     )
     count = config.runs[args.scale] if args.runs is None else args.runs
-    with server.running():
+    try:
+        held = hold_server(server, app_cold_only=args.app_cold_only)
+    except ServerError as e:
+        sys.exit(str(e))
+    with held:
         environment: dict[str, Any] = {
             **host_environment(),
             **side.environment(),

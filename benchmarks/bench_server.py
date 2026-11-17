@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import fcntl
+import graphlib
 import math
 import os
 import re
@@ -187,6 +189,11 @@ class MysqlConfig:
         """The server's error log."""
         return self.data_root / 'error.log'
 
+    @property
+    def web_runs_lock(self) -> Path:
+        """The file `MysqlServer.web_runs_held` locks."""
+        return self.data_root / 'web_runs.lock'
+
     def render_my_cnf(self, template: str) -> str:
         """Fill the option-file template.
 
@@ -330,6 +337,41 @@ class MysqlServer:
         if not text.isdigit() or not pid_alive(int(text)):
             return None
         return int(text)
+
+    @contextlib.contextmanager
+    def web_runs_held(self, *, exclusive: bool) -> Iterator[None]:
+        """Hold the lock that keeps a generation switch apart from ``bench_web`` commands.
+
+        A ``bench_web`` command holds it shared for as long as it runs, so any number of
+        them run together; a generation switch holds it exclusive, since the switch empties
+        the search tables and flushes the cache that a web run measures. The lock is taken
+        without waiting, and the operating system releases it when its holder exits.
+
+        Parameters:
+            exclusive: Whether to hold it exclusive, as a switch does, rather than shared.
+
+        Yields:
+            Nothing; the lock is held until the block exits.
+
+        Raises:
+            ServerError: If the other kind holds it, or another switch holds it exclusive.
+        """
+        path = self.config.web_runs_lock
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open('a', encoding='utf-8') as stream:
+            try:
+                fcntl.flock(stream, (fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH) | fcntl.LOCK_NB)
+            except BlockingIOError:
+                holder = (
+                    'a bench_web command or another generation switch'
+                    if exclusive
+                    else 'a generation switch'
+                )
+                raise ServerError(f'{holder} holds {path}') from None
+            try:
+                yield
+            finally:
+                fcntl.flock(stream, fcntl.LOCK_UN)
 
     def is_running(self) -> bool:
         """Return whether the server answers on its socket.
@@ -701,12 +743,18 @@ def restamp_version(server: MysqlServer, schema: str, version: int) -> str | Non
 #: account in backquotes, a backquote inside a name doubled, and the space after it.
 _DEFINER_CLAUSE = re.compile(r'DEFINER=`(?:[^`]|``)*`@`(?:[^`]|``)*`\s*')
 
+#: The quoted tokens of a view definition: a backquoted identifier, with a backquote
+#: inside it doubled, and a string literal in single or double quotes, with a quote
+#: inside it doubled or escaped by a backslash.
+_QUOTED_TOKEN = re.compile(r"`(?:[^`]|``)*`|'(?:[^'\\]|\\.|'')*'|\"(?:[^\"\\]|\\.|\"\")*\"")
+
 
 def portable_view_definition(definition: str, source: str, target: str) -> str:
     """Rewrite a view's ``SHOW CREATE VIEW`` text so that it creates the view in another schema.
 
     Every name the text qualifies with the source schema is qualified with the target
-    instead, so the view reads the target's tables. The ``DEFINER`` clause is dropped, so
+    instead, so the view reads the target's tables; only the identifier is rewritten, so
+    a string literal holding the source's name is kept as it is. The ``DEFINER`` clause is dropped, so
     the view is defined by the account that creates it and creating it needs no privilege
     to name another account (``SET_USER_ID``); its algorithm and ``SQL SECURITY`` clause
     are kept.
@@ -719,15 +767,25 @@ def portable_view_definition(definition: str, source: str, target: str) -> str:
     Returns:
         The ``CREATE VIEW`` statement for the target.
     """
-    qualified = definition.replace(f'{quote_identifier(source)}.', f'{quote_identifier(target)}.')
-    return _DEFINER_CLAUSE.sub('', qualified, count=1)
+    source_name = quote_identifier(source)
+    target_name = quote_identifier(target)
+
+    def relocate(match: re.Match[str]) -> str:
+        token = match.group(0)
+        if token == source_name and match.string.startswith('.', match.end()):
+            return target_name
+        return token
+
+    return _DEFINER_CLAUSE.sub('', _QUOTED_TOKEN.sub(relocate, definition), count=1)
 
 
 def copy_views(connection: Any, source: str, target: str) -> list[str]:
     """Create every view of one schema in another, whose tables already exist.
 
     Each view is created from ``SHOW CREATE VIEW`` on the source, rewritten for the target
-    (`portable_view_definition`), in name order.
+    (`portable_view_definition`), after every view of the source it reads, since MySQL
+    creates a view only when what it names exists; views that read none of each other
+    are created in name order.
 
     Parameters:
         connection: An open connection.
@@ -746,12 +804,28 @@ def copy_views(connection: Any, source: str, target: str) -> list[str]:
             [source],
         )
     ]
-    for view in views:
+    reads: dict[str, set[str]] = {view: set() for view in views}
+    for view, table in query(
+        connection,
+        'SELECT VIEW_NAME, TABLE_NAME FROM information_schema.VIEW_TABLE_USAGE '
+        'WHERE VIEW_SCHEMA = %s AND TABLE_SCHEMA = %s',
+        [source, source],
+    ):
+        if str(view) in reads and str(table) in reads:
+            reads[str(view)].add(str(table))
+    order = graphlib.TopologicalSorter(reads)
+    order.prepare()
+    created: list[str] = []
+    while order.is_active():
+        ready = sorted(order.get_ready())
+        created.extend(ready)
+        order.done(*ready)
+    for view in created:
         definition = query(
             connection, f'SHOW CREATE VIEW {quote_identifier(source)}.{quote_identifier(view)}'
         )[0][1]
         query(connection, portable_view_definition(str(definition), source, target))
-    return views
+    return created
 
 
 #: The base table holding the observations of a schema whose ``obs_general`` is a view of

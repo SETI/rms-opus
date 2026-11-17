@@ -492,7 +492,10 @@ Without a mode, the command runs the update and then the switch, recording each 
 it finishes. ``--stop-before-switch`` runs the update alone and leaves its generation
 ready to switch; ``--switch-only`` then runs the switch alone on a generation an earlier
 command left ready. Each update and its switch leave the schema ready for the next
-update, so the command can run several times in place.
+update, so the command can run several times in place. A result file pins the schema
+and the bundles of the updates it holds, so the command checks before any phase runs
+that the label's file would take its runs, rather than finish an update it could not
+record and leave its generation pending.
 
 Each phase is checked as an import run's invocations are. The bundle import must leave a
 row in the pending generation for every bundle it imports; rows the served generation
@@ -530,8 +533,12 @@ update imports. What is safe beside which phase:
   visible until the switch. A run without ``--app-cold-only`` is not safe: its db-cold
   pass restarts the MySQL server, which kills the update's connections.
 * **The switch**: never beside a web run. It empties the search tables and flushes the
-  cache a web run is reading, so ``bench_generation`` refuses to switch while anything
-  listens on ``web.toml``'s gunicorn or memcached port.
+  cache a web run is reading. Every ``bench_web`` command holds a lock file in the owned
+  server's data root shared for as long as it runs, and the switch and its purge hold it
+  exclusive, each taking it without waiting: ``bench_generation`` refuses to switch
+  while a web command holds it, and a web command refuses to start during a switch.
+  The switch also refuses while anything listens on ``web.toml``'s gunicorn or memcached
+  port, which a server started outside the harness would.
 * **The purge**: the side runs it while the site serves, but ``bench_generation`` runs
   it straight after the switch, so no web run is beside it.
 
@@ -617,9 +624,11 @@ versions whenever the change raises it. A side whose code has no version checks 
 and is left alone. ``bench_server.clone_schema`` restamps a copied ``ready`` row the same
 way, to the version of the side that will use the copy, and copies any other row as it
 is. It creates each of the source's views in the copy once the copy's tables exist,
-from the source's ``SHOW CREATE VIEW``, with every name the source schema qualifies
-qualified by the copy instead and without the ``DEFINER`` clause, so the view reads the
-copy's tables and the harness's own account defines it. ``bench_db``'s query capture
+and after any view it reads, from the source's ``SHOW CREATE VIEW``, with every name the
+source schema qualifies qualified by the copy instead and without the ``DEFINER``
+clause, so the view reads the copy's tables and the harness's own account defines it. A
+string literal in the definition is copied as it is, even when it holds the source's
+name. ``bench_db``'s query capture
 stamps its schema as ``bench_web`` does before it starts its server.
 
 Before measuring, ``bench_web`` asks the side's settings, in the environment the workers
@@ -672,8 +681,10 @@ there that fails keeps the schema and fails the command, naming it; its ``saved_
 and ``saved_django_session`` hold the rows to put back.
 
 ``--app-cold-only`` makes each run the app-cold pass alone, with its warm repetitions,
-so a run never restarts the MySQL server and another process can use it meanwhile, such
-as an incremental update (:ref:`dev_guide_benchmarks_generation`). The environment
+against a MySQL server already running, so another process can use it meanwhile, such
+as an incremental update (:ref:`dev_guide_benchmarks_generation`). The command refuses
+to run while the server is down, and never starts, restarts or stops it; without the
+option the command starts a server that is down, and stops it again when it finishes. The environment
 records the cold states a run's passes reset to as ``cold_states``, and a result file
 refuses web runs that differ in them.
 
