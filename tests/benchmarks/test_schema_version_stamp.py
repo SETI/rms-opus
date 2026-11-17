@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from benchmarks import bench_server, bench_web
+from benchmarks import bench_server, bench_web, schema_copy
 from benchmarks.app_servers import ServerError
 from benchmarks.bench_web import WebRunError, stamp_schema_version
 from benchmarks.sides import Side, SideError, Spelling
@@ -56,7 +56,7 @@ def test_a_failing_interpreter_is_an_error(tmp_path: Path) -> None:
 
 def test_every_clone_states_the_version() -> None:
     """The right value depends on the side, so the parameter has no default."""
-    parameter = inspect.signature(bench_server.clone_schema).parameters['version']
+    parameter = inspect.signature(schema_copy.clone_schema).parameters['version']
     assert parameter.kind is inspect.Parameter.KEYWORD_ONLY
     assert parameter.default is inspect.Parameter.empty
 

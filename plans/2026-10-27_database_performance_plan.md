@@ -8959,6 +8959,331 @@ Nothing above this line is rewritten by an executor.
   one in a served row; only the served one is reported, and without the fix the retired
   row's min/max, `obs_pds` and preview defects are reported too.
 
+### 2026-11-16, PR-23a (written against this file at 54760861)
+
+- **Split from PR-23** so that each pull request fits CodeRabbit's cap of 100 reviewable
+  files (see PR-23's "Split for review"). It carries the benchmark harness's support for
+  generations unchanged from PR-23's 411f1e2c: `bench_generation`, `bench_web
+  --app-cold-only`, the view-aware `bench_server.clone_schema`, the harness's other
+  changes, their tests and `dev_guide_benchmarks.rst`.
+- **A complex search and a column set**, asked for by the operator: PR-23's scenarios
+  searched on one table, or two, and paged the default columns. `web.toml`'s `complex`
+  search selects on four tables (a time range, `instrument=Cassini ISS` and
+  `target=Saturn` on `obs_general` and its junction, a ring radius range on
+  `obs_ring_geometry`, a latitude range on Saturn's surface geometry), and runs as
+  `search.complex`, `pages.complex`, `resort.complex` and `fanout.complex`. A `pages`
+  scenario may name a column set from `[columns]`, asked for as `cols`;
+  `pages.complex_geometry` asks for columns from the same four tables. At complete scale
+  the search matches 51,068 observations, so its pages 10 and last exist.
+- **The complex search measured** (2026-11-16, complete scale), for PR-23 against
+  `db-perf`: a fresh import of PR-23's code (2,935.5 s) against the base schema of PR-23's
+  clean session, `bench_db` and `bench_web` alternated three runs a side with this
+  branch's harness at 84fb95bc; the machine idle between phases. The cold fan-out's mult
+  counts are unchanged (`instrument` 1.38 s against 1.40 s db-cold, `target` 1.43 s
+  against 1.46 s), and the result count and re-sort are within 3% at web level; in
+  `bench_db` every complex statement is within or near its spread, the count 6.2%
+  slower. The pages scenarios' cold medians came out 64–69% slower. That is one request
+  per run taking 50–60 ms more, handled by a gunicorn thread that had not yet opened its
+  database connection: the run has one more MySQL connection and 21–31 more statements.
+  Such runs are about as frequent on both sides across the session's cold scenario runs
+  (53 and 61 of 180; 44 and 46 of 150 in the clean session), but in
+  `pages.complex_geometry` they fell in 5 of PR-23's 6 cold runs and none of the base's.
+  The page statements are the same on both sides. PR-23's body has the tables.
+- **CodeRabbit's review (2026-11-17)**, of 84fb95bc, all fixed with a test that fails with
+  the fix reverted (mutation-checked):
+  - *Fixed:* the switch's refusal probed `bench_web`'s two ports one after the other, so
+    an app-cold reset, between restarting gunicorn and memcached, could find both quiet.
+    A lock file in the owned server's data root is held shared by every `bench_web`
+    command and exclusive by the switch through its purge, each without waiting; the
+    port probe stays for a server started outside the harness.
+  - *Fixed:* `bench_web --app-cold-only` started a stopped MySQL server and stopped it on
+    exit, which would stop an update that attached meanwhile; it needs the server running
+    and never starts or stops it, as `bench_generation` does.
+  - *Fixed:* `bench_generation` found a label whose file pins other bundles only when it
+    appended, after the update had run and left its generation pending; it checks first.
+  - *Fixed:* copying a schema's views rewrote the source qualifier inside string literals
+    too, and created views in name order; it rewrites identifiers only and creates each
+    view after the views it reads.
+
+### 2026-11-16, PR-24 (written against this file at 9db392e2)
+
+- **The measuring tools only; the PR is gated.** The branch is PR-23a's head (9db392e2).
+  It adds `bench_db --option-probe` and the prototype tool, and changes nothing under
+  `src/`. The complete-scale session (the floor sessions, both prototypes, the probe on
+  each copy) is the orchestrator's; its report goes in the PR's description, and nothing
+  of either option is implemented until the operator decides.
+- **The prototypes** are `python -m benchmarks.option_prototypes --source <schema> --target
+  <copy> --option {default_rank,facet}` (`benchmarks/option_prototypes.py`), one option per
+  command, each on its own copy made by `bench_server.clone_schema` (views included); the
+  source is only read.
+  - *`default_rank`:* `ALTER TABLE obs_general_rows ADD COLUMN default_rank INT UNSIGNED,
+    ADD KEY default_rank (default_rank)`, then one `UPDATE` joining the table to its own
+    rows numbered by `ROW_NUMBER() OVER (ORDER BY time1, opus_id)`; then the view is
+    re-created by `ImportDBMySQL.create_obs_general_view` (the import's own code path,
+    reached through a connection the tool opens with `bulk_load=False`), given
+    `obs_general.json`'s entries with `{"field_name": "default_rank", "field_type":
+    "uint4"}` after them, which is how an implemented column would reach the view. A
+    schema whose `obs_general` is a base table gets the column there and no view.
+  - *`facet`:* `obs_facet(obs_general_id INT UNSIGNED NOT NULL PRIMARY KEY, ...)`, one
+    column per field of `mult_fields.packaged_mult_columns()` whose `field_type` is
+    `mult_idx`, `flag_yesno` or `flag_onoff` and whose table holds one row per observation
+    (`obs_general`, or a schema declaring the primary key `(obs_general_id)` alone, read
+    with `table_keys.declared_keys`), named by the qualified name and typed by
+    `MYSQL_FIELD_TYPE_SQL` (PR-14's `SMALLINT UNSIGNED`); no secondary key. One `INSERT
+    ... SELECT` fills it from `obs_general` (the view) left joined to each child on
+    `obs_general_id`. A list column (its junction table has several rows per observation)
+    and `obs_surface_geometry_target`'s field are excluded by that rule, not by a list. A
+    field whose table the copy lacks is left out and named in the details.
+  - Each refuses a copy whose `obs_general` shows fewer rows than `obs_general_rows`
+    holds (a pending generation), and a copy already carrying the option. The run, kind
+    `prototype` (not compared), records `prototype.<option>.{clone_s, alter_s, fill_s,
+    view_s | create_s, fill_s, build_s, rows, data_bytes, index_bytes}`, plus `key_bytes`
+    (the rank key's size from `mysql.innodb_index_stats`) and the facet's `columns`, bytes
+    read after `ANALYZE TABLE` with `information_schema_stats_expiry = 0`. The `ALTER`
+    rebuilds `obs_general_rows` (MySQL cannot add a column instantly together with a key),
+    so the rank's `data_bytes` includes the rebuild's effect; `key_bytes` is the clean
+    figure for the key. The label's environment names the copy as its `schema`, so
+    `bench_db` and `bench_web` given the same label measure the copy. The tool builds with
+    the harness process's own import code and refuses a `--repo-root` other than its own
+    checkout.
+- **The probe** (`benchmarks/option_probe.py`, `bench_db --option-probe`, needs
+  `--dump-queries`) runs after the replay, on connections of its own. Each request it
+  covers is a pair of a **captured** shape (from the capture) and a **prototype** shape
+  (generated from it and from the built searches' ids, written to no capture):
+  - `default_rank.empty_page_1` / `empty_page_last`: the page read of `pages.empty/page_1`
+    and `page_last` (the `INNER JOIN` to the search's `search_results` rows with `sort_order
+    BETWEEN a AND b ORDER BY sort_order`) against the same columns and joins with `WHERE
+    obs_general.default_rank BETWEEN a AND b ORDER BY obs_general.default_rank`;
+    `default_rank.broad_build`: the inner `SELECT` of `search.broad/result_count`'s `INSERT
+    INTO search_results` against the same with its window ordered by `default_rank ASC`.
+  - `facet.<search>.mults_<slug>`: each mult count of `mults.broad` and `mults.selective`
+    whose counted `<table>.<column>` is a facet column, against `SELECT obs_facet.<column>,
+    COUNT(*) ... FROM obs_facet, (<the search's search_results rows>) AS results WHERE
+    obs_facet.obs_general_id = results.id [AND obs_facet.<column> IS NOT NULL] GROUP BY
+    ...`; the `IS NOT NULL` is for a child column only, since an observation without a
+    child row holds NULL in the facet table and has no row in the captured count. The
+    `target` counts (the junction table's `mult_id`) are not probed, and the details say
+    so.
+  - *Cold and warm:* each shape is timed by `server.restart()`, a connection opened after
+    it, one `EXPLAIN ANALYZE` (cold) and `EXPLAIN_RUNS` (5) more (warm, the median).
+    `--option-probe-rounds N` (default 1) repeats every shape's restart-cold-warm N times;
+    each figure is the median over the rounds, every value in `samples`.
+  - *Rows:* after the timed runs each shape's rows are read once. A page and a count are
+    fetched and compared with the other shape's (a page in order, a count as a multiset);
+    a build is counted by `SELECT COUNT(*)` over it. A page read cannot be counted that
+    way: its select list names `label` twice, which a derived table refuses.
+  - *Metrics:* `db.option_probe.<option>.<pair>.{cold_s, warm_s, cold_analyze_ms,
+    warm_analyze_ms, rows_examined, rows_returned}` are of the shape the schema answers
+    with: the prototype where the schema carries the option (`obs_general.default_rank`
+    exists; `obs_facet` exists), the captured shape where it does not. So on the
+    unmodified schema the probe times the captured shapes alone and says the options are
+    skipped (not a failure), the floor sessions get floors for the pair metrics, and
+    `compare <floor session> <copy> --floors-file ... --target
+    db.option_probe.default_rank.broad_build.cold_s` judges a target directly. On a copy
+    the captured shape is also under `.captured.`, with `cold_ratio` and `warm_ratio`.
+    `.valid` per pair and `db.option_probe.<option>.valid` per option.
+  - *Failures:* a shape with no rows, two shapes with different counts or rows, or a
+    statement the server refuses fails its pair and the others still run; a capture
+    lacking an option's captured shapes fails that option; a server that cannot be
+    restarted fails the probe (`measure`). The run is recorded and `bench_db` exits
+    non-zero naming every problem (`probe_failure` covers both probes).
+- **Decisions where the section left a choice:**
+  - *The captured mult counts did not exist.* The capture held mult counts only for
+    `fanout.empty`, `fanout.selected` and `fanout.complex`, and none for a widget on a
+    child table, so the section's "captured counts" of the broad and the selective search
+    could not come from it. A `mults` scenario kind (`web_scenarios`: an untimed result
+    count, then the default widgets' counts and `[mults] widgets`') and two scenarios,
+    `mults.broad` and `mults.selective`, are added to `web.toml`, with `[mults] widgets =
+    ["imagetype"]` (`obs_type_image`, which holds one row per observation at every scale).
+    They run in `bench_web` too, so the complete-scale floor sessions cover them.
+  - *Which searches.* "The broad constrained search" is `web.toml`'s `broad` (the time
+    range), whose build and counts both options pair; "the selective one" is `selective`
+    (`planet=Uranus`).
+  - *Rounds.* A complete-scale `bench_db --dump-queries` is long, so a floor session's
+    spread of a cold time comes from `--option-probe-rounds 3` within one run rather than
+    from three `bench_db` runs.
+  - `resort_probe`'s block lookup, top-level keyword search, `WHERE` pattern, search-id and
+    build patterns are made public (`tagged_block`, `top_level`, `WHERE_KEYWORD`,
+    `SEARCH_ID_READ`, `RESULTS_INSERT`, and `search_build`, which `captured_resort` calls),
+    so the option probe reuses them.
+- **Fixture-scale smoke** (not a measurement; the harness's own server, a fixture import
+  made for it with `bench_import --runs 1`, dropped afterwards): `bench_db --dump-queries
+  --option-probe` on the unmodified schema timed the 9 captured shapes, all valid, both
+  options skipped; the `default_rank` copy (`view_s` re-created the view, which lists
+  `default_rank` last; every row's rank equals its `ROW_NUMBER()` over `(time1, opus_id)`)
+  with `--option-probe-rounds 2` gave its 3 pairs valid, the pages returning the captured
+  rows in order and the build 379 rows both ways; the `facet` copy (86 columns, 399 rows)
+  gave its 6 pairs valid. `compare` of the unmodified run against the rank copy's printed
+  the pair metrics side by side and judged the named target.
+- **Tests:** `tests/benchmarks/test_option_probe.py` and `test_option_prototypes.py`, a
+  `mults` case in `test_scenarios.py`, and a check that `web.toml` issues every request the
+  probe reads; 16 mutations of the two modules (the restart, the cold run, the row
+  comparison in order, the NULL filter, the one-row-per-observation rule, the view's
+  re-creation and its rank entry, the served-rows refusal, the left join, the bytes delta,
+  the copy-is-source refusal, the metric naming and others) each failed a test.
+- Results: `run-all-checks.sh` passes (ruff, ruff format, mypy, pytest 3,592 passed, pyroma,
+  bandit, vulture, Sphinx, PyMarkdown). The import suite was not run: nothing under `src/`
+  or `import_tests/` changed.
+
+### 2026-11-16, PR-24 review fixes (written against this file at 0bd89ee6)
+
+An independent review and CodeRabbit reviewed 0bd89ee6. The orchestrator's decisions
+below are each fixed with a test that fails with the fix reverted (mutation-checked: 23
+reversions, each failing a test).
+
+- **The copies' layout.** `clone_schema` created each table with every secondary key, then
+  filled it, so the copy's secondary keys were built by random inserts (fragmented, with a
+  change-buffer backlog merging during the cold timings), where the import builds them
+  sorted after its load. `clone_schema` gains `defer_keys` (default off, so its other
+  callers are unchanged): each table is created from `SHOW CREATE TABLE` with its plain,
+  unique, `FULLTEXT` and `SPATIAL` keys and its foreign keys set apart
+  (`schema_copy.split_secondary_keys`, which reads one element per line), filled ordered by
+  its primary key, then given its plain and unique keys in one `ALTER` and each `FULLTEXT`
+  or `SPATIAL` key in its own, then, once every table has its keys, its foreign keys with
+  `foreign_key_checks` off. `option_prototypes` always copies so, and after the build
+  restarts the server once with `innodb_fast_shutdown = 0`, putting the setting back after
+  (`settle_server`, `prototype.<option>.settle_s`). A third option, `none`, is the copy
+  alone. At fixture scale the `none` copy's 48 tables' `SHOW CREATE TABLE` equal the
+  source's exactly (180 secondary keys, 35 foreign keys), the rank copy differs only by the
+  rank column and key, and the facet copy only by `obs_facet`.
+  - `bench_server.py` would have passed the module-size rule, so `clone_schema`,
+    `copy_views` and `portable_view_definition` move, unchanged otherwise, into
+    `benchmarks/schema_copy.py`; `bench_import` and the tests import them from there.
+  - The complete-scale floor sessions run on the `none` copy, so every schema compared
+    has one layout; no import runs in them (the source is any finished schema of this
+    import code, only read).
+- **The rank's bytes.** Both sides of the delta were already read after `ANALYZE TABLE`;
+  with the copies laid out as the import does, the delta compares like layouts. `key_bytes`
+  is the figure the guide and the runbook report.
+- **A copy run that is not what its label says.** `db.option_probe.<option>.carried` (0/1)
+  is recorded, and `bench_db --option-probe` refuses, before anything runs, when the
+  label's result file holds a `prototype` run of an option the schema does not carry
+  (`bench_db.prototype_options`, `option_probe.require_carried`). At fixture scale the
+  rank label given `--schema` of the `none` copy is refused.
+- **An invalid pair** records `.valid` = 0 and no other metric or sample; its figures stay
+  in the details. A failure in a later round leaves no earlier round's figures under the
+  judged names.
+- **The build's check** reduces each shape on the server to its row count,
+  `SUM(sort_order * obs_general_id)` and the `BIT_XOR` of the first 64 bits of
+  `MD5(CONCAT(sort_order, ',', obs_general_id))` (`option_probe.build_checksum`, through a
+  derived table's column list, `AS numbered (search_id, sort_order, obs_general_id)`).
+  The review's suggestion was `BIT_XOR(CRC32(...))`; at fixture scale, with two ranks of
+  the rank copy swapped, the weighted sum changed but the CRC XOR did not: a CRC is affine
+  over XOR, so two rows exchanging their numbers between texts of equal length leave the
+  XOR of their CRCs as it was. With MD5 both checksums changed and the pair failed; with
+  the ranks put back it passed.
+- **`obs_facet`** is created with `STATS_SAMPLE_PAGES` from
+  `opus_import.importdb.mysql.STATS_SAMPLE_PAGES`.
+- **The jitter.** `compare` treats the re-sort probe's metrics as ordinary `db` metrics, so
+  there was no precedent to follow; the option probe's metrics form a family of their own,
+  `db.option_probe` (`compare.metric_family`), so their cold times stay out of the `db`
+  family's jitter.
+- **The view.** The row-count refusal let through a pending generation with no rows yet.
+  `require_served_view` refuses a source whose `schema_version` records a pending
+  generation or a revertible switch, or whose `obs_general` view has a condition (a
+  top-level `WHERE` outside quotes), before it is copied; and `require_view_columns`
+  refuses a rank copy whose view lists other columns, in order, than
+  `generations.view_columns(obs_general.json)`, before anything is changed. The view is
+  still made from `obs_general.json` by the import's code.
+- **Warm figures per round** (CodeRabbit): each round's warm figure is the median of its
+  executions, and the metric and its samples are over those per-round values, which
+  `compare.summarize` recomputes from; every execution is in the details.
+- **Fixture scale** (the harness's own server; one import made for it and the three copies,
+  all dropped afterwards; timings are not a measurement): the `none`, `default_rank` and
+  `facet` copies built and settled; `bench_db --dump-queries --option-probe
+  --option-probe-rounds 2` on each recorded every pair valid, `carried` 0/0, 1/0 and 0/1,
+  two warm samples a figure with ten executions in the details, and the build's checksums
+  equal on the rank copy.
+
+### 2026-11-17, PR-24 complete-scale session (written against this file at 6da7388e)
+
+- **The session** (§2.6; the harness's own server, the machine idle before every phase):
+  - **The source** was PR-23's head import (`bench_complete_after_rings_1`, schema version
+    13, no generation pending), which `src/` here equals.
+  - **Floors:** two floor sessions, `f1` and `f2`, on the `none` copy, each running
+    `bench_web` three times and `bench_db --dump-queries --option-probe
+    --option-probe-rounds 3`.
+  - **Prototypes:** `rank` and `facet`, each building its copy, running the probe with
+    three rounds, then `bench_web` three times.
+  - **Warm-up:** one warmed `bench_web` run on the `none` copy, session `warm`.
+  - **Copy costs:** each copy took 37–38 minutes to clone and 1–2.5 minutes to settle.
+  - **Floor agreement:** `compare --floors` lists 91 metrics on which the two floor
+    sessions disagree. On the target shapes the sessions differ by 1.6% at most, against
+    spreads within a session of 0.5–2.6%, so no third session was taken.
+- **Option 1, the rank:**
+  - *Probe:* every pair valid.
+  - *Cold, against the floors:* the target, the broad build's cold time, is 1.204 s
+    against the floor sessions' 1.059 s (+13.7%, "not improved").
+  - *Cold, on the same copy:* the captured build takes 1.41 s cold, against 1.05 s on the
+    `none` copy. The `ALTER` rebuilt `obs_general_rows` 14% larger (325 MB against
+    285 MB), and the copy reads slower cold. The in-copy ratio is the like-for-like
+    figure: 0.85 cold (1.20 s against 1.41 s) and 0.78 warm (0.70 s against 0.91 s).
+  - *Pages:* the empty search's pages by `default_rank` take 17–21 ms cold against
+    25–29 ms.
+  - *Cost:* `key_bytes` 64.6 MB, and 39.8 MB more data. Build 292 s, of which the `ALTER`
+    is 259 s and the fill 33 s.
+  - *Guards:* all 22 held.
+- **Option 2, the facet table:**
+  - *Probe:* every pair valid. The copy's captured counts time like the floors.
+  - *Broad search:* counting from `obs_facet` is slower. Cold against the same copy's
+    captured counts: `instrument` 1.72 s against 1.50 s, `imagetype` 1.83 s against
+    1.44 s, `observationtype` 1.73 s against 1.73 s. Warm: 4–37% slower.
+  - *Why:* the captured count streams `obs_general_rows`' covering `instrument_id` key in
+    group order, while the facet count scans the 159 MB table and groups in a temporary
+    table. In both, about 0.9 s of the time is the 1.6 million lookups into
+    `search_results`.
+  - *Selective search:* counts are 40% faster cold, at 28–32 ms against 47–54 ms.
+  - *Cost:* 159 MB of data, 86 columns, and a 28 s fill.
+  - *Verdicts and guards:* against the floors, two targets are "not improved" and one
+    "improved" (−3.1%). 21 of 22 guards held. The one that regressed,
+    `app-cold.pages.empty`, is a request the facet table cannot reach.
+- **PR-22's confirmation:**
+  - The bundle-ID autocomplete answers with a prefix `LIKE` range on `obs_pds.bundle_id`
+    under `MAX_EXECUTION_TIME`, the branch without the join to the search, in 14–41 ms
+    cold.
+  - It had no timeouts in any of the six floor runs.
+  - Its warm requests take under 1.2 ms.
+- **`warm_search`'s wall-clock**, over 34 resets each: median 35.8 s after a restart
+  (34.3–37.6 s), and 39.0 s app-cold (34.7–40.7 s).
+- **CodeRabbit, on 6da7388e:** `require_served_view` also refuses a view with a top-level
+  `LIMIT`, which the import never makes.
+- **Searches of every size**, after the report, on the same copies: each captured search's
+  build (`selective`, `complex`, `surface_geometry`, `target`, `ring_radius`, the selected
+  fan-out, `broad`, and for option 1 the empty search), timed cold after a server restart
+  and as the median of five warm executions. These are timed by the client around the
+  statement, not by `EXPLAIN ANALYZE`, so they are not the probe's figures.
+  - *Option 2:* each built search's mult counts for `instrument`, `observationtype` and
+    `imagetype`, from `obs_facet` against the captured counts, returning the same counts.
+    For the two columns of `obs_general_rows` the facet count is 18–43% faster cold on
+    searches of 10,697 to 519,991 rows (at most about 250 ms), 5–17% slower on the fan-out,
+    and on the broad search 4% faster for `observationtype` and 17% slower for
+    `instrument`. Warm, those two columns are 4–35% slower on every search. `imagetype`, the
+    child table's widget, is slower on every search, cold and warm.
+  - *Option 1:* each build's `SELECT` ordered by `default_rank` against `(time1, opus_id)`,
+    wrapped as `SELECT COUNT(*), SUM(rn * id)` so the numbering is compared on the server;
+    every numbering matched. Cold and warm ratios: `selective` 0.93 and 0.86, `complex`
+    0.97 and 0.97, `surface_geometry` 0.96 and 0.93, `target` 0.86 and 0.72, `ring_radius`
+    0.94 and 0.93, the fan-out 0.90 and 0.85, `broad` 0.86 and 0.80, the empty search 0.81
+    and 0.69. The saving is the sort's share of the build: tens of milliseconds on a
+    constrained search, 0.1–0.3 s on the largest. The wrapping gives `complex` and
+    `ring_radius` slower plans than the application's `INSERT ... SELECT` gets (`ring_radius`
+    1.77 s warm against 0.99 s), the same plan for both orders, so their ratios compare like
+    for like and their times do not.
+
+### 2026-11-17, ruling on PR-24 (written against this file at d94d6d53)
+
+- **Neither option is implemented.** The operator ruled on the report and the sweeps
+  above.
+  - *Option 1:* its target is "not improved" against the floors. Like for like it saves
+    0.1–0.3 s on the largest builds and tens of milliseconds on constrained ones. A build
+    runs once and is then cached, and the empty search, which gains most, is warmed after
+    every deploy. Against that it costs a column, a key, a full re-import, and a
+    renumbering of every observation after each import and update, which under design B
+    falls in the switch, while the site is down.
+  - *Option 2:* its target is "not improved". The facet count is slower on broad searches,
+    slower warm on every search, and slower for a child table's widget, and saves at most
+    about 250 ms cold on mid-sized searches.
+
 ### 2026-11-17, PR-23b (written against this file at 208b19c0)
 
 - **Deploying a revision with no release**, at the operator's request for an easier way

@@ -14,7 +14,7 @@ The fixture scale runs through `import_tests.tools.build_run.perform_run`; the t
 complete scales run the groups of their scenario file through
 `import_tests.tools.build_run.run_pipeline_step`. At test scale a full run is followed
 by the scenario's largest bundle imported alone into a fresh schema, and by the
-incremental group: a copy of the finished schema (`benchmarks.bench_server.clone_schema`),
+incremental group: a copy of the finished schema (`benchmarks.schema_copy.clone_schema`),
 the largest bundle imported into it again, and the finalization sequence after.
 
 Two more modes serve a change measured on clones, whose only change to the schema is
@@ -83,17 +83,15 @@ from benchmarks.bench_server import (
     DB_PASSWORD,
     DB_USER,
     MysqlServer,
-    clone_schema,
     counter_deltas,
     drop_schema,
     global_status,
     load_server_config,
-    parse_import_keys,
+    obs_general_table,
     query,
     quote_identifier,
     reexec_with_socket,
     server_environment,
-    write_opus_config,
 )
 from benchmarks.import_scenarios import (
     ImportScenario,
@@ -102,6 +100,7 @@ from benchmarks.import_scenarios import (
     require_empty_errors_log,
 )
 from benchmarks.monitor import InvocationMonitor, RunFailedError
+from benchmarks.opus_config_file import parse_import_keys, write_opus_config
 from benchmarks.results import (
     RESULTS_DIR,
     SCALES,
@@ -114,6 +113,7 @@ from benchmarks.results import (
     new_run,
     scenario_hash,
 )
+from benchmarks.schema_copy import clone_schema
 from benchmarks.sides import Side, Spelling, require_no_pythonpath
 from import_tests.tools import build_run, run_logs
 from import_tests.tools.golden_io import DatabaseCredentials
@@ -978,12 +978,17 @@ class ImportBench:
             return [dict(zip(columns, row, strict=True)) for row in query(connection, statement)]
 
     def _rows(self, schema: str, bundle: str) -> int:
-        """Return how many ``obs_general`` rows a bundle has in a schema."""
-        statement = (
-            f'SELECT COUNT(*) FROM {quote_identifier(schema)}.obs_general '  # nosec B608 - quoted identifier
-            'WHERE bundle_id = %s'
-        )
+        """Return how many ``obs_general`` rows a bundle has in a schema, in any generation.
+
+        The rows are counted in the base table that holds the observations
+        (`benchmarks.bench_server.obs_general_table`).
+        """
         with contextlib.closing(self.server.connect()) as connection:
+            base = quote_identifier(obs_general_table(connection, schema))
+            statement = (
+                f'SELECT COUNT(*) FROM {quote_identifier(schema)}.{base} '  # nosec B608 - quoted identifiers
+                'WHERE bundle_id = %s'
+            )
             return int(query(connection, statement, [bundle])[0][0])
 
     def _incremental(self, run: dict[str, Any], index: int | str, source: str) -> None:
@@ -1091,11 +1096,13 @@ class ImportBench:
     ) -> tuple[int, int]:
         """Count a bundle's ``obs_general`` rows, and those written before a moment.
 
-        A side whose ``obs_general`` has a ``timestamp`` column, which the server set as
-        each row was loaded, says when each row was written. A side without one has the
-        bundle registry instead: its rows were all written since the moment when the
-        bundle's row is ``done``, its latest import began no earlier, and that import
-        counted every row in ``rows_done``; otherwise every row counts as older.
+        The rows are those of the base table that holds the observations
+        (`benchmarks.bench_server.obs_general_table`). A side whose ``obs_general`` has a
+        ``timestamp`` column, which the server set as each row was loaded, says when each
+        row was written. A side without one has the bundle registry instead: its rows
+        were all written since the moment when the bundle's row is ``done``, its latest
+        import began no earlier, and that import counted every row in ``rows_done``;
+        otherwise every row counts as older.
 
         Parameters:
             schema: The schema.
@@ -1109,23 +1116,25 @@ class ImportBench:
         local, utc = since
         q_schema = quote_identifier(schema)
         with contextlib.closing(self.server.connect()) as connection:
+            base = obs_general_table(connection, schema)
+            observations = f'{q_schema}.{quote_identifier(base)}'
             has_timestamp = query(
                 connection,
                 'SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = %s '
-                "AND TABLE_NAME = 'obs_general' AND COLUMN_NAME = 'timestamp'",
-                [schema],
+                "AND TABLE_NAME = %s AND COLUMN_NAME = 'timestamp'",
+                [schema, base],
             )[0][0]
             if has_timestamp:
                 statement = (
-                    f'SELECT COUNT(*), COALESCE(SUM(`timestamp` < %s), 0) '  # nosec B608 - quoted identifier
-                    f'FROM {q_schema}.obs_general WHERE bundle_id = %s'
+                    f'SELECT COUNT(*), COALESCE(SUM(`timestamp` < %s), 0) '  # nosec B608 - quoted identifiers
+                    f'FROM {observations} WHERE bundle_id = %s'
                 )
                 rows, stale = query(connection, statement, [local, bundle])[0]
                 return int(rows), int(stale)
             rows = int(
                 query(
                     connection,
-                    f'SELECT COUNT(*) FROM {q_schema}.obs_general WHERE bundle_id = %s',  # nosec B608 - quoted identifier
+                    f'SELECT COUNT(*) FROM {observations} WHERE bundle_id = %s',  # nosec B608 - quoted identifiers
                     [bundle],
                 )[0][0]
             )
@@ -1214,12 +1223,15 @@ class ImportBench:
             metrics['import.server.peak_checkpoint_age_bytes'] = max(ages)
         with contextlib.closing(self.server.connect()) as connection:
             after = global_status(connection)
+            observations = (
+                f'{quote_identifier(schema)}.'
+                f'{quote_identifier(obs_general_table(connection, schema))}'
+            )
             by_bundle = {
                 str(bundle): int(count)
                 for bundle, count in query(
                     connection,
-                    f'SELECT bundle_id, COUNT(*) FROM {quote_identifier(schema)}.obs_general '  # nosec B608 - quoted identifier
-                    'GROUP BY bundle_id',
+                    f'SELECT bundle_id, COUNT(*) FROM {observations} GROUP BY bundle_id',  # nosec B608 - quoted identifiers
                 )
             }
         for name, delta in counter_deltas(before, after, IMPORT_COUNTERS).items():
@@ -1555,6 +1567,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         'bulk_load_path': DEFAULT_BULK_LOAD_PATH,
         'importers': args.importers,
         'coordinator_importers': args.coordinator,
+        'generation_schema': None,
+        'generation_update': None,
     }
     if args.importers is not None and spelling.join is None:
         sys.exit('this side has no --join: measure it without --importers, in one process')

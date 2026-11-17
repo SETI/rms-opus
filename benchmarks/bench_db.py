@@ -10,7 +10,8 @@ field (``MAX(id)`` of each per-field ``mult_`` table, or of each field's ``mult`
 the schema's index bytes including InnoDB's ``FULLTEXT`` auxiliary tablespaces,
 which ``information_schema.TABLES`` leaves out; the schema's total beside
 ``innodb_buffer_pool_size``; the size of ``preview_images``, in ``obs_preview`` or, on a
-schema without that table, in ``obs_general``; and the index-usage snapshot.
+schema without that table, in the base table holding ``obs_general``'s rows; and the
+index-usage snapshot.
 
 ``--dump-queries`` captures the statements each web scenario's requests issue against
 this side's own schema (`benchmarks.query_capture`) into the session's scratch
@@ -28,6 +29,17 @@ non-zero result count, or that could not run (a capture without the shapes, a st
 the server refused), is recorded with the rest of the run, and then the command exits with
 an error.
 
+``--option-probe``, with ``--dump-queries``, then times the statements each measured schema
+option would answer with beside the application's own (`benchmarks.option_probe`), each
+from a cold start of the server, on new connections after the replay's;
+``--option-probe-rounds`` says how many cold starts each shape is timed from. A schema
+without an option's prototype has that option's captured shapes timed alone. A pair whose
+shapes returned no rows or different rows, or a probe that could not run, is recorded with
+the rest of the run, and then the command exits with an error. The probe is refused before
+anything runs when the label's result file holds a ``prototype`` run of an option the schema
+does not carry (`prototype_options`), since its pairs would be timed in their captured shape
+under the names the prototype's figures take.
+
 ``--ascii-columns`` counts, for every column whose form type is ``STRING``, the values
 that do not survive conversion to ASCII.
 
@@ -35,7 +47,7 @@ Example::
 
     python -m benchmarks.bench_db --scale test --side before --pr PR-nn --session a \\
         --python venv-head/bin/python --repo-root . --dump-queries --resort-probe \\
-        --ascii-columns
+        --option-probe --ascii-columns
 """
 
 from __future__ import annotations
@@ -47,16 +59,17 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from benchmarks import query_capture, resort_probe
+from benchmarks import option_probe, query_capture, resort_probe
 from benchmarks.app_servers import MemcachedServer
 from benchmarks.bench_server import (
+    OBS_GENERAL_ROWS_TABLE,
+    OBS_GENERAL_TABLE,
     MysqlServer,
     load_server_config,
     query,
     quote_identifier,
     reexec_with_socket,
     server_environment,
-    write_opus_config,
 )
 from benchmarks.bench_web import (
     Client,
@@ -67,14 +80,19 @@ from benchmarks.bench_web import (
     run_sequence,
     side_schema,
 )
+from benchmarks.option_prototypes import PROTOTYPE_KIND
+from benchmarks.opus_config_file import write_opus_config
+from benchmarks.resort_probe import ProbeError
 from benchmarks.results import (
     REPO_ROOT,
+    RESULTS_DIR,
     SCALES,
     SCENARIOS_DIR,
     SIDES,
     Label,
     append_runs,
     host_environment,
+    load_result,
     make_label,
     median,
     new_run,
@@ -197,10 +215,14 @@ def like_literal(text: str) -> str:
     return text.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
 
 
+#: The base tables that may hold ``obs_general``'s rows, in the order they are looked for: a
+#: schema whose ``obs_general`` is a view holds them in ``obs_general_rows``.
+OBS_GENERAL_BASE_TABLES = (OBS_GENERAL_TABLE, OBS_GENERAL_ROWS_TABLE)
+
 #: The tables that may hold ``preview_images``, in the order they are looked for: a schema
-#: holds the column in ``obs_preview`` where it has that table, and in ``obs_general``
-#: otherwise.
-PREVIEW_TABLES = ('obs_preview', 'obs_general')
+#: holds the column in ``obs_preview`` where it has that table, and otherwise in the base
+#: table holding ``obs_general``'s rows.
+PREVIEW_TABLES = ('obs_preview', *OBS_GENERAL_BASE_TABLES)
 
 
 def preview_images(
@@ -209,7 +231,8 @@ def preview_images(
     """Return the size of ``preview_images`` beside ``obs_general``'s data.
 
     The column is read from the first of `PREVIEW_TABLES` the schema has, so a schema of
-    either shape is measured. Both ``DATA_LENGTH`` and ``JSON_STORAGE_SIZE`` count a large
+    any shape is measured, and the ratio is to the data of the first of
+    `OBS_GENERAL_BASE_TABLES` it has. Both ``DATA_LENGTH`` and ``JSON_STORAGE_SIZE`` count a large
     value's off-page pages, which a scan of ``obs_general``'s other columns never reads,
     so the ratio overstates what holding the column elsewhere saves a scan.
 
@@ -221,7 +244,7 @@ def preview_images(
     Returns:
         The table holding the column, the column's average and total storage size, and
         the total's ratio to ``obs_general``'s data length; None when the schema has
-        neither table.
+        none of the tables.
     """
     table = next((name for name in PREVIEW_TABLES if name in statistics), None)
     if table is None:
@@ -232,7 +255,8 @@ def preview_images(
         'COALESCE(SUM(JSON_STORAGE_SIZE(preview_images)), 0) '
         f'FROM {quote_identifier(schema)}.{quote_identifier(table)}',  # nosec B608 - quoted
     )[0]
-    obs_general_data_bytes = statistics.get('obs_general', {}).get('data_bytes', 0)
+    base = next((name for name in OBS_GENERAL_BASE_TABLES if name in statistics), None)
+    obs_general_data_bytes = 0 if base is None else statistics[base].get('data_bytes', 0)
     return {
         'table': table,
         'average_bytes': float(average),
@@ -442,6 +466,18 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         'needs --dump-queries',
     )
     parser.add_argument(
+        '--option-probe',
+        action='store_true',
+        help="time each measured option's statements beside the application's, each from a "
+        'cold start of the server; needs --dump-queries',
+    )
+    parser.add_argument(
+        '--option-probe-rounds',
+        type=int,
+        default=1,
+        help='how many cold starts the option probe times each statement from (default 1)',
+    )
+    parser.add_argument(
         '--ascii-columns', action='store_true', help='count non-ASCII STRING values'
     )
     return parser.parse_args(argv)
@@ -459,6 +495,10 @@ def main(argv: Sequence[str] | None = None) -> None:
         raise SystemExit('--commit-capture copies the capture --dump-queries makes; give both')
     if args.resort_probe and not args.dump_queries:
         raise SystemExit('--resort-probe re-sorts the searches --dump-queries builds; give both')
+    if args.option_probe and not args.dump_queries:
+        raise SystemExit('--option-probe reads the searches --dump-queries builds; give both')
+    if args.option_probe_rounds < 1:
+        raise SystemExit('--option-probe-rounds takes a count of at least 1')
     if args.commit_capture and args.repo_root.resolve() != REPO_ROOT:
         # The committed capture is this checkout's own SQL; another side's would be
         # committed under this commit's name.
@@ -479,6 +519,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     environment: dict[str, Any] = {**host_environment(), **side.environment()}
     with server.running():
         environment.update(server_environment(server))
+        if args.option_probe:
+            with contextlib.closing(server.connect(schema)) as connection:
+                try:
+                    option_probe.require_carried(connection, prototype_options(label))
+                except ProbeError as err:
+                    raise SystemExit(f'{schema}: {err}') from err
         # The per-search tables an earlier web run left behind are not part of what
         # the import built, so they are emptied before anything is measured.
         reset_config = write_opus_config(
@@ -547,6 +593,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 run=run,
                 commit_capture=args.commit_capture,
                 probe_resort=args.resort_probe,
+                option_rounds=args.option_probe_rounds if args.option_probe else None,
             )
     path = append_runs(label, environment, [run])
     sys.stdout.write(f'recorded in {path}\n')
@@ -574,20 +621,74 @@ def record_resort_probe(
     run['details']['resort_probe'] = details
 
 
+def prototype_options(label: Label) -> list[str]:
+    """Return the options whose prototypes a label's ``prototype`` runs built.
+
+    Parameters:
+        label: The label, whose result file may hold ``prototype`` runs
+            (`benchmarks.option_prototypes`).
+
+    Returns:
+        The options among `benchmarks.option_probe.OPTIONS` those runs name, in order;
+        none when the file does not exist.
+    """
+    path = RESULTS_DIR / label.file_name
+    if not path.exists():
+        return []
+    built = {
+        str(run['details'].get('option'))
+        for run in load_result(path)['runs']
+        if run['kind'] == PROTOTYPE_KIND
+    }
+    return [option for option in option_probe.OPTIONS if option in built]
+
+
+def record_option_probe(
+    run: dict[str, Any],
+    session: option_probe.ProbeSession,
+    blocks: Sequence[query_capture.Block],
+    rounds: int,
+) -> None:
+    """Time each measured option's statements and add what the probe found to a run.
+
+    A probe that could not run is recorded as a failed measurement
+    (`benchmarks.option_probe.measure`), so the run's other measurements are kept.
+
+    Parameters:
+        run: The ``db`` run, whose metrics, samples and details gain the probe's.
+        session: The side's schema and server.
+        blocks: The capture the replay ran.
+        rounds: How many cold starts each shape is timed from.
+    """
+    metrics, samples, details = option_probe.measure(session, blocks, rounds=rounds)
+    run['metrics'].update(metrics)
+    run['samples'].update(samples)
+    run['details']['option_probe'] = details
+
+
+#: Each probe a run may hold, by its details' key, with the name its failure is given.
+PROBES = {'resort_probe': 'the re-sort probe', 'option_probe': 'the option probe'}
+
+
 def probe_failure(run: Mapping[str, Any]) -> str | None:
-    """Return why a run's re-sort probe is not a valid measurement, if it is not.
+    """Return why a run's probes are not valid measurements, if any is not.
 
     Parameters:
         run: A ``db`` run, recorded already.
 
     Returns:
-        A message naming each problem `benchmarks.resort_probe` found, or None for a run
-        without a probe or with a valid one.
+        A message naming each problem `benchmarks.resort_probe` and
+        `benchmarks.option_probe` found, or None for a run without a probe or with valid
+        ones.
     """
-    problems = run['details'].get('resort_probe', {}).get('problems')
-    if not problems:
+    failures = []
+    for key, name in PROBES.items():
+        problems = run['details'].get(key, {}).get('problems')
+        if problems:
+            failures.append(f'{name} is not a valid measurement: ' + '; '.join(problems))
+    if len(failures) == 0:
         return None
-    return 'the re-sort probe is not a valid measurement: ' + '; '.join(problems)
+    return '\n'.join(failures)
 
 
 def _dump_and_replay(
@@ -601,6 +702,7 @@ def _dump_and_replay(
     run: dict[str, Any],
     commit_capture: bool,
     probe_resort: bool,
+    option_rounds: int | None,
 ) -> None:
     """Capture this side's scenario SQL and replay it at once, into the run's details.
 
@@ -615,6 +717,8 @@ def _dump_and_replay(
         commit_capture: Whether to copy the capture to `COMMITTED_CAPTURE` as well.
         probe_resort: Whether to run `record_resort_probe` after the replay, on its
             connection.
+        option_rounds: The rounds of `record_option_probe` to run after the replay, on
+            connections of its own, or None to run none.
     """
     config = load_web_config(scale=label.scale)
     memcached = MemcachedServer(
@@ -644,6 +748,11 @@ def _dump_and_replay(
         entries = query_capture.replay(connection, blocks)
         if probe_resort:
             record_resort_probe(run, connection, blocks)
+    if option_rounds is not None:
+        session = option_probe.ProbeSession(
+            connect=lambda: server.connect(schema), restart=server.restart
+        )
+        record_option_probe(run, session, blocks, option_rounds)
     run['details']['plans'] = entries
     run['details']['capture'] = str(capture)
     run['details']['capture_server_model'] = bench.gunicorn.server_model

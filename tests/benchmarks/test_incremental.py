@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from benchmarks import bench_import
+from benchmarks import bench_import, bench_server
 from benchmarks.monitor import RunFailedError
 
 #: The bundle the stand-in scenario names as its largest.
@@ -124,8 +124,9 @@ def _bench_on(monkeypatch: pytest.MonkeyPatch, connection: _Connection) -> bench
     """Return a bench whose server's every connection is `connection`.
 
     Parameters:
-        monkeypatch: Replaces the harness's query function with one that answers from
-            the connection's table.
+        monkeypatch: Replaces the harness's query function, in the bench and in the
+            server module whose helpers it calls, with one that answers from the
+            connection's table.
         connection: The connection that records each statement and answers it.
 
     Returns:
@@ -148,6 +149,7 @@ def _bench_on(monkeypatch: pytest.MonkeyPatch, connection: _Connection) -> bench
         return next(rows for key, rows in conn.answers.items() if key in statement)
 
     monkeypatch.setattr(bench_import, 'query', query)
+    monkeypatch.setattr(bench_server, 'query', query)
     bench = object.__new__(bench_import.ImportBench)
     bench.server = SimpleNamespace(connect=lambda: connection)  # type: ignore[assignment]
     return bench
@@ -175,6 +177,25 @@ def test_a_side_with_a_timestamp_column_is_judged_by_it(monkeypatch: pytest.Monk
     connection = _Connection({'information_schema': [(1,)], 'SUM(`timestamp`': [(40, 3)]})
     assert _rows_written(monkeypatch, connection) == (40, 3)
     assert connection.bound('SUM(`timestamp`') == ['local now', BUNDLE]
+
+
+def test_a_schema_whose_obs_general_is_a_view_is_judged_by_its_base_table(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The rows are counted in obs_general_rows, whichever generation they are in."""
+    connection = _Connection(
+        {
+            'information_schema.TABLES': [(1,)],
+            'information_schema.COLUMNS': [(1,)],
+            'SUM(`timestamp`': [(40, 0)],
+        }
+    )
+    assert _rows_written(monkeypatch, connection) == (40, 0)
+    assert connection.bound('information_schema.COLUMNS') == ['bench_0', 'obs_general_rows']
+    counted = next(
+        statement for statement, _ in connection.queries if 'SUM(`timestamp`' in statement
+    )
+    assert '`bench_0`.`obs_general_rows`' in counted
 
 
 @pytest.mark.parametrize(

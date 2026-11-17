@@ -352,3 +352,70 @@ def test_an_unusable_server_toml_is_a_result_error(
 
 def test_the_results_directory_is_outside_the_repository() -> None:
     assert not results.RESULTS_DIR.is_relative_to(results.REPO_ROOT)
+
+
+@pytest.mark.parametrize(
+    ('first', 'then', 'message'),
+    [
+        ({'generation_schema': None}, {'generation_schema': 'served'}, 'None and is now'),
+        ({'generation_schema': 'served'}, {'generation_schema': None}, "'served' and is now"),
+        ({'generation_schema': 'served'}, {'generation_schema': 'other'}, "'served' and is now"),
+        ({}, {'generation_schema': 'served'}, 'None and is now'),
+    ],
+    ids=['full-then-update', 'update-then-full', 'other-schema', 'unrecorded-then-update'],
+)
+def test_an_incremental_update_is_refused_beside_other_import_runs(
+    first: dict[str, object],
+    then: dict[str, object],
+    message: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A file holds the updates of one schema, or runs that updated none."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-14', 'PR-23', 'after', 'test', 'mysql', 'g')
+    results.append_runs(label, first, [_run('import')])
+    with pytest.raises(ResultError, match=f'generation_schema was {message}'):
+        results.append_runs(label, then, [_run('generation_update')])
+
+
+def test_updates_of_other_bundles_are_refused_within_a_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A switch, which records no bundles, appends beside the updates it switched in."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-14', 'PR-23', 'after', 'test', 'mysql', 'g')
+    update = {'generation_schema': 'served', 'generation_update': {'bundles': 'A', 'drop': None}}
+    results.append_runs(label, update, [_run('generation_update')])
+    results.append_runs(label, {'generation_schema': 'served'}, [_run('generation_switch')])
+    other = {**update, 'generation_update': {'bundles': 'A', 'drop': 'B'}}
+    with pytest.raises(ResultError, match='generation_update was'):
+        results.append_runs(label, other, [_run('generation_update')])
+
+
+def test_web_runs_that_reset_to_other_states_are_refused_within_a_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Runs of the app-cold pass alone are not mixed with runs of both passes."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-14', 'PR-23', 'after', 'test', 'mysql', 'w')
+    results.append_runs(label, {'cold_states': ['db-cold', 'app-cold']}, [_run()])
+    with pytest.raises(ResultError, match='cold_states was'):
+        results.append_runs(label, {'cold_states': ['app-cold']}, [_run()])
+
+
+def test_a_label_is_checked_before_the_runs_exist(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The check refuses what the append would, and changes nothing; no file takes all."""
+    monkeypatch.setattr(results, 'RESULTS_DIR', tmp_path)
+    label = Label('2026-11-14', 'PR-23', 'after', 'test', 'mysql', 'g')
+    update = {'generation_schema': 'served', 'generation_update': {'bundles': 'A', 'drop': None}}
+    other = {**update, 'generation_update': {'bundles': 'B', 'drop': None}}
+    results.require_appendable(label, other)
+    results.append_runs(label, update, [_run('generation_update')])
+    before = (tmp_path / label.file_name).read_text()
+    results.require_appendable(label, update)
+    with pytest.raises(ResultError, match='generation_update was'):
+        results.require_appendable(label, other)
+    assert (tmp_path / label.file_name).read_text() == before

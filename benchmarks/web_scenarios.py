@@ -9,6 +9,9 @@ the search they act on, and expanded here into their requests:
 ``pages``
     The first, tenth and last page of the search's results through ``api/data.json``,
     preceded by an untimed result count so the pages measure paging and not the build.
+    One that names a column set (``columns``) from ``web.toml``'s ``[columns]`` asks for
+    those columns as ``cols`` in place of the default ones, and is named
+    ``pages.<search>_<columns>``.
 ``resort``
     The first page sorted by ``web.toml``'s re-sort order, preceded by an untimed first
     page in the default order, so the timed request re-sorts a search already built.
@@ -16,6 +19,10 @@ the search they act on, and expanded here into their requests:
     What a user-interface load asks for: the result count, the mult counts of the
     default widgets, the range endpoints, and the menu (which carries the triggered
     tables).
+``mults``
+    The mult counts alone: those of the default widgets, then those of ``web.toml``'s
+    ``[mults] widgets``, preceded by an untimed result count so the counts measure
+    counting and not the build.
 ``widget``
     One widget's HTML.
 ``categories``
@@ -55,7 +62,7 @@ WEB_TOML = SCENARIOS_DIR / 'web.toml'
 PAGE_LIMIT = 100
 
 #: The scenario kinds named for, and built on, one of the named searches.
-SEARCH_KINDS = ('search', 'pages', 'resort', 'fanout', 'files', 'previews')
+SEARCH_KINDS = ('search', 'pages', 'resort', 'fanout', 'mults', 'files', 'previews')
 
 #: The scenario kinds that ask about the scale's observation.
 OBSERVATION_KINDS = ('categories', 'files', 'previews')
@@ -182,6 +189,33 @@ def _join(path: str, query: str) -> str:
     return f'{path}&{query}' if '?' in path else f'{path}?{query}'
 
 
+def _result_count_url(search: str) -> str:
+    """Return the result count request of a search, which builds it.
+
+    Parameters:
+        search: The search's query string.
+
+    Returns:
+        The URL.
+    """
+    return _join(_join('__api/meta/result_count.json', search), 'reqno=1')
+
+
+def _mult_request(slug: str, search: str) -> Request:
+    """Return the mult count request of one widget for a search.
+
+    Parameters:
+        slug: The widget's slug.
+        search: The search's query string.
+
+    Returns:
+        The request, named ``mults_<slug>``.
+    """
+    return Request(
+        f'mults_{slug}', _join(_join(f'__api/meta/mults/{slug}.json', search), 'reqno=1')
+    )
+
+
 def _fanout_requests(raw: Mapping[str, Any], search: str) -> tuple[Request, ...]:
     """Expand the fan-out for one search.
 
@@ -192,12 +226,8 @@ def _fanout_requests(raw: Mapping[str, Any], search: str) -> tuple[Request, ...]
     Returns:
         The result count, each mult count, each range endpoints request, and the menu.
     """
-    requests = [
-        Request('result_count', _join(_join('__api/meta/result_count.json', search), 'reqno=1'))
-    ]
-    for slug in raw['mult_widgets']:
-        url = _join(_join(f'__api/meta/mults/{slug}.json', search), 'reqno=1')
-        requests.append(Request(f'mults_{slug}', url))
+    requests = [Request('result_count', _result_count_url(search))]
+    requests += [_mult_request(slug, search) for slug in raw['mult_widgets']]
     for slug in raw['range_slugs']:
         url = _join(_join(f'__api/meta/range/endpoints/{slug}.json', search), 'reqno=1')
         requests.append(Request(f'endpoints_{slug}', url))
@@ -220,8 +250,9 @@ def _expand(
         The scenario.
 
     Raises:
-        ScenarioError: If the entry names an unknown kind or search, lacks the search its
-            kind needs, or needs an observation the scale does not name.
+        ScenarioError: If the entry names an unknown kind, search or column set, lacks the
+            search its kind needs, names a column set outside a ``pages`` scenario, or
+            needs an observation the scale does not name.
     """
     kind = entry['kind']
     requests: tuple[Request, ...]
@@ -234,22 +265,28 @@ def _expand(
         raise ScenarioError(f"scenario {entry} needs this scale's [observations] entry")
     search = searches[search_name] if search_name is not None else ''
     limit = f'limit={PAGE_LIMIT}'
+    columns_name = entry.get('columns')
+    if columns_name is not None and kind != 'pages':
+        raise ScenarioError(f'scenario {entry} names columns, which only a pages scenario takes')
+    columns = raw.get('columns', {})
+    if columns_name is not None and columns_name not in columns:
+        raise ScenarioError(f'scenario {entry} names the unknown columns {columns_name!r}')
     if kind == 'search':
-        url = _join(_join('__api/meta/result_count.json', search), 'reqno=1')
+        url = _result_count_url(search)
         return Scenario(f'search.{search_name}', kind, (Request('result_count', url),))
     if kind == 'pages':
         data = _join('api/data.json', search)
+        name = f'pages.{search_name}'
+        if columns_name is not None:
+            data = _join(data, f'cols={columns[columns_name]}')
+            name = f'pages.{search_name}_{columns_name}'
         requests = (
-            Request(
-                'build',
-                _join(_join('__api/meta/result_count.json', search), 'reqno=1'),
-                timed=False,
-            ),
+            Request('build', _result_count_url(search), timed=False),
             Request('page_1', _join(data, f'page=1&{limit}')),
             Request('page_10', _join(data, f'page=10&{limit}')),
             Request('page_last', _join(data, f'page={{last}}&{limit}')),
         )
-        return Scenario(f'pages.{search_name}', kind, requests, last_page_of=search_name)
+        return Scenario(name, kind, requests, last_page_of=search_name)
     if kind == 'resort':
         data = _join('api/data.json', search)
         order = raw['resort']['order']
@@ -260,6 +297,13 @@ def _expand(
         return Scenario(f'resort.{search_name}', kind, requests)
     if kind == 'fanout':
         return Scenario(f'fanout.{search_name}', kind, _fanout_requests(raw['fanout'], search))
+    if kind == 'mults':
+        slugs = [*raw['fanout']['mult_widgets'], *raw.get('mults', {}).get('widgets', [])]
+        requests = (
+            Request('build', _result_count_url(search), timed=False),
+            *(_mult_request(slug, search) for slug in slugs),
+        )
+        return Scenario(f'mults.{search_name}', kind, requests)
     if kind == 'widget':
         slug = entry['slug']
         return Scenario(f'widget.{slug}', kind, (Request('widget', f'__widget/{slug}.html'),))

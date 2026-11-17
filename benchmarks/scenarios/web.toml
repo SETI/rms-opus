@@ -44,6 +44,17 @@ target = "target=Saturn"
 surface_geometry = "surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30"
 # The selections of the fan-out with selections: the broad time range and one mult.
 selected = "time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&planet=Saturn"
+# Selections on four tables at once: a time range, an instrument and a target on
+# obs_general and its target junction, a ring radius range on obs_ring_geometry, and a
+# latitude range on Saturn's surface geometry.
+complex = "time1=2004-01-01T00:00:00&time2=2018-01-01T00:00:00&instrument=Cassini+ISS&target=Saturn&RINGGEOringradius1=60000&RINGGEOringradius2=140000&surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30"
+
+# Column sets a pages scenario can ask for (`columns`) in place of the default columns,
+# as `cols` values; the scenario is then named `pages.<search>_<columns>`.
+[columns]
+# Columns from four tables: obs_general, the Cassini ISS table, obs_ring_geometry and
+# Saturn's surface geometry.
+geometry = "opusid,instrument,target,time1,COISSfilter,RINGGEOringradius1,RINGGEOringradius2,SURFACEGEOsaturn_planetographiclatitude1,SURFACEGEOsaturn_planetographiclatitude2"
 
 # The observation each scale's categories, files and previews scenarios ask about: one
 # with surface geometry, which every scale's data holds. The complete scale holds the
@@ -58,6 +69,11 @@ complete = "co-iss-w1477654052"
 [fanout]
 mult_widgets = ["instrument", "observationtype", "target"]
 range_slugs = ["time1"]
+
+# The mult counts a mults scenario asks for after the default widgets': a widget on
+# obs_type_image, a child table holding one row for each observation.
+[mults]
+widgets = ["imagetype"]
 
 # The order a re-sort asks for, in place of the default.
 [resort]
@@ -88,6 +104,10 @@ kind = "search"
 search = "surface_geometry"
 
 [[scenarios]]
+kind = "search"
+search = "complex"
+
+[[scenarios]]
 kind = "pages"
 search = "empty"
 
@@ -112,6 +132,15 @@ kind = "pages"
 search = "surface_geometry"
 
 [[scenarios]]
+kind = "pages"
+search = "complex"
+
+[[scenarios]]
+kind = "pages"
+search = "complex"
+columns = "geometry"
+
+[[scenarios]]
 kind = "resort"
 search = "empty"
 
@@ -134,6 +163,10 @@ search = "target"
 [[scenarios]]
 kind = "resort"
 search = "surface_geometry"
+
+[[scenarios]]
+kind = "resort"
+search = "complex"
 
 [[scenarios]]
 kind = "fanout"
@@ -142,6 +175,20 @@ search = "empty"
 [[scenarios]]
 kind = "fanout"
 search = "selected"
+
+[[scenarios]]
+kind = "fanout"
+search = "complex"
+
+# The mult counts of a broad search and of a selective one, which the fan-out is not
+# issued for.
+[[scenarios]]
+kind = "mults"
+search = "broad"
+
+[[scenarios]]
+kind = "mults"
+search = "selective"
 
 # A mult widget outside the defaults.
 [[scenarios]]
