@@ -161,3 +161,55 @@ def test_the_switch_refuses_when_nothing_is_deployed(tmp_path: Path) -> None:
     assert status == 1
     assert ran == []
     assert 'cannot read the served schema' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_stop_sudo_refuses_changes_nothing(tmp_path: Path) -> None:
+    """No step runs, the failed command is named, and the exit is non-zero."""
+    status, output, ran = run_deploy(
+        tmp_path, _SCRIPT, failing_sudo=f'systemctl stop {WEB_SERVICE}'
+    )
+    assert status == 1
+    assert ran == [_STOP]
+    assert f'sudo systemctl stop {WEB_SERVICE} failed with status 1' in output
+    assert 'nothing was changed' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_start_sudo_refuses_after_the_switch_says_the_site_is_down(tmp_path: Path) -> None:
+    """The switch is made, so the exit is non-zero, nothing is warmed, and the way to start
+    the web service is named."""
+    status, output, ran = run_deploy(
+        tmp_path, _SCRIPT, failing_sudo=f'systemctl start {WEB_SERVICE}'
+    )
+    assert status == 1
+    assert ran == [_STOP, 'opus_import --switch-generation', _RESTART_CACHE, _START]
+    assert 'opus_import --switch-generation succeeded, and the site is down' in output
+    assert f'Start it with: sudo systemctl start {WEB_SERVICE}' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_cache_restart_sudo_refuses_is_a_warning(tmp_path: Path) -> None:
+    """The switch is made and the web service starts; the stale cache is reported."""
+    status, output, ran = run_deploy(
+        tmp_path, _SCRIPT, failing_sudo=f'systemctl restart {CACHE_SERVICE}'
+    )
+    assert status == 0, output
+    assert ran == [_STOP, 'opus_import --switch-generation', _RESTART_CACHE, _START, _WARM]
+    assert f'WARNING: {CACHE_SERVICE} did not restart' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_start_sudo_refuses_after_a_refused_step_says_the_site_is_down(
+    tmp_path: Path,
+) -> None:
+    """A refusal changed nothing, but the web service it stopped is not running again."""
+    status, output, ran = run_deploy(
+        tmp_path,
+        _SCRIPT,
+        refused_import='--switch-generation',
+        failing_sudo=f'systemctl start {WEB_SERVICE}',
+    )
+    assert status == 1
+    assert ran == [_STOP, 'opus_import --switch-generation', _START]
+    assert f'The site is down. Start it with: sudo systemctl start {WEB_SERVICE}' in output

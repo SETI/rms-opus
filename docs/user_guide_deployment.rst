@@ -288,6 +288,16 @@ rebuilds description tables the update also builds, a switch changes the generat
 writing, and either would spoil the dump that ends it. ``promote_generation.sh`` takes it
 too, since it changes what is served.
 
+**A refused sudo is said, never silent.** Both deploy scripts ask for the ``sudo``
+password with ``sudo -v`` before anything long runs, so the switch at the end finds it
+cached; a password ``sudo`` does not accept ends the deploy there, with nothing built or
+switched. Every service action of a promotion, and of ``promote_generation.sh``, is
+checked, and a failed one names the ``systemctl`` command and its status: a failed stop
+changes nothing; a failed start after a step that changed nothing says the site is down;
+a failed start after the switch is made ends the script with the site down on the new
+installation or generation, naming the command that starts it; a failed cache restart is
+a warning, and the deploy goes on.
+
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
 ``OPUS_DB_HOST``, or ``<dump name>.sql`` when a second name is given
