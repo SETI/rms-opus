@@ -168,6 +168,16 @@ table-level ``foreign_key``, ``primary_key``, ``unique`` and ``key`` entries inc
 (:ref:`dev_guide_table_schemas`), which is how ``cart`` has its cascading foreign key,
 and ``search_results`` its keys over two columns, from the start.
 
+Every table ``create_table`` creates samples
+:data:`~opus_import.importdb.mysql.STATS_SAMPLE_PAGES` leaf pages for its persistent
+statistics (``STATS_SAMPLE_PAGES``), in place of the server's default of 20. The
+optimizer chooses plans from those statistics, and 20 pages misjudge the row count of a
+table whose pages hold very different numbers of rows -- ``obs_ring_geometry``'s, at
+complete scale, by up to a factor of three from one ``ANALYZE`` to the next, enough to
+switch the ring-radius search between a plan and one twice as slow. A table with fewer
+leaf pages is read whole, and at complete scale the larger sample makes the
+finalization's ``ANALYZE`` of the large tables seconds longer in all.
+
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys
 last, plus a plain key on each foreign-key column no other key leads, so the index each

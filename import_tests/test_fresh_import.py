@@ -25,6 +25,7 @@ import pytest
 
 from import_tests.tools import build_run, fixture_layout, golden_io, run_logs
 from opus_import import generations, import_util
+from opus_import.importdb import mysql
 from opus_import.steps import do_import
 from opus_import.table_keys import (
     TableKey,
@@ -51,6 +52,10 @@ _SCHEMA_DIR = Path(str(import_util.TABLE_SCHEMA_DIR))
 
 #: The tables a schema file describes that Django's own migrations create, not the import.
 _CREATED_BY_DJANGO = {'django_session'}
+
+#: The name prefixes of the tables Django's own applications create through their
+#: migrations, which the schema holds beside the import's tables.
+_DJANGO_APP_PREFIXES = ('auth_', 'django_')
 
 
 def _schema_for(table: str) -> list[dict[str, Any]]:
@@ -178,6 +183,28 @@ def test_every_string_column_has_the_character_set_its_schema_names(
                 )
     assert {('obs_general', 'opus_id'), ('cart', 'session_id')} <= expected.keys()
     assert {key: found.get(key) for key in expected} == expected
+
+
+def test_every_table_the_import_creates_samples_its_statistics_widely(
+    main_run: build_run.ImportRun, db_credentials: DatabaseCredentials
+) -> None:
+    """Each base table the import created carries `mysql.STATS_SAMPLE_PAGES`, so its
+    persistent statistics come from that many leaf pages rather than the server's default.
+    Django's applications create their own tables, which are left out."""
+    options = {
+        str(table): str(create_options)
+        for table, create_options in golden_io.query(
+            db_credentials,
+            None,
+            'SELECT TABLE_NAME, CREATE_OPTIONS FROM information_schema.TABLES '
+            "WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'BASE TABLE'",
+            [main_run.schema],
+        )
+        if not str(table).startswith(_DJANGO_APP_PREFIXES)
+    }
+    assert {'obs_general_rows', 'obs_ring_geometry', 'mult'} <= options.keys()
+    expected = f'stats_sample_pages={mysql.STATS_SAMPLE_PAGES}'
+    assert {table for table, option in options.items() if expected not in option} == set()
 
 
 def test_every_main_run_import_took_the_fresh_path(main_run: build_run.ImportRun) -> None:

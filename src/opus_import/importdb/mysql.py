@@ -103,6 +103,14 @@ MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
 #: The rows `ImportDBMySQL.stream_select` asks the server for at a time.
 STREAM_FETCH_ROWS = 10_000
 
+#: The leaf pages InnoDB samples for a table's persistent statistics, set on every table
+#: `ImportDBMySQL.create_table` creates. The server's default of 20 pages estimates the
+#: row count of a table whose pages hold very different numbers of rows, such as
+#: ``obs_ring_geometry``, at anywhere from below to several times the true count, from
+#: one ``ANALYZE`` to the next, and the optimizer's choice of plan follows the estimate.
+#: A table with fewer leaf pages is read whole.
+STATS_SAMPLE_PAGES = 500
+
 #: A ``field_type`` that names a variable-width string and its most characters, such as
 #: ``varchar255``: the width is the group.
 MYSQL_WIDTH_FIELD_TYPE = re.compile(r'varchar([1-9][0-9]*)')
@@ -1053,7 +1061,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             cmd = (
                 f'CREATE TABLE {if_not_exists}{self.quote_identifier(table_name)} (\n' + cmd + '\n)'
             )
-            cmd += f' ENGINE={self.default_engine}\n'
+            cmd += f' ENGINE={self.default_engine} STATS_SAMPLE_PAGES={STATS_SAMPLE_PAGES}\n'
 
             try:
                 self._execute(cmd, mutates=True)
