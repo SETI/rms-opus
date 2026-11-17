@@ -8906,3 +8906,27 @@ Nothing above this line is rewritten by an executor.
     statement takes its own snapshot, so the block would not close the begin window
     recorded above. A class diagram for `dev_guide_architecture.rst`: the chapter predates
     this pull request, which adds a paragraph and a sentence to it.
+- **The steady state's cost, and the statistics sample (2026-11-17)**, at the operator's
+  question why PR-23 is slower with no generation pending. Measured on the benchmark
+  schemas:
+  - *The view.* The empty search's `observation_type` mult count, a full scan grouped in
+    a temporary table, takes 265 ms on the base's `obs_general`, 268 ms on PR-23's
+    `obs_general_rows` read directly, and 327 ms through the view, which has no condition
+    in the steady state. MySQL merges the view, so the plan is the same, and the cost is
+    per row: the `instrument_id` count, which groups along an index, takes 139 ms against
+    141 ms. Removing it is open: one way is to keep the base table named `obs_general`
+    while nothing is pending, renaming it and creating the view at the begin and undoing
+    both at the purge.
+  - *The generation columns.* `obs_general_rows` is 2.5% larger than `db-perf`'s
+    `obs_general` (20,608 pages against 20,096), so a cold full scan reads that much more.
+  - *Not explained:* the selected fan-out's `instrument` and `observationtype` mult
+    counts are 6–13% slower at web level in both sessions, while their statements replay
+    equal or faster.
+  - *The ring-radius plan flip* is InnoDB's 20-page statistics sample, on both sides:
+    `obs_ring_geometry`'s row estimate ranged from 0.69 to 2.99 times its 1,627,081 rows
+    over 15 `ANALYZE`s, and above about 2.3 times the optimizer walks `obs_general`'s
+    `time1` index (1.86 s) in place of scanning `obs_ring_geometry` (0.95 s). At 500
+    pages the estimates of every table of 1,000 pages or more stay within 0.91–1.03 times
+    the true count, with no flip in 15 `ANALYZE`s, and analyzing those tables takes 7.8 s
+    against 0.7 s. At the operator's decision, every table the import creates is created
+    with `STATS_SAMPLE_PAGES = 500`; the benchmarks above were measured without it.

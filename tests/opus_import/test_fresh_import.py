@@ -179,7 +179,7 @@ def test_a_table_level_foreign_key_renders_what_a_delete_does() -> None:
     assert cmd == (
         'CREATE TABLE IF NOT EXISTS `cart` ( `obs_general_id` int unsigned NOT NULL, '
         'CONSTRAINT one UNIQUE (obs_general_id) , FOREIGN KEY (`obs_general_id`) '
-        'REFERENCES `obs_general_rows`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB'
+        'REFERENCES `obs_general_rows`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB STATS_SAMPLE_PAGES=500'
     )
 
 
