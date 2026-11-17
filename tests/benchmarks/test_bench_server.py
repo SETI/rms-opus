@@ -1,10 +1,12 @@
 """The tuning baseline's sizing rules and the server configuration they render into."""
 
+import contextlib
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 
-from benchmarks import bench_server
+from benchmarks import bench_server, bench_web
 from benchmarks.app_servers import ServerError
 from benchmarks.bench_server import GIB, MIB, MysqlConfig
 
@@ -143,3 +145,89 @@ def test_the_counters_move_by_their_difference() -> None:
 def test_identifiers_are_quoted(name: str, expected: str) -> None:
     """A backquote inside a name is doubled."""
     assert bench_server.quote_identifier(name) == expected
+
+
+def test_web_commands_share_the_web_runs_lock(tmp_path: Path) -> None:
+    """Any number of bench_web commands hold it together."""
+    server = bench_server.MysqlServer(_config(tmp_path))
+    with server.web_runs_held(exclusive=False), server.web_runs_held(exclusive=False):
+        pass
+
+
+@pytest.mark.parametrize(
+    ('first', 'second', 'holder'),
+    [
+        (False, True, 'a bench_web command or another generation switch'),
+        (True, False, 'a generation switch'),
+        (True, True, 'a bench_web command or another generation switch'),
+    ],
+    ids=['switch-beside-web', 'web-beside-switch', 'switch-beside-switch'],
+)
+def test_a_switch_and_a_web_command_exclude_each_other(
+    first: bool, second: bool, holder: str, tmp_path: Path
+) -> None:
+    """The second is refused at once, naming what holds the lock, which is then free."""
+    server = bench_server.MysqlServer(_config(tmp_path))
+    with (
+        server.web_runs_held(exclusive=first),
+        pytest.raises(ServerError, match=f'^{holder} holds '),
+        server.web_runs_held(exclusive=second),
+    ):
+        pass
+    with server.web_runs_held(exclusive=second):
+        pass
+
+
+class _HeldServer:
+    """The owned server as a web command takes it, recording what it does."""
+
+    def __init__(self, *, up: bool, switching: bool = False) -> None:
+        self.up = up
+        self.switching = switching
+        self.calls: list[str] = []
+
+    def is_running(self) -> bool:
+        return self.up
+
+    @contextlib.contextmanager
+    def web_runs_held(self, *, exclusive: bool) -> Iterator[None]:
+        if self.switching:
+            raise ServerError('a generation switch holds lock')
+        self.calls.append(f'lock exclusive={exclusive}')
+        yield
+        self.calls.append('unlock')
+
+    @contextlib.contextmanager
+    def running(self) -> Iterator[None]:
+        self.calls.append('start if down')
+        yield
+        self.calls.append('stop if started')
+
+
+@pytest.mark.parametrize('up', [True, False], ids=['up', 'down'])
+def test_a_web_command_making_every_pass_owns_the_server(up: bool) -> None:
+    """It may start the server, and stops it after if so, all under the shared lock."""
+    server = _HeldServer(up=up)
+    with bench_web.hold_server(server, app_cold_only=False):  # type: ignore[arg-type]
+        assert server.calls == ['lock exclusive=False', 'start if down']
+    assert server.calls[2:] == ['stop if started', 'unlock']
+
+
+def test_an_app_cold_only_command_never_starts_or_stops_the_server() -> None:
+    """Stopping it would stop the incremental update sharing it."""
+    server = _HeldServer(up=True)
+    with bench_web.hold_server(server, app_cold_only=True):  # type: ignore[arg-type]
+        pass
+    assert server.calls == ['lock exclusive=False', 'unlock']
+    stopped = _HeldServer(up=False)
+    with pytest.raises(ServerError, match='is not running'):
+        bench_web.hold_server(stopped, app_cold_only=True)  # type: ignore[arg-type]
+    assert stopped.calls == []
+
+
+def test_a_web_command_is_refused_during_a_switch() -> None:
+    """Nothing is started when the lock is refused."""
+    server = _HeldServer(up=False, switching=True)
+    with pytest.raises(ServerError, match='switch holds'):
+        bench_web.hold_server(server, app_cold_only=False)  # type: ignore[arg-type]
+    assert server.calls == []

@@ -34,7 +34,7 @@ Three **scales**, each named by a file under ``benchmarks/scenarios/``:
 ``tests/benchmarks/test_scenarios.py`` checks that the two holdings scales' groups
 agree with the script and with :mod:`opus_import.import_all`.
 
-Five commands, each run from the root of a checkout as ``python -m benchmarks.<name>``:
+The commands, each run from the root of a checkout as ``python -m benchmarks.<name>``:
 
 ``bench_server``
     Creates, starts, stops and reports on the MySQL server the harness owns.
@@ -42,12 +42,20 @@ Five commands, each run from the root of a checkout as ``python -m benchmarks.<n
 ``bench_import``
     Times import runs, invocation by invocation and step by step.
 
+``bench_generation``
+    Times an incremental update of a served schema, written in place into an import
+    generation, and the switch that serves it.
+
 ``bench_db``
     Measures the schema an import built, and the plans of the statements the web
     scenarios issue.
 
 ``bench_web``
     Times the web scenarios against a gunicorn it starts, in three cache states.
+
+``option_prototypes``
+    Builds a schema option that is measured before it is implemented on a copy of a
+    schema, and times the build.
 
 ``compare``
     Renders two result files as a before/after table, and computes noise floors.
@@ -206,8 +214,10 @@ Then create the data directory once, and start the server::
     python -m benchmarks.bench_server init
     python -m benchmarks.bench_server start
 
-Every bench command starts the server itself if it is down, and stops it again when it
-finishes; started by hand, it stays up until ``python -m benchmarks.bench_server stop``.
+Every bench command but ``bench_generation`` starts the server itself if it is down, and
+stops it again when it finishes; started by hand, it stays up until
+``python -m benchmarks.bench_server stop``. ``bench_generation`` never starts, stops or
+restarts it, and refuses to run while it is down.
 Keep ``server.toml``'s ``memory_budget_gb`` within what the machine can spare, and before
 a complete-scale import check that the data directory's filesystem has room for the
 whole schema.
@@ -422,12 +432,225 @@ because several steps log an error and still exit zero. Each run starts with a l
 directory of its own, and an ``ERRORS.log`` already holding anything fails it before it
 starts.
 
+A schema whose ``obs_general`` is a view of the rows in the import generation it serves
+holds its observations in the base table ``obs_general_rows``. The view shows no row
+until the import writes the version row, so every check the harness makes on what an
+import wrote, and every count of a run's rows, reads the base table.
+
+.. _dev_guide_benchmarks_generation:
+
+What an incremental update run is
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``bench_generation`` times an incremental update: the changed bundles written into the
+served schema as an import generation, which the ``obs_general`` view hides until the
+generation is switched in. It works on a schema a full import built, in place. It never
+copies the schema, never drops it, and never stops, starts or restarts the owned MySQL
+server, so ``bench_web`` can serve the same schema from another process while the update
+imports. Start the server first with ``python -m benchmarks.bench_server start``; the
+command refuses to run while it is down. A side whose ``opus_import --help`` lists no
+``--begin-generation`` cannot make such an update, and the command refuses it before
+anything runs. To update a copy instead, make one with ``bench_import --reuse-schema
+<schema> --clone`` and name the copy.
+
+``--schema`` names the schema. ``--bundles`` names the bundles to re-import or add, as
+the bundle import takes them, or ``--incremental-group SCALE`` names a scale whose import
+scenario has an incremental group, and the update re-imports that group, the scenario's
+largest bundle. The test scale's group can update a schema of the complete scale.
+``--drop`` names bundles to drop, as ``--delete-bundles`` takes them. A bundle both
+re-imported and dropped is refused, since a re-import already replaces every row of the
+bundle. ``--import-key`` works as it does for ``bench_import``.
+
+The **update** is these invocations of the side's ``opus_import``, each a process of its
+own whose ``OPUS_CONFIG`` names the schema, each given ``--timing-json``:
+
+#. ``--begin-generation``, recorded as ``import.generation.begin.wall_s``;
+#. the bundle import of the bundles to re-import or add,
+   ``import.generation.import.wall_s``;
+#. ``--delete-bundles`` of the bundles to drop, when ``--drop`` is given,
+   ``import.generation.delete.wall_s``;
+#. the side's finalization option, ``import.generation.finalize.wall_s``;
+#. the side's validation option, ``import.generation.validate.wall_s``;
+#. ``--write-schema-version``, which marks the generation ready to switch,
+   ``import.generation.write_schema_version.wall_s``.
+
+``import.generation.update.wall_s`` is their sum: the update's wall-clock, from
+``--begin-generation`` through ``--write-schema-version``. The **switch** is two more:
+
+#. ``--switch-generation``, ``import.generation.switch.wall_s``, which a deploy runs
+   while the web service is stopped, so it is the service's downtime;
+#. ``--purge-generations``, ``import.generation.purge.wall_s``, which deletes the rows
+   the switched-out generation alone held, while the site serves.
+
+``import.generation.switch_purge.wall_s`` is their sum. The update and the switch are
+each recorded as a run of their own, of kind ``generation_update`` and
+``generation_switch``. Each run also records, under its own prefix
+(``import.generation.update`` or ``import.generation.switch_purge``), the steps its
+invocations' timing files name (``.phase.<step>_s``), the peak resident set and the peak
+proportional set size of its invocations' process trees, and the server's counters over
+it, as an import run records them. Its details hold every invocation, the schema and the
+generation, and an update's hold the bundles each way, as given and expanded, and the
+rows the generation added and retired.
+
+Without a mode, the command runs the update and then the switch, recording each run as
+it finishes. ``--stop-before-switch`` runs the update alone and leaves its generation
+ready to switch; ``--switch-only`` then runs the switch alone on a generation an earlier
+command left ready. Each update and its switch leave the schema ready for the next
+update, so the command can run several times in place. A result file pins the schema
+and the bundles of the updates it holds, so the command checks before any phase runs
+that the label's file would take its runs, rather than finish an update it could not
+record and leave its generation pending.
+
+Each phase is checked as an import run's invocations are. The bundle import must leave a
+row in the pending generation for every bundle it imports; rows the served generation
+already holds do not count. After the drop, no dropped bundle may keep a row in the
+pending generation. The version row must show the generation begun and writing after
+``--begin-generation``, and ready after ``--write-schema-version``. The switch is
+refused unless a generation is ready, since the side's switch succeeds doing nothing on
+a schema already switched. After the switch the schema must serve the generation, and
+after the purge it must not be revertible and must hold no retired row. A run that
+fails any of these records nothing.
+
+A result file holds the updates of one schema and one set of bundles: its environment
+records the schema as ``generation_schema`` and the bundles as ``generation_update``, and
+refuses runs that differ. Every other import run records ``generation_schema`` as null,
+so a full import and an update are never mixed in one file; give the update a session of
+its own. A switch records no bundles, so it appends beside the update it switched in.
+
+An update into a complete-scale schema, then its switch::
+
+    python -m benchmarks.bench_server start
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --incremental-group test --stop-before-switch
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --switch-only
+
+**Web runs during an update.** ``bench_web --app-cold-only`` serves the schema while the
+update imports. What is safe beside which phase:
+
+* **The update's phases**, ``--begin-generation`` through ``--write-schema-version``:
+  safe with ``--app-cold-only``. The served generation stays ``ready`` throughout, so
+  ``bench_web``'s version restamp, its search-table resets, its memcached restarts and
+  its ``warm_search`` all work as on an idle schema, and nothing the update writes is
+  visible until the switch. A run without ``--app-cold-only`` is not safe: its db-cold
+  pass restarts the MySQL server, which kills the update's connections.
+* **The switch**: never beside a web run. It empties the search tables and flushes the
+  cache a web run is reading. Every ``bench_web`` command holds a lock file in the owned
+  server's data root shared for as long as it runs, and the switch and its purge hold it
+  exclusive, each taking it without waiting: ``bench_generation`` refuses to switch
+  while a web command holds it, and a web command refuses to start during a switch.
+  The switch also refuses while anything listens on ``web.toml``'s gunicorn or memcached
+  port, which a server started outside the harness would.
+* **The purge**: the side runs it while the site serves, but ``bench_generation`` runs
+  it straight after the switch, so no web run is beside it.
+
+Give the web runs during the update a session of their own, and run the same scenarios
+idle, with the same options, in another session, to compare them. The two commands
+share the server, so a web run's counters and statement statistics during the update
+count the update's work too; its latencies are the measurement. A scenario issued after
+the update has ended measures an idle schema, so choose a run count that ends before the
+update does. Start the update first, in the background, then the web runs; stop the web
+runs before the switch::
+
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --incremental-group test --stop-before-switch &
+    python -m benchmarks.bench_web --scale complete --side after --pr <tag> \
+        --session wu --python venv/bin/python --repo-root . \
+        --schema <schema> --app-cold-only --runs 1
+    wait
+    python -m benchmarks.bench_generation --scale complete --side after --pr <tag> \
+        --session g --python venv/bin/python --repo-root . \
+        --schema <schema> --switch-only
+
+.. _dev_guide_benchmarks_prototypes:
+
+What a prototype run is
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A schema option can be measured on real data before the application uses it: the
+option is built as a **prototype** on a copy of a finished schema, and ``bench_db
+--option-probe`` (below) times the statements the application would issue against it
+beside the ones it issues. ``option_prototypes`` builds one copy per command, with
+``--source`` naming the schema to copy, ``--target`` the copy and ``--option`` what is
+added to it:
+
+``none``
+    Nothing: the copy alone, which the prototypes' copies are compared with, so that
+    every schema compared is laid out the same way.
+
+``default_rank``
+    Each observation's place in the default sort order, ``(time1, opus_id)``, in a
+    keyed column of the base table holding ``obs_general``'s rows: one ``ALTER TABLE``
+    adds ``default_rank INT UNSIGNED`` and its key, and one ``UPDATE`` writes each row's
+    ``ROW_NUMBER() OVER (ORDER BY time1, opus_id)``. Where ``obs_general`` is a view, the
+    view is then created again listing the column, by the import's own
+    :meth:`~opus_import.importdb.mysql.ImportDBMySQL.create_obs_general_view` given
+    ``obs_general.json``'s columns with the rank declared after them. A copy whose view
+    lists other columns than those is refused before anything is changed, so the view
+    made again cannot differ from the copied one silently.
+
+``facet``
+    A narrow table, ``obs_facet``, keyed by ``obs_general_id``, holding each
+    observation's value of every mult field whose ``field_type`` is ``mult_idx``,
+    ``flag_yesno`` or ``flag_onoff`` and whose table holds one row per observation:
+    ``obs_general`` and each table whose primary key is ``obs_general_id`` alone. Each
+    column is named by its field's qualified name and has the type the import gives a
+    mult id. The columns come from the import's own field metadata
+    (:func:`opus_import.mult_fields.packaged_mult_columns`), so a list column, held in a
+    junction table, and a field of a table with several rows per observation have none.
+    The table takes the statistics sample the import gives every table it creates
+    (``STATS_SAMPLE_PAGES``). One ``INSERT ... SELECT`` fills it from ``obs_general``
+    left joined to each of those tables; a field whose table the copy lacks is left out,
+    and the run's details name it.
+
+The source is only read, and is refused unless it serves every row it holds: its
+``schema_version`` row records no pending generation (even one with no rows yet) and no
+switch that can still be reverted, and its ``obs_general`` view has no condition. A
+prototype on a schema that hides rows would measure rows no visitor sees, and the rank's
+view, made again, would lose the condition.
+
+The copy is made with ``schema_copy.clone_schema``, views included, laid out as the
+import lays out a schema (``defer_keys``): each table is created with its primary key
+alone, filled in primary-key order, then given its secondary keys, each built sorted from
+the rows already there, and last its foreign keys. A copy whose secondary keys were
+instead built by the rows' inserts would have fragmented keys, and a change buffer whose
+merging would fall into the cold timings, which the import's own schema has neither.
+Once the option is built, the server is restarted once with ``innodb_fast_shutdown = 0``,
+so InnoDB merges its change buffer and writes every page before anything is timed, and
+the setting is put back.
+
+Each step is timed (``clone_s``, then ``alter_s``, ``fill_s`` and ``view_s`` or
+``create_s`` and ``fill_s``, their sum ``build_s``, and the restart's ``settle_s``), and
+the option's cost in bytes is read after ``ANALYZE TABLE`` with the statistics cache off.
+For the rank the figure to report is ``key_bytes``, the key's own size from InnoDB's
+persistent statistics; the change in the base table's data and index bytes
+(``data_bytes``, ``index_bytes``, each side read after ``ANALYZE TABLE``) is kept beside
+it, and counts the table's rebuild too, since the ``ALTER`` rebuilds the table when it
+adds a column and a key together. For the facet table the figures are its data and index
+bytes and its column count. The metrics are under ``prototype.<option>.`` in a run of kind
+``prototype``, which ``compare`` does not compare. The label's environment then names
+the copy as its schema, so ``bench_db`` and ``bench_web`` given the same label measure the
+copy. The prototype is built by the harness's own process, with the import code of the
+checkout the harness runs from, so the side given must be that checkout::
+
+    python -m benchmarks.option_prototypes --scale complete --side after --pr <tag> \
+        --session rank --python venv/bin/python --repo-root . \
+        --source <schema> --target <schema>_rank --option default_rank
+    python -m benchmarks.bench_db --scale complete --side after --pr <tag> \
+        --session rank --python venv/bin/python --repo-root . --dump-queries \
+        --option-probe
+
 What a web run is
 ~~~~~~~~~~~~~~~~~
 
 Each scenario is a named sequence of requests issued one after another with one cookie
 jar, as a browser issues them; ``benchmarks/web_scenarios.py`` says what each kind of
-scenario in ``web.toml`` expands to. Every request carries ``Connection: close``.
+scenario in ``web.toml`` expands to. A ``pages`` scenario may name a column set from
+``web.toml``'s ``[columns]`` table, which its pages ask for in place of the default
+columns. Every request carries ``Connection: close``.
 
 One run is two passes over the scenarios. In the **db-cold** pass each scenario is
 preceded by emptying the search tables with the side's own option, stopping the
@@ -454,9 +677,9 @@ the run's details.
 Per scenario and state the run records the wall-clock and each request's latency, the
 statements executed against the schema, the twenty statement shapes with the most total
 latency, the server's buffer-pool misses, connections, sort-merge passes, on-disk
-temporary tables and statements stopped at the execution time limit, the schema's table
-count, and the workers' peak resident set. The buffer-pool misses
-(``Innodb_buffer_pool_reads``) are the reads a request waited on; they leave out the
+temporary tables and statements stopped at the execution time limit, the schema's count
+of base tables, its views left out, and the workers' peak resident set. The buffer-pool
+misses (``Innodb_buffer_pool_reads``) are the reads a request waited on; they leave out the
 pages InnoDB's read-ahead brought in beside them, so the run also records those
 (``Innodb_buffer_pool_read_ahead``) and every page read from disk
 (``Innodb_pages_read``). A cold scan that read-ahead serves shows few misses and many
@@ -480,10 +703,15 @@ import still writing the schema will finish it under, and ``bench_web`` refuses 
 it, since only a finished import may set ``ready``. A table holding more than one row is
 refused before anything is written. Two sides that serve one schema expect different
 versions whenever the change raises it. A side whose code has no version checks nothing
-and is left alone. ``bench_server.clone_schema`` restamps a copied ``ready`` row the same
+and is left alone. ``schema_copy.clone_schema`` restamps a copied ``ready`` row the same
 way, to the version of the side that will use the copy, and copies any other row as it
-is. ``bench_db``'s query capture stamps its schema as ``bench_web`` does before it starts
-its server.
+is. It creates each of the source's views in the copy once the copy's tables exist,
+and after any view it reads, from the source's ``SHOW CREATE VIEW``, with every name the
+source schema qualifies qualified by the copy instead and without the ``DEFINER``
+clause, so the view reads the copy's tables and the harness's own account defines it. A
+string literal in the definition is copied as it is, even when it holds the source's
+name. ``bench_db``'s query capture
+stamps its schema as ``bench_web`` does before it starts its server.
 
 Before measuring, ``bench_web`` asks the side's settings, in the environment the workers
 run in, which cache they chose: it refuses to run on the local-memory fallback or on a
@@ -534,6 +762,14 @@ schema's and the mark is emptied, in one transaction, and the command says so. A
 there that fails keeps the schema and fails the command, naming it; its ``saved_cart``
 and ``saved_django_session`` hold the rows to put back.
 
+``--app-cold-only`` makes each run the app-cold pass alone, with its warm repetitions,
+against a MySQL server already running, so another process can use it meanwhile, such
+as an incremental update (:ref:`dev_guide_benchmarks_generation`). The command refuses
+to run while the server is down, and never starts, restarts or stops it; without the
+option the command starts a server that is down, and stops it again when it finishes. The environment
+records the cold states a run's passes reset to as ``cold_states``, and a result file
+refuses web runs that differ in them.
+
 A side without ``warm_search``, or whose ``opus_import --help`` lists no
 ``--carry-over-sessions-from``, skips that step, and the result's ``skipped_steps``
 names it (``warm_search``, ``carry_over_sessions``). The environment records the states
@@ -549,9 +785,10 @@ earlier web run stored are not part of what the import wrote. Then, after
 ``ANALYZE TABLE`` on every table, with the statistics cache off: each table's data
 and index bytes, exact row count and index count, and the largest ``id`` of each mult
 table that has an ``id`` column; the schema's totals, its ``FULLTEXT`` tablespaces, and
-its size against the buffer pool; the size of ``preview_images`` beside ``obs_general``'s
-data, read from ``obs_preview`` or, on a schema without that table, from
-``obs_general``, and the table it was read from; and the per-index usage counters.
+its size against the buffer pool; the size of ``preview_images`` beside the data of the
+base table holding ``obs_general``'s rows, read from ``obs_preview`` or, on a schema
+without that table, from that base table, and the table it was read from; and the
+per-index usage counters.
 ``--ascii-columns`` counts the non-ASCII values of every column whose form type is
 ``STRING``.
 
@@ -603,6 +840,71 @@ why, and the command exits with an error after recording the run. A probe that c
 run -- a capture without the re-sort scenario's blocks, a re-sorted request that built
 no search, or a statement the server refuses -- is recorded the same way, with the error
 as its problem, so the run's other measurements are kept.
+
+``--option-probe``, given with ``--dump-queries``, times the statements each prototyped
+schema option (:ref:`dev_guide_benchmarks_prototypes`) would answer with, after the
+replay (``benchmarks/option_probe.py``). Each request it covers is a **pair** of shapes:
+the **captured** shape, the ``SELECT`` the application issued, from the capture; and the
+**prototype** shape, the ``SELECT`` the option would answer with, generated from it and
+from the built searches' ids and written into no capture file:
+
+* for ``default_rank``, the empty search's first and last pages
+  (``pages.empty/page_1`` and ``pages.empty/page_last``) read as a range of
+  ``obs_general.default_rank`` with no search built, in place of a range of the search's
+  ``search_results`` rows (``empty_page_1``, ``empty_page_last``); and the broad search's
+  build (``search.broad/result_count``) numbering its rows by ``default_rank`` in place of
+  ``(time1, opus_id)`` (``broad_build``);
+* for ``facet``, each mult count of the ``mults.broad`` and ``mults.selective``
+  scenarios whose column ``obs_facet`` holds, counted from ``obs_facet`` joined to the
+  search's ``search_results`` rows in place of the column's own table
+  (``<search>.mults_<slug>``). A ``mults`` scenario asks for the default widgets' counts
+  and those of ``web.toml``'s ``[mults] widgets``, a widget on a child table among them.
+  A count of a column ``obs_facet`` does not hold, such as a list column's, is not
+  probed, and the details say so.
+
+Where the schema does not carry an option -- no ``default_rank`` column in
+``obs_general``, no ``obs_facet`` table -- the option's captured shapes are timed alone
+and the details say the option was skipped; that is not a failure, so a floor session on
+a copy without either option (``--option none``) measures the captured shapes' noise.
+
+Each shape is timed from a **cold start**: the server is restarted, and the shape's
+``SELECT`` runs under ``EXPLAIN ANALYZE`` once on a connection opened after the restart,
+its cold time, then five more times on that connection, whose median is its warm time.
+``--option-probe-rounds`` times every shape that many times over, a restart before each.
+Each round gives one value of each figure -- for the warm figures, the median of its
+round's executions -- and the metric is the median of those values, which the run's
+``samples`` keep under its name; every execution is in the details. Then each shape's rows
+are read once: a page or a count is fetched and compared with the other shape's row for
+row (a page in order), and a build, too large to fetch, is reduced on the server to its
+row count, ``SUM(sort_order * obs_general_id)``, and the ``BIT_XOR`` of the first 64
+bits of ``MD5(CONCAT(sort_order, ',', obs_general_id))``, so two builds agree only when
+they number the same observations alike. (A ``CRC32`` would not do for the hash: a CRC is
+affine over XOR, so two rows exchanging their numbers can leave an XOR of CRCs as it was.)
+
+The metrics are under ``db.option_probe.<option>.<pair>.``: ``cold_s``, ``warm_s``,
+``cold_analyze_ms`` and ``warm_analyze_ms`` (the time to the last row the top iterator
+reports), ``rows_examined`` and ``rows_returned``, all of the shape the schema answers
+the pair with -- the prototype shape where it carries the option, the captured one where
+it does not. ``compare`` therefore compares a floor session on a copy without the
+option (``option_prototypes --option none``) with a run on a prototype's copy pair by pair,
+and judges a pair's ``cold_s`` against the captured shape's floor. Where the prototype
+shape is timed, the captured shape's figures on the same copy are under ``.captured.``,
+beside ``cold_ratio`` and ``warm_ratio``, the prototype's time over the captured one's:
+the cross-check of the comparison, measured on one schema in one session. Each pair
+records ``valid``, and each option ``db.option_probe.<option>.valid`` and
+``db.option_probe.<option>.carried``, 1 where the schema carries its prototype. A pair is
+not valid when a shape returned no rows, when the two returned different numbers of rows,
+different rows or a different numbering, or when a statement failed in any round; such a
+pair records ``valid`` at 0 and no other metric, so nothing ``compare`` judges comes from
+it. An option whose captured shapes the capture lacks is not valid as a whole. The
+details keep each pair's statements, every execution's figures and the last ``EXPLAIN
+ANALYZE`` tree of each shape, invalid pairs' included. A run holding a probe that is not
+valid is recorded, and the command then exits with an error naming every problem.
+
+Before anything runs, the probe is refused when the label's result file holds a
+``prototype`` run of an option the schema does not carry -- a wrong label, a wrong
+``--schema``, or a view that was not made again -- since that option's pairs would
+otherwise be timed in their captured shape under the names the prototype's figures take.
 
 Result files
 ------------
@@ -717,7 +1019,9 @@ session's runs, outliers left out, or the range of the session medians. Small ti
 scatter by a roughly fixed amount whatever their size -- a few milliseconds of scheduling
 on a web request, a fraction of a millisecond on a planned statement -- so a fraction
 measured on one median does not carry over to a much smaller one. The file records each
-family's **jitter** (``import``, ``db`` and ``web``): the median ``floor_abs`` of its
+family's **jitter** (``import``, ``db``, ``web``, and the option probe's own,
+``db.option_probe``, whose cold times would otherwise raise every ``db`` time's floor):
+the median ``floor_abs`` of its
 time metrics. Sessions agree on a metric when their medians lie within the widest range
 of a session's runs or, for a time metric, within its family's jitter where that is
 larger. Every metric any session recorded gets a floor, and
