@@ -18,7 +18,8 @@
 #
 # Inputs (exported by the caller): OPUS_SRC_DIR, OPUS_DIR_NAME, OPUS_DB_NAME,
 # OPUS_LOG_DIR and everything _read_deploy_env.sh exports. OPUS_VERSION_SPEC is
-# optional and is appended to the distribution name, e.g. "==3.23.0".
+# optional: a PEP 440 specifier ("==3.23.0") or "@" and a git ref ("@main"), which
+# opus_requirement (_version_spec.sh) turns into what pip installs.
 #
 # Exports: OPUS_CONFIG, pointing at the opus.toml written here. This file is
 # sourced, so that export reaches every later step of the deploy.
@@ -65,13 +66,15 @@ fi
 source opus_venv/bin/activate
 python -m pip install --upgrade pip 2>&1
 
-# The released distribution, from PyPI. OPUS_VERSION_SPEC pins a particular release
-# ("==3.23.0"); with it empty, pip takes the newest. To reproduce an installation
+# The distribution: a release from PyPI, or, for "@<ref>", the repository's revision,
+# which pip builds from a clone. OPUS_VERSION_SPEC pins a particular release
+# ("==3.23.0") or names the revision; with it empty, pip takes the newest release. To reproduce an installation
 # exactly, generate a constraints file from a known-good server --
 # `python -m pip freeze > constraints.txt` inside its opus_venv -- and pass it here
 # with `-c constraints.txt`; the deploy does not maintain one, because the floors in
 # the distribution's own metadata are what this project supports.
-python -m pip install "rms-opus${OPUS_VERSION_SPEC:-}" 2>&1
+source ${IMPORT_SCRIPT_DIR}/_version_spec.sh
+python -m pip install "$(opus_requirement "${OPUS_VERSION_SPEC:-}")" 2>&1
 
 # The memcached client. It is not a dependency of the distribution -- OPUS runs
 # without it, on Django's per-process local-memory cache -- but a server wants the

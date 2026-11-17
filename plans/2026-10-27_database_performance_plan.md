@@ -8307,3 +8307,997 @@ Nothing above this line is rewritten by an executor.
     built the 1030 form.
   - The `bench_complete_after_full6x4_1` schema stays on the benchmark server until the
     chain's cleanup.
+
+### 2026-11-14, PR-23 (written against this file at 0f3a81f1)
+
+- **Design B, chosen by the operator on 2026-11-14.** The section's "Choosing: measure both,
+  report, discuss, then decide" gate was not run and nothing of design A is implemented;
+  design A's text stays as the record of what was weighed, and design B's scripts reuse its
+  structure (`_copy_database_to_peer.sh`, the steps file, the operator's command). The branch
+  is PR-22's head (0f3a81f1), stacked on PR-20's. PR-21 was not executed and PR-22 was
+  reduced to its test fix, so there is no `_load_db_steps.sh` and no session setting or
+  refusal for the peer load to carry. PR-24 is not implemented; its hook is the rule that a
+  finalization step states whether it runs on a pending generation or at the switch, written
+  at the head of `--finalize`'s sequence in `opus_import.cli`. `SCHEMA_VERSION` is 13.
+- **The view is not the section's: it has no condition while every row is served.** The
+  section's view, `WHERE added_generation <= (SELECT generation FROM schema_version) AND
+  ...`, was built first (with `COALESCE(..., 1)` so an unfinished schema showed its first
+  generation) and `EXPLAIN`ed on `pr23local` against PR-20's `pr20local` (the base's schema,
+  version 12, the same test-scale bundles), on the captured statements of
+  `benchmarks/scenarios/queries.sql` for the broad and target search builds, the empty and
+  broad first pages, the empty and selected mult counts of `instrument` and `target`, the
+  empty search's `time1` endpoints, the autocomplete's two prefixes, one observation's files
+  and the detail page, plus a metadata lookup by `opus_id` (`obs_general` and `obs_pds`
+  joined to it, as `query_table_for_opus_id` does). The subquery was evaluated once in every
+  statement (two `SUBQUERY` rows on `schema_version`, never `DEPENDENT SUBQUERY`), but two
+  access paths changed: the target search build read `obs_general_rows` by a full scan and
+  probed `obs_general_target_name` (base: the junction's primary key first, then
+  `obs_general` by `eq_ref`); and the empty search's `MIN(time1)`/`MAX(time2)` lost "Select
+  tables optimized away" and became a full scan. The optimizer prices the view's condition
+  as passing about one row in eight (an estimate of 4,094 of 30,709 in one plan), and that
+  estimate drives the flip; it also sent the selector count's join (below) through a
+  temporary table.
+  - **So the view selects every row, with no condition, whenever every row is in the served
+    generation** (after a fresh import and after a purge), and names the served generation
+    as a number while a generation is pending or retired rows wait for the purge
+    (`ImportDBMySQL.create_obs_general_view(schema, served)`). The commands that change
+    which rows it shows re-create it (`do_generation.refresh_view`): `--begin-generation`,
+    before it records the pending generation, so no row of it is written while the view
+    shows every row; the switch, as its step 4 before its last statement; the revert; the
+    purge, once the retired rows are gone; the abandon, with no condition unless retired
+    rows remain. The view is DDL re-created at begin while the site serves; it takes the
+    view's metadata lock for a moment.
+  - **`EXPLAIN` with this view** (the same statements, `pr23local` rebuilt): with no
+    condition every statement's access path equals the base's, table for table and key for
+    key, and there is no subquery at all. With the condition (the view re-created by hand on
+    `pr23local` to name generation 1, as during an update, then put back) two paths change,
+    as before: the target search build (`obs_general_rows` full scan first) and the empty
+    search's `time1` endpoints (full scan); the others equal the base's. That cost is paid
+    only while a generation is pending or awaiting its purge.
+  - The view needs no `schema_version` row, so `create_table` does not create
+    `schema_version` empty (the section's step for its subquery), and a schema with no
+    version row is still neither served nor appended to.
+- **The name translation** is in `ImportDBMySQL.quote_identifier`: the name `obs_general`
+  renders as `obs_general_rows`, so every statement the import builds, raw SQL included,
+  names the base table; `table_names`, `table_info`, `read_table_keys` (both the table and a
+  foreign key's referenced table) and `key_space_bytes` report or read the base table under
+  the name `obs_general`. `create_table('obs_general')` creates the table, then the view;
+  `drop_table('obs_general')` drops the view first, and scorched earth drops it before any
+  table (`drop_obs_general_view`). The view's own name and PR-18's carry-over, which names
+  the target's `obs_general` literally and so reads its view, are the places the import
+  names the view. `create_opus_models.sh` runs `inspectdb --include-views` and hides the
+  base table's class; `models.py` is unchanged, since the view has `ObsGeneral`'s columns.
+- **The generation columns** carry `"data_source": "GENERATION"` in `obs_general.json`:
+  `import_observation_table` computes nothing for them, and `TableRowSink.add` writes
+  `ImportContext.import_generation` into `added_generation` of each `obs_general` row in the
+  import's process, after PR-09's replay. `import_generation` is the pending generation if
+  any, otherwise the served one, and 1 for a schema with no version row.
+- **The registry.** `import_bundle`'s unique key is `(bundle_id, generation)`, `generation`
+  defaults to 1 and `retired_generation` is NULL. Every function of
+  `opus_import.bundle_registry` that names a bundle reads and writes its **live row**
+  (`retired_generation IS NULL`); a new range starts after every row's, retired rows
+  included (`registered_ranges(include_retired=True)`), since their ids are in use until
+  the purge. Registration in a pending generation retires a bundle's live row of an earlier
+  generation and adds a row of its own in the same transaction (`do_register._copies_to_retire`,
+  `bundle_registry.retire_copies`); a rerun within the generation keeps the generation's
+  row. `--delete-bundles` in a pending generation retires the bundle's live row and deletes
+  its row of the pending generation. Without a pending generation every row of the bundle
+  goes, as PR-08 made it.
+- **Refusals the section does not name.** A plain append and a plain `--delete-bundles` are
+  refused while a switch is revertible, naming `--purge-generations` (they delete by
+  `bundle_id`, which would delete the retired rows a revert needs). `--create-cart` is refused
+  with a pending generation (it drops the served cart), and `--finalize` with one skips it as
+  it skips the search reset; the section names only the reset. `--purge-generations` is
+  refused while a generation is pending. `--import-dictionary` still swaps at once with a
+  pending generation: the dictionary does not depend on the observations.
+- **What reads one generation.** The duplicate step, the unique-OPUS-ID validation and the
+  surface geometry bodies the auxiliary tables list (`surface_geometry.stored_targets`, now
+  joined to the base table's rows in the run's generation) read the generation the run
+  works on. The other validations read every row, as the section asks of the orphan counts.
+  In a pending generation the duplicate step deletes a losing row the generation added and
+  retires one an earlier generation added; the retire uses `update_row` with `LIMIT`, by
+  `bundle_id`'s key, `transaction_rows` at a time, inside `retrying`.
+- **`pending_state`.** `writing` is set by `--import`, `--delete-bundles`,
+  `--register-bundles`, `--requeue`, `--join` and at the start of `--finalize`; `finalized`
+  once `--finalize` ends with no failed step; `validated` or `finalized` by `--validate`
+  (`cli._validate`), which is refused before `finalized`; `ready` by `--write-schema-version`
+  (`do_schema_version._stamp_pending_generation`), refused unless `validated`.
+- **The lock.** Each generation command takes `GET_LOCK(lock_name(schema, 'generation'), 0)`
+  for its run (`do_generation.generation_command`, `ImportDBSuper.release_named_lock` is new)
+  and is refused while any `import_process` row's lock is held (`read_snapshot`'s `alive`).
+  An invocation that writes the pending generation (`cli._PENDING_WRITERS`: the import,
+  join, registration, requeue, delete, finalization and its auxiliary steps, validation,
+  the stamp) registers itself through PR-16a's `start_importer` on a sibling connection while
+  briefly holding the generation lock (`register_writer`), and frees it at exit. A `--join`
+  importer in a pending generation therefore has two `import_process` rows, its writer's and
+  its importer's.
+- **The switch and the revert complete each other.** The switch's steps are the aux swap
+  keeping `__prev`, the cart's move (`ImportDBMySQL.repoint_cart`: an `UPDATE ... JOIN` by
+  `opus_id` to the generation's row, then a `DELETE` of the rows left, one transaction), the
+  search reset and cache flush, the view, then the version row; the fault site is
+  `OPUS_IMPORT_FAULT=switch_generation:<1..4>`. The reset cannot tell whether it ran and runs
+  again on a rerun, which is harmless while the web service is stopped. With nothing pending
+  and `revertible` set, the switch runs steps 1 to 4 again for the served generation and
+  succeeds, which also completes a revert that stopped after swapping back; a revert of a
+  pending generation that is `ready` undoes whatever steps a switch that stopped part way ran
+  and changes no version column. The purge drops the `__prev` tables right after clearing
+  `revertible`, and `--begin-generation` drops any an interrupted purge left, so while a
+  generation is pending only a part-way switch leaves `__prev` tables. The purge finds the
+  retired ids in one scan of `obs_general_rows` (no key on `removed_generation`, as the
+  section decides) and deletes them by `do_import_tables.delete_observations`, which the
+  duplicate step now shares.
+- **`promote_generation.sh` asks first.** It runs
+  `do_generation.generation_command_problem(<step>)` through the deployed interpreter before
+  stopping the web service, so a switch or revert `opus_import` would refuse leaves the site
+  up (raised by the deploy-script review). It takes the deploy lock, reuses `warm_search`
+  and `previous_db_name` from `_promote_steps.sh`, and copies `_promote.sh`'s stop, cache
+  restart and start, which are not functions there.
+- **The scripts' other decisions:** `run_incremental_opus_update.sh` checks its arguments
+  first (the version spec only as the first argument, starting with `= < > ! ~`; `--drop`
+  repeatable; an empty name is the usage line); the internal script builds a staged
+  installation as a full import does, holds the deploy lock for its whole run (a code-only
+  deploy would rebuild the same `__new` tables, and DDL would spoil the dump), checks
+  `ERRORS.log` after every invocation and stops before the stamp, runs neither `migrate` nor
+  `--import-dictionary`, and names the peer's schema `opus3_<time>_<pid>` by the function
+  `_run_full_opus_import.sh` now shares. `dump_db.sh` dumps with `--single-transaction`;
+  `load_db.sh <dumped> [<target>]` creates the target and drops a view's `DEFINER` clause as
+  it reads the dump (the view is `SQL SECURITY INVOKER`, and the peer may lack the first
+  server's account). The guides tell the operator not to deploy code while a generation is
+  pending; nothing enforces it.
+- **The per-observation queries that read a child table without `obs_general`,
+  `search_results` or a row the view returned**, found by reading every `cursor.execute` site
+  under `src/opus_app/apps` and every ORM query on a per-observation model (the ORM's
+  `obs_general__opus_id` lookups join the view and are safe), each now hanging
+  `sql_builder.served_observations_join(<child>)` off the child's source:
+  1. the autocomplete from every observation (`api_string_search_choices`, the branch for a
+     search past `STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD` or timed out);
+  2. the empty search's mult counts of a column outside `obs_general`: a list column's
+     junction table, a child's `GROUP` column, the surface geometry selector and a body's
+     category (`api_get_mult_counts`);
+  3. the empty search's range endpoints of a child's column (`api_get_range_endpoints`,
+     whose ORM branch became the raw statement the selections branch already built);
+  4. the product types of an OPUS ID (`api_get_product_types_for_opus_id`, `obs_files` by
+     its own `opus_id`);
+  5. the empty search's product types (`api_get_product_types_for_search`);
+  6. `file_utils.get_pds_products`, `obs_files` by its own `opus_id`, behind `api/files/<opus_id>`,
+     `api/download/<opus_id>` and, by an OPUS ID a re-imported bundle shares with its retired
+     copy, every other caller.
+  The join is MySQL's `STRAIGHT_JOIN` (a `Join` kind of `sql_builder`), so the child is read
+  first with its own access path and each row's observation is one `eq_ref` on the view's
+  primary key. An `INNER JOIN` gave the selector count a temporary table, under the first
+  view (the integration suite's plan test failed), and `STRAIGHT_JOIN` keeps its index scan.
+  Either join changed the empty search's product type order, since the server sorts a
+  one-table `DISTINCT` by every selected column after the `ORDER BY`'s and a join by the
+  `ORDER BY`'s alone, so the two product type statements that gained the join order their
+  ties by the remaining columns explicitly (`results.views._join_served_observations`), and
+  no golden changed. These
+  statements' plans do change, by design: each gains the `eq_ref` lookup, the autocomplete's
+  covering skip scan becomes an index scan into a deduplicating table of `limit + 1` rows,
+  and a child's empty-search `MIN`/`MAX` loses "optimized away" for a scan of the child
+  (measured on `pr23local`; cached, and warmed after a promotion). A new mult value of a
+  pending generation is still listed before the switch, as the section accepts.
+- **The goldens** change in `obs_general.tsv` (the two generation columns, every row `1` and
+  `\N`, checked by a script: no other column differs), `schema_version.tsv` (13 and the four
+  columns) and `import_bundle.tsv` (`generation` 1, `retired_generation` `\N`); nothing else
+  (`make_mini_goldens`). `golden_io.list_tables` lists base tables only and reports
+  `obs_general_rows` as `obs_general`, reading it for every function that takes a table name,
+  so the golden keeps its name; `build_run.clone_schema` copies the views too.
+  **No API golden changed.**
+- **The harness** (`bench_server.clone_schema` recreates each view from `SHOW CREATE VIEW`, the
+  source's schema name replaced and the definer dropped; `scripts/import/clone_database.sh`
+  drops the definer too). The generation update is a command of its own,
+  `python -m benchmarks.bench_generation`, not a `bench_import` mode (`bench_import.py` is
+  past the module-size rule): `--schema <schema>` in place, `--bundles` or
+  `--incremental-group <scale's group>`, `--drop`, and `--stop-before-switch` or
+  `--switch-only`; it refuses a side without `--begin-generation`, never starts, restarts or
+  stops the server and never drops a schema, and records two runs, kinds `generation_update`
+  and `generation_switch`, with `import.generation.{begin,import,delete,finalize,validate,
+  write_schema_version,update,switch,purge,switch_purge}.wall_s` and the invocations'
+  `--timing-json` phases. `bench_web --app-cold-only` skips the db-cold pass, whose server
+  restart would kill the update's connections, so web scenarios can run while it imports.
+  The harness's own row checks read `obs_general_rows` where it exists, `bench_web`'s table
+  count counts base tables only, and the result files pin `generation_schema`,
+  `generation_update` and `cold_states`.
+- **Tests.** `tests/opus_import/test_generations.py` (the view's DDL both ways, the name
+  mapping, the drop order, the cart's move, the retire, every refusal of the five commands,
+  the lock both ways, the switch's order and its fault after each step and rerun, the
+  completion and the revert of a part-way switch, the closing invocations' gating, the
+  duplicate step's retire) and a sink case in `test_table_row_sink.py`;
+  `import_tests/test_generations.py` (a copy of the main run updated, one bundle re-imported
+  and one dropped: the served rows identical before the switch, the full import's less the
+  dropped bundle after it, the planted cart row moved and moved back by a revert, the purge
+  leaving only served rows and deleting a value only the dropped bundle used, the view's
+  condition present only between begin and purge; an abandon restoring every base table; the
+  switch killed after each step and completed by a rerun);
+  `integration_tests/apps_db_tests/test_generations.py` (an observation planted in the next
+  generation, with its `obs_pds`, `obs_type_image`, `obs_wavelength`, `obs_files` (under the
+  served copy's OPUS ID) and junction rows, is in no endpoint's answer); `tests/opus_deploy`
+  (the steps file, the peer copy's three cases, the usage line, `promote_generation.sh`'s
+  order, failures and pre-check, the dump and load); `tests/benchmarks` (view cloning, the
+  update command). Every new test was mutation-checked, each mutation failing its tests:
+  19 of the import's source (the translation, the view's drop order and condition, the
+  begin's refusals and view, the lock and the writers' check, the switch's fault site and
+  completion, the revert of a part-way switch, the gating of validation and the stamp, the
+  duplicate step's retire, the commands' conflicts, the retire's `<`, the cart's delete,
+  the purge's `__prev` drop, the sink's generation, the bodies' generation), 5 against the
+  import suite (the begin's view, the purge's mult step, the abandon's restore, the cart's
+  move, the revert's view), 5 against `pr23local` (each of the joins above removed) and one
+  of `keep_to_served_observations`, 2 of the scripts (`promote_generation.sh`'s pre-check,
+  `load_db.sh`'s definer), plus the deploy-script and harness reviews' own 43 and 53.
+- **Results** on the final head: the gates pass (`run-all-checks.sh`, 3,345 unit tests); the
+  import suite 198 passed and 3 skipped; `pr23local` set up again from this branch (its
+  `obs_general` view with no condition, `schema_version` 13, generation 1) and the
+  integration job's run 2,903 passed at 100% coverage. The subagent-written deploy scripts
+  and harness were reviewed and tested here; no deploy script, `load_db.sh`, `dump_db.sh` or
+  `bench_*` command was run for real, and no MySQL view was loaded on a second server.
+- **The measurement, for the orchestrator** (not run here; the section's test-scale design is
+  replaced by the orchestrator's complete-scale one). `S="--side <side> --pr PR-23 --python
+  <side's interpreter> --repo-root <side's checkout>"`:
+  1. the full imports, base and head, as PR-16a's: `python -m benchmarks.bench_import
+     --scale complete $S --session <label> --coordinator 6 --import-key workers=24
+     --import-key cpu_fraction=0.8`, each into `bench_complete_<side>_<label>_1`;
+  2. the web scenarios on each, as for any schema-changing PR: `python -m
+     benchmarks.bench_web --scale complete $S --session <label> --schema <schema>`;
+  3. the update into the head's schema, the server started first (`python -m
+     benchmarks.bench_server start`; the command refuses a stopped server): `python -m
+     benchmarks.bench_generation --scale complete $S --session <label> --schema <schema>
+     (--bundles <descriptors> | --incremental-group <scale>) [--drop <descriptors>]
+     --stop-before-switch`, recording `import.generation.{begin,import,delete,finalize,
+     validate,write_schema_version}.wall_s` and their sum, the target,
+     `import.generation.update.wall_s`;
+  4. `bench_web` while it imports, in another process: `python -m benchmarks.bench_web
+     --scale complete $S --session <label> --schema <schema> --app-cold-only --runs 1`
+     (the db-cold pass would restart the server under the update), against an idle session
+     with `--app-cold-only` too; its latencies are the comparison, its counters include the
+     update's statements;
+  5. after `bench_web` ends, `python -m benchmarks.bench_generation ... --switch-only`:
+     `import.generation.switch.wall_s`, the service's downtime, and
+     `import.generation.purge.wall_s`. The switch refuses while anything listens on the
+     harness's gunicorn or memcached port.
+- **The review (2026-11-15).** An independent read-only review found five defects, each
+  fixed on this branch with its tests:
+  - an abandon, or a write into the pending generation, after a switch that stopped part
+    way, and a purge after a revert that stopped part way, are refused
+    (`unfinished_switch_problem`), and a revert of a part-way switch runs its steps in
+    reverse;
+  - `--validate` reads the pending generation's `param_info__new`;
+  - `register_writer` reads the generation again under its lock, and `set_pending_state`
+    fails on a lost state;
+  - the second server's copy is purged before it is promoted.
+
+  Also fixed:
+  - the view's re-creation waits for locks only as long as the swap's rename does;
+  - the abandon restores the retired rows by primary key after one scan;
+  - the update installs the deployed release unless given a specifier;
+  - every rebuild after the stamp sets the generation back to `writing`;
+  - a refused generation command exits with status 3, and `promote_generation.sh` tells a
+    refusal from a part-way step.
+
+  Two races remain:
+  - a writer that started before an abandon passes the check of a new begin that reuses
+    the generation's number;
+  - a begin can start under a plain writer, which is not registered.
+
+  The product types' tie order was left: their `ORDER BY` names every selected column.
+
+  A second review, of the fixes, found more:
+  - A plain rebuild of the served auxiliary tables or the cart (`--finalize`,
+    `--create-param-info`, `--create-partables`, `--create-table-names`, `--create-cart`)
+    after a revert that stopped part way would have dropped the `__new` tables that mark
+    it, and so let the purge run. It is refused while `unfinished_switch_problem` reports
+    anything (`cli._rebuilds_served`), and a mutation of that refusal fails the import
+    suite.
+  - The deployed release was refused only for a local version. A `.dev` version, which
+    this project's builds carry instead, is refused too.
+  - The chain's release is checked after the default specifier is filled in.
+  - After a refused `--begin-generation` the update says nothing was begun, rather than
+    advising an abandon.
+  - Left: `promote_generation.sh --revert` of a ready generation never switched still
+    stops the site and resets the searches, harmlessly.
+- **The measurement (2026-11-15), complete scale**, the orchestrator's. The harness's
+  result files name these commits by their hashes before a rewrite of the branch's
+  messages: b6183a9c was febe305e, fdd16322 was 4c2f1d83.
+  - **Full imports**, 6 importers × 4 workers, `--session full6x4`:
+    | | wall-clock | bundle imports | finalization | registration |
+    |---|---|---|---|---|
+    | base (PR-22, 0f3a81f1) | 3,145.6 s | 1,482 s | 1,515 s | 145 s |
+    | head (b6183a9c) | 3,123.7 s | 1,472 s | 1,506 s | 142 s |
+
+    Where the runs differ:
+    - The head's run was OOM-killed at 19 minutes inside the capped scope (about 33.6 GB),
+      which holds the owned mysqld's 18 GB pool and the 24 workers together, and was rerun
+      in a 48 GB scope.
+    - The base ran in the capped scope; its first attempt was killed the same way.
+    - One run a side, not the three §2.3 asks for a target with no floor: the update's
+      difference from a full import is several times the import's spread (PR-22's own
+      head imported in 3,350.9 s).
+  - **The web guards, the view's cost**: `bench_web`, both sides alternated three times
+    (`--session web`), and the head's runs repeated on fdd16322 (`--session web2`).
+    - Every guard held except the bundle-ID autocomplete, judged app-cold, from every
+      observation, since the empty search exceeds the count threshold.
+    - On b6183a9c it took 334 ms against 36 ms, about 9 times slower.
+      - `bundle_id` is `obs_pds`'s column.
+      - The join to the view cost the loose index scan of the column's key.
+      - The autocomplete's full branch therefore takes no join: it suggests every stored
+        value, as the mult choices list theirs.
+    - On fdd16322 it took 52 ms against 36 ms, which `compare` still calls a regression.
+      - The statement is the base's: identical text, plan ("Using index for group-by") and
+        time (both 0.00–0.03 s).
+      - The difference is a second cold worker. In the head's runs the request's two
+        prefixes reached two workers: 2 connections and 37 statements, against 1
+        connection and 27 statements for the base.
+      - Other scenarios move the same way in both directions: `fanout.selected` went from 3
+        connections to 2 (108 statements to 92), `pages.empty` from 2 to 1 (62 to 55).
+      - Held on that reading.
+    - The searches' app-cold medians are 15–30% lower on the head (`search.empty` 5.23 s
+      against 4.34 s). This is not explained, and no improvement is claimed.
+  - **The update**, `bench_generation` into the head's schema, on fdd16322:
+    | | update | of it: import | finalize | validate | switch | purge |
+    |---|---|---|---|---|---|---|
+    | `gen3`: the test scale's incremental group, `NHPELO_1001` | 216.2 s | 80.9 s | 11.9 s | 121.4 s | 1.8 s | 21.5 s |
+    | `gen2`: `COISS_2111,COUVIS_0002,COVIMS_0006,GO_0017,VGISS_8201,NHPELO_1001`, `HSTJ0_9975` dropped | 455.6 s | 193.6 s | 12.6 s | 246.1 s | 0.9 s | 33.2 s |
+
+    Reading the table:
+    - `begin` and `write_schema_version` took 0.5 s and 1.4–1.5 s; `gen2`'s `delete`,
+      1.4 s.
+    - Update, switch and purge sum to 239.4 s and 490.6 s, against the full import's
+      3,123.7 s: 13.0 and 6.4 times faster. The service is down only for the switch.
+    - The validation, which reads the whole schema, is half of each update; scoping it to
+      the pending generation is the obvious next gain.
+    - `gen1` repeated `gen3`, but was disturbed by probes against the server and is not
+      used.
+  - **The site while the update imports.** `genweb3` was `bench_web --app-cold-only`
+    beside `gen3`, against an idle `idleweb3`, one run each. The update overlapped only the
+    first 3.6 of the session's 5.8 minutes.
+    - The heavy scenarios were 0–10% slower: `search.empty` +1.9%, `fanout.empty` +6.2%,
+      `files.broad` +10.1%, `concurrency` p95 −0.6% and −2.3%.
+    - The small ones scattered both ways, by up to +128% on a 0.04 s page.
+  - **Kept**: the full import is unchanged, the view costs no guard, and an update is
+    several times faster than the full import it replaces.
+- **CodeRabbit's review (2026-11-15)**, of 65be837f. Fixed, each with tests, the important
+  ones mutation-checked:
+  - Every invocation that writes a schema with a version row registers in
+    `import_process` (`cli._WRITERS`, `cli._registers_writer`), the served rows' writers
+    too, so the second race above is closed: a begin is refused while a plain append runs,
+    and an append that started before a begin is refused at registration. An erase and a
+    read-only run register nothing; a schema with no version row is never begun on. A
+    registered `--join` importer imports under its writer's row, so it has one
+    `import_process` row, in a pending generation too.
+  - `--finalize`, `--validate` and `--write-schema-version` write a pending generation as
+    its sole writer (`register_writer(sole=True)`): refused while any other registered
+    invocation is alive, and holding `generation_sole_writer`, a named lock on the row's
+    connection, which refuses every other writer of it. A condition on the state alone
+    would not have done: a writer during `--finalize` writes the same `writing`, and a
+    whole finalization during a validation ends at `finalized` again.
+  - The pending generation is read again after `--scorched-earth`; the import path
+    checks the version and state before the generation path; `read_generation_state`
+    finds no generation in a `schema_version` without the generation columns, and the
+    erase drops an `obs_general` base table of such a schema by its own name (MySQL 8.0
+    only notes a `DROP VIEW IF EXISTS` of a base table, but `DROP TABLE
+    obs_general_rows` failed there).
+  - An abandon marks the generation `writing` first, and deletes the child rows left in
+    the id ranges the generation registered.
+  - The update dumps the served schema under the peer's new name, so an operator's dump
+    of it survives; `load_db.sh` drops only the view's `DEFINER` line's clause; the
+    wrappers quote their paths; `clone_database.sh` stops on a failed step;
+    `create_opus_models.sh` marks the view's `id` as its primary key, checked by
+    regenerating the models against `pr23local`.
+  - Declined: moving the generation options out of `opus_import.cli` (it was past the
+    module-size rule, at 1,028 lines, at PR-22's head, so the move would not bring it
+    under); `create_table` re-creating the view (a connection reaching it on a schema
+    with a version row has read the table list again at its start and at registration).
+  - Results: the gates pass; the import suite 203 passed and 3 skipped.
+- **`--validate` with a generation pending checks what the update wrote**, not the whole
+  schema (`do_validate.GenerationScope`). Its first id is the end of every range an earlier
+  generation registered, retired ones included (`bundle_registry.end_before_generation`):
+  every range of the pending generation starts there, one it registered and then dropped
+  included, and no served row's id is that high; `added_generation`, which has no key, is
+  only a residual test.
+  - The min/max, `obs_pds` bundle and preview checks read the generation's observations by
+    `obs_general_rows`' primary key, and their child rows by each table's `obs_general_id`
+    key; the junction comparison takes the first id.
+  - The orphan count reads child rows from the first id up by their own `obs_general_id`,
+    still against every `obs_general_rows` row: an orphan has no observation to select it
+    by, an update deletes only its own observations, and the served rows it hides are
+    retired with their children kept. This replaces the section's "the orphan counts read
+    every row".
+  - The filter check compares the filters the generation's observations carry, across
+    every observation the generation shows, so a bundle that disagrees with served rows is
+    still reported. The NULL check is skipped and says so, since it describes the schema.
+    `param_info` and the unique-OPUS-ID check are unchanged.
+  - `EXPLAIN` on `pr23local`, with a first id leaving 1% of the rows in scope, shows a range
+    on a primary key or an `obs_general_id` key, then `eq_ref`, for every per-row statement.
+- **The join to the served observations is conditional.** At complete scale, `bench_db`'s
+  `fanout.empty/mults_target` took 1.04 s on this branch against 0.14 s without the join,
+  and `mults_observationtype` 0.36 s against 0.30 s: every junction or child row did an
+  `eq_ref` lookup into `obs_general_rows`, and outside an update the join filters nothing.
+  - The six statements of "The per-observation queries" above hang
+    `served_observations_join` only while `db_utils.unserved_observations_exist()` is true:
+    one read of `schema_version`'s `pending_generation` and `revertible`, per statement
+    that needs it (once for a range's two statements), never cached across requests,
+    since a begin runs while the site serves. No table or no row joins nothing. With no
+    generation in flight each statement is the joined one less the join, and the product
+    types' tie order is added only with the join, so their statements are PR-22's. The
+    autocomplete's full branch still takes no join.
+  - The condition is exact because `revertible` now outlives the retired rows. The purge's
+    steps (`PURGE_STEPS`, fault site `purge_generations:<1..5>`): drop the auxiliary
+    `__new`/`__old` leftovers, then the `__prev` tables; delete the retired observations;
+    delete the retired registry rows; re-create the view with no condition; clear
+    `revertible`; then the mult step and `ANALYZE`. Dropping `__prev` first keeps the
+    revert refused from before the first row goes: `unfinished_purge_problem` (revertible,
+    nothing pending, `__prev` not whole, no `__new`) refuses `--revert-generation` (which
+    would otherwise have found no `__prev` to swap, pointed the cart and served a part-
+    purged generation), the begin, and the served rebuilds in `cli` (an interrupted
+    rebuild would leave `__new` with no `__prev`, the mark of a part-way revert, and let a
+    revert run); `generation_command_problem` reports it for a revert. Leftover `__new`
+    tables go before `__prev` so an interrupted purge never looks like a part-way revert.
+    A rerun finishes an interrupted purge. The purge and the abandon moved to
+    `opus_import.steps.do_generation_purge`, which keeps `do_generation` under the
+    1,000-line rule; `require_state`, `update_version_row` and `command_step` became public
+    for it.
+  - The begin no longer drops stale `__prev` tables and the abandon no longer scans for
+    retired rows (`_has_retired_rows` is gone): no switch revertible and nothing pending
+    now implies no retired row and no `__prev` table. Retirement happens only in a pending
+    generation, at that generation (`retire_bundle_rows`, the duplicate step, a pending
+    `--delete-bundles`); a begin needs `revertible = 0`, which the purge sets only after
+    deleting every row retired at or before the served generation; so every retired row
+    while P is pending has `removed_generation = P`, and the abandon restores them all and
+    re-creates the view with no condition. The state the abandon guarded against, retired
+    rows with nothing pending and `revertible = 0`, arose only from the old purge order.
+  - One window is left: a request that reads the version row just before a begin commits,
+    and runs its statement after the update's first child rows are committed, does not
+    join. The begin records the pending generation before any row of it is written and the
+    first `--import` is a separate invocation started after it, so the window is the gap
+    between one request's two statements against an invocation's start-up; Django's READ
+    COMMITTED gives each statement its own snapshot, so no transaction closes it.
+  - Tests: `tests/opus_app/test_unserved_observations.py` (the reader's states, the
+    missing table, other errors, a read per call); `tests/opus_import/test_generations.py`
+    (the purge's order, its fault after each step with the revert and the begin refused
+    and a rerun finishing it, `unfinished_purge_problem`'s shapes, the revert refused
+    cleanly, the pre-check); `import_tests/test_generations.py` (the purge killed after
+    each step in turn, the view's condition and `revertible` at each, the revert, the
+    begin and a served rebuild refused, then finished);
+    `integration_tests/apps_db_tests/test_generations.py` (the plant hidden both as a
+    pending generation and as rows a revertible switch retired; no `STRAIGHT_JOIN` with
+    neither; each child statement equal to the plain one plus the join with either).
+  - Results on cecfab54: the gates pass (`run-all-checks.sh`, 3,477 unit tests); the import
+    suite passes (205 passed, 3 skipped); the integration suite passes against a database
+    this branch imported (2,912 passed, 100% coverage); the mutations are caught.
+- **The measurement (2026-11-16), complete scale, from scratch**, the orchestrator's, on
+  cecfab54 against PR-22's head 0f3a81f1 (the tree `db-perf` holds after PR-20 and PR-22
+  merged), on an idle machine: every phase waited for five minutes under three busy CPUs,
+  and the top processes, sampled every five minutes, show no other job. Every run in a
+  48 GB scope. It supersedes the 2026-11-15 web and update figures, which predate the
+  conditional join and the scoped validation.
+  - **Full imports**, 6 importers × 4 workers, `--session clean`, this branch first:
+    | | wall-clock | bundle imports | finalization | of it: secondary keys |
+    |---|---|---|---|---|
+    | base (0f3a81f1) | 2,946 s | 1,482 s | 1,327 s | 1,210 s |
+    | head (cecfab54) | 3,052 s | 1,487 s | 1,425 s | 1,312 s |
+
+    Reading the table:
+    - The difference is the key build, which is single-connection DDL whose time moves
+      between runs of the same code: `obs_files` took 790 s and 935 s here, and between
+      761 s and 934 s in the earlier imports of either side; `obs_general`'s keys took
+      38 s and 136 s here, and between 27 s and 147 s before.
+    - An earlier rerun on the same commits (`--session rerun`, 2026-11-16) built the base's
+      `obs_files` keys in 155 s, and every table's faster, giving the base 2,067 s against
+      3,056 s. It was the base's only such run and is not used; the importers' logs keep
+      each table's key time for such a comparison.
+    - The 2026-11-15 pair went the other way (3,145.6 s against 3,123.7 s): the full import
+      is unchanged within the key build's variation.
+  - **`bench_db`** (`--session dbc`, `--dump-queries`, alternated three runs a side): every
+    captured statement planned with `EXPLAIN ANALYZE`; schema data and index bytes held.
+    - `fanout.empty/mults_target` no longer appears: the conditional join leaves it the
+      base's.
+    - `fanout.empty/mults_observationtype` 0.36 s against 0.29 s (+24%), outside both
+      spreads (6%); in the rerun +19%.
+    - The page statements, about 1 ms on either side, range from 3% faster to 12% slower
+      on the head, within or near their spreads (6–30%).
+    - `search.ring_radius/result_count` and `resort.ring_radius/resorted` reported +95%
+      (0.98 s against 1.89 s), but the optimizer chose between two plans in each run on
+      both sides: a scan of `obs_ring_geometry` with a primary-key lookup per match
+      (0.95 s), or the `time1` index walked with a lookup into `obs_ring_geometry` per
+      observation (1.86 s). The base took the slow plan in one of its three runs and the
+      head in two, so the medians differ by the plan, not by the view.
+  - **`bench_web`** (`--session webc`, alternated three runs a side): 13 of 18 guards held.
+    The five that regressed are small requests:
+    - `app-cold.autocomplete.bundleid` 39.5 ms against 36.2 ms (+9%); in the rerun it was
+      18% faster on the head.
+    - `app-cold.pages.empty` 64.7 ms against 47.7 ms; `warm.pages.empty.page_1` 5.5 ms
+      against 3.8 ms; `warm.pages.empty.page_last` 10.7 ms against 6.6 ms;
+      `warm.fanout.empty` 7.3 ms against 6.8 ms.
+    - The other searches' page scenarios move both ways by as much:
+      `app-cold.pages.selective` is 47% faster on the head and `app-cold.pages.target` 28%
+      faster, while their statements are within 3–12% of the base's.
+    - The heavy guards are within 3%: `search.empty` +1.2%, `fanout.empty` +1.8%,
+      `fanout.selected` +2.4%, `concurrency` p95 −3.0% and −1.2%.
+  - **The updates**, `bench_generation` into the head's schema:
+    | | update | of it: import | finalize | validate | switch | purge |
+    |---|---|---|---|---|---|---|
+    | `genc1`: the test scale's incremental group, `NHPELO_1001` | 112.1 s | 83.6 s | 15.7 s | 10.9 s | 1.0 s | 24.6 s |
+    | `genc2`: `COISS_2111,COUVIS_0002,COVIMS_0006,GO_0017,VGISS_8201,NHPELO_1001`, `HSTJ0_9975` dropped | 200.6 s | 172.3 s | 10.4 s | 14.6 s | 0.6 s | 29.7 s |
+
+    Reading the table:
+    - `begin` took 0.5 s and `write_schema_version` 1.4 s; `genc2`'s `delete`, 1.4 s.
+    - Update, switch and purge sum to 137.7 s and 230.9 s, against the head's full import
+      of 3,052 s: 22 and 13 times faster. The service is down only for the switch.
+    - The scoped validation takes 11–15 s, against 121–246 s for the whole schema's.
+  - **The site while the update imports.** `genwebc` was `bench_web --app-cold-only` beside
+    `genc1`, against an idle `idlewebc` after it, one run each. The heavy scenarios moved
+    by −14% to +7% (`search.empty` +2.5%, `fanout.empty` −14.4%, `files.broad` +0.3%,
+    `concurrency` p95 +3.9% and +0.7%); the small ones scattered both ways.
+  - **Kept**: the full import is unchanged within its variation, no heavy guard moved by
+    more than 3%, and an update with its switch and purge is 13–22 times faster than the
+    full import it replaces.
+- **An independent review of cecfab54 (2026-11-16)**, in place of CodeRabbit's, which skips
+  the pull request once its base is `db-perf`: its 105 reviewable files exceed CodeRabbit's
+  cap of 100, and its incremental review does not apply. The review found no state in
+  which an unserved generation's rows reach a response, and confirmed the purge keeps
+  `revertible` set until the last retired row is gone. Its low findings, at the
+  orchestrator's decisions:
+  - *Fixed:* `--switch-generation` with nothing pending ran while a purge was unfinished,
+    and `promote_generation.sh`'s pre-check let it stop the web service to change nothing.
+    The switch and `generation_command_problem` refuse it with `unfinished_purge_problem`'s
+    message (unit, pre-check and import tests).
+  - *Fixed:* the append's refusal and `--delete-bundles`'s, during a revertible switch,
+    named the revert and the abandon, which an unfinished purge refuses; they say the purge
+    also finishes a purge that stopped part way.
+  - *Recorded:* the begin window above can last longer than one request: the empty
+    search's mult counts, range endpoints and product types are cached under keys that
+    name no generation, so a request inside the window would keep a pending generation's
+    values in the cache until a switch or a revert flushes it; the abandon flushes
+    nothing.
+  - *Recorded:* a switch made while one of `AUX_TABLES` had no live table leaves its
+    `__prev` set incomplete, which `unfinished_purge_problem` then reads as a purge
+    started, refusing a served rebuild with that message; the revert already failed in that
+    state.
+  - *Recorded:* the six gated statements are tested against a database only by
+    `integration_tests/apps_db_tests/test_generations.py`, which the self-hosted
+    integration job runs on every push; the unit suite tests the reader alone.
+  - *Recorded:* child rows with no `obs_general_rows` row, which a killed append (not a
+    generation) can leave, are not hidden outside an update, as in PR-22.
+- **Split for review (2026-11-16).** Once its base was `db-perf`, CodeRabbit skipped this
+  pull request outright: 105 reviewable files, over its cap of 100. The operator asked for
+  CodeRabbit's review, so the benchmark harness's part moved to PR-23a, stacked on this
+  one: `bench_generation`, `bench_web --app-cold-only`, the view-aware
+  `bench_server.clone_schema` and the harness's other changes, their tests under
+  `tests/benchmarks/`, and `dev_guide_benchmarks.rst`. Nothing outside the harness uses
+  them, and `db-perf`'s harness tests pass against this branch's code. The measurements
+  above were made with the harness as PR-23a has it.
+- **CodeRabbit's full review (2026-11-16)**, of 54760861, the first once the split brought
+  the pull request under its cap. At the orchestrator's decisions, each behavior fix with a
+  test that fails with it reverted (mutation-checked):
+  - *Fixed:* `--switch-generation` with nothing pending, beside a whole `__prev` set and the
+    `__new` tables an interrupted rebuild of the served auxiliary tables leaves, would have
+    dropped the previous generation's tables and swapped the rebuild's in;
+    `unfinished_rebuild_problem` refuses the switch and the deploy pre-check (the revert
+    drops `__new` first, so it runs).
+  - *Fixed:* `--abandon-generation` re-created the view with no condition before clearing
+    the pending generation, so an interruption between them left a writable generation
+    shown; it clears the pending generation first. An interruption between leaves the view
+    naming the served generation, which shows every row, and `--purge-generations`, with
+    nothing to delete, re-creates it with no condition.
+  - *Fixed:* a plain import registered as a writer did not check its writer lock before a
+    chunk committed, so a writer whose lock connection dropped could keep committing after
+    an abandon took it for finished; `BundleGuard` checks the writer lock as it checks an
+    importer's, and the plain loop ends with a fatal message.
+  - *Fixed:* `validate_param_info`'s check that surface-geometry rows have a body category
+    counted rows of observations a pending generation retired; it counts the validated
+    generation's.
+  - *Fixed:* a read-only registration into a pending generation planned a new copy of a
+    live bundle, but `bundle_range` answered with the live row; the plan takes precedence.
+  - *Fixed:* `create_table('obs_general')` on an existing base table whose view's statement
+    had failed created no view; it creates a missing view and leaves an existing one.
+  - *Fixed:* `repoint_cart` committed or rolled back inside an enclosing `transaction()`.
+  - *Fixed, deploy chain:* the drops run before the import, so a descriptor that expands to
+    a dropped bundle imports it again; a comma-separated name beginning with `-` is
+    refused; the wrapper path is quoted; the README's abandon sets `OPUS_CONFIG`; the
+    runner exits on a failed step explicitly; `promote_generation.sh` passes the step to
+    Python as an argument.
+  - *Documented:* a revert does not restore the cart rows the switch deleted (their OPUS
+    IDs absent from the switched-in generation); an update run with a release whose pinned
+    `mult_options` differ relabels served `mult` rows at registration; the import overview
+    and the steps guide name the generation path, retirement in place of deletion, the
+    switch's separate steps, the generation columns' base table, and ranges registered
+    afresh in a pending generation.
+  - *Not changed:* reading the version row and the child aggregate in one
+    `transaction.atomic()`: Django's MySQL connections run READ COMMITTED, where each
+    statement takes its own snapshot, so the block would not close the begin window
+    recorded above. A class diagram for `dev_guide_architecture.rst`: the chapter predates
+    this pull request, which adds a paragraph and a sentence to it.
+- **The steady state's cost, and the statistics sample (2026-11-17)**, at the operator's
+  question why PR-23 is slower with no generation pending. Measured on the benchmark
+  schemas:
+  - *The view.* The empty search's `observation_type` mult count, a full scan grouped in
+    a temporary table, takes 265 ms on the base's `obs_general`, 268 ms on PR-23's
+    `obs_general_rows` read directly, and 327 ms through the view, which has no condition
+    in the steady state. MySQL merges the view, so the plan is the same, and the cost is
+    per row: the `instrument_id` count, which groups along an index, takes 139 ms against
+    141 ms. Removing it is open: one way is to keep the base table named `obs_general`
+    while nothing is pending, renaming it and creating the view at the begin and undoing
+    both at the purge.
+  - *The generation columns.* `obs_general_rows` is 2.5% larger than `db-perf`'s
+    `obs_general` (20,608 pages against 20,096), so a cold full scan reads that much more.
+  - *Not explained:* the selected fan-out's `instrument` and `observationtype` mult
+    counts are 6–13% slower at web level in both sessions, while their statements replay
+    equal or faster.
+  - *The ring-radius plan flip* is InnoDB's 20-page statistics sample, on both sides:
+    `obs_ring_geometry`'s row estimate ranged from 0.69 to 2.99 times its 1,627,081 rows
+    over 15 `ANALYZE`s, and above about 2.3 times the optimizer walks `obs_general`'s
+    `time1` index (1.86 s) in place of scanning `obs_ring_geometry` (0.95 s). At 500
+    pages the estimates of every table of 1,000 pages or more stay within 0.91–1.03 times
+    the true count, with no flip in 15 `ANALYZE`s, and analyzing those tables takes 7.8 s
+    against 0.7 s. At the operator's decision, every table the import creates is created
+    with `STATS_SAMPLE_PAGES = 500`; the benchmarks above were measured without it.
+  - *The 500-page sample, measured* (session `rings`: a fresh import of PR-23's head
+    against the base's, `bench_db` and `bench_web` alternated three runs a side, and 30
+    rounds a side of `ANALYZE` and `EXPLAIN`). Warm, PR-23 scanned `obs_ring_geometry` in
+    every round and run (0.99 s); the base walked `time1` in 9 of 30 rounds and one
+    `bench_db` run (1.64 s). On the scan, PR-23's ring count and re-sort are 5–7% slower,
+    as the broad search is: the view and the generation columns. The db-cold re-sort is
+    65% slower in every run (3.36 s against 2.04 s), and the statistics decide it, not
+    the view: after a restart and the default-order build, with part of the data cached,
+    MySQL walks `time1` (3.4 s) in place of the scan (2.45 s forced) at PR-23's estimate
+    during the runs, 0.90 times the true count. With the 500-page sample the base's
+    schema did so in 3 of 3 rounds and PR-23's in 3 of 4; with the 20-page sample, 2 of
+    6. `prefer_ordering_index=off` does not change it. The sample fixes the warm flip;
+    the re-sort after a restart needs the plan fixed in the query.
+- **`--validate` from a switch until the purge (2026-11-17)**, at the operator's question
+  what it does with no generation pending. It read every row of `obs_general_rows`, so the
+  observations the switch retired, and their child rows, were checked beside the served
+  ones: a filter whose wavelengths the update corrected was reported as inconsistent with
+  its retired observations, and a retired row's defects were reported under OPUS IDs the
+  site serves. While no generation is pending and the switch is revertible
+  (`do_validate.served_generation_only`), the min/max, `obs_pds` bundle, preview, filter
+  and NULL checks read the served generation's observations alone, and the log names it.
+  The orphan count and the junction comparison still read every row: a retired
+  observation's child rows are not orphans, it keeps its list and its junction rows
+  together, and the purge deletes them with it. `param_info` and the unique-OPUS-ID check
+  already read the served generation. With every row served, nothing changes.
+  `import_tests/test_generations.py` plants defects in a retired row after a switch and
+  one in a served row; only the served one is reported, and without the fix the retired
+  row's min/max, `obs_pds` and preview defects are reported too.
+
+### 2026-11-16, PR-23a (written against this file at 54760861)
+
+- **Split from PR-23** so that each pull request fits CodeRabbit's cap of 100 reviewable
+  files (see PR-23's "Split for review"). It carries the benchmark harness's support for
+  generations unchanged from PR-23's 411f1e2c: `bench_generation`, `bench_web
+  --app-cold-only`, the view-aware `bench_server.clone_schema`, the harness's other
+  changes, their tests and `dev_guide_benchmarks.rst`.
+- **A complex search and a column set**, asked for by the operator: PR-23's scenarios
+  searched on one table, or two, and paged the default columns. `web.toml`'s `complex`
+  search selects on four tables (a time range, `instrument=Cassini ISS` and
+  `target=Saturn` on `obs_general` and its junction, a ring radius range on
+  `obs_ring_geometry`, a latitude range on Saturn's surface geometry), and runs as
+  `search.complex`, `pages.complex`, `resort.complex` and `fanout.complex`. A `pages`
+  scenario may name a column set from `[columns]`, asked for as `cols`;
+  `pages.complex_geometry` asks for columns from the same four tables. At complete scale
+  the search matches 51,068 observations, so its pages 10 and last exist.
+- **The complex search measured** (2026-11-16, complete scale), for PR-23 against
+  `db-perf`: a fresh import of PR-23's code (2,935.5 s) against the base schema of PR-23's
+  clean session, `bench_db` and `bench_web` alternated three runs a side with this
+  branch's harness at 84fb95bc; the machine idle between phases. The cold fan-out's mult
+  counts are unchanged (`instrument` 1.38 s against 1.40 s db-cold, `target` 1.43 s
+  against 1.46 s), and the result count and re-sort are within 3% at web level; in
+  `bench_db` every complex statement is within or near its spread, the count 6.2%
+  slower. The pages scenarios' cold medians came out 64–69% slower. That is one request
+  per run taking 50–60 ms more, handled by a gunicorn thread that had not yet opened its
+  database connection: the run has one more MySQL connection and 21–31 more statements.
+  Such runs are about as frequent on both sides across the session's cold scenario runs
+  (53 and 61 of 180; 44 and 46 of 150 in the clean session), but in
+  `pages.complex_geometry` they fell in 5 of PR-23's 6 cold runs and none of the base's.
+  The page statements are the same on both sides. PR-23's body has the tables.
+- **CodeRabbit's review (2026-11-17)**, of 84fb95bc, all fixed with a test that fails with
+  the fix reverted (mutation-checked):
+  - *Fixed:* the switch's refusal probed `bench_web`'s two ports one after the other, so
+    an app-cold reset, between restarting gunicorn and memcached, could find both quiet.
+    A lock file in the owned server's data root is held shared by every `bench_web`
+    command and exclusive by the switch through its purge, each without waiting; the
+    port probe stays for a server started outside the harness.
+  - *Fixed:* `bench_web --app-cold-only` started a stopped MySQL server and stopped it on
+    exit, which would stop an update that attached meanwhile; it needs the server running
+    and never starts or stops it, as `bench_generation` does.
+  - *Fixed:* `bench_generation` found a label whose file pins other bundles only when it
+    appended, after the update had run and left its generation pending; it checks first.
+  - *Fixed:* copying a schema's views rewrote the source qualifier inside string literals
+    too, and created views in name order; it rewrites identifiers only and creates each
+    view after the views it reads.
+
+### 2026-11-16, PR-24 (written against this file at 9db392e2)
+
+- **The measuring tools only; the PR is gated.** The branch is PR-23a's head (9db392e2).
+  It adds `bench_db --option-probe` and the prototype tool, and changes nothing under
+  `src/`. The complete-scale session (the floor sessions, both prototypes, the probe on
+  each copy) is the orchestrator's; its report goes in the PR's description, and nothing
+  of either option is implemented until the operator decides.
+- **The prototypes** are `python -m benchmarks.option_prototypes --source <schema> --target
+  <copy> --option {default_rank,facet}` (`benchmarks/option_prototypes.py`), one option per
+  command, each on its own copy made by `bench_server.clone_schema` (views included); the
+  source is only read.
+  - *`default_rank`:* `ALTER TABLE obs_general_rows ADD COLUMN default_rank INT UNSIGNED,
+    ADD KEY default_rank (default_rank)`, then one `UPDATE` joining the table to its own
+    rows numbered by `ROW_NUMBER() OVER (ORDER BY time1, opus_id)`; then the view is
+    re-created by `ImportDBMySQL.create_obs_general_view` (the import's own code path,
+    reached through a connection the tool opens with `bulk_load=False`), given
+    `obs_general.json`'s entries with `{"field_name": "default_rank", "field_type":
+    "uint4"}` after them, which is how an implemented column would reach the view. A
+    schema whose `obs_general` is a base table gets the column there and no view.
+  - *`facet`:* `obs_facet(obs_general_id INT UNSIGNED NOT NULL PRIMARY KEY, ...)`, one
+    column per field of `mult_fields.packaged_mult_columns()` whose `field_type` is
+    `mult_idx`, `flag_yesno` or `flag_onoff` and whose table holds one row per observation
+    (`obs_general`, or a schema declaring the primary key `(obs_general_id)` alone, read
+    with `table_keys.declared_keys`), named by the qualified name and typed by
+    `MYSQL_FIELD_TYPE_SQL` (PR-14's `SMALLINT UNSIGNED`); no secondary key. One `INSERT
+    ... SELECT` fills it from `obs_general` (the view) left joined to each child on
+    `obs_general_id`. A list column (its junction table has several rows per observation)
+    and `obs_surface_geometry_target`'s field are excluded by that rule, not by a list. A
+    field whose table the copy lacks is left out and named in the details.
+  - Each refuses a copy whose `obs_general` shows fewer rows than `obs_general_rows`
+    holds (a pending generation), and a copy already carrying the option. The run, kind
+    `prototype` (not compared), records `prototype.<option>.{clone_s, alter_s, fill_s,
+    view_s | create_s, fill_s, build_s, rows, data_bytes, index_bytes}`, plus `key_bytes`
+    (the rank key's size from `mysql.innodb_index_stats`) and the facet's `columns`, bytes
+    read after `ANALYZE TABLE` with `information_schema_stats_expiry = 0`. The `ALTER`
+    rebuilds `obs_general_rows` (MySQL cannot add a column instantly together with a key),
+    so the rank's `data_bytes` includes the rebuild's effect; `key_bytes` is the clean
+    figure for the key. The label's environment names the copy as its `schema`, so
+    `bench_db` and `bench_web` given the same label measure the copy. The tool builds with
+    the harness process's own import code and refuses a `--repo-root` other than its own
+    checkout.
+- **The probe** (`benchmarks/option_probe.py`, `bench_db --option-probe`, needs
+  `--dump-queries`) runs after the replay, on connections of its own. Each request it
+  covers is a pair of a **captured** shape (from the capture) and a **prototype** shape
+  (generated from it and from the built searches' ids, written to no capture):
+  - `default_rank.empty_page_1` / `empty_page_last`: the page read of `pages.empty/page_1`
+    and `page_last` (the `INNER JOIN` to the search's `search_results` rows with `sort_order
+    BETWEEN a AND b ORDER BY sort_order`) against the same columns and joins with `WHERE
+    obs_general.default_rank BETWEEN a AND b ORDER BY obs_general.default_rank`;
+    `default_rank.broad_build`: the inner `SELECT` of `search.broad/result_count`'s `INSERT
+    INTO search_results` against the same with its window ordered by `default_rank ASC`.
+  - `facet.<search>.mults_<slug>`: each mult count of `mults.broad` and `mults.selective`
+    whose counted `<table>.<column>` is a facet column, against `SELECT obs_facet.<column>,
+    COUNT(*) ... FROM obs_facet, (<the search's search_results rows>) AS results WHERE
+    obs_facet.obs_general_id = results.id [AND obs_facet.<column> IS NOT NULL] GROUP BY
+    ...`; the `IS NOT NULL` is for a child column only, since an observation without a
+    child row holds NULL in the facet table and has no row in the captured count. The
+    `target` counts (the junction table's `mult_id`) are not probed, and the details say
+    so.
+  - *Cold and warm:* each shape is timed by `server.restart()`, a connection opened after
+    it, one `EXPLAIN ANALYZE` (cold) and `EXPLAIN_RUNS` (5) more (warm, the median).
+    `--option-probe-rounds N` (default 1) repeats every shape's restart-cold-warm N times;
+    each figure is the median over the rounds, every value in `samples`.
+  - *Rows:* after the timed runs each shape's rows are read once. A page and a count are
+    fetched and compared with the other shape's (a page in order, a count as a multiset);
+    a build is counted by `SELECT COUNT(*)` over it. A page read cannot be counted that
+    way: its select list names `label` twice, which a derived table refuses.
+  - *Metrics:* `db.option_probe.<option>.<pair>.{cold_s, warm_s, cold_analyze_ms,
+    warm_analyze_ms, rows_examined, rows_returned}` are of the shape the schema answers
+    with: the prototype where the schema carries the option (`obs_general.default_rank`
+    exists; `obs_facet` exists), the captured shape where it does not. So on the
+    unmodified schema the probe times the captured shapes alone and says the options are
+    skipped (not a failure), the floor sessions get floors for the pair metrics, and
+    `compare <floor session> <copy> --floors-file ... --target
+    db.option_probe.default_rank.broad_build.cold_s` judges a target directly. On a copy
+    the captured shape is also under `.captured.`, with `cold_ratio` and `warm_ratio`.
+    `.valid` per pair and `db.option_probe.<option>.valid` per option.
+  - *Failures:* a shape with no rows, two shapes with different counts or rows, or a
+    statement the server refuses fails its pair and the others still run; a capture
+    lacking an option's captured shapes fails that option; a server that cannot be
+    restarted fails the probe (`measure`). The run is recorded and `bench_db` exits
+    non-zero naming every problem (`probe_failure` covers both probes).
+- **Decisions where the section left a choice:**
+  - *The captured mult counts did not exist.* The capture held mult counts only for
+    `fanout.empty`, `fanout.selected` and `fanout.complex`, and none for a widget on a
+    child table, so the section's "captured counts" of the broad and the selective search
+    could not come from it. A `mults` scenario kind (`web_scenarios`: an untimed result
+    count, then the default widgets' counts and `[mults] widgets`') and two scenarios,
+    `mults.broad` and `mults.selective`, are added to `web.toml`, with `[mults] widgets =
+    ["imagetype"]` (`obs_type_image`, which holds one row per observation at every scale).
+    They run in `bench_web` too, so the complete-scale floor sessions cover them.
+  - *Which searches.* "The broad constrained search" is `web.toml`'s `broad` (the time
+    range), whose build and counts both options pair; "the selective one" is `selective`
+    (`planet=Uranus`).
+  - *Rounds.* A complete-scale `bench_db --dump-queries` is long, so a floor session's
+    spread of a cold time comes from `--option-probe-rounds 3` within one run rather than
+    from three `bench_db` runs.
+  - `resort_probe`'s block lookup, top-level keyword search, `WHERE` pattern, search-id and
+    build patterns are made public (`tagged_block`, `top_level`, `WHERE_KEYWORD`,
+    `SEARCH_ID_READ`, `RESULTS_INSERT`, and `search_build`, which `captured_resort` calls),
+    so the option probe reuses them.
+- **Fixture-scale smoke** (not a measurement; the harness's own server, a fixture import
+  made for it with `bench_import --runs 1`, dropped afterwards): `bench_db --dump-queries
+  --option-probe` on the unmodified schema timed the 9 captured shapes, all valid, both
+  options skipped; the `default_rank` copy (`view_s` re-created the view, which lists
+  `default_rank` last; every row's rank equals its `ROW_NUMBER()` over `(time1, opus_id)`)
+  with `--option-probe-rounds 2` gave its 3 pairs valid, the pages returning the captured
+  rows in order and the build 379 rows both ways; the `facet` copy (86 columns, 399 rows)
+  gave its 6 pairs valid. `compare` of the unmodified run against the rank copy's printed
+  the pair metrics side by side and judged the named target.
+- **Tests:** `tests/benchmarks/test_option_probe.py` and `test_option_prototypes.py`, a
+  `mults` case in `test_scenarios.py`, and a check that `web.toml` issues every request the
+  probe reads; 16 mutations of the two modules (the restart, the cold run, the row
+  comparison in order, the NULL filter, the one-row-per-observation rule, the view's
+  re-creation and its rank entry, the served-rows refusal, the left join, the bytes delta,
+  the copy-is-source refusal, the metric naming and others) each failed a test.
+- Results: `run-all-checks.sh` passes (ruff, ruff format, mypy, pytest 3,592 passed, pyroma,
+  bandit, vulture, Sphinx, PyMarkdown). The import suite was not run: nothing under `src/`
+  or `import_tests/` changed.
+
+### 2026-11-16, PR-24 review fixes (written against this file at 0bd89ee6)
+
+An independent review and CodeRabbit reviewed 0bd89ee6. The orchestrator's decisions
+below are each fixed with a test that fails with the fix reverted (mutation-checked: 23
+reversions, each failing a test).
+
+- **The copies' layout.** `clone_schema` created each table with every secondary key, then
+  filled it, so the copy's secondary keys were built by random inserts (fragmented, with a
+  change-buffer backlog merging during the cold timings), where the import builds them
+  sorted after its load. `clone_schema` gains `defer_keys` (default off, so its other
+  callers are unchanged): each table is created from `SHOW CREATE TABLE` with its plain,
+  unique, `FULLTEXT` and `SPATIAL` keys and its foreign keys set apart
+  (`schema_copy.split_secondary_keys`, which reads one element per line), filled ordered by
+  its primary key, then given its plain and unique keys in one `ALTER` and each `FULLTEXT`
+  or `SPATIAL` key in its own, then, once every table has its keys, its foreign keys with
+  `foreign_key_checks` off. `option_prototypes` always copies so, and after the build
+  restarts the server once with `innodb_fast_shutdown = 0`, putting the setting back after
+  (`settle_server`, `prototype.<option>.settle_s`). A third option, `none`, is the copy
+  alone. At fixture scale the `none` copy's 48 tables' `SHOW CREATE TABLE` equal the
+  source's exactly (180 secondary keys, 35 foreign keys), the rank copy differs only by the
+  rank column and key, and the facet copy only by `obs_facet`.
+  - `bench_server.py` would have passed the module-size rule, so `clone_schema`,
+    `copy_views` and `portable_view_definition` move, unchanged otherwise, into
+    `benchmarks/schema_copy.py`; `bench_import` and the tests import them from there.
+  - The complete-scale floor sessions run on the `none` copy, so every schema compared
+    has one layout; no import runs in them (the source is any finished schema of this
+    import code, only read).
+- **The rank's bytes.** Both sides of the delta were already read after `ANALYZE TABLE`;
+  with the copies laid out as the import does, the delta compares like layouts. `key_bytes`
+  is the figure the guide and the runbook report.
+- **A copy run that is not what its label says.** `db.option_probe.<option>.carried` (0/1)
+  is recorded, and `bench_db --option-probe` refuses, before anything runs, when the
+  label's result file holds a `prototype` run of an option the schema does not carry
+  (`bench_db.prototype_options`, `option_probe.require_carried`). At fixture scale the
+  rank label given `--schema` of the `none` copy is refused.
+- **An invalid pair** records `.valid` = 0 and no other metric or sample; its figures stay
+  in the details. A failure in a later round leaves no earlier round's figures under the
+  judged names.
+- **The build's check** reduces each shape on the server to its row count,
+  `SUM(sort_order * obs_general_id)` and the `BIT_XOR` of the first 64 bits of
+  `MD5(CONCAT(sort_order, ',', obs_general_id))` (`option_probe.build_checksum`, through a
+  derived table's column list, `AS numbered (search_id, sort_order, obs_general_id)`).
+  The review's suggestion was `BIT_XOR(CRC32(...))`; at fixture scale, with two ranks of
+  the rank copy swapped, the weighted sum changed but the CRC XOR did not: a CRC is affine
+  over XOR, so two rows exchanging their numbers between texts of equal length leave the
+  XOR of their CRCs as it was. With MD5 both checksums changed and the pair failed; with
+  the ranks put back it passed.
+- **`obs_facet`** is created with `STATS_SAMPLE_PAGES` from
+  `opus_import.importdb.mysql.STATS_SAMPLE_PAGES`.
+- **The jitter.** `compare` treats the re-sort probe's metrics as ordinary `db` metrics, so
+  there was no precedent to follow; the option probe's metrics form a family of their own,
+  `db.option_probe` (`compare.metric_family`), so their cold times stay out of the `db`
+  family's jitter.
+- **The view.** The row-count refusal let through a pending generation with no rows yet.
+  `require_served_view` refuses a source whose `schema_version` records a pending
+  generation or a revertible switch, or whose `obs_general` view has a condition (a
+  top-level `WHERE` outside quotes), before it is copied; and `require_view_columns`
+  refuses a rank copy whose view lists other columns, in order, than
+  `generations.view_columns(obs_general.json)`, before anything is changed. The view is
+  still made from `obs_general.json` by the import's code.
+- **Warm figures per round** (CodeRabbit): each round's warm figure is the median of its
+  executions, and the metric and its samples are over those per-round values, which
+  `compare.summarize` recomputes from; every execution is in the details.
+- **Fixture scale** (the harness's own server; one import made for it and the three copies,
+  all dropped afterwards; timings are not a measurement): the `none`, `default_rank` and
+  `facet` copies built and settled; `bench_db --dump-queries --option-probe
+  --option-probe-rounds 2` on each recorded every pair valid, `carried` 0/0, 1/0 and 0/1,
+  two warm samples a figure with ten executions in the details, and the build's checksums
+  equal on the rank copy.
+
+### 2026-11-17, PR-24 complete-scale session (written against this file at 6da7388e)
+
+- **The session** (§2.6; the harness's own server, the machine idle before every phase):
+  - **The source** was PR-23's head import (`bench_complete_after_rings_1`, schema version
+    13, no generation pending), which `src/` here equals.
+  - **Floors:** two floor sessions, `f1` and `f2`, on the `none` copy, each running
+    `bench_web` three times and `bench_db --dump-queries --option-probe
+    --option-probe-rounds 3`.
+  - **Prototypes:** `rank` and `facet`, each building its copy, running the probe with
+    three rounds, then `bench_web` three times.
+  - **Warm-up:** one warmed `bench_web` run on the `none` copy, session `warm`.
+  - **Copy costs:** each copy took 37–38 minutes to clone and 1–2.5 minutes to settle.
+  - **Floor agreement:** `compare --floors` lists 91 metrics on which the two floor
+    sessions disagree. On the target shapes the sessions differ by 1.6% at most, against
+    spreads within a session of 0.5–2.6%, so no third session was taken.
+- **Option 1, the rank:**
+  - *Probe:* every pair valid.
+  - *Cold, against the floors:* the target, the broad build's cold time, is 1.204 s
+    against the floor sessions' 1.059 s (+13.7%, "not improved").
+  - *Cold, on the same copy:* the captured build takes 1.41 s cold, against 1.05 s on the
+    `none` copy. The `ALTER` rebuilt `obs_general_rows` 14% larger (325 MB against
+    285 MB), and the copy reads slower cold. The in-copy ratio is the like-for-like
+    figure: 0.85 cold (1.20 s against 1.41 s) and 0.78 warm (0.70 s against 0.91 s).
+  - *Pages:* the empty search's pages by `default_rank` take 17–21 ms cold against
+    25–29 ms.
+  - *Cost:* `key_bytes` 64.6 MB, and 39.8 MB more data. Build 292 s, of which the `ALTER`
+    is 259 s and the fill 33 s.
+  - *Guards:* all 22 held.
+- **Option 2, the facet table:**
+  - *Probe:* every pair valid. The copy's captured counts time like the floors.
+  - *Broad search:* counting from `obs_facet` is slower. Cold against the same copy's
+    captured counts: `instrument` 1.72 s against 1.50 s, `imagetype` 1.83 s against
+    1.44 s, `observationtype` 1.73 s against 1.73 s. Warm: 4–37% slower.
+  - *Why:* the captured count streams `obs_general_rows`' covering `instrument_id` key in
+    group order, while the facet count scans the 159 MB table and groups in a temporary
+    table. In both, about 0.9 s of the time is the 1.6 million lookups into
+    `search_results`.
+  - *Selective search:* counts are 40% faster cold, at 28–32 ms against 47–54 ms.
+  - *Cost:* 159 MB of data, 86 columns, and a 28 s fill.
+  - *Verdicts and guards:* against the floors, two targets are "not improved" and one
+    "improved" (−3.1%). 21 of 22 guards held. The one that regressed,
+    `app-cold.pages.empty`, is a request the facet table cannot reach.
+- **PR-22's confirmation:**
+  - The bundle-ID autocomplete answers with a prefix `LIKE` range on `obs_pds.bundle_id`
+    under `MAX_EXECUTION_TIME`, the branch without the join to the search, in 14–41 ms
+    cold.
+  - It had no timeouts in any of the six floor runs.
+  - Its warm requests take under 1.2 ms.
+- **`warm_search`'s wall-clock**, over 34 resets each: median 35.8 s after a restart
+  (34.3–37.6 s), and 39.0 s app-cold (34.7–40.7 s).
+- **CodeRabbit, on 6da7388e:** `require_served_view` also refuses a view with a top-level
+  `LIMIT`, which the import never makes.
+- **Searches of every size**, after the report, on the same copies: each captured search's
+  build (`selective`, `complex`, `surface_geometry`, `target`, `ring_radius`, the selected
+  fan-out, `broad`, and for option 1 the empty search), timed cold after a server restart
+  and as the median of five warm executions. These are timed by the client around the
+  statement, not by `EXPLAIN ANALYZE`, so they are not the probe's figures.
+  - *Option 2:* each built search's mult counts for `instrument`, `observationtype` and
+    `imagetype`, from `obs_facet` against the captured counts, returning the same counts.
+    For the two columns of `obs_general_rows` the facet count is 18–43% faster cold on
+    searches of 10,697 to 519,991 rows (at most about 250 ms), 5–17% slower on the fan-out,
+    and on the broad search 4% faster for `observationtype` and 17% slower for
+    `instrument`. Warm, those two columns are 4–35% slower on every search. `imagetype`, the
+    child table's widget, is slower on every search, cold and warm.
+  - *Option 1:* each build's `SELECT` ordered by `default_rank` against `(time1, opus_id)`,
+    wrapped as `SELECT COUNT(*), SUM(rn * id)` so the numbering is compared on the server;
+    every numbering matched. Cold and warm ratios: `selective` 0.93 and 0.86, `complex`
+    0.97 and 0.97, `surface_geometry` 0.96 and 0.93, `target` 0.86 and 0.72, `ring_radius`
+    0.94 and 0.93, the fan-out 0.90 and 0.85, `broad` 0.86 and 0.80, the empty search 0.81
+    and 0.69. The saving is the sort's share of the build: tens of milliseconds on a
+    constrained search, 0.1–0.3 s on the largest. The wrapping gives `complex` and
+    `ring_radius` slower plans than the application's `INSERT ... SELECT` gets (`ring_radius`
+    1.77 s warm against 0.99 s), the same plan for both orders, so their ratios compare like
+    for like and their times do not.
+
+### 2026-11-17, ruling on PR-24 (written against this file at d94d6d53)
+
+- **Neither option is implemented.** The operator ruled on the report and the sweeps
+  above.
+  - *Option 1:* its target is "not improved" against the floors. Like for like it saves
+    0.1–0.3 s on the largest builds and tens of milliseconds on constrained ones. A build
+    runs once and is then cached, and the empty search, which gains most, is warmed after
+    every deploy. Against that it costs a column, a key, a full re-import, and a
+    renumbering of every observation after each import and update, which under design B
+    falls in the switch, while the site is down.
+  - *Option 2:* its target is "not improved". The facet count is slower on broad searches,
+    slower warm on every search, and slower for a child table's widget, and saves at most
+    about 250 ms cold on mid-sized searches.
+
+### 2026-11-17, PR-23b (written against this file at 208b19c0)
+
+- **Deploying a revision with no release**, at the operator's request for an easier way
+  to test PR-23's deploy chain than building a wheel and pointing pip at it. Every
+  script that takes a version spec also takes "@" and a git branch, tag or commit, which
+  installs `rms-opus @ git+https://github.com/SETI/rms-opus.git@<ref>`
+  (`_version_spec.sh`: `is_version_spec`, `check_version_spec`,
+  `opus_requirement`). Each script checks its spec before it runs anything, so a ref
+  without its "@" is refused by name rather than by pip once an installation is half
+  built. `update_deploy_scripts.sh @<ref>` refreshes the chain from the revision, and
+  the chain-version advice names it in place of the two commands it ran.
+- **The incremental update's default** is what the served installation runs: its
+  release, or, for one pip built from git, the commit pip recorded in
+  `direct_url.json`, so an update of a revision under test needs no spec. A
+  development build with no recorded commit is still refused.
+- `opus_deploy_scripts --from` was considered and not added: `update_deploy_scripts.sh`
+  already installs a spec and rewrites the chain.

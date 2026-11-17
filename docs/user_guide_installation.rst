@@ -337,7 +337,9 @@ containing a space.
      - The MySQL server this installation connects to, usually ``localhost``.
    * - ``OPUS_DB_USER``, ``OPUS_DB_PASSWORD``
      - The MySQL account the import pipeline and the web application connect as. It
-       needs most privileges, including creating and dropping tables.
+       needs most privileges, including creating and dropping tables and views
+       (``CREATE VIEW``, since ``obs_general`` is a view), and ``SHOW VIEW``, without
+       which ``dump_db.sh`` cannot dump that view for a second server.
    * - ``OPUS_SECRET_KEY``
      - Django's signing key: unique to this server, and secret.
    * - ``PDS3_HOLDINGS_DIR``, ``PDS4_HOLDINGS_DIR``
@@ -367,10 +369,10 @@ containing a space.
        and needs a trailing slash.
    * - ``OPUS_DB_DUMP_DIR``
      - *Optional.* Where ``mysqldump`` writes a finished database, and where the load
-       reads it back. **Empty means an import does not dump at all** -- a dump of the
-       full holdings is tens of gigabytes and hours of writing, so it happens because
-       this names a directory. On two servers that copy databases to each other, a
-       directory both can see.
+       reads it back. Both a full import and an incremental update dump into it.
+       **Empty means neither dumps at all** -- a dump of the full holdings is tens of
+       gigabytes and hours of writing, so it happens because this names a directory. On
+       two servers that copy databases to each other, a directory both can see.
    * - ``OPUS_PYTHON``
      - *Has a default.* The Python each installation's virtualenv is built with,
        ``python3.12`` unless this names another. ``python3`` is whatever the machine
@@ -387,10 +389,11 @@ containing a space.
        is no shared cache, which skips the restart.
    * - ``OPUS_PEER_DB_HOST``
      - *Optional.* The MySQL server a finished database is copied to. With a host here,
-       an import ends by dumping what it built and loading it there; empty, the dump
-       stays where it was written. It needs ``OPUS_DB_DUMP_DIR``, because the load
-       reads what the dump wrote, and a peer with nowhere to dump to is refused before
-       the import rather than after it.
+       an import ends by dumping what it built and loading it there, and an incremental
+       update is copied too: it ends by dumping the updated database and loading it there
+       under a new name. Empty, the dump stays where it was written. It needs
+       ``OPUS_DB_DUMP_DIR``, because the load reads what the dump wrote, and a peer with
+       nowhere to dump to is refused before the import rather than after it.
    * - ``OPUS_IMPORT_MAIL_TO``
      - *Optional.* Where to mail the log when an import finishes. Empty sends nothing
        and leaves the log where it was written.
@@ -441,7 +444,8 @@ done. :ref:`dev_guide_import_full_run` describes each step, and ``opus_import_al
 --dry-run`` prints what the given arguments would run without running it.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
-``==<release>`` for a particular release, omitted for the newest. Give this step and
+``==<release>`` for a particular release, omitted for the newest. ``@`` and a git branch,
+tag or commit installs that revision instead (:ref:`user_guide_deployment_revision`). Give this step and
 step 5 the same one -- they install ``rms-opus`` separately, so leaving it off both
 means "the newest release" twice, which is two different releases if one is published
 in between.

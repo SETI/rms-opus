@@ -168,6 +168,16 @@ table-level ``foreign_key``, ``primary_key``, ``unique`` and ``key`` entries inc
 (:ref:`dev_guide_table_schemas`), which is how ``cart`` has its cascading foreign key,
 and ``search_results`` its keys over two columns, from the start.
 
+Every table ``create_table`` creates samples
+:data:`~opus_import.importdb.mysql.STATS_SAMPLE_PAGES` leaf pages for its persistent
+statistics (``STATS_SAMPLE_PAGES``), in place of the server's default of 20. The
+optimizer chooses plans from those statistics, and 20 pages misjudge the row count of a
+table whose pages hold very different numbers of rows -- ``obs_ring_geometry``'s, at
+complete scale, by up to a factor of three from one ``ANALYZE`` to the next, enough to
+switch the ring-radius search between a plan and one twice as slow. A table with fewer
+leaf pages is read whole, and at complete scale the larger sample makes the
+finalization's ``ANALYZE`` of the large tables seconds longer in all.
+
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys
 last, plus a plain key on each foreign-key column no other key leads, so the index each
@@ -219,7 +229,18 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
    * - Abstract member
      - Contract
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.quote_identifier`\ ``(s)``
-     - Return a name quoted for use as an identifier.
+     - Return a name quoted for use as an identifier. The name ``obs_general`` is
+       rendered as ``obs_general_rows``, the base table the import reads and writes
+       (:ref:`dev_guide_import_generations`), and ``table_names``, ``table_info`` and
+       ``read_table_keys`` report that table as ``obs_general``.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.create_obs_general_view`\ ``(schema)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.drop_obs_general_view`\ ``()``
+     - Create, or drop, the ``obs_general`` view of the served generation.
+       ``create_table`` creates it after ``obs_general_rows``, with ``schema_version``
+       empty first when that is absent, and ``drop_table`` drops it before the table.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.repoint_cart`\ ``(generation)``
+     - Point every ``cart`` row at a generation's observation with the same OPUS ID, or
+       delete it when the generation has none, in one transaction; a generation's switch
+       and revert.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_names`\ ``(prefix=None)``
      - The tables in the schema, optionally filtered by one prefix or several. **An
        implementation must sort them**, because a caller handing out row ids while
@@ -268,6 +289,8 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Lock the first row a WHERE clause selects in descending ``order_by`` order,
        passing over rows another session has locked, and return one column of it, or
        None; the bundle claim.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.release_named_lock`\ ``(name)``
+     - Free a lock ``try_named_lock`` took; the generation commands' lock.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.named_lock`\ ``(name)``
      - A context manager holding a server-wide named lock while its body runs, waiting
        for it first. The lock belongs to the connection, so it survives the body's

@@ -19,6 +19,7 @@ class _LoadingDB:
         self.transaction_rows = transaction_rows
         self.events: list[tuple[str, str, Any]] = []
         self.guards: list[object] = []
+        self.loaded: list[tuple[str, dict[str, Any]]] = []
 
     def quote_identifier(self, name: str) -> str:
         """Backtick-quote a name."""
@@ -30,6 +31,7 @@ class _LoadingDB:
         """Record a load, its size, and the guard its chunks run under."""
         self.events.append(('load', table_name, len(rows)))
         self.guards.append(guard)
+        self.loaded.extend((table_name, row) for row in rows)
 
     def delete_rows(self, table_name: str, where: str, where_params: list[Any]) -> None:
         """Record a delete, the column it selects by and the ids it runs from and to."""
@@ -256,3 +258,16 @@ def test_a_table_without_list_columns_gives_no_junction_rows() -> None:
     sink.add('obs_files', {'obs_general_id': 10, 'target_name': '[4]'})
     sink.finish()
     assert not any(_junction_rows(db).values())
+
+
+def test_an_observation_is_added_in_the_generation_the_import_writes() -> None:
+    """``obs_general`` rows carry ``added_generation``; the other tables' rows do not."""
+    sink, db = _sink(10)
+    sink.ctx.import_generation = 4
+    sink.add('obs_general', {'id': 10})
+    sink.add('obs_files', {'obs_general_id': 10})
+    sink.finish()
+    assert db.loaded == [
+        ('obs_general', {'id': 10, 'added_generation': 4}),
+        ('obs_files', {'obs_general_id': 10}),
+    ]

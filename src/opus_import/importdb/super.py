@@ -736,6 +736,49 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::try_named_lock must be overridden')
 
+    def release_named_lock(self, name: str) -> None:
+        """Free a lock `try_named_lock` took on this connection.
+
+        Parameters:
+            name: The lock's name.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::release_named_lock must be overridden')
+
+    def create_obs_general_view(
+        self,
+        schema: Sequence[SchemaColumn],
+        served: int | None = None,
+        *,
+        lock_wait_timeout_s: int | None = None,
+        attempts: int = 1,
+    ) -> None:
+        """Create, or re-create, ``obs_general`` as the view of the served generation.
+
+        Parameters:
+            schema: ``obs_general``'s table schema.
+            served: The served generation, when the view must hide the rows of others;
+                None for a view of every row.
+            lock_wait_timeout_s: How long one attempt waits for the view's lock, which
+                every transaction that has read the view holds, or None for the
+                session's own wait.
+            attempts: How many times to try before a bounded wait is a failure.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::create_obs_general_view must be overridden')
+
+    def drop_obs_general_view(self) -> None:
+        """Drop the ``obs_general`` view, if the schema has it.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::drop_obs_general_view must be overridden')
+
     def holds_named_lock(self, name: str) -> bool:
         """Return whether this connection holds a named lock.
 
@@ -1110,6 +1153,20 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::run_ddl must be overridden')
+
+    def repoint_cart(self, generation: int) -> tuple[int, int]:
+        """Point every cart row at an observation of a generation, by OPUS id.
+
+        Parameters:
+            generation: The generation the cart is to name.
+
+        Returns:
+            How many rows were pointed at another observation, and how many deleted.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::repoint_cart must be overridden')
 
     def carry_over_sessions(self, source_schema: str) -> CarriedOver:
         """Replace this schema's sessions and cart rows with another schema's.
@@ -1628,7 +1685,12 @@ class ImportDBSuper:
         raise NotImplementedError('ImportDBSuper::stream_select must be overridden')
 
     def list_junction_mismatches(
-        self, table_name: str, column: str, junction: str, observation_column: str
+        self,
+        table_name: str,
+        column: str,
+        junction: str,
+        observation_column: str,
+        first_id: int | None = None,
     ) -> tuple[int, int | None]:
         """Compare a ``mult_list`` column's lists with its junction table's rows.
 
@@ -1641,6 +1703,8 @@ class ImportDBSuper:
             junction: Its junction table.
             observation_column: The table's column holding the observation's
                 ``obs_general`` id.
+            first_id: Compare only the observations whose ``obs_general`` id is at least
+                this, or every observation when None.
 
         Returns:
             How many observations disagree, and the least ``obs_general`` id among them,

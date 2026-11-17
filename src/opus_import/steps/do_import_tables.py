@@ -28,6 +28,7 @@ from opus_import import (
     bundle_registry,
     config_bundle_info,
     config_data,
+    generations,
     import_processes,
     import_util,
     list_junctions,
@@ -38,7 +39,7 @@ from opus_import import (
 from opus_import.mult_fields import MULT_TABLE
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
 
     from opus_import.config_bundle_info import BundleInfo
     from opus_import.context import ImportContext
@@ -50,7 +51,8 @@ if TYPE_CHECKING:
 OPUS_TABLE_PREFIXES = ('obs_', 'mult_')
 
 #: The other tables the import creates, by exact name, including the tables a rebuild
-#: that stopped part way leaves beside the live ones (`opus_import.table_swap`).
+#: that stopped part way leaves beside the live ones, and those a generation's switch
+#: keeps until the purge (`opus_import.table_swap`).
 OPUS_TABLE_NAMES = (
     schema_version.SCHEMA_VERSION_TABLE,
     MULT_TABLE,
@@ -74,6 +76,9 @@ OPUS_TABLE_NAMES = (
     'contexts__old',
     'definitions__new',
     'definitions__old',
+    'param_info__prev',
+    'partables__prev',
+    'table_names__prev',
 )
 
 #: The ``definitions`` tables, which reference ``contexts`` and so are dropped before
@@ -119,9 +124,12 @@ def opus_imports_bundle(bundle_id: str) -> bool:
 def delete_all_opus_tables(ctx: ImportContext) -> None:
     """Drop every table the import creates, leaving Django's own.
 
-    The tables are the ones `OPUS_TABLE_PREFIXES` and `OPUS_TABLE_NAMES` name, dropped
-    in an order the foreign keys allow: ``schema_version`` first, so an erase that stops
-    part way leaves a schema nothing serves or deploys onto; then every ``obs_`` table
+    The ``obs_general`` view goes first, with ``DROP VIEW``, since ``DROP TABLE`` refuses
+    a view; in a schema of an earlier version ``obs_general`` is a base table, which goes
+    in ``obs_general``'s place in the order below. The tables are the ones
+    `OPUS_TABLE_PREFIXES` and `OPUS_TABLE_NAMES` name, dropped in an order the foreign keys
+    allow: ``schema_version`` first, so an erase that stops part way leaves a schema
+    nothing serves or deploys onto; then every ``obs_`` table
     but ``obs_general``; ``cart``; ``obs_general``; the ``definitions`` tables, which
     reference ``contexts``; every other exact name but ``mult``; and ``mult`` and every
     ``mult_`` table, ``mult_field`` and ``mult_group`` among them, last.
@@ -131,6 +139,7 @@ def delete_all_opus_tables(ctx: ImportContext) -> None:
     """
     db = ctx.db
     assert db is not None
+    db.drop_obs_general_view()
     present = set(db.table_names())
     prefixed = sorted(name for name in present if name.startswith(OPUS_TABLE_PREFIXES))
 
@@ -180,6 +189,11 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     deletes, so ``cart``'s cascade removes the cart rows that name the bundle's
     observations.
 
+    With a pending generation (`opus_import.generations`) the bundle's rows of earlier
+    generations are not deleted but retired (`retire_bundle_rows`), since the served
+    generation still shows them; only the rows the pending generation added, which lie
+    in the range its registration gave the bundle, are deleted as above.
+
     Parameters:
         ctx: The import run's context, for the open database and the logger.
         bundle_id: The bundle whose rows go.
@@ -197,6 +211,14 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
     q = db.quote_identifier
     description = f'Deleting bundle "{bundle_id}"'
     registered = bundle_registry.bundle_range(ctx, bundle_id)
+    pending = ctx.pending_generation
+    within: tuple[int, int] | None = None
+    if pending is not None:
+        retire_bundle_rows(ctx, bundle_id, pending)
+        if registered is None or registered.generation != pending:
+            # The pending generation added none of the bundle's rows.
+            return
+        within = (registered.first_id, registered.end - 1)
     if registered is not None:
         last = registered.end - 1
         in_range = f'{q("id")} BETWEEN %s AND %s'
@@ -205,15 +227,10 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
             [registered.first_id, last],
         )[0][0]
         above = registered.first_id if highest is None else int(highest) + 1
-        in_orphans = f'{q("obs_general_id")} BETWEEN %s AND %s'
-        for table_name in joined:
-            db.retrying(
-                description,
-                functools.partial(db.delete_rows, table_name, in_orphans, [above, last]),
-            )
+        _delete_id_range_rows(db, joined, above, last, description)
     parent = q(db.JOINED_PARENT_ALIAS)
     in_chunk = f'{parent}.{q("bundle_id")} = %s AND {parent}.{q("id")} BETWEEN %s AND %s'
-    for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id):
+    for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id, within):
         for table_name in joined:
             db.retrying(
                 description,
@@ -233,8 +250,154 @@ def delete_bundle_from_obs_tables(ctx: ImportContext, bundle_id: str) -> None:
         )
 
 
+def _delete_id_range_rows(
+    db: ImportDBSuper, table_names: Sequence[str], first_id: int, last_id: int, description: str
+) -> None:
+    """Delete the tables' rows whose ``obs_general_id`` lies in a range, a table at a time.
+
+    Parameters:
+        db: The open database.
+        table_names: Observation tables other than ``obs_general``.
+        first_id: The range's first id.
+        last_id: The range's last id.
+        description: What `ImportDBSuper.retrying` logs if a statement is retried.
+    """
+    in_range = f'{db.quote_identifier("obs_general_id")} BETWEEN %s AND %s'
+    for table_name in table_names:
+        db.retrying(
+            description,
+            functools.partial(db.delete_rows, table_name, in_range, [first_id, last_id]),
+        )
+
+
+def delete_rows_in_id_ranges(ctx: ImportContext, ranges: Sequence[tuple[int, int]]) -> None:
+    """Delete every observation table's rows but ``obs_general``'s in ranges of ids.
+
+    Abandoning a pending generation runs it over the ranges the generation registered,
+    once it has deleted the observations the generation added. Only that generation's
+    rows lie in those ranges, so what it deletes are the rows a killed import committed
+    for observations whose ``obs_general`` rows it never committed.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        ranges: The first and last id of each range.
+    """
+    db = ctx.db
+    assert db is not None
+    db.forget_table_names()
+    joined = [
+        name
+        for name in sorted(db.table_names(prefix=['obs_']))
+        if not table_keys.is_bundle_keyed_table(name)
+    ]
+    for first_id, last_id in ranges:
+        _delete_id_range_rows(
+            db, joined, first_id, last_id, f'Deleting the rows of ids {first_id}-{last_id}'
+        )
+
+
+def retire_bundle_rows(ctx: ImportContext, bundle_id: str, generation: int) -> int:
+    """Retire a bundle's observations at a pending generation, which hides them from it.
+
+    Every ``obs_general`` row of the bundle that an earlier generation added and none has
+    retired gets ``removed_generation`` set to the pending generation. The bundle's rows
+    are walked through the ``bundle_id`` key a range of ids at a time, each range holding
+    at most `ImportDBSuper.transaction_rows` of them (`_bundle_id_ranges`), and each
+    statement reads only its range, so no row is read twice. The rows stay until the
+    purge; the served generation goes on showing them.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        bundle_id: The bundle.
+        generation: The pending generation.
+
+    Returns:
+        How many rows were retired.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    where = (
+        f'{q("bundle_id")}=%s AND {q("id")} BETWEEN %s AND %s AND '
+        f'{q(generations.ADDED_GENERATION_COLUMN)} < %s AND '
+        f'{q(generations.REMOVED_GENERATION_COLUMN)} IS NULL'
+    )
+    retired = 0
+    for first_id, last_id in _bundle_id_ranges(db, 'obs_general', bundle_id):
+        retired += db.retrying(
+            f'Retiring bundle "{bundle_id}"',
+            functools.partial(
+                db.update_row,
+                'obs_general',
+                {generations.REMOVED_GENERATION_COLUMN: generation},
+                where,
+                [bundle_id, first_id, last_id, generation],
+            ),
+        )
+    return retired
+
+
+def restore_retired_rows(
+    ctx: ImportContext, obs_general_ids: Sequence[int], generation: int
+) -> None:
+    """Show again observations a pending generation retired, as abandoning it does.
+
+    `ImportDBSuper.transaction_rows` observations to a statement, each found by its
+    primary key, so a statement reads and locks only the rows it changes.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        obs_general_ids: The observations, read from a scan for ``removed_generation``.
+        generation: The pending generation; a row another generation retired is left.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    for start in range(0, len(obs_general_ids), db.transaction_rows):
+        chunk = list(obs_general_ids[start : start + db.transaction_rows])
+        placeholders = ','.join(['%s'] * len(chunk))
+        db.retrying(
+            f'Restoring the rows generation {generation} retired',
+            functools.partial(
+                db.update_row,
+                'obs_general',
+                {generations.REMOVED_GENERATION_COLUMN: None},
+                f'{q("id")} IN ({placeholders}) AND {q(generations.REMOVED_GENERATION_COLUMN)}=%s',
+                [*chunk, generation],
+            ),
+        )
+
+
+def delete_observations(ctx: ImportContext, obs_general_ids: Sequence[int]) -> None:
+    """Delete observations by ``obs_general`` id from every observation table.
+
+    `ImportDBSuper.transaction_rows` observations to a statement: every other ``obs_``
+    table's rows of a chunk first, by ``obs_general_id``, then the chunk's ``obs_general``
+    rows. The connection checks foreign keys, so a row that still references a deleted
+    observation is refused rather than orphaned, and ``cart``'s cascade removes the cart
+    rows that name one.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        obs_general_ids: The observations.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    db.forget_table_names()
+    other_tables = [name for name in sorted(db.table_names(prefix='obs_')) if name != 'obs_general']
+    for start in range(0, len(obs_general_ids), db.transaction_rows):
+        chunk = list(obs_general_ids[start : start + db.transaction_rows])
+        placeholders = ','.join(['%s'] * len(chunk))
+        for table_name in other_tables:
+            db.delete_rows(
+                table_name, f'{q("obs_general_id")} IN ({placeholders})', where_params=chunk
+            )
+        db.delete_rows('obs_general', f'{q("id")} IN ({placeholders})', where_params=chunk)
+
+
 def _bundle_id_ranges(
-    db: ImportDBSuper, table_name: str, bundle_id: str
+    db: ImportDBSuper, table_name: str, bundle_id: str, within: tuple[int, int] | None = None
 ) -> Iterator[tuple[int, int]]:
     """Yield the ranges of a table's ``id`` its rows of a bundle cover, a chunk at a time.
 
@@ -246,19 +409,24 @@ def _bundle_id_ranges(
         db: The open database.
         table_name: A table holding ``bundle_id`` and an ``id`` of its own.
         bundle_id: The bundle.
+        within: The first and last id of the only rows to cover, or None for all.
 
     Yields:
         The first and last id of each chunk.
     """
     q = db.quote_identifier
     in_bundle = f'{q("bundle_id")}=%s'
+    bundle_params: list[object] = [bundle_id]
+    if within is not None:
+        in_bundle += f' AND {q("id")} BETWEEN %s AND %s'
+        bundle_params += list(within)
     after: int | None = None
     while True:
         if after is None:
-            where, params = in_bundle, [bundle_id, db.transaction_rows]
+            where, params = in_bundle, [*bundle_params, db.transaction_rows]
         else:
             where = f'{in_bundle} AND {q("id")} > %s'
-            params = [bundle_id, after, db.transaction_rows]
+            params = [*bundle_params, after, db.transaction_rows]
         ids = [
             row[0]
             for row in db.general_select(

@@ -25,6 +25,7 @@ from django.db import connection
 
 from opus_app.apps.search.models import ObsPreview
 from opus_app.apps.tools import sql_builder
+from opus_app.apps.tools.db_utils import unserved_observations_exist
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -107,7 +108,10 @@ def get_pds_products(
     if loc_type == 'raw':
         select.add_column(obs_files_column('checksum'))
 
-    select.add_from('obs_files')
+    # The served observations' files: an unserved generation may hold the same OPUS ID.
+    files_source = select.add_from('obs_files')
+    if unserved_observations_exist():
+        files_source.append_join(sql_builder.served_observations_join('obs_files'))
     if product_types != ['all']:
         # Because we didn't store @version in the database, when multiple versions (or
         # product types) are passed in, we need to query the database by both short name

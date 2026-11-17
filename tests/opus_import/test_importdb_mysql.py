@@ -271,11 +271,17 @@ def test_upsert_rows_omits_the_update_clause_for_a_key_only_row(db: _RecordingDB
 
 @pytest.mark.parametrize(
     'name',
-    ['obs_general', 'mult_obs_general_planet_id', 'cache_12', 'J2000_longitude', '_mult_val_'],
+    ['obs_pds', 'mult_obs_general_planet_id', 'cache_12', 'J2000_longitude', '_mult_val_'],
 )
 def test_quote_identifier_accepts_the_names_opus_uses(db: _RecordingDB, name: str) -> None:
     """Everything OPUS actually names is letters, digits and underscores."""
     assert db.quote_identifier(name) == f'`{name}`'
+
+
+def test_quote_identifier_renders_obs_general_as_its_base_table(db: _RecordingDB) -> None:
+    """The import reads and writes obs_general's base table, never the served view."""
+    assert db.quote_identifier('obs_general') == '`obs_general_rows`'
+    assert db.quote_identifier('obs_general_id') == '`obs_general_id`'
 
 
 @pytest.mark.parametrize(
@@ -307,7 +313,7 @@ def test_where_clause_values_travel_as_parameters(db: _RecordingDB) -> None:
     db.delete_rows('obs_general', where, where_params=['COISS_2002'])
 
     assert db.executed == [
-        ('DELETE FROM `obs_general` WHERE `bundle_id`=%s', ['COISS_2002']),
+        ('DELETE FROM `obs_general_rows` WHERE `bundle_id`=%s', ['COISS_2002']),
     ]
 
 
@@ -326,7 +332,7 @@ def test_a_joined_delete_deletes_the_rows_of_the_parents_it_selects(db: _Recordi
 
     assert db.executed == [
         (
-            'DELETE `c` FROM `obs_pds` AS `c` JOIN `obs_general` AS `p` '
+            'DELETE `c` FROM `obs_pds` AS `c` JOIN `obs_general_rows` AS `p` '
             'ON `p`.`id` = `c`.`obs_general_id` '
             'WHERE `p`.`bundle_id` = %s AND `p`.`id` BETWEEN %s AND %s',
             ['COISS_2002', 4, 9],
@@ -338,7 +344,7 @@ def test_a_where_clause_with_no_parameters_passes_none(db: _RecordingDB) -> None
     """An empty parameter list would make MySQLdb interpolate, so pass None."""
     db.delete_rows('obs_general', '`id` > 0')
 
-    assert db.executed == [('DELETE FROM `obs_general` WHERE `id` > 0', None)]
+    assert db.executed == [('DELETE FROM `obs_general_rows` WHERE `id` > 0', None)]
 
 
 def test_update_row_parameterizes_the_set_values_and_the_where(db: _RecordingDB) -> None:
@@ -573,7 +579,7 @@ def test_delete_rows_deletes_every_row_when_asked(db: _RecordingDB) -> None:
     """`all_rows=True` is the one way to empty a table."""
     db.delete_rows('obs_general', all_rows=True)
 
-    assert db.executed == [('DELETE FROM `obs_general`', None)]
+    assert db.executed == [('DELETE FROM `obs_general_rows`', None)]
 
 
 # ---------------------------------------------------------------------------
@@ -806,7 +812,7 @@ def test_bulk_load_names_the_table_columns_and_character_set(tmp_path: Path) -> 
 
     [(cmd, params)] = _statements(db, 'LOAD DATA')
     assert cmd == (
-        'LOAD DATA LOCAL INFILE %s INTO TABLE `obs_general` CHARACTER SET utf8mb4 '
+        'LOAD DATA LOCAL INFILE %s INTO TABLE `obs_general_rows` CHARACTER SET utf8mb4 '
         "FIELDS TERMINATED BY '\\t' ESCAPED BY '\\\\' LINES TERMINATED BY '\\n' "
         '(`id`,`note`,`opus_id`)'
     )
@@ -1431,10 +1437,11 @@ def test_an_importer_refused_its_lock_commits_nothing() -> None:
 
 
 def _guarded(
-    matched: int = 1, holds: int = 1, importer: bool = True
+    matched: int = 1, holds: int = 1, importer: bool = True, writer: bool = False
 ) -> tuple[_ConnectedDB, _CommitRecordingConnection, import_processes.BundleGuard]:
     """Return a connection writing by INSERT statements, its scripted connection, and a
-    guard for bundle 3 under importer 9 (or no importer)."""
+    guard for bundle 3 under importer 9 (or no importer, with process 9's lock as its
+    writer lock or no writer)."""
     conn = _CommitRecordingConnection(matched=matched)
     db = _ConnectedDB(conn)
     db.bulk_load_path = BULK_LOAD_PATH_INSERT
@@ -1442,7 +1449,13 @@ def _guarded(
     lock_conn = _ScriptedConnection({'SELECT IS_USED_LOCK': [(holds,)]})
     lock = import_processes.ImporterLock(_ConnectedDB(lock_conn), 9, 'opus:lock')
     ids = bundle_registry.BundleIds(bundle_registry.BundleRange(3, 'B_3', 10, 0, 1000, 'importing'))
-    return db, conn, import_processes.BundleGuard(ids, lock if importer else None)
+    return (
+        db,
+        conn,
+        import_processes.BundleGuard(
+            ids, lock if importer else None, lock if writer and not importer else None
+        ),
+    )
 
 
 def test_each_guarded_chunk_records_its_progress_first_and_commits_last() -> None:
@@ -1453,7 +1466,7 @@ def test_each_guarded_chunk_records_its_progress_first_and_commits_last() -> Non
     db.bulk_load_rows('obs_general', [{'id': 1}, {'id': 2}, {'id': 3}], guard=guard)
 
     shapes = [cmd.split(' SET ')[0].split(' (')[0] for cmd, _ in conn.executed]
-    chunk = ['UPDATE `import_bundle`', 'UPDATE `import_process`', 'INSERT INTO `obs_general`']
+    chunk = ['UPDATE `import_bundle`', 'UPDATE `import_process`', 'INSERT INTO `obs_general_rows`']
     assert shapes == [*chunk, 'COMMIT', *chunk, 'COMMIT']
     first_update, params = conn.executed[0]
     assert first_update == (
@@ -1490,11 +1503,29 @@ def test_a_plain_imports_guard_counts_observations_and_checks_nothing() -> None:
 
     assert [cmd.split(' (')[0] for cmd, _ in conn.executed] == [
         'UPDATE `import_bundle` SET `rows_done`=%s WHERE `bundle_number`=%s AND `started_at`=%s',
-        'INSERT INTO `obs_general`',
+        'INSERT INTO `obs_general_rows`',
         'COMMIT',
         'INSERT INTO `obs_files`',
         'COMMIT',
     ]
+
+
+@pytest.mark.parametrize('holds', [0, 1], ids=['lock-lost', 'lock-held'])
+def test_a_plain_import_with_a_writer_lock_commits_only_while_it_holds_it(holds: int) -> None:
+    """A registered writer's chunk is checked before its commit, as an importer's is: a
+    generation command takes a writer whose lock is gone for finished."""
+    db, conn, guard = _guarded(holds=holds, importer=False, writer=True)
+
+    if holds:
+        db.bulk_load_rows('obs_general', [{'id': 1}], guard=guard)
+        assert conn.commits == 1
+        assert guard.ids.rows_done == 1
+        return
+    with pytest.raises(import_processes.LostImporterError, match='opus:lock'):
+        db.bulk_load_rows('obs_general', [{'id': 1}], guard=guard)
+    assert conn.commits == 0
+    assert conn.executed[-1] == ('ROLLBACK', None)
+    assert guard.ids.rows_done == 0
 
 
 def test_an_update_reports_the_rows_it_matched_changed_or_not() -> None:
@@ -1655,7 +1686,7 @@ def test_the_junction_comparison_anti_joins_both_ways() -> None:
     assert all(type(figure) is int for figure in found)
     (cmd,) = db.selects
     listed = (
-        "`obs_general` AS `t`, JSON_TABLE(`t`.`target_name`, '$[*]' COLUMNS (`v` INT PATH "
+        "`obs_general_rows` AS `t`, JSON_TABLE(`t`.`target_name`, '$[*]' COLUMNS (`v` INT PATH "
         "'$')) AS `j`"
     )
     assert cmd == (
@@ -1673,3 +1704,32 @@ def test_a_junction_table_that_agrees_has_no_first_observation() -> None:
     """No disagreement gives a count of 0 and no id."""
     db = _ComparingDB((0, None))
     assert db.list_junction_mismatches('obs_general', 'target_class', 'j', 'id') == (0, None)
+
+
+class _ScopedComparingDB(_ComparingDB):
+    """A comparing database that records the values each select binds."""
+
+    def __init__(self, row: tuple[Any, Any]) -> None:
+        """Hold the row every select returns, and record the values."""
+        super().__init__(row)
+        self.values: list[Any] = []
+
+    def general_select(self, cmd: str, param_list: Any = None) -> list[tuple[Any, Any]]:
+        """Record the statement and its values, and return the row."""
+        self.selects.append(cmd)
+        self.values.append(param_list)
+        return [self.row]
+
+
+def test_the_junction_comparison_from_a_first_id_reads_each_tables_range() -> None:
+    """Both anti-joins start their table at the first id, by its observation column."""
+    db = _ScopedComparingDB((0, None))
+    found = db.list_junction_mismatches(
+        'obs_instrument_x', 'modes', 'obs_instrument_x_modes', 'obs_general_id', 1500
+    )
+    assert found == (0, None)
+    (cmd,) = db.selects
+    assert db.values == [[1500, 1500]]
+    assert 'WHERE `t`.`obs_general_id` >= %s AND NOT EXISTS (SELECT 1 FROM' in cmd
+    assert 'WHERE `x`.`obs_general_id` >= %s AND NOT EXISTS (SELECT 1 FROM' in cmd
+    assert cmd.count('%s') == 2

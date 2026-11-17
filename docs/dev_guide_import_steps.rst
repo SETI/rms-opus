@@ -179,8 +179,13 @@ path it takes, the schema and its version
   since a full import runs one invocation per bundle group: the **fresh import**. Each
   observation table is created with only the keys a load needs
   (:ref:`dev_guide_import_db_keys`);
+* **one row, holding this release's version, in the** ``ready`` **state, with a pending
+  generation**: the **generation** path, into that generation
+  (:ref:`dev_guide_import_steps_do_generation`); a ``ready`` schema whose switch is still
+  revertible refuses an append, naming the purge;
 * **one row, holding this release's version, in the** ``ready`` **or** ``appending``
-  **state**: the **append**, into the tables with their keys in place;
+  **state, with no pending generation**: the **append**, into the tables with their keys
+  in place;
 * **a row of another version, more than one row, or another state**: refused, with a
   fatal message naming ``opus_import --scorched-earth --yes``, since a schema is
   re-imported under the release that will serve it;
@@ -242,11 +247,12 @@ live. In order:
    named bundles. A bundle OPUS skips is never registered.
 10. **Import each bundle.** It is moved to ``importing`` -- a bundle another process
     took meanwhile is an error, and is left to that process -- and
-    :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; it is deleted
-    from every observation table
-    (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) with
-    foreign key checks on, so ``cart``'s cascading foreign key removes the cart rows that
-    name its observations; it is imported through
+    :attr:`~opus_import.context.ImportContext.bundle_has_errors` is cleared; its earlier
+    rows go (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`):
+    outside a generation update it is deleted from every observation table with foreign
+    key checks on, so ``cart``'s cascading foreign key removes the cart rows that name its
+    observations, and in one its served rows are retired at the pending generation and
+    only rows that generation added are deleted; it is imported through
     :func:`~opus_import.steps.do_import.import_one_bundle` with the checks off
     (:meth:`~opus_import.importdb.super.ImportDBSuper.foreign_keys_unchecked`), which
     validation's orphan count stands in for; and it is marked ``done``, or ``failed``
@@ -567,6 +573,129 @@ foreign key removes a cart row that names a deleted copy rather than leaving it
 orphaned, and ends by checking that no OPUS ID has two rows; a failure keeps the
 invocation from marking the schema ready, as a validation failure does.
 
+The step compares the rows of one generation (:ref:`dev_guide_import_generations`): the
+pending one, if there is one, and the served one otherwise. In a pending generation a
+re-imported bundle has ids above every unchanged bundle's, so it wins every duplicate
+against one; a losing row the pending generation added is deleted, and one an earlier
+generation added, which the served generation still shows, is retired instead.
+
+.. _dev_guide_import_steps_do_generation:
+
+opus_import.steps.do_generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The commands of an update by generation (:ref:`dev_guide_import_running_generations`):
+``--begin-generation``, ``--switch-generation``, ``--purge-generations``,
+``--abandon-generation`` and ``--revert-generation``, each run alone. Each holds the
+schema's generation lock (``GET_LOCK`` on a name :func:`~opus_import.importdb.lock_name`
+gives, without waiting) for its whole run, and is refused while any invocation that
+registered itself in ``import_process`` to write the pending generation is alive
+(:func:`~opus_import.steps.do_generation.register_writer`).
+
+**The retire.** With a pending generation P, the per-bundle delete
+(:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) retires the
+bundle's rows of earlier generations, setting ``removed_generation = P`` on the
+``obs_general`` rows an earlier generation added and none retired, one range of ids at a
+time, each holding at most ``transaction_rows`` of the bundle's rows and read through the
+``bundle_id`` key (:func:`~opus_import.steps.do_import_tables.retire_bundle_rows`). It
+deletes only the rows P added, which lie in the range P's registration gave the bundle,
+so a rerun is clean.
+Registration in P retires the bundle's live registry row (``retired_generation = P``) and
+adds a row of its own, with the next number and a range after every existing one.
+
+**The switch** is refused unless P is ``ready``. Its steps, in order, each finding out
+whether it has run:
+
+#. the auxiliary tables' ``__new`` tables are swapped in with one rename, the live tables
+   kept as ``__prev``, after any ``__prev`` an earlier switch left is dropped
+   (:func:`~opus_import.table_swap.swap_in_keeping_previous`);
+#. every ``cart`` row whose observation is not in P is pointed at P's row with the same
+   ``opus_id``, or deleted when P has none, and the log counts both;
+#. the search tables are reset and the web application's cache flushed
+   (:ref:`dev_guide_import_steps_do_django`);
+#. the ``obs_general`` view is re-created to show P
+   (:func:`~opus_import.steps.do_generation.refresh_view`);
+#. last, one statement sets ``generation = P``, clears the pending generation and its
+   state, and sets ``revertible``.
+
+A test makes it fail after a step through ``OPUS_IMPORT_FAULT=switch_generation:<step>``.
+With nothing pending and ``revertible`` set, the last statement has run; the switch runs
+steps 1 to 4 again, which find nothing to do after a whole switch, and succeeds.
+
+**The view.** ``--begin-generation`` re-creates the ``obs_general`` view to show the
+served generation alone, by number, before it records the pending generation, so no row
+of P is written while the view shows every row. The switch and the revert re-create it to
+show the generation they serve; the purge and the abandon re-create it with no condition.
+
+**The revert** runs the switch backward while the switch is revertible and no purge has
+started (below): the ``__prev``
+tables back in, the reverted generation's kept as ``__new``; the cart moved to the
+previous generation (a cart row the switch deleted, because P has no observation with its
+OPUS ID, stays deleted); the search tables reset; the view re-created to show the previous
+generation; then the previous generation served, P
+pending and ``ready`` again and the switch not revertible. On a pending generation
+that is ``ready``, it undoes whatever steps a switch that stopped part way ran, in the
+opposite order: the view, the search tables and the cart first, the ``__prev`` tables
+last.
+
+**An unfinished switch or revert** is told by the auxiliary tables it leaves
+(:func:`~opus_import.steps.do_generation.unfinished_switch_problem`): ``__prev`` tables
+beside a pending generation, which a switch keeps from its first step and a revert of it
+swaps back last; ``__new`` tables with no ``__prev`` beside a revertible switch, which a
+revert of a whole switch leaves from its first step. Either way the cart, the search
+tables and the view may belong to either generation, so the abandon, every write to the
+pending generation and the purge are refused, naming the switch and the revert, either of
+which finishes it.
+
+**The purge** (:func:`~opus_import.steps.do_generation_purge.purge_generations`, beside
+the abandon in :mod:`opus_import.steps.do_generation_purge`) is refused while a generation
+is pending, or a revert is unfinished. Its steps, in order:
+
+#. the auxiliary tables' leftover ``__new`` and ``__old`` tables are dropped, then the
+   ``__prev`` tables, so no revert can run from before the first row goes;
+#. every row retired at or before the served generation is deleted from every
+   observation table, children first, with foreign keys checked
+   (:func:`~opus_import.steps.do_import_tables.delete_observations`);
+#. the registry rows retired by then are deleted;
+#. the view is re-created with no condition;
+#. last, ``revertible`` is cleared.
+
+It then runs the mult step (:ref:`dev_guide_import_steps_do_finalize_mult`) and
+``ANALYZE``. ``revertible`` stays set for as long as retired rows remain, so the web
+application keeps a child table's rows to the served observations until the last is gone
+(:ref:`dev_guide_webapp_tools`), and a begin is refused until then. A test makes it fail
+after a step through ``OPUS_IMPORT_FAULT=purge_generations:<step>``; every step can run
+again, so a rerun finishes the work.
+
+**An unfinished purge** is a revertible switch with nothing pending whose ``__prev``
+tables are not all there and no ``__new`` table beside them
+(:func:`~opus_import.steps.do_generation.unfinished_purge_problem`), since the purge drops
+every ``__new`` table before the first ``__prev`` one. The served generation's rows are
+whole, but the previous generation's retired rows may be part deleted, so the revert is
+refused, and so are the begin, the switch (which would only stop the web service to change
+nothing) and every rebuild of the served auxiliary tables or the cart (a rebuild that
+stopped part way would leave ``__new`` tables marking a part-way revert), each naming the
+purge, which finishes it.
+
+**An unfinished rebuild** of the served auxiliary tables beside a revertible switch leaves
+``__new`` tables beside a whole set of ``__prev`` tables, with nothing pending
+(:func:`~opus_import.steps.do_generation.unfinished_rebuild_problem`). Completing the switch
+would drop the ``__prev`` set and swap in what the rebuild left, so the switch is refused
+until the rebuild has been run again; the revert drops the ``__new`` tables before it swaps
+the ``__prev`` ones back, so it runs.
+
+**The abandon** deletes the rows P added, clears ``removed_generation = P`` and
+``retired_generation = P``, deletes P's registry rows, drops the ``__new`` tables,
+clears the pending generation and, last, re-creates the view with no condition, so the
+view never shows every row while P can still be written. P was begun with no row retired,
+which the purge's order ensures, so every retired row is one P retired, and the view is
+left showing every row. An abandon stopped between the last two steps leaves the view
+naming the served generation, which shows every row; ``--purge-generations``, with nothing
+to delete, re-creates it with no condition. Neither generation column has a key, so one scan of
+``obs_general_rows`` finds the rows P added and the rows it retired, and each is then
+changed by its primary key, ``transaction_rows`` to a statement. Rerun after an
+interruption, it finishes the work.
+
 .. _dev_guide_import_steps_do_finalize_mult:
 
 opus_import.steps.do_finalize_mult
@@ -859,6 +988,32 @@ error instead, and exits with failure once its other steps have run, so
 the same invocation overrides both, for a debugging run; ``opus_import_all`` never passes
 it to its finishing steps.
 
+**With a pending generation the checks read** ``param_info__new``, the description
+finalization built from it for the switch to put in place
+(:func:`~opus_import.steps.do_validate.param_info_table`), since the live ``param_info``
+describes the served generation and lacks any table the update adds. Without that table
+the checks that read it are skipped and the validation fails, naming it.
+
+**With a pending generation the checks read what the update wrote**, not the whole schema
+(:class:`~opus_import.validation_queries.GenerationScope`). Registration lays every range
+the pending generation registers out after every range an earlier generation registered,
+retired ones included, so the end of those earlier ranges
+(:func:`~opus_import.bundle_registry.end_before_generation`) divides the ids: the
+observations the generation added are the ``obs_general_rows`` from there up whose
+``added_generation`` is the generation, read by the primary key, and their rows of the
+other tables are the ones whose ``obs_general_id`` is from there up, read by the key every
+observation table has on that column. No served row's id is that high. The log names the
+generation, how many observations it added and that first id before the checks run.
+
+**With no generation pending the checks read the generation the site serves.** From a
+switch until the purge, ``obs_general_rows`` still holds the observations the switch
+retired, with their rows of the other tables, which the ``obs_general`` view hides. The
+checks then leave them out, as the site does
+(:func:`~opus_import.validation_queries.served_generation_only`), and the log names the
+served generation before the checks run; so a filter whose wavelengths the update
+corrected is not compared with its retired observations. Otherwise every row is served,
+and every row is read with no condition.
+
 The checks, in this order:
 
 :func:`~opus_import.steps.do_validate.validate_param_info`
@@ -881,7 +1036,10 @@ The checks, in this order:
     Reports a column declared to allow NULLs in which no NULL was found, at **info**
     level rather than as an error: it is an observation about the schema rather than a
     fault in the data. ``obs_surface_geometry_target`` is counted once, over every body's
-    rows.
+    rows. With a pending generation it does not run, and logs that it did not: it
+    describes the whole schema, and the few bundles an update writes would report
+    columns falsely. Until the purge after a switch it counts the served generation's rows
+    alone.
 
 :func:`~opus_import.steps.do_validate.validate_min_max_order`
     For every ``X1``/``X2`` pair, reports rows where ``X2 < X1``, listing the first
@@ -890,31 +1048,53 @@ The checks, in this order:
     ``param_info`` form type is NULL. A missing ``X2``, an absent
     ``param_info`` row, or more than one, is an error; the row is looked up under the
     category ``validate_param_info`` uses. A table other than ``obs_general`` names a bad
-    row by the OPUS ID of the ``obs_general`` row it joins.
+    row by the OPUS ID of the ``obs_general`` row it joins. With a pending generation
+    only its observations and their rows are read, and until the purge after a switch
+    only the served generation's.
 
 :func:`~opus_import.steps.do_validate.validate_filter_wavelength_consistency`
     For every table with a ``filter_name`` or ``combined_filter`` column, checks that
     all observations sharing a filter agree about that filter's nine wavelength
     columns. ``obs_instrument_coiss`` is grouped by camera as well as by filter,
-    because its two cameras carry filters of the same name. Reported as a warning.
+    because its two cameras carry filters of the same name. Reported as a warning. With
+    a pending generation only the filters its observations carry are compared, but
+    across every observation the generation shows -- the served ones it keeps as well as
+    its own, and not the ones it retires -- so a bundle that disagrees with the served
+    observations of its filter is still reported. A table holding none of the
+    generation's observations is not read; a table without a key on its filter column
+    is read whole for the filters it does carry. Until the purge after a switch every
+    filter is compared across the served generation's observations alone.
 
 :func:`~opus_import.steps.do_validate.validate_orphans`
     Counts, for every observation table other than ``obs_general`` and for ``cart``,
     the rows whose ``obs_general_id`` names no ``obs_general`` row, by an anti-join. A
     foreign key added with the checks off, as finalization adds them, never reads the
-    rows already there, so this is the check that it holds. Any orphan is an error.
+    rows already there, so this is the check that it holds. Any orphan is an error. With
+    a pending generation only the rows whose ``obs_general_id`` is from the generation's
+    first id up are counted, still against every ``obs_general_rows`` row, retired ones
+    included. An orphan has no observation to select it by, so it is chosen by its own
+    id; every child row an update writes names an id from there up, and so does every
+    child row it could leave behind, since the only observations it deletes are its
+    own, those of a bundle it imported and then dropped included, whose registry row is
+    gone. The served rows an update hides are retired, never deleted, and keep their
+    child rows. With no generation pending every row is counted against every
+    ``obs_general_rows`` row too: a retired observation's rows are not orphans, and the
+    purge deletes them with it.
 
 :func:`~opus_import.steps.do_validate.validate_pds_bundle_ids`
     Counts the ``obs_pds`` rows whose ``bundle_id`` differs from their ``obs_general``
     row's. ``obs_pds.bundle_id`` is the public bundle field, written beside
     ``obs_general.bundle_id``, which the per-bundle delete selects by, so a search by
     bundle and the delete would otherwise see different bundles. Any such row is an
-    error.
+    error. With a pending generation only its observations' rows are compared, and until
+    the purge after a switch only the served generation's.
 
 :func:`~opus_import.steps.do_validate.validate_previews`
     Counts the ``obs_general`` rows with no ``obs_preview`` row, by an anti-join. The
     import writes one for every observation, and the results pages read an
-    observation's preview images from it. Any such row is an error.
+    observation's preview images from it. Any such row is an error. With a pending
+    generation only its observations are read, and until the purge after a switch only
+    the served generation's.
 
 :func:`~opus_import.steps.do_validate.validate_junctions`
     For each ``mult_list`` column, compares the distinct ids of each observation's JSON
@@ -924,13 +1104,20 @@ The checks, in this order:
     counts of the field's values read the junction table, and the pages that show the
     list read the JSON, so the two must agree. Disagreement is an error naming the
     junction table, how many observations disagree and the least ``obs_general`` id
-    among them; a missing junction table is an error too.
+    among them; a missing junction table is an error too. With a pending generation only
+    the lists and the junction rows of ids from the generation's first id up are
+    compared. With none pending every list is compared, a retired observation's
+    included: it keeps both its list and its junction rows until the purge deletes them
+    together.
 
 :func:`~opus_import.steps.do_validate.validate_unique_opus_ids`
     Groups ``obs_general`` by ``opus_id`` and reports any OPUS ID more than one row
     carries, with how many there are and the first ten. ``opus_id`` carries a plain key,
     and the duplicate step of ``--finalize`` is what leaves one row per OPUS ID, so a
     schema that has not been through it can hold two. Any shared OPUS ID is an error.
+    The rows grouped are those of the generation the run works on: with a pending
+    generation, its own and the served ones it keeps, and not the ones it retires, which
+    share their OPUS IDs with their bundle's new rows. It reads every such row.
 
 .. _dev_guide_import_steps_do_dictionary:
 

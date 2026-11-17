@@ -234,8 +234,10 @@ class _CategoryDB:
         return f'`{name}`'
 
     def general_select(self, cmd: str, params: Any = None) -> list[tuple[Any, ...]]:
-        """Answer the bodies query with each body's id and its selector value."""
-        assert params == ['obs_surface_geometry_name.target_name']
+        """Answer the bodies query, which reads the first generation's rows, with each
+        body's id and its selector value."""
+        assert params == [1, 1, 'obs_surface_geometry_name.target_name']
+        assert '`added_generation` <= %s' in cmd
         return [(7, 'SATURN'), (3, 'DIONE')]
 
     def insert_rows(self, table_name: str, rows: list[dict[str, Any]]) -> None:
@@ -287,6 +289,7 @@ class _ValidationDB:
         self.body_category = body_category
         self.has_rows = body_category is not None if has_rows is None else has_rows
         self.asked: list[tuple[str, str]] = []
+        self.exists_queries: list[tuple[str, Any]] = []
 
     def table_names(self, prefix: str) -> list[str]:
         """Name ``obs_surface_geometry_target`` alone."""
@@ -307,6 +310,7 @@ class _ValidationDB:
         if cmd.startswith('MIN('):
             return [(self.body_category,)]
         if cmd.startswith('1 FROM'):
+            self.exists_queries.append((cmd, params))
             return [(1,)] if self.has_rows else []
         if 'EXISTS' in cmd or cmd.lstrip().startswith('`g`'):
             return []
@@ -354,11 +358,18 @@ def test_an_empty_surface_geometry_table_checks_only_the_selector() -> None:
 
 
 def test_a_surface_geometry_table_with_rows_and_no_body_category_is_reported() -> None:
-    """Rows with no category to describe them are an error, not an empty table."""
+    """Rows with no category to describe them are an error, not an empty table; only
+    rows of observations in the generation being validated count, so a pending
+    generation that retired every observation with surface geometry is not refused."""
     db = _ValidationDB(None, has_rows=True)
     ctx = make_context(db=db)
+    ctx.import_generation = 3
     do_validate.validate_param_info(ctx)
     errors = ctx.logger.messages_at('error')
     assert len(errors) == 1
     assert 'obs_surface_geometry_target' in errors[0]
     assert 'obs_surface_geometry__' in errors[0]
+    ((cmd, params),) = db.exists_queries
+    assert 'JOIN `obs_general` `g` ON `g`.`id`=`s`.`obs_general_id`' in cmd
+    assert '`g`.`added_generation` <= %s' in cmd
+    assert params == [3, 3]

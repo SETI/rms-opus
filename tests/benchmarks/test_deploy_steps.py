@@ -17,6 +17,7 @@ from benchmarks import bench_web
 from benchmarks.app_servers import ServerError
 from benchmarks.bench_web import DeploySteps, WebBench, WebRunError, deploy_steps
 from benchmarks.sides import Spelling
+from benchmarks.web_scenarios import COLD_STATES
 
 #: A side's spelling with the carry-over, and one without it.
 _WITH = Spelling.from_help('--reset-search-tables --carry-over-sessions-from')
@@ -156,9 +157,15 @@ class _Gunicorn(_Recorder):
         return list(self.requests)
 
 
-def _bench(calls: list[str], warm_states: frozenset[str], status: int = 0) -> WebBench:
-    """Return a WebBench over stand-ins; nothing is started."""
+def _bench(
+    calls: list[str],
+    warm_states: frozenset[str],
+    status: int = 0,
+    cold_states: tuple[str, ...] = COLD_STATES,
+) -> WebBench:
+    """Return a WebBench over stand-ins, resetting to `cold_states`; nothing is started."""
     bench = object.__new__(WebBench)
+    bench.cold_states = cold_states
     gunicorn = _Gunicorn(calls)
     bench.side = _Side(calls, status, gunicorn.requests)  # type: ignore[assignment]
     bench.server = _Recorder('mysql', calls)  # type: ignore[assignment]
@@ -233,6 +240,48 @@ def test_a_run_whose_states_warm_passes_the_cold_check() -> None:
         'web.db-cold.landing',
     ]
     assert calls.count('side.warm_search') == 2
+
+
+def _one_landing_run(bench: WebBench) -> list[str]:
+    """Make one run of one scenario on a stand-in bench.
+
+    Parameters:
+        bench: The bench, from `_bench`.
+
+    Returns:
+        The state each issue of the scenario was recorded as, in order.
+    """
+    bench.config = SimpleNamespace(  # type: ignore[assignment]
+        scenarios=[SimpleNamespace(name='landing')], concurrency=None
+    )
+    bench.promotion_source = None
+    scenario_states: list[str] = []
+
+    def run_scenario(state: str, *args: Any) -> list[Any]:
+        scenario_states.append(state)
+        bench._cache_gets += 1
+        return []
+
+    bench.run_scenario = run_scenario  # type: ignore[method-assign, assignment]
+    bench.warm_up = lambda issued: {'rounds': 0}  # type: ignore[method-assign]
+    bench.one_run()
+    return scenario_states
+
+
+def test_an_app_cold_run_never_restarts_the_database() -> None:
+    """Another process may use the server meanwhile, so the db-cold pass is left out."""
+    calls: list[str] = []
+    bench = _bench(calls, frozenset(), cold_states=bench_web.cold_states(app_cold_only=True))
+    assert _one_landing_run(bench) == ['app-cold', 'warm']
+    assert 'mysql.restart' not in calls
+
+
+def test_a_full_run_resets_to_both_cold_states() -> None:
+    """Without ``--app-cold-only`` a run is both passes, the db-cold one first."""
+    calls: list[str] = []
+    bench = _bench(calls, frozenset(), cold_states=bench_web.cold_states(app_cold_only=False))
+    assert _one_landing_run(bench) == ['db-cold', 'app-cold', 'warm']
+    assert calls.count('mysql.restart') == 1
 
 
 def test_a_failed_warm_up_fails_the_run() -> None:

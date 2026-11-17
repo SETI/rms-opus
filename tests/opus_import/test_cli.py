@@ -14,6 +14,7 @@ import subprocess
 import sys
 import types
 import warnings
+from collections.abc import Callable
 from pathlib import Path
 
 import pdslogger
@@ -23,6 +24,22 @@ import opus_config.config
 import opus_import.__main__
 from opus_config import OPUS_CONFIG_ENV_VAR
 from opus_import import cli, importdb
+from opus_import.context import ImportContext
+from opus_import.generations import PENDING_READY, GenerationState
+from opus_import.schema_version import SCHEMA_VERSION
+from opus_import.steps import (
+    do_cart,
+    do_django,
+    do_duplicate_ids,
+    do_finalize_mult,
+    do_generation,
+    do_import,
+    do_import_tables,
+    do_indexes,
+    do_param_info,
+    do_partables,
+    do_table_names,
+)
 
 from .conftest import RecordingLogger, make_context
 
@@ -182,6 +199,43 @@ def _main_until_refused(
         cli.main()
     assert excinfo.value.code != 0
     return logger, opened
+
+
+class _LockedSchema:
+    """A database whose generation lock another connection holds, and which has no
+    version row."""
+
+    db_schema = 'opus_ci_db'
+    log_sql = False
+
+    def forget_table_names(self) -> None:
+        """Read nothing."""
+
+    def table_exists(self, table: str) -> bool:
+        """Hold no table."""
+        return False
+
+    def try_named_lock(self, name: str) -> bool:
+        """Refuse every lock."""
+        return False
+
+
+def test_a_refused_generation_command_exits_with_its_own_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The deploy chain tells a refusal, which changed nothing, from a failure by it."""
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: _LockedSchema())
+    monkeypatch.setattr(sys, 'argv', ['opus_import', '--switch-generation'])
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    (message,) = logger.messages_at('fatal')
+    assert message.startswith('--switch-generation refused: another generation command holds')
 
 
 def test_the_first_line_logged_says_how_much_of_the_computer_the_run_may_use(
@@ -462,3 +516,139 @@ def test_a_queue_importer_names_its_logs_after_its_computer_and_process(
             cli.main()
     host_and_pid = f'{cli.JOIN_LOG_SUFFIX}_{socket.gethostname()}_{os.getpid()}'
     assert suffixes == [host_and_pid, host_and_pid, '', '']
+
+
+class _ErasedSchema:
+    """A database the run opens, which the stubbed steps below never touch."""
+
+    db_schema = 'opus_ci_db'
+    log_sql = False
+
+
+def test_an_erase_forgets_the_pending_generation_it_dropped(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """After --scorched-earth, finalization runs as on a fresh import -- the mult step,
+    the cart and the search tables' reset -- and records no pending generation's state,
+    since the erase dropped the version row that named one."""
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+    monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: _ErasedSchema())
+    monkeypatch.setattr(cli, '_prepare_holdings', lambda *args: None)
+    monkeypatch.setattr(cli, '_registry_finished', lambda ctx, step: True)
+    pending = GenerationState(SCHEMA_VERSION, 'ready', 1, 2, PENDING_READY, False)
+    monkeypatch.setattr(
+        do_generation,
+        'load_generation_state',
+        lambda ctx: setattr(ctx, 'generation_state', pending),
+    )
+
+    def erase(ctx: ImportContext) -> bool:
+        """Drop the version row, as the erase does."""
+        ctx.generation_state = None
+        return True
+
+    monkeypatch.setattr(do_import, 'do_import_steps', erase)
+    ran: list[str] = []
+
+    def recorder(name: str) -> Callable[..., bool]:
+        """Return a stand-in step that records its name and succeeds."""
+
+        def step(*args: object) -> bool:
+            ran.append(name)
+            return True
+
+        return step
+
+    for module, name in [
+        (do_indexes, 'create_indexes'),
+        (do_duplicate_ids, 'delete_duplicate_opus_ids'),
+        (do_finalize_mult, 'finalize_mult'),
+        (do_param_info, 'do_param_info'),
+        (do_partables, 'do_partables'),
+        (do_table_names, 'do_table_names'),
+        (do_cart, 'create_cart'),
+        (do_django, 'reset_search_tables'),
+        (do_import_tables, 'analyze_all_tables'),
+    ]:
+        monkeypatch.setattr(module, name, recorder(name))
+    monkeypatch.setattr(
+        do_generation, 'set_pending_state', lambda ctx, state: ran.append(f'pending {state}')
+    )
+    monkeypatch.setattr(sys, 'argv', ['opus_import', '--scorched-earth', '--yes', '--finalize'])
+    cli.main()
+    assert ran == [
+        'create_indexes',
+        'delete_duplicate_opus_ids',
+        'finalize_mult',
+        'do_param_info',
+        'do_partables',
+        'do_table_names',
+        'create_cart',
+        'reset_search_tables',
+        'analyze_all_tables',
+    ]
+    assert logger.messages_at('fatal') == []
+
+
+@pytest.mark.parametrize(
+    ('arguments', 'has_row', 'registers'),
+    [
+        (['--import', 'COISS_2002'], True, True),
+        (['--finalize'], True, True),
+        (['--validate'], True, True),
+        (['--write-schema-version'], True, True),
+        (['--delete-bundles', 'COISS_2002'], True, True),
+        (['--import', 'COISS_2002'], False, False),
+        (['--scorched-earth', '--yes', '--do-it-all', 'COISS_2002'], True, False),
+        (['--read-only', '--finalize'], True, False),
+        (['--import-dictionary'], True, False),
+    ],
+    ids=[
+        'import',
+        'finalize',
+        'validate',
+        'stamp',
+        'delete',
+        'no-version-row',
+        'erase',
+        'read-only',
+        'dictionary',
+    ],
+)
+def test_a_writer_of_a_schema_with_a_version_row_registers(
+    arguments: list[str], has_row: bool, registers: bool
+) -> None:
+    """Only a schema with a version row can be begun on; an erase drops the table a
+    registration is in, and a read-only run writes nothing."""
+    args = cli._create_argument_parser().parse_args(arguments)
+    cli.expand_aggregate_options(args)
+    state = GenerationState(SCHEMA_VERSION, 'ready', 1, None, None, False) if has_row else None
+    assert cli._registers_writer(args, state) is registers
+
+
+@pytest.mark.parametrize(
+    ('arguments', 'pending', 'sole'),
+    [
+        (['--finalize'], 2, True),
+        (['--validate'], 2, True),
+        (['--write-schema-version'], 2, True),
+        (['--do-it-all', 'COISS_2002'], 2, True),
+        (['--import', 'COISS_2002'], 2, False),
+        (['--create-param-info'], 2, False),
+        (['--finalize'], None, False),
+    ],
+    ids=['finalize', 'validate', 'stamp', 'do-it-all', 'import', 'rebuild', 'nothing-pending'],
+)
+def test_the_invocations_that_move_a_generation_forward_write_it_alone(
+    arguments: list[str], pending: int | None, sole: bool
+) -> None:
+    """Finalization, validation and the stamp record a state of the pending generation's
+    rows, so each writes it alone; the served rows have no state to record."""
+    args = cli._create_argument_parser().parse_args(arguments)
+    cli.expand_aggregate_options(args)
+    assert cli._writes_as_sole_writer(args, pending) is sole

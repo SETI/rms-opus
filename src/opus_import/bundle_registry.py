@@ -18,6 +18,16 @@ The registry is what keeps a half-finished import from being finished: finalizat
 the schema version step both refuse while any bundle in it is not ``done``
 (`unfinished_bundles`). An append into a finalized schema that fails part way leaves its
 bundles recorded, and the next import into that schema resumes them.
+
+Each row also names the import generation that imported that copy of the bundle,
+``generation``, and the one that retired it, ``retired_generation``
+(`opus_import.generations`). A bundle re-imported in a pending generation has two rows
+until the retired copy is purged: its served copy's, retired at the pending generation,
+and its pending copy's, with a number and an id range of its own. A bundle's **live
+row** is the one no generation has retired, and every function here that names a bundle
+reads and writes its live row; the ranges of retired rows still count when a new range is
+laid out (`registered_ranges` with ``include_retired``), since their ids are in use until
+the purge.
 """
 
 from __future__ import annotations
@@ -28,6 +38,11 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from opus_import import import_processes, import_util
+from opus_import.generations import (
+    FIRST_GENERATION,
+    REGISTRY_GENERATION_COLUMN,
+    RETIRED_GENERATION_COLUMN,
+)
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -66,6 +81,7 @@ _RANGE_COLUMNS = (
     'id_capacity',
     'state',
     'started_at',
+    REGISTRY_GENERATION_COLUMN,
 )
 
 
@@ -89,6 +105,7 @@ class BundleRange:
         id_capacity: How many ids, from `first_id`, it may use.
         state: Its state, one of the ``BUNDLE_`` constants.
         started_at: When its latest import began, or None before the first.
+        generation: The import generation that registered this copy of the bundle.
     """
 
     bundle_number: int
@@ -98,6 +115,7 @@ class BundleRange:
     id_capacity: int
     state: str
     started_at: datetime.datetime | None = None
+    generation: int = FIRST_GENERATION
 
     @property
     def end(self) -> int:
@@ -146,16 +164,20 @@ class BundleIds:
         return first
 
 
-def plan_ranges(start: int, estimates: Sequence[tuple[str, int]]) -> list[dict[str, str | int]]:
+def plan_ranges(
+    start: int, estimates: Sequence[tuple[str, int]], generation: int
+) -> list[dict[str, str | int]]:
     """Lay out the id ranges of bundles registered together, one after another.
 
     Parameters:
         start: The first id after every range already registered.
         estimates: Each bundle with its size estimate, in registration order.
+        generation: The import generation the bundles are registered in.
 
     Returns:
         One registry row per bundle, in the same order, with ``bundle_id``,
-        ``size_estimate``, ``first_id``, ``id_capacity`` and ``state`` ``pending``.
+        ``size_estimate``, ``first_id``, ``id_capacity``, ``state`` ``pending`` and
+        ``generation``.
 
     Raises:
         RegistrationError: If a range would pass `MAX_OBSERVATION_ID`, naming the
@@ -178,6 +200,7 @@ def plan_ranges(start: int, estimates: Sequence[tuple[str, int]]) -> list[dict[s
                 'first_id': first_id,
                 'id_capacity': capacity,
                 'state': BUNDLE_PENDING,
+                REGISTRY_GENERATION_COLUMN: generation,
             }
         )
         first_id += capacity
@@ -198,24 +221,58 @@ def create_registry(ctx: ImportContext) -> None:
     db.create_table(BUNDLE_REGISTRY_TABLE, schema)
 
 
-def registered_ranges(db: ImportDBSuper) -> list[BundleRange]:
-    """Return every bundle the registry holds, in registration order.
+def live_condition(db: ImportDBSuper) -> str:
+    """Return the condition that a registry row is a bundle's live row, retired by no
+    generation."""
+    return f'{db.quote_identifier(RETIRED_GENERATION_COLUMN)} IS NULL'
+
+
+def registered_ranges(db: ImportDBSuper, *, include_retired: bool = False) -> list[BundleRange]:
+    """Return every bundle's live row, in registration order.
 
     Parameters:
         db: The open database.
+        include_retired: Return the rows retired copies keep until the purge as well.
 
     Returns:
         The rows ordered by ``bundle_number``; none when the table is absent.
     """
     if not db.table_exists(BUNDLE_REGISTRY_TABLE):
         return []
-    order = f'1=1 ORDER BY {db.quote_identifier("bundle_number")}'
+    live = '1=1' if include_retired else live_condition(db)
+    order = f'{live} ORDER BY {db.quote_identifier("bundle_number")}'
     return [_range(row) for row in db.read_rows(BUNDLE_REGISTRY_TABLE, _RANGE_COLUMNS, order)]
+
+
+def end_before_generation(db: ImportDBSuper, generation: int) -> int:
+    """Return the first id after every range a generation before the given one registered.
+
+    Registration lays a new range out after every row's, retired rows included, and only
+    a row of the generation itself is deleted while it is pending, so every range the
+    generation registers starts at or after this id, and every range before it ends at or
+    before it.
+
+    Parameters:
+        db: The open database.
+        generation: The generation.
+
+    Returns:
+        The end of the last of those ranges, retired ones included; 0 when there is none
+        or the registry is absent.
+    """
+    return max(
+        (
+            row.end
+            for row in registered_ranges(db, include_retired=True)
+            if row.generation < generation
+        ),
+        default=0,
+    )
 
 
 def _range(row: Sequence[object]) -> BundleRange:
     """Return a `BundleRange` from a row of `_RANGE_COLUMNS`."""
-    number, bundle_id, size_estimate, first_id, capacity, state, started_at = row
+    number, bundle_id, size_estimate, first_id, capacity, state, started_at, generation = row
     return BundleRange(
         int(str(number)),
         str(bundle_id),
@@ -224,6 +281,7 @@ def _range(row: Sequence[object]) -> BundleRange:
         int(str(capacity)),
         str(state),
         started_at if isinstance(started_at, datetime.datetime) else None,
+        int(str(generation)),
     )
 
 
@@ -273,10 +331,14 @@ def bundle_range(ctx: ImportContext, bundle_id: str) -> BundleRange | None:
         bundle_id: The bundle.
 
     Returns:
-        Its row; in a read-only run, the row its registration planned and did not write
-        (`ImportContext.planned_ranges`) when the registry does not hold it; otherwise
-        None when the registry does not hold it or is absent.
+        In a read-only run, the row its registration planned and did not write
+        (`ImportContext.planned_ranges`), which takes the place of a live copy a pending
+        generation's registration would have retired; otherwise its row, or None when the
+        registry does not hold it or is absent.
     """
+    planned = ctx.planned_ranges.get(bundle_id)
+    if planned is not None:
+        return planned
     db = ctx.db
     assert db is not None
     rows: Sequence[Sequence[object]] = []
@@ -284,12 +346,10 @@ def bundle_range(ctx: ImportContext, bundle_id: str) -> BundleRange | None:
         rows = db.read_rows(
             BUNDLE_REGISTRY_TABLE,
             _RANGE_COLUMNS,
-            f'{db.quote_identifier("bundle_id")}=%s',
+            f'{db.quote_identifier("bundle_id")}=%s AND {live_condition(db)}',
             [bundle_id],
         )
-    if rows:
-        return _range(rows[0])
-    return ctx.planned_ranges.get(bundle_id)
+    return _range(rows[0]) if rows else None
 
 
 def bundle_ids(ctx: ImportContext, bundle_id: str) -> BundleIds | None:
@@ -387,7 +447,10 @@ def start_bundle(
     db = ctx.db
     assert db is not None
     columns = _state_columns(BUNDLE_IMPORTING)
-    where = f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}'
+    where = (
+        f'{db.quote_identifier("bundle_id")}=%s AND {live_condition(db)} AND '
+        f'{_in_states(db, from_states)}'
+    )
     if BUNDLE_IMPORTING in from_states:
         where += f' AND {db.quote_identifier("process_id")} IS NULL'
     changed = db.conditional_update(
@@ -422,7 +485,8 @@ def finish_bundle(ctx: ImportContext, claim: Claim, state: str) -> bool:
     changed = db.conditional_update(
         BUNDLE_REGISTRY_TABLE,
         _state_columns(state),
-        f'{q("bundle_id")}=%s AND {_in_states(db, [BUNDLE_IMPORTING])} AND {q("started_at")}=%s',
+        f'{q("bundle_id")}=%s AND {live_condition(db)} AND '
+        f'{_in_states(db, [BUNDLE_IMPORTING])} AND {q("started_at")}=%s',
         [claim.bundle_id, BUNDLE_IMPORTING, claim.started_at],
     )
     return changed != 0
@@ -449,7 +513,8 @@ def return_to_pending(
         changed = db.conditional_update(
             BUNDLE_REGISTRY_TABLE,
             _state_columns(BUNDLE_PENDING),
-            f'{db.quote_identifier("bundle_id")}=%s AND {_in_states(db, from_states)}',
+            f'{db.quote_identifier("bundle_id")}=%s AND {live_condition(db)} AND '
+            f'{_in_states(db, from_states)}',
             [bundle_id, *from_states],
         )
         if changed != 0:
@@ -489,7 +554,7 @@ def claim_bundle(
     db = ctx.db
     assert db is not None
     q = db.quote_identifier
-    where = f'{q("state")} = %s'
+    where = f'{q("state")} = %s AND {live_condition(db)}'
     params: list[object] = [BUNDLE_PENDING]
     if among is not None:
         if not among:
@@ -561,7 +626,8 @@ def finish_claimed_bundle(ctx: ImportContext, bundle_number: int, importer: Impo
 
 
 def unregister_bundles(ctx: ImportContext, bundle_ids: Iterable[str]) -> None:
-    """Remove bundles from the registry, as deleting them from the schema does.
+    """Remove bundles from the registry, every row of each, as deleting them from the
+    schema does.
 
     Parameters:
         ctx: The import run's context, for the open database.
@@ -574,3 +640,89 @@ def unregister_bundles(ctx: ImportContext, bundle_ids: Iterable[str]) -> None:
     q = db.quote_identifier
     for bundle_id in bundle_ids:
         db.delete_rows(BUNDLE_REGISTRY_TABLE, f'{q("bundle_id")}=%s', [bundle_id])
+
+
+def retire_copies(ctx: ImportContext, bundle_ids: Iterable[str], generation: int) -> None:
+    """Retire the live rows of bundles at a pending generation, which imports or drops
+    them.
+
+    A row the pending generation itself registered is left alone.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        bundle_ids: The bundles.
+        generation: The pending generation.
+    """
+    db = ctx.db
+    assert db is not None
+    q = db.quote_identifier
+    for bundle_id in bundle_ids:
+        db.update_row(
+            BUNDLE_REGISTRY_TABLE,
+            {RETIRED_GENERATION_COLUMN: generation},
+            f'{q("bundle_id")}=%s AND {live_condition(db)} AND '
+            f'{q(REGISTRY_GENERATION_COLUMN)} < %s',
+            [bundle_id, generation],
+        )
+
+
+def delete_generation_copies(
+    ctx: ImportContext, generation: int, bundle_ids: Iterable[str] | None = None
+) -> None:
+    """Delete the rows a pending generation registered.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        generation: The pending generation.
+        bundle_ids: Only these bundles' rows, or None for every bundle's.
+    """
+    db = ctx.db
+    assert db is not None
+    if not db.table_exists(BUNDLE_REGISTRY_TABLE):
+        return
+    q = db.quote_identifier
+    in_generation = f'{q(REGISTRY_GENERATION_COLUMN)}=%s'
+    if bundle_ids is None:
+        db.delete_rows(BUNDLE_REGISTRY_TABLE, in_generation, [generation])
+        return
+    for bundle_id in bundle_ids:
+        db.delete_rows(
+            BUNDLE_REGISTRY_TABLE,
+            f'{in_generation} AND {q("bundle_id")}=%s',
+            [generation, bundle_id],
+        )
+
+
+def restore_retired_copies(ctx: ImportContext, generation: int) -> None:
+    """Make the rows a pending generation retired live again, as abandoning it does.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        generation: The pending generation.
+    """
+    db = ctx.db
+    assert db is not None
+    if not db.table_exists(BUNDLE_REGISTRY_TABLE):
+        return
+    db.update_row(
+        BUNDLE_REGISTRY_TABLE,
+        {RETIRED_GENERATION_COLUMN: None},
+        f'{db.quote_identifier(RETIRED_GENERATION_COLUMN)}=%s',
+        [generation],
+    )
+
+
+def purge_retired_copies(ctx: ImportContext, served: int) -> None:
+    """Delete the rows of the copies retired at or before the served generation.
+
+    Parameters:
+        ctx: The import run's context, for the open database.
+        served: The served generation.
+    """
+    db = ctx.db
+    assert db is not None
+    if not db.table_exists(BUNDLE_REGISTRY_TABLE):
+        return
+    db.delete_rows(
+        BUNDLE_REGISTRY_TABLE, f'{db.quote_identifier(RETIRED_GENERATION_COLUMN)} <= %s', [served]
+    )

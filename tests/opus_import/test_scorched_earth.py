@@ -38,6 +38,9 @@ _EXACT_NAMES = (
     'contexts__old',
     'definitions__new',
     'definitions__old',
+    'param_info__prev',
+    'partables__prev',
+    'table_names__prev',
 )
 
 #: One table of each prefix the import creates in any number, and the two mult tables
@@ -79,6 +82,14 @@ class _DroppingDB:
         self.tables.remove(table_name)
         self.dropped.append(table_name)
 
+    def drop_obs_general_view(self) -> None:
+        """Record the served view's drop, which ``DROP TABLE`` would refuse."""
+        self.dropped.append(_VIEW_DROP)
+
+
+#: What `_DroppingDB` records for the drop of the ``obs_general`` view.
+_VIEW_DROP = 'DROP VIEW obs_general'
+
 
 def _erase(tables: list[str]) -> _DroppingDB:
     """Run scorched earth over a schema holding `tables`, returning the stand-in."""
@@ -91,14 +102,15 @@ def test_every_opus_table_goes_and_no_django_table_does() -> None:
     """The prefixes and the exact names cover every table the import creates."""
     db = _erase([*_PREFIXED, *_EXACT_NAMES, *_DJANGO_TABLES])
     assert sorted(db.tables) == sorted(_DJANGO_TABLES)
-    assert sorted(db.dropped) == sorted([*_PREFIXED, *_EXACT_NAMES])
+    assert sorted(db.dropped) == sorted([_VIEW_DROP, *_PREFIXED, *_EXACT_NAMES])
 
 
 def test_the_drop_order_follows_the_foreign_keys() -> None:
-    """The version table first, children before cart before obs_general, mult tables last."""
+    """The served view first, then the version table, children before cart before
+    obs_general, mult tables last."""
     db = _erase([*_PREFIXED, *_EXACT_NAMES, *_DJANGO_TABLES])
     position = {table: index for index, table in enumerate(db.dropped)}
-    assert db.dropped[0] == 'schema_version'
+    assert db.dropped[:2] == [_VIEW_DROP, 'schema_version']
     assert position['obs_pds'] < position['cart'] < position['obs_general']
     assert position['obs_surface_geometry_target'] < position['cart']
     for definitions in ('definitions', 'definitions__new', 'definitions__old'):
@@ -113,4 +125,4 @@ def test_the_drop_order_follows_the_foreign_keys() -> None:
 def test_an_absent_table_is_not_asked_for() -> None:
     """Only the tables the schema holds are dropped."""
     db = _erase(['obs_general', 'auth_user'])
-    assert db.dropped == ['obs_general']
+    assert db.dropped == [_VIEW_DROP, 'obs_general']

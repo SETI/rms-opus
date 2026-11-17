@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from opus_config.config import DEFAULT_INDEX_WORKERS, DEFAULT_WORKER_ROWS, DEFAULT_WORKERS
+from opus_import.generations import FIRST_GENERATION
 
 if TYPE_CHECKING:
     import argparse
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 
     from opus_import.bundle_registry import BundleIds, BundleRange
     from opus_import.deferred import Capture
+    from opus_import.generations import GenerationState
     from opus_import.import_processes import BundleGuard, ImporterLock
     from opus_import.importdb.super import ImportDBSuper
     from opus_import.mult_fields import MultFieldInfo
@@ -221,7 +223,8 @@ class ImportContext:
             a bundle.
         planned_ranges: The registry rows a read-only run's registration planned and,
             being read-only, did not write, keyed by bundle, so the run imports a new
-            bundle from the range it would have registered.
+            bundle, or a pending generation's new copy of a live one, from the range it
+            would have registered.
         current_bundle_id: The bundle being imported, or None outside a bundle.
         current_index_row_number: The 1-based index row being imported, or None.
         current_primary_filespec: The primary filespec of the observation being imported,
@@ -246,6 +249,9 @@ class ImportContext:
             writes (`opus_import.deferred`), or None in the import's own process.
         importer: This process's row and lock as an importer drawing from the queue
             (`opus_import.import_processes.ImporterLock`), or None for a plain import.
+        writer: This process's row and lock as a registered writer of the schema
+            (`opus_import.steps.do_generation.register_writer`), or None when it is not
+            registered. A queue importer that is registered imports under this row.
         load_guard: What each chunk of the bundle being imported runs in its
             transaction (`opus_import.import_processes.BundleGuard`), or None outside a
             bundle.
@@ -256,6 +262,12 @@ class ImportContext:
         queue_entered: Whether a queue importer has begun recording itself in
             ``import_process``; until then it holds nothing, and a second interrupt
             stops it wherever it lands.
+        generation_state: The schema's ``schema_version`` row as `opus_import.cli` read
+            it when the run opened the database
+            (`opus_import.generations.GenerationState`), or None when it has none.
+        import_generation: The generation the observation rows this run writes are
+            added in: the pending generation, if any, otherwise the served one, and
+            `opus_import.generations.FIRST_GENERATION` for a schema with no version row.
     """
 
     args: argparse.Namespace
@@ -287,10 +299,13 @@ class ImportContext:
     index_workers: int = DEFAULT_INDEX_WORKERS
     capture: Capture | None = None
     importer: ImporterLock | None = None
+    writer: ImporterLock | None = None
     load_guard: BundleGuard | None = None
     log_path: str | None = None
     interrupts: int = 0
     queue_entered: bool = False
+    generation_state: GenerationState | None = None
+    import_generation: int = FIRST_GENERATION
 
     log: ImportLog = field(init=False)
 
@@ -302,6 +317,12 @@ class ImportContext:
         """Record that the run, and the bundle it is importing, produced an error."""
         self.import_has_bad_data = True
         self.bundle_has_errors = True
+
+    @property
+    def pending_generation(self) -> int | None:
+        """The generation an update is writing, or None when the schema has none."""
+        state = self.generation_state
+        return None if state is None else state.pending
 
     @contextlib.contextmanager
     def timed(self, step: str) -> Iterator[None]:

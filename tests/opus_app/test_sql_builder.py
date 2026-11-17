@@ -302,6 +302,25 @@ class SQLBuilderSelectTests(TestCase):
         )
         self.assertEqual(params, [])
 
+    def test__served_observations_join_reads_the_child_first(self) -> None:
+        """A child's rows reach obs_general by its primary key, the child read first."""
+        select = sql_builder.Select()
+        select.add_column(sql_builder.column('short_name', 'obs_files'))
+        select.add_from('obs_files').append_join(sql_builder.served_observations_join('obs_files'))
+        sql, params = select.build()
+        self.assertEqual(
+            sql,
+            'SELECT `obs_files`.`short_name` FROM `obs_files` STRAIGHT_JOIN `obs_general` '
+            'ON `obs_general`.`id`=`obs_files`.`obs_general_id`',
+        )
+        self.assertEqual(params, [])
+
+    def test__join_rejects_an_unknown_kind(self) -> None:
+        """Only the kinds the builder renders are accepted."""
+        join = sql_builder.Join('CROSS', 'obs_files', sql_builder.column('id', 'obs_files'))
+        with self.assertRaises(ValueError):
+            join.render()
+
     def test__select_rejects_non_int_limit_and_offset(self) -> None:
         "[test_sql_builder.py] Select: LIMIT/OFFSET are rendered literally, so they must be ints"
         select = sql_builder.Select()

@@ -160,8 +160,16 @@ def fill_partables(ctx: ImportContext, new_table: str) -> bool:
 def do_partables(ctx: ImportContext) -> None:
     """Rebuild the ``partables`` table, driven by ``--create-partables``.
 
+    With a pending generation (`opus_import.generations`) the table is built from it and
+    left as ``partables__new``, which the switch swaps in.
+
     Parameters:
         ctx: The import run's context, for the open database and the logger.
     """
     new_name = table_swap.swap_new_name('partables')
-    table_swap.rebuild_tables_by_swap(ctx, ['partables'], lambda: fill_partables(ctx, new_name))
+    table_swap.rebuild_tables_by_swap(
+        ctx,
+        ['partables'],
+        lambda: fill_partables(ctx, new_name),
+        swap=ctx.pending_generation is None,
+    )

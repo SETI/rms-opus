@@ -22,6 +22,8 @@ from opus_import import config_targets, import_util, importdb
 from opus_import.cli import _create_argument_parser
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
+from opus_import.schema_version import SCHEMA_VERSION
+from opus_import.steps import do_generation, do_import_tables
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -208,3 +210,63 @@ def test_upsert_updates_the_row_it_finds(import_db: ImportDBSuper) -> None:
         ['OPUS_GENERAL'],
     )
     assert [row[0] for row in rows] == ['second']
+
+
+def _earlier_version_schema(credentials: DatabaseCredentials, schema: str) -> None:
+    """Create what an earlier version's import left: obs_general a base table with a
+    child referencing it, and a version row without the generation columns."""
+    for statement in (
+        'CREATE TABLE obs_general (id INT UNSIGNED PRIMARY KEY, bundle_id VARCHAR(20))',
+        'CREATE TABLE obs_pds (obs_general_id INT UNSIGNED PRIMARY KEY, '
+        'FOREIGN KEY (obs_general_id) REFERENCES obs_general (id))',
+        'CREATE TABLE schema_version (version INT, state VARCHAR(20))',
+        'INSERT INTO obs_general VALUES (1, "B_1")',
+        'INSERT INTO obs_pds VALUES (1)',
+        f'INSERT INTO schema_version VALUES ({SCHEMA_VERSION - 1}, "ready")',
+    ):
+        golden_io.execute(credentials, schema, statement)
+
+
+def test_an_earlier_versions_schema_holds_no_generation_and_is_erased_whole(
+    import_db: ImportDBSuper, db_credentials: DatabaseCredentials
+) -> None:
+    """Its version row is read as no generation rather than failing the read, the erase
+    drops its obs_general base table, and a fresh import then creates the view in its
+    place."""
+    schema = import_db.db_schema
+    _earlier_version_schema(db_credentials, schema)
+    ctx = _import_context()
+    ctx.db = import_db
+    import_db.forget_table_names()
+    assert do_generation.read_generation_state(import_db) is None
+    do_import_tables.delete_all_opus_tables(ctx)
+    assert golden_io.query(db_credentials, schema, 'SHOW FULL TABLES') == []
+    table_schema = import_util.read_schema_for_table(ctx, 'obs_general')
+    assert table_schema is not None
+    import_db.create_table('obs_general', table_schema)
+    assert sorted(golden_io.query(db_credentials, schema, 'SHOW FULL TABLES')) == [
+        ('obs_general', 'VIEW'),
+        ('obs_general_rows', 'BASE TABLE'),
+    ]
+
+
+def test_a_child_row_of_a_pending_only_observation_is_found_by_its_bundle(
+    import_db: ImportDBSuper, db_credentials: DatabaseCredentials
+) -> None:
+    """The view hides a generation it does not serve, and the helper asks the base table,
+    so a child row of an observation only a pending generation holds is reported."""
+    schema = import_db.db_schema
+    for statement in (
+        'CREATE TABLE obs_general_rows (id INT UNSIGNED PRIMARY KEY, bundle_id VARCHAR(20), '
+        'added_generation INT UNSIGNED)',
+        'CREATE VIEW obs_general AS SELECT id, bundle_id FROM obs_general_rows '
+        'WHERE added_generation <= 1',
+        'CREATE TABLE obs_pds (obs_general_id INT UNSIGNED PRIMARY KEY)',
+        'INSERT INTO obs_general_rows VALUES (7, "B_1", 2)',
+        'INSERT INTO obs_pds VALUES (7)',
+    ):
+        golden_io.execute(db_credentials, schema, statement)
+    holding = golden_io.tables_holding_bundle(
+        db_credentials, schema, ['obs_general', 'obs_pds'], 'B_1'
+    )
+    assert holding == {'obs_general', 'obs_pds'}

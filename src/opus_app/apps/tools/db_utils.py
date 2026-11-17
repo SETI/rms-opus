@@ -20,6 +20,10 @@ copy of the field's rows from `import_constants`.
 The MySQL error numbers are the failures that callers of these tables catch when
 they inspect a database exception; `is_lock_timeout_error` and `is_deadlock_error` are
 the places that read the numbers of a lock wait that timed out and of a broken deadlock.
+
+`unserved_observations_exist` reads the version row to say whether the schema holds rows
+of a generation it does not serve, which decides whether a statement reading a child table
+joins the served observations (`sql_builder.served_observations_join`).
 """
 
 from __future__ import annotations
@@ -30,9 +34,12 @@ from typing import TYPE_CHECKING, Any
 
 from django.apps import apps
 from django.conf import settings
+from django.db import DatabaseError, connection
 
 from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.import_constants import mult_table, table_names
+from opus_import.generations import PENDING_GENERATION_COLUMN, REVERTIBLE_COLUMN
+from opus_import.schema_version import SCHEMA_VERSION_TABLE
 from opus_support import ASCII_COLLATION, parse_form_type
 
 if TYPE_CHECKING:
@@ -72,6 +79,44 @@ def is_deadlock_error(exc: BaseException) -> bool:
         True for MySQL's error 1213.
     """
     return bool(exc.args) and exc.args[0] == MYSQL_DEADLOCK
+
+
+def unserved_observations_exist() -> bool:
+    """Return whether the schema holds observation rows of a generation it does not serve.
+
+    Such rows exist while a generation is pending, and from a switch until the purge has
+    deleted the rows it retired: exactly while the version row names a pending generation
+    or has ``revertible`` set (`opus_import.steps.do_generation`). A statement that reads a
+    child table's rows outside a search's results joins the served observations only then,
+    since otherwise the join drops no row and costs each child row a lookup into
+    ``obs_general_rows``.
+
+    The row is read on every call and never kept: a generation is begun while the site
+    serves, and a process that went on answering from an earlier read would show the
+    pending generation's child rows.
+
+    Returns:
+        True while a generation is pending or a switch is revertible; False otherwise,
+        and when the schema has no version row or no version table, either of which
+        leaves it one generation.
+
+    Raises:
+        django.db.DatabaseError: If the version table exists but cannot be read.
+    """
+    select = sql_builder.Select()
+    select.add_column(sql_builder.column(PENDING_GENERATION_COLUMN))
+    select.add_column(sql_builder.column(REVERTIBLE_COLUMN))
+    select.add_from(SCHEMA_VERSION_TABLE)
+    sql, params = select.build()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+    except DatabaseError as error:
+        if error.args and error.args[0] == MYSQL_TABLE_NOT_EXISTS:
+            return False
+        raise
+    return any(pending is not None or revertible == 1 for pending, revertible in rows)
 
 
 def table_model_from_name(table_name: str) -> type[Any]:

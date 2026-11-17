@@ -531,11 +531,16 @@ def list_contains_any(table: str, column_name: str, mult_ids: Sequence[int]) -> 
     return exists(junction, where)
 
 
+#: The SQL each join kind renders as.
+_JOIN_KEYWORDS = {'INNER': 'INNER JOIN', 'LEFT': 'LEFT JOIN', 'STRAIGHT': 'STRAIGHT_JOIN'}
+
+
 @dataclass(frozen=True)
 class Join:
     """One join onto a table source."""
 
-    #: 'INNER' or 'LEFT'.
+    #: 'INNER', 'LEFT', or 'STRAIGHT' for MySQL's ``STRAIGHT_JOIN``, an inner join that
+    #: reads the source it is hung on before the one it joins.
     kind: str
     #: The table name, or other `TableSource`, being joined in.
     source: TableSource
@@ -544,10 +549,11 @@ class Join:
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this join."""
-        if self.kind not in ('INNER', 'LEFT'):
+        if self.kind not in _JOIN_KEYWORDS:
             raise ValueError(f'Unsupported join kind: {self.kind!r}')
         source_sql, params = _render_source(self.source)
-        return f' {self.kind} JOIN {source_sql} ON {self.on.sql}', params + list(self.on.params)
+        keyword = _JOIN_KEYWORDS[self.kind]
+        return f' {keyword} {source_sql} ON {self.on.sql}', params + list(self.on.params)
 
 
 @dataclass
@@ -581,6 +587,34 @@ class FromSource:
             sql += join_sql
             params = params + join_params
         return sql, params
+
+
+#: The served observations, a view of the rows of the import generation the schema
+#: serves (`opus_import.generations`). A child table carries no generation, so while the
+#: schema holds another generation's rows, a statement reading a child's rows outside a
+#: search's results reaches them through this view.
+OBS_GENERAL_TABLE = 'obs_general'
+
+
+def served_observations_join(table: str) -> Join:
+    """Return the join that keeps a child table's rows to the served observations.
+
+    Renders `STRAIGHT_JOIN obs_general ON obs_general.id = <table>.obs_general_id`: an
+    inner join that drops the rows of a generation the schema does not serve, and that
+    reads the child first, so the statement keeps the child's own access path and the
+    order its rows come in, and reads each row's observation through the view's primary
+    key. A caller hangs it only while the schema holds such rows
+    (`opus_app.apps.tools.db_utils.unserved_observations_exist`); otherwise it drops
+    nothing and costs each child row the lookup.
+
+    Parameters:
+        table: The child table, or the alias its columns are read under.
+    """
+    return Join(
+        'STRAIGHT',
+        OBS_GENERAL_TABLE,
+        columns_equal(column('id', OBS_GENERAL_TABLE), column('obs_general_id', table)),
+    )
 
 
 #: The table holding every mult field's values, keyed ``(field_id, id)``.

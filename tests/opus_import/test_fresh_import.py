@@ -17,6 +17,7 @@ from typing import Any
 import pytest
 
 from opus_import import cli, import_util
+from opus_import.generations import PENDING_WRITING, GenerationState
 from opus_import.importdb.super import ImportDBError, ImportDBSuper, IndexStatement
 from opus_import.schema_version import SCHEMA_VERSION
 from opus_import.steps import (
@@ -149,7 +150,7 @@ def test_a_table_outside_the_filter_is_created_with_every_declared_key() -> None
     db = _RecordingDB(set())
     cmd = _create_statement(db, 'cart')
     for clause in (
-        'FOREIGN KEY (`obs_general_id`) REFERENCES `obs_general`(`id`) '
+        'FOREIGN KEY (`obs_general_id`) REFERENCES `obs_general_rows`(`id`) '
         'ON DELETE RESTRICT ON UPDATE CASCADE',
         'KEY `opus_id` (`opus_id`)',
         'KEY `bundle_id` (`bundle_id`)',
@@ -178,7 +179,7 @@ def test_a_table_level_foreign_key_renders_what_a_delete_does() -> None:
     assert cmd == (
         'CREATE TABLE IF NOT EXISTS `cart` ( `obs_general_id` int unsigned NOT NULL, '
         'CONSTRAINT one UNIQUE (obs_general_id) , FOREIGN KEY (`obs_general_id`) '
-        'REFERENCES `obs_general`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB'
+        'REFERENCES `obs_general_rows`(`id`) ON DELETE CASCADE ON UPDATE CASCADE ) ENGINE=INNODB STATS_SAMPLE_PAGES=500'
     )
 
 
@@ -200,7 +201,7 @@ def test_the_statements_that_add_keys() -> None:
     foreign = TableKey('foreign', ('obs_general_id',), ('obs_general', ('id',)))
     assert db.add_foreign_key_statement('obs_pds', foreign) == (
         'ALTER TABLE `obs_pds` ADD FOREIGN KEY (`obs_general_id`) REFERENCES '
-        '`obs_general`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
+        '`obs_general_rows`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
     )
 
 
@@ -678,6 +679,45 @@ def test_a_schema_no_import_may_append_to_is_refused(
     assert '--scorched-earth --yes' in message
 
 
+def _choose_with_generation(
+    version: int, *, pending: int | None, revertible: bool = False
+) -> tuple[bool, Any]:
+    """Choose a path against a ready schema of a version whose row names generations."""
+    db = _StateDB([(version, 'ready')], {}, [])
+    ctx = make_context(db=db)
+    pending_state = None if pending is None else PENDING_WRITING
+    ctx.generation_state = GenerationState(version, 'ready', 1, pending, pending_state, revertible)
+    return do_import.choose_import_path(ctx), ctx
+
+
+def test_a_pending_generation_of_this_version_is_written() -> None:
+    """The import writes the generation, logged with the generation served."""
+    chosen, ctx = _choose_with_generation(SCHEMA_VERSION, pending=2)
+    assert chosen
+    assert ctx.import_path == do_import.IMPORT_PATH_GENERATION
+    assert ctx.logger.messages_at('info') == [
+        f'Import path: generation 2, into "opus_test" (version {SCHEMA_VERSION}, ready; '
+        'generation 1 served)'
+    ]
+
+
+@pytest.mark.parametrize(
+    ('pending', 'revertible'), [(2, False), (None, True)], ids=['pending', 'revertible']
+)
+def test_another_versions_schema_is_refused_whatever_its_generations(
+    pending: int | None, revertible: bool
+) -> None:
+    """The release check comes first: no import writes another release's schema, a
+    pending generation of it included, and the refusal names the version."""
+    chosen, ctx = _choose_with_generation(
+        SCHEMA_VERSION + 1, pending=pending, revertible=revertible
+    )
+    assert not chosen
+    assert ctx.import_path is None
+    (message,) = ctx.logger.messages_at('fatal')
+    assert f'is version {SCHEMA_VERSION + 1} and this release is version' in message
+
+
 def test_an_interrupted_finalization_refuses_the_import() -> None:
     """No version row but a key finalization adds: refused, naming --finalize."""
     keys = {'obs_general': [TableKey('primary', ('id',)), TableKey('key', ('time1', 'opus_id'))]}
@@ -753,6 +793,7 @@ class _DeletingDB:
             'id_capacity': capacity,
             'state': 'importing',
             'started_at': None,
+            'generation': 1,
         }
         return [tuple(row[column] for column in columns)]
 
@@ -882,11 +923,12 @@ def test_a_bundle_the_registry_lacks_deletes_only_its_joined_rows() -> None:
 class _DuplicateDB(_DeletingDB):
     """A stand-in whose ``obs_general`` holds the duplicated rows it is given."""
 
-    def __init__(self, rows: list[tuple[int, str, str]], remaining: list[Any]) -> None:
+    def __init__(self, rows: list[tuple[int, str, str, int]], remaining: list[Any]) -> None:
         """Hold the duplicated rows, and what the closing check finds.
 
         Parameters:
-            rows: ``(id, opus_id, bundle_id)`` for every row sharing an OPUS id.
+            rows: ``(id, opus_id, bundle_id, added_generation)`` for every row sharing an
+                OPUS id.
             remaining: What the check after the deletes finds.
         """
         super().__init__([], ['obs_general', 'obs_pds'])
@@ -906,13 +948,16 @@ class _DuplicateDB(_DeletingDB):
 def test_the_highest_id_is_kept_and_the_others_deleted_children_first() -> None:
     """Another bundle's copy is logged at info level; the same bundle's as a warning."""
     db = _DuplicateDB(
-        [(3, 'a', 'B_1'), (8, 'a', 'B_2'), (4, 'b', 'B_1'), (5, 'b', 'B_1')], remaining=[]
+        [(3, 'a', 'B_1', 1), (8, 'a', 'B_2', 1), (4, 'b', 'B_1', 1), (5, 'b', 'B_1', 1)],
+        remaining=[],
     )
     ctx = make_context(db=db)
     assert do_duplicate_ids.delete_duplicate_opus_ids(ctx)
     # The OPUS id comes from the grouped side, so case variants the collation joins
     # come back under one spelling.
     assert '`g`.`id`, `d`.`opus_id`, `g`.`bundle_id`' in db.selects[0]
+    # Only the rows of the generation the run works on are compared.
+    assert db.selects[0].count('`added_generation` <= %s') == 2
     assert db.deletes == [
         ('obs_pds', '`obs_general_id` IN (%s,%s)', [3, 4]),
         ('obs_general', '`id` IN (%s,%s)', [3, 4]),
@@ -928,7 +973,7 @@ def test_the_highest_id_is_kept_and_the_others_deleted_children_first() -> None:
 
 def test_an_id_left_shared_after_the_step_is_an_error() -> None:
     """The closing check fails the step when any OPUS id still has two rows."""
-    db = _DuplicateDB([(3, 'a', 'B_1'), (8, 'a', 'B_2')], remaining=[(1, 'a', 'B_1')])
+    db = _DuplicateDB([(3, 'a', 'B_1', 1), (8, 'a', 'B_2', 1)], remaining=[(1, 'a', 'B_1', 1)])
     ctx = make_context(db=db)
     assert not do_duplicate_ids.delete_duplicate_opus_ids(ctx)
     assert ctx.logger.messages_at('error') == ['An OPUS ID still has more than one obs_general row']
@@ -1004,7 +1049,7 @@ def test_create_indexes_adds_what_a_child_lacks_then_its_foreign_key() -> None:
     assert 'ADD KEY (`obs_general_id`)' not in statement.sql
     assert [s.sql for s in db.foreign] == [
         'ALTER TABLE `obs_pds` ADD FOREIGN KEY (`obs_general_id`) REFERENCES '
-        '`obs_general`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
+        '`obs_general_rows`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE'
     ]
     assert db.analyzed == ['obs_pds', 'obs_pds']
     assert db.workers == 1
@@ -1294,9 +1339,15 @@ class _JunctionDB:
         return list(self.tables)
 
     def list_junction_mismatches(
-        self, table_name: str, column: str, junction: str, observation_column: str
+        self,
+        table_name: str,
+        column: str,
+        junction: str,
+        observation_column: str,
+        first_id: int | None = None,
     ) -> tuple[int, int | None]:
         """Record the comparison and return its count and first observation."""
+        assert first_id is None
         self.compared.append((table_name, column, junction, observation_column))
         return self.mismatches.get(junction, (0, None))
 
@@ -1345,7 +1396,8 @@ def test_do_validate_runs_the_junction_check(monkeypatch: pytest.MonkeyPatch) ->
     for name in dir(do_validate):
         if name.startswith('validate_'):
             monkeypatch.setattr(do_validate, name, lambda ctx, name=name: called.append(name))
-    ctx = make_context(db=SimpleNamespace())
+    db = SimpleNamespace(forget_table_names=lambda: None, table_exists=lambda name: True)
+    ctx = make_context(db=db)
     monkeypatch.setattr(ctx.logger, 'close', lambda *args, **kwargs: (0, 0, 0, 0))
     assert do_validate.do_validate(ctx)
     assert 'validate_junctions' in called

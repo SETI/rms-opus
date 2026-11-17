@@ -3,7 +3,19 @@
 # The steps of a promotion that can fail on their own, as functions, so that a test can
 # run each one without running _promote.sh.
 #
-# Defines three functions and runs nothing, so a test can source it.
+# Defines these functions and runs nothing, so a test can source it.
+#
+# service_action <action> <unit>
+#     Runs "sudo systemctl <action> <unit>" and returns its status. When it fails --
+#     sudo refused, as after a mistyped password, or the unit did not <action> -- it
+#     prints an error naming the command and the status, which the caller's own message
+#     follows. A caller runs it in an if or with ||, so that under set -e the script does
+#     not end at a failed sudo without saying what is running and what is not.
+#
+# start_web_service_again
+#     Starts the web service (service_action) after a step that changed nothing has
+#     failed while it was stopped. When it does not start, says the site is down and how
+#     to start it. Returns 0 either way, since the caller is already failing.
 #
 # previous_db_name <deployed opus.toml> <target schema>
 #     Prints the schema the served installation's opus.toml names, when that file
@@ -16,6 +28,7 @@
 #     --carry-over-sessions-from). It runs while the
 #     web service is stopped, before the switch. When it fails it starts the web service
 #     again, on the installation that was serving, and returns 1; nothing has switched.
+#     When that start fails too, it says the site is down and how to start it.
 #     It does the same when opus_import --help fails, since that does not show whether
 #     the option exists. When the help succeeds and lists no such option, as an older
 #     release's does, it warns and returns 0, and the promotion goes on without the
@@ -30,8 +43,26 @@
 # Inputs: OPUS_CONFIG (exported by _opus_setup_environment.sh) naming the staged
 # installation's configuration, and that installation's virtualenv active, so that
 # opus_import and opus_manage are its own; OPUS_WEB_SERVICE (from _read_deploy_env.sh).
-# OPUS_SERVICE_COMMAND, when set, replaces "sudo systemctl" as the command that starts a
-# service.
+# OPUS_SERVICE_COMMAND, when set, replaces "sudo systemctl" as the command that starts,
+# stops or restarts a service.
+
+service_action() {
+    local action=$1
+    local unit=$2
+    local status=0
+    ${OPUS_SERVICE_COMMAND:-sudo systemctl} "${action}" "${unit}" || status=$?
+    if [[ ${status} -ne 0 ]]; then
+        echo "ERROR: sudo systemctl ${action} ${unit} failed with status ${status}:"
+        echo "       sudo refused, as after a mistyped password, or ${unit} did not ${action}."
+    fi
+    return "${status}"
+}
+
+start_web_service_again() {
+    if ! service_action start "${OPUS_WEB_SERVICE}"; then
+        echo "       The site is down. Start it with: sudo systemctl start ${OPUS_WEB_SERVICE}"
+    fi
+}
 
 previous_db_name() {
     local deployed_toml=$1
@@ -56,7 +87,7 @@ carry_over_sessions() {
         echo "ERROR: opus_import --help failed, so whether the release being promoted"
         echo "       can carry sessions over is unknown."
         echo "       Nothing has been switched; restarting what was running before."
-        ${OPUS_SERVICE_COMMAND:-sudo systemctl} start "${OPUS_WEB_SERVICE}"
+        start_web_service_again
         return 1
     fi
     # Going back to a release older than the option promotes it without the carry-over.
@@ -68,7 +99,7 @@ carry_over_sessions() {
     if ! opus_import --carry-over-sessions-from "${served}"; then
         echo "ERROR: could not carry sessions and carts over from ${served}."
         echo "       Nothing has been switched; restarting what was running before."
-        ${OPUS_SERVICE_COMMAND:-sudo systemctl} start "${OPUS_WEB_SERVICE}"
+        start_web_service_again
         return 1
     fi
     return 0

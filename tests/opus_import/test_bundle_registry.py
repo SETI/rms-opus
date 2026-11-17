@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from opus_import import bundle_registry, cli, import_util, importdb
+from opus_import import bundle_registry, cli, import_processes, import_util, importdb
 from opus_import.schema_version import (
     SCHEMA_STATE_APPENDING,
     SCHEMA_STATE_READY,
@@ -78,6 +78,22 @@ def test_a_bundle_whose_import_fails_stops_the_loop(monkeypatch: pytest.MonkeyPa
     succeeded, _ctx = run_import_loop(db, ['B_1', 'B_2', 'B_3'], monkeypatch, failing=('B_2',))
     assert not succeeded
     assert db.states() == {'B_1': 'done', 'B_2': 'failed', 'B_3': 'pending'}
+
+
+def test_a_plain_import_that_loses_its_writer_lock_stops_and_writes_nothing_more(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A chunk refused for a lost writer lock ends the run with a fatal message, the
+    bundle left as it was and the bundles after it untouched."""
+
+    def lose(ctx: Any) -> None:
+        raise import_processes.LostImporterError('lost the writer lock')
+
+    db = RegistryDB()
+    succeeded, ctx = run_import_loop(db, ['B_1', 'B_2', 'B_3'], monkeypatch, during={'B_2': lose})
+    assert not succeeded
+    assert db.states() == {'B_1': 'done', 'B_2': 'importing', 'B_3': 'pending'}
+    assert 'lost the writer lock' in ctx.logger.messages_at('fatal')
 
 
 def test_ignore_errors_marks_every_bundle_done_and_goes_on(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -391,6 +407,22 @@ def test_a_read_only_run_imports_a_new_bundle_from_the_range_it_planned(
     )
 
 
+def test_a_read_only_runs_planned_range_replaces_the_live_copy_it_would_retire() -> None:
+    """A read-only registration into a pending generation plans a new copy of a live
+    bundle and writes nothing, so the lookup answers with the plan, not the live row."""
+    db = RegistryDB({'import_bundle': registry_rows({'B_1': 'done'})})
+    db.read_only = True
+    ctx = make_context(db=db)
+    live = bundle_registry.bundle_range(ctx, 'B_1')
+    assert live is not None
+    planned = bundle_registry.BundleRange(2, 'B_1', BUNDLE_SIZE, 5000, 400, 'pending', None, 2)
+    ctx.planned_ranges['B_1'] = planned
+    assert bundle_registry.bundle_range(ctx, 'B_1') == planned
+    ids = bundle_registry.bundle_ids(ctx, 'B_1')
+    assert ids is not None
+    assert (ids.range.first_id, ids.range.generation) == (5000, 2)
+
+
 @pytest.mark.parametrize('named', [[], ['GO_0001']], ids=['nothing-named', 'only-skipped'])
 def test_an_append_with_nothing_to_import_leaves_the_schema_ready(
     named: list[str], monkeypatch: pytest.MonkeyPatch
@@ -494,15 +526,16 @@ def test_the_registry_reads_nothing_when_it_has_no_table() -> None:
 
 def test_ranges_ascend_and_one_past_the_largest_id_is_refused() -> None:
     """Each range starts where the last ended; one ending past INT UNSIGNED's maximum fails."""
-    rows = bundle_registry.plan_ranges(7, [('A', 2), ('B', 3)])
+    rows = bundle_registry.plan_ranges(7, [('A', 2), ('B', 3)], 4)
     assert [(row['bundle_id'], row['first_id'], row['id_capacity']) for row in rows] == [
         ('A', 7, 200),
         ('B', 207, 300),
     ]
+    assert {row['generation'] for row in rows} == {4}
     last = bundle_registry.MAX_OBSERVATION_ID + 1
-    assert bundle_registry.plan_ranges(last - 100, [('C', 1)])[0]['first_id'] == last - 100
+    assert bundle_registry.plan_ranges(last - 100, [('C', 1)], 1)[0]['first_id'] == last - 100
     with pytest.raises(bundle_registry.RegistrationError, match='Bundle D'):
-        bundle_registry.plan_ranges(last - 99, [('D', 1)])
+        bundle_registry.plan_ranges(last - 99, [('D', 1)], 1)
 
 
 def test_a_bundle_that_outgrows_its_range_is_refused_naming_it() -> None:

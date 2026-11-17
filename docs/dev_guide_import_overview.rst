@@ -104,14 +104,20 @@ A schema holding another release's version is imported into on neither path: it 
 re-imported under the release that will serve it, starting from
 ``opus_import --scorched-earth --yes``.
 
-**On both paths each bundle is deleted, then loaded.**
+**A served schema is updated by generation** (:ref:`dev_guide_import_generations`): the
+append path, into a pending generation the web application does not see until it is
+switched in whole.
+
+**On both paths each bundle's earlier rows go before it is loaded.** Outside a
+generation update,
 :func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables` removes the
 bundle's rows from every observation table with foreign key checks on, so ``cart``'s
-cascading foreign key removes the cart rows that name them; the bundle is then loaded
-with the checks off, and validation's orphan count stands in for them
-(:ref:`dev_guide_import_steps_do_validate`). A bundle imported again therefore replaces
-its earlier rows rather than adding a second copy, and a failed bundle is repaired by
-importing it again.
+cascading foreign key removes the cart rows that name them; in a generation update the
+served rows are retired instead, and only rows the pending generation added are deleted
+(below). The bundle is then loaded with the checks off, and validation's orphan count
+stands in for them (:ref:`dev_guide_import_steps_do_validate`). A bundle imported again
+therefore replaces its earlier rows rather than adding a second copy, and a failed bundle
+is repaired by importing it again.
 
 **The bundle registry keeps an unfinished import from being finished.** Every invocation
 that imports bundles registers each of them in ``import_bundle`` before the first starts,
@@ -131,6 +137,50 @@ import creates before anything else runs.
 On either path a run can be **resumed rather than restarted**: the bundles already
 written stay, the registry names the ones that did not finish, and the per-step options
 let a second invocation redo only the part that failed.
+
+.. _dev_guide_import_generations:
+
+Generations: nothing is served until it is finished
+---------------------------------------------------
+
+The rule that keeps a request from reading a database part way through an import holds
+on a served schema too. Every row of ``obs_general_rows``, the base table behind
+``obs_general``, carries the import **generation** that added it, ``added_generation``,
+and the one that retired it, ``removed_generation``; the view leaves both columns out.
+``obs_general`` is a view of the rows
+in the generation the schema serves, the ``generation`` column of its ``schema_version``
+row: a row is in generation G when it was added at or before G and was not retired at or
+before G. A fresh import writes generation 1, and its version row serves it. While every
+row is in the served generation the view has no condition, so a request reads the table
+as it would the table itself; while other generations' rows are there, it names the
+served generation (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). The child
+tables carry no generation; while other generations' rows are there, a request reaches a
+child row only through an observation the view returned, or a search built from the view.
+
+An update (:ref:`dev_guide_import_running_generations`) begins a **pending generation**,
+one above the served one, and writes only the bundles it changes into it: a re-imported
+bundle's old rows are retired at the pending generation and its new rows added in it, and
+a dropped bundle's rows are retired. The served generation still shows every row it
+showed, so nothing a request reads changes while the update imports, finalizes and
+validates, with one exception: bundle registration writes the pinned fields' ``mult``
+rows from the release's ``mult_options`` (:ref:`dev_guide_import_steps_registry`), so an
+update run with a release whose pinned labels differ from the served schema's relabels
+those rows at once, and an abandon does not undo it. The auxiliary tables are built from
+the pending generation beside the live ones. The **switch**, while the web service is
+stopped, runs as separate steps: it swaps those tables in, moves the cart to the new
+generation's rows, resets the search tables, re-creates the view, and last serves the new
+generation in one statement; a switch that stops part way is completed or undone by
+running it or the revert again (:ref:`dev_guide_import_steps_do_generation`). The web
+workers restart afterwards, refreshing what each process caches. The retired rows stay
+until the **purge**, so until then a switch can be reverted, and an update that never
+switched can be abandoned with nothing served having changed.
+
+The import itself always reads and writes the base table:
+:mod:`opus_import.importdb` renders the name ``obs_general`` as ``obs_general_rows`` and
+reports the base table under the name ``obs_general``, and every step that compares
+observations -- the duplicate step, the unique-OPUS-ID check, the surface geometry
+bodies the auxiliary tables list -- reads the generation the run works on, the pending one
+if there is one and the served one otherwise.
 
 .. _dev_guide_import_context:
 
@@ -445,9 +495,10 @@ already produced, and ``file_number`` counts from 1 in the order the files are w
 registration order, and the bundle's observations take the range's first id and those
 after it, in the order they are produced. So ids depend only on the labels and the
 registration order, never on which process imports a bundle or when, and several
-processes can import into one schema at once. A bundle imported again keeps its range,
-and its observations their ids; one deleted and imported again is registered afresh,
-after every other bundle. Within a bundle **ids depend on the order rows are produced
+processes can import into one schema at once. A bundle imported again outside a
+generation update keeps its range, and its observations their ids; one deleted and
+imported again, or imported into a pending generation, is registered afresh, after every
+other bundle. Within a bundle **ids depend on the order rows are produced
 in**, which is why the pipeline sorts every directory listing and every table name it
 iterates. A pool worker numbers its ids from zero within its task, and the import's
 process rebases them onto the bundle's range as it replays the tasks in index order; the

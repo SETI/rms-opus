@@ -258,6 +258,11 @@ a value it does not recognize is logged as a schema fault.
    * - ``D_LONGITUDE_FIELD``
      - The half-span of a longitude range, from
        :meth:`~opus_import.obs.obs_base.ObsBase.compute_d_longitude_field`.
+   * - ``GENERATION``
+     - Nothing per row: ``obs_general``'s ``added_generation`` and
+       ``removed_generation``. The loader writes the generation the import writes into
+       ``added_generation``, and ``removed_generation`` starts ``NULL``
+       (:ref:`dev_guide_import_generations`).
 
 Two more keys change what is computed rather than where it comes from.
 ``put_mults_here`` marks a column that holds another column's mult id, which the row

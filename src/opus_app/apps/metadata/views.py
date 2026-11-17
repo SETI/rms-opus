@@ -36,7 +36,6 @@ from typing import TYPE_CHECKING, Any
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
-from django.db.models import Max, Min
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
@@ -70,7 +69,7 @@ from opus_app.apps.tools.app_utils import (
     json_response,
     strip_numeric_suffix,
 )
-from opus_app.apps.tools.db_utils import TARGET_COLUMN, resolve_category
+from opus_app.apps.tools.db_utils import resolve_category, unserved_observations_exist
 from opus_app.apps.tools.import_constants import get_table_name, mult_table
 from opus_import import list_junctions
 from opus_support import (
@@ -363,7 +362,7 @@ def api_get_mult_counts(
             category.restrict(select)
         select.add_column(counted_column)
         select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
-        select.add_from(source)
+        counted_source = select.add_from(source)
 
         search_id = get_search_id(selections, extras, api_code=api_code)
 
@@ -382,6 +381,10 @@ def api_get_mult_counts(
             assert search_id is not None
             select.add_from(sql_builder.search_results_source(search_id))
             select.add_where(search_results_join_condition(counted_table))
+        elif counted_table != sql_builder.OBS_GENERAL_TABLE and unserved_observations_exist():
+            # Every served observation: a child table's rows are kept to them while a
+            # generation the schema does not serve has rows there too.
+            counted_source.append_join(sql_builder.served_observations_join(counted_table))
 
         select.add_group_by(counted_column)
 
@@ -611,61 +614,50 @@ def api_get_range_endpoints(
 
     range_endpoints = cache.get(cache_key)
     if range_endpoints is None:
-        # We didn't find a cache entry, so calculate the endpoints
-        if selections:
-            # There are selections, so tie the query to the search's results.
-            # search_results has no model, so this cross-join and its condition
-            # cannot be expressed through the ORM and are built as raw SQL instead.
-            # The block above returned already if the search could not be built.
-            assert search_id is not None
-            results_source = sql_builder.search_results_source(search_id)
-            cache_join = search_results_join_condition(table_name)
-            # The database column, not the model field name: the two differ for a
-            # field declared with db_column, and the ORM path below names fields.
-            min_column = sql_builder.column(table_model._meta.get_field(param1).column, table_name)
-            max_column = sql_builder.column(table_model._meta.get_field(param2).column, table_name)
+        # We didn't find a cache entry, so calculate the endpoints. The database column,
+        # not the model field name: the two differ for a field declared with db_column.
+        min_column = sql_builder.column(table_model._meta.get_field(param1).column, table_name)
+        max_column = sql_builder.column(table_model._meta.get_field(param2).column, table_name)
 
-            endpoints_select = sql_builder.Select()
-            endpoints_select.add_column(sql_builder.min_of(min_column))
-            endpoints_select.add_column(sql_builder.max_of(max_column))
-            endpoints_select.add_from(category.source)
-            endpoints_select.add_from(results_source)
-            endpoints_select.add_where(cache_join)
+        endpoints_select = sql_builder.Select()
+        endpoints_select.add_column(sql_builder.min_of(min_column))
+        endpoints_select.add_column(sql_builder.max_of(max_column))
+        nulls_select = sql_builder.Select()
+        nulls_select.add_column(sql_builder.count_star())
+        # No selections: every served observation's row, which a child table reaches
+        # through the view while an unserved generation has rows there too.
+        join_served = (
+            not selections
+            and table_name != sql_builder.OBS_GENERAL_TABLE
+            and unserved_observations_exist()
+        )
+        for select in (endpoints_select, nulls_select):
+            category_source = select.add_from(category.source)
+            if selections:
+                # There are selections, so tie the query to the search's results. The
+                # block above returned already if the search could not be built.
+                assert search_id is not None
+                select.add_from(sql_builder.search_results_source(search_id))
+                select.add_where(search_results_join_condition(table_name))
+            elif join_served:
+                category_source.append_join(sql_builder.served_observations_join(table_name))
             # A surface geometry body's category is the body's rows of a table every
             # body shares, so each statement keeps to them.
-            category.restrict(endpoints_select)
+            category.restrict(select)
+        nulls_select.add_where(sql_builder.is_null(min_column))
+        nulls_select.add_where(sql_builder.is_null(max_column))
 
-            nulls_select = sql_builder.Select()
-            nulls_select.add_column(sql_builder.count_star())
-            nulls_select.add_from(category.source)
-            nulls_select.add_from(results_source)
-            nulls_select.add_where(cache_join)
-            category.restrict(nulls_select)
-            nulls_select.add_where(sql_builder.is_null(min_column))
-            nulls_select.add_where(sql_builder.is_null(max_column))
+        cursor = connection.cursor()
+        sql, params = endpoints_select.build()
+        log.debug('RANGE ENDPOINTS SQL: %r *** PARAMS %r', sql, str(params))
+        cursor.execute(sql, params)
+        (endpoint_min, endpoint_max) = cursor.fetchone()
+        range_endpoints = {'min': endpoint_min, 'max': endpoint_max}
 
-            cursor = connection.cursor()
-            sql, params = endpoints_select.build()
-            log.debug('RANGE ENDPOINTS SQL: %r *** PARAMS %r', sql, str(params))
-            cursor.execute(sql, params)
-            (endpoint_min, endpoint_max) = cursor.fetchone()
-            range_endpoints = {'min': endpoint_min, 'max': endpoint_max}
-
-            sql, params = nulls_select.build()
-            log.debug('RANGE ENDPOINTS NULLS SQL: %r *** PARAMS %r', sql, str(params))
-            cursor.execute(sql, params)
-            range_endpoints['nulls'] = cursor.fetchone()[0]
-        else:
-            # There are no selections, so hit the whole category: the whole table, or a
-            # surface geometry body's rows of the table every body shares
-            results = table_model.objects.all()
-            if category.target_name is not None:
-                results = results.filter(**{TARGET_COLUMN: category.target_name})
-            range_endpoints = results.aggregate(min=Min(param1), max=Max(param2))
-            # For a single-column range param1 and param2 are the same column, so
-            # this is one condition rather than two.
-            null_filter = {f'{param1}__isnull': True, f'{param2}__isnull': True}
-            range_endpoints['nulls'] = results.filter(**null_filter).count()
+        sql, params = nulls_select.build()
+        log.debug('RANGE ENDPOINTS NULLS SQL: %r *** PARAMS %r', sql, str(params))
+        cursor.execute(sql, params)
+        range_endpoints['nulls'] = cursor.fetchone()[0]
 
         # The returned range endpoints are converted to the destination
         # unit

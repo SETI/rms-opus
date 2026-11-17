@@ -90,11 +90,30 @@ The columns that identify an observation are stored once, in ``obs_general``: it
 
 ``obs_pds`` is the exception: it also has ``opus_id`` and ``bundle_id``, because they are search fields of their own, "OPUS ID" and "Bundle/Volume ID" in the "PDS Constraints" category. Each has a plain key and no foreign key. The import writes the same values into ``obs_pds`` as into ``obs_general``, and its validation step reports any ``obs_pds`` row whose ``bundle_id`` differs from its ``obs_general`` row's.
 
-Here is an example of the schema for the ``obs_general`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
+.. _dev_guide_database_schema_obs_general_rows:
+
+``obs_general`` is a view, and ``obs_general_rows`` its table. The observation rows live in the base table ``obs_general_rows``, each with the import generation that added it, ``added_generation``, and the one that retired it, ``removed_generation``, ``NULL`` while none has. ``obs_general`` is a view of the rows in the generation the database serves, ``schema_version.generation``: a row added at or before it and not retired at or before it. The view lists every column of the table but those two. While every row is in the served generation -- after a fresh import, and after a purge -- it selects them all, with no condition:
 
 ::
 
-    mysql> DESC obs_general;
+    CREATE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW obs_general AS
+      SELECT <every column but added_generation and removed_generation>
+      FROM obs_general_rows
+
+While a generation is pending, or a switch's retired rows wait for the purge, it selects the served generation's rows, the generation written as a number, here 4:
+
+::
+
+      ... FROM obs_general_rows
+      WHERE added_generation <= 4 AND (removed_generation IS NULL OR removed_generation > 4)
+
+The commands that change which rows the view shows re-create it: ``--begin-generation``, before the pending generation is recorded; ``--switch-generation`` and ``--revert-generation``, while the web service is stopped; ``--purge-generations`` and ``--abandon-generation``, once no other generation's rows remain (:ref:`dev_guide_import_steps_do_generation`). MySQL merges the view into each statement that names it, so the web application reads ``obs_general`` as a table, through ``obs_general_rows``'s keys; with no condition, a statement reads the table exactly as it would read the table itself. The child tables', ``cart``'s and the junction tables' foreign keys reference ``obs_general_rows``. The import reads and writes the base table under the name ``obs_general`` (:ref:`dev_guide_import_generations`), and creates the view whenever it creates the table. The child tables carry no generation, so while ``obs_general_rows`` holds rows outside the served generation, a statement that reads a child table outside a search's results joins the view on ``obs_general_id``. Neither generation column has a key: nearly every row passes the test, and the import finds a bundle's rows through ``bundle_id``.
+
+Here is an example of the schema for the ``obs_general_rows`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
+
+::
+
+    mysql> DESC obs_general_rows;
     +----------------------+-------------------+------+-----+---------+
     | Field                | Type              | Null | Key | Default |
     +----------------------+-------------------+------+-----+---------+
@@ -118,6 +137,8 @@ Here is an example of the schema for the ``obs_general`` table (note this may ch
     | declination1         | double            | YES  | MUL | NULL    |
     | declination2         | double            | YES  | MUL | NULL    |
     | observation_type     | smallint unsigned | NO   |     | NULL    |
+    | added_generation     | int unsigned      | NO   |     | NULL    |
+    | removed_generation   | int unsigned      | YES  |     | NULL    |
     +----------------------+-------------------+------+-----+---------+
 
 Besides the keys shown, ``obs_general`` has three keys over two columns each:
@@ -914,24 +935,34 @@ The ``schema_version`` table records which generation of the table schemas impor
 ::
 
     mysql> DESC schema_version;
-    +---------+---------------------------+------+-----+---------+
-    | Field   | Type                      | Null | Key | Default |
-    +---------+---------------------------+------+-----+---------+
-    | version | int unsigned              | NO   | PRI | NULL    |
-    | state   | enum('ready','appending') | NO   |     | NULL    |
-    +---------+---------------------------+------+-----+---------+
+    +--------------------+-------------------------------------------------+------+-----+---------+
+    | Field              | Type                                            | Null | Key | Default |
+    +--------------------+-------------------------------------------------+------+-----+---------+
+    | version            | int unsigned                                    | NO   | PRI | NULL    |
+    | state              | enum('ready','appending')                       | NO   |     | NULL    |
+    | generation         | int unsigned                                    | NO   |     | NULL    |
+    | pending_generation | int unsigned                                    | YES  |     | NULL    |
+    | pending_state      | enum('writing','finalized','validated','ready') | YES  |     | NULL    |
+    | revertible         | tinyint unsigned                                | NO   |     | 0       |
+    +--------------------+-------------------------------------------------+------+-----+---------+
 
 The fields are:
 
 * ``version``: The :data:`~opus_import.schema_version.SCHEMA_VERSION` of the release whose import created the tables. A release that changes a table schema in a way an existing database does not have raises it, and is deployed with a fresh import.
 * ``state``: ``ready`` once the database is finished; ``appending`` while an append to it is writing.
+* ``generation``: The import generation the web application serves, which the ``obs_general`` view shows (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). A fresh import writes 1.
+* ``pending_generation``: The generation an incremental update is writing, one above ``generation``, or ``NULL`` (:ref:`dev_guide_import_running_generations`).
+* ``pending_state``: How far the pending generation has got: ``writing`` from ``--begin-generation`` and again whenever anything writes it, ``finalized`` once every step of ``--finalize`` succeeded on it, ``validated`` once ``--validate`` passed on a finalized one, and ``ready`` once ``--write-schema-version`` stamped a validated one. Only a ``ready`` generation is switched in.
+* ``revertible``: 1 from a switch until the purge has deleted the rows it retired. ``--revert-generation`` can switch back while it is 1 and the ``__prev`` auxiliary tables are whole, which is until the purge's first step drops them.
 
-The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), creates the table and writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). ``--scorched-earth`` drops the table before any other.
+The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). An update by generation writes neither ``version`` nor ``state``: the row stays ``ready``, and the update writes the generation columns. ``--scorched-earth`` drops the table before any other.
 
 Two things read it, and both require the release's own version in the ``ready`` state:
 
 * the web application, as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy, and each refused request checks again, so a worker serves the database as soon as it is finished, without a reload. Once the check passes the worker does not make it again, so a worker already serving a database goes on serving it if the row later changes: an append or a deletion is made only to a database nothing is serving. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
 * both deploy scripts, before they write anything (:ref:`user_guide_deployment_schema_version`).
+
+The web application also reads ``pending_generation`` and ``revertible``, on each request that reads a child table's rows outside a search's results: while either is set, ``obs_general_rows`` holds rows outside the served generation, and the statement joins the ``obs_general`` view (:func:`~opus_app.apps.tools.db_utils.unserved_observations_exist`).
 
 .. _dev_guide_database_schema_import_bundle:
 
@@ -943,25 +974,27 @@ The ``import_bundle`` table is the bundle registry: the import's record of each 
 ::
 
     mysql> DESC import_bundle;
-    +---------------+---------------------------------------------+------+-----+---------+----------------+
-    | Field         | Type                                        | Null | Key | Default | Extra          |
-    +---------------+---------------------------------------------+------+-----+---------+----------------+
-    | bundle_number | smallint unsigned                           | NO   | PRI | NULL    | auto_increment |
-    | bundle_id     | varchar(75)                                 | NO   | UNI | NULL    |                |
-    | size_estimate | bigint unsigned                             | NO   |     | NULL    |                |
-    | first_id      | int unsigned                                | NO   |     | NULL    |                |
-    | id_capacity   | int unsigned                                | NO   |     | NULL    |                |
-    | state         | enum('pending','importing','done','failed') | NO   | MUL | pending |                |
-    | started_at    | datetime                                    | YES  |     | NULL    |                |
-    | finished_at   | datetime                                    | YES  |     | NULL    |                |
-    | process_id    | int unsigned                                | YES  |     | NULL    |                |
-    | rows_done     | bigint unsigned                             | NO   |     | 0       |                |
-    | losses        | tinyint unsigned                            | NO   |     | 0       |                |
-    +---------------+---------------------------------------------+------+-----+---------+----------------+
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
+    | Field              | Type                                        | Null | Key | Default | Extra          |
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
+    | bundle_number      | smallint unsigned                           | NO   | PRI | NULL    | auto_increment |
+    | bundle_id          | varchar(75)                                 | NO   | MUL | NULL    |                |
+    | size_estimate      | bigint unsigned                             | NO   |     | NULL    |                |
+    | first_id           | int unsigned                                | NO   |     | NULL    |                |
+    | id_capacity        | int unsigned                                | NO   |     | NULL    |                |
+    | state              | enum('pending','importing','done','failed') | NO   | MUL | pending |                |
+    | started_at         | datetime                                    | YES  |     | NULL    |                |
+    | finished_at        | datetime                                    | YES  |     | NULL    |                |
+    | process_id         | int unsigned                                | YES  |     | NULL    |                |
+    | rows_done          | bigint unsigned                             | NO   |     | 0       |                |
+    | losses             | tinyint unsigned                            | NO   |     | 0       |                |
+    | generation         | int unsigned                                | NO   |     | 1       |                |
+    | retired_generation | int unsigned                                | YES  |     | NULL    |                |
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
 
 The fields are:
 
-* ``bundle_number``: The bundle's place in registration order, which fixes its id range and so which copy of a shared OPUS ID finalization keeps. A plain ``--import`` imports its bundles in this order; queue importers claim the largest pending bundle first, whatever its number. A bundle keeps its number when it is imported again.
+* ``bundle_number``: The bundle's place in registration order, which fixes its id range and so which copy of a shared OPUS ID finalization keeps. A plain ``--import`` imports its bundles in this order; queue importers claim the largest pending bundle first, whatever its number. A bundle keeps its number when it is imported again, except into a pending generation, which registers it afresh.
 * ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never registered.
 * ``size_estimate``: The rows the bundle's primary index labels declared when it was registered.
 * ``first_id``: The ``obs_general.id`` of the bundle's first observation. A bundle's range starts where the range of the bundle registered before it ends, so the ranges ascend in ``bundle_number`` order and the copy of a shared OPUS ID that finalization keeps, the one with the highest ``id``, is the one from the bundle registered later.
@@ -971,6 +1004,10 @@ The fields are:
 * ``process_id``: The ``import_process`` row of the importer that claimed the bundle, set with ``importing``, and kept on a ``failed`` bundle so its importer's log can be found; ``NULL`` for a bundle imported by a plain ``opus_import``, and once the bundle returns to ``pending``.
 * ``rows_done``: The ``obs_general`` rows the bundle's latest import has committed, advanced in each chunk's transaction.
 * ``losses``: How many importers died holding the bundle. Its second loss marks it ``failed``.
+* ``generation``: The import generation that registered this copy of the bundle; 1 on a fresh import.
+* ``retired_generation``: The generation that retired this copy, by importing the bundle again or dropping it, or ``NULL``. A bundle re-imported in a pending generation has two rows until the purge, its served copy's, retired at the pending generation, and its pending copy's, with a number and an id range after every existing one; the purge deletes the rows of the copies it deletes. The import reads and writes a bundle's **live row**, the one no generation retired.
+
+The unique key is ``(bundle_id, generation)``.
 
 The key on ``(state, size_estimate, bundle_number)`` is what a claim reads: scanned from its highest entry, it gives the largest ``pending`` bundle in one index entry, so a claim locks only the row it takes.
 

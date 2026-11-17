@@ -243,16 +243,22 @@ class BundleGuard:
 
     For a plain ``opus_import`` (no importer) only an ``obs_general`` chunk carries the
     ``rows_done`` update, matching the bundle only while it keeps the ``started_at`` the
-    import began with, and nothing is checked.
+    import began with. Before the commit, a plain import registered as a writer of the
+    schema (`opus_import.steps.do_generation.register_writer`) has its writer lock checked
+    in the same way, since a generation command takes a writer whose lock is gone for
+    finished; one with no writer row, a fresh import, checks nothing.
 
     Attributes:
         ids: The bundle's id counter, which holds its committed ``rows_done``.
         importer: The importer, or None for a plain ``opus_import``.
+        writer: For a plain ``opus_import``, its writer row and lock, or None when it has
+            none.
         chunks: How many chunks have committed.
     """
 
     ids: BundleIds
     importer: ImporterLock | None
+    writer: ImporterLock | None = None
     chunks: int = 0
     _pending_rows: int = 0
 
@@ -297,7 +303,8 @@ class BundleGuard:
         )
 
     def confirm(self, db: ImportDBSuper) -> None:
-        """Check, last before the commit, that the lock connection holds the lock.
+        """Check, last before the commit, that the lock connection holds the lock: the
+        importer's, or a plain import's writer lock.
 
         Parameters:
             db: The import connection; the check runs on the lock connection.
@@ -305,8 +312,9 @@ class BundleGuard:
         Raises:
             LostImporterError: If it does not, or the lock connection is gone.
         """
-        if self.importer is not None and not self.importer.held():
-            raise LostImporterError(lost_lock_message(self.importer, WHILE_COMMITTING_A_CHUNK))
+        lock = self.importer if self.importer is not None else self.writer
+        if lock is not None and not lock.held():
+            raise LostImporterError(lost_lock_message(lock, WHILE_COMMITTING_A_CHUNK))
 
     def committed(self) -> None:
         """Keep the committed ``rows_done``, and hold after the first chunk if a test asks."""

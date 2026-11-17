@@ -143,6 +143,11 @@ deploy against another release's application.
     cd /opt/opus/deploy
     ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
 
+Wherever a release is named, "@" and a git branch, tag or commit names a
+revision with no release instead, which pip builds from a clone of the
+repository (the server needs git): update_deploy_scripts.sh @main, then
+deploy_new_code_only.sh @main, and so on.
+
 Then the deploy itself, and which one it is depends on the release. One deploy
 runs at a time: each takes a lock on deploy.lock in OPUS_DIR before it reads
 anything, and a second deploy started meanwhile stops at once, changing nothing.
@@ -181,6 +186,63 @@ names the remedy: an import under the new release, or, for a database this
 release imported but did not finish, its finishing steps -- `opus_import
 --finalize`, `--import-dictionary` and `--validate` -- then
 `opus_import --write-schema-version`.
+
+Bundles of the served database can be imported again, added or dropped
+without a full import. The update goes into the served database as a new
+generation, which the site does not show until it is switched in:
+
+    ./import_and_deploy/run_incremental_opus_update.sh ==3.24.1 \
+        COISS_2115 --drop COISS_2001
+    (read the log, and ERRORS.log, once the mail says it has finished)
+    ./import_and_deploy/promote_generation.sh
+    (check the site)
+    export OPUS_CONFIG=/opt/opus/deployed/opus.toml
+    /opt/opus/deployed/opus_venv/bin/opus_import --purge-generations
+
+The bundles named are imported, replacing the copies the database holds;
+--drop names bundles to remove. A bundle named both ways is imported. The
+update runs detached, mails its log, and holds the deploy lock until it
+ends. Without a version spec it installs what is being served: its release,
+or the git commit it was built from.
+
+promote_generation.sh takes the deploy lock, asks whether the switch would
+run (and stops nothing when it would be refused), stops the web server,
+switches the generation in, restarts the cache service and the web server,
+and warms the common searches. If the switch fails, the web server stays
+stopped: running promote_generation.sh again completes the switch, and
+`promote_generation.sh --revert` goes back. A switch refused after the
+stop changed nothing, and the web server is started again if it was
+serving. The purge deletes the rows the switch replaced, while the site
+serves.
+
+Until the purge, the update can be undone:
+
+    ./import_and_deploy/promote_generation.sh --revert
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import --abandon-generation
+
+An update that failed, or one not yet switched in, is thrown away with the
+second command alone; after a switch that stopped part way it is refused
+until promote_generation.sh, or the same with --revert, has finished what
+was begun. Deploy no code while a generation is pending: a
+code-only deploy's auxiliary tables would wait for the switch. Without a
+second server that holds a copy, take a dump of the served database before
+the update, with OPUS_DB_DUMP_DIR set:
+
+    ./database/dump_db.sh <the served database>
+
+With OPUS_PEER_DB_HOST set, the update ends by loading the updated database
+onto that server under a new name, which the log gives. Nothing serves it
+there, so on that server the switch needs no stop, and the purge follows at
+once, since the way back there is the database it was serving:
+
+    export OPUS_CONFIG=/opt/opus/deployed/opus.toml
+    /opt/opus/deployed/opus_venv/bin/opus_import \
+        --override-db-schema <that database> --switch-generation
+    /opt/opus/deployed/opus_venv/bin/opus_import \
+        --override-db-schema <that database> --purge-generations
+    ./import_and_deploy/deploy_new_code_and_database.sh \
+        <that database> ==3.24.1
 
 
 --------------------------------------------------------------------------------
@@ -223,7 +285,8 @@ for a while.
 --------------------------------------------------------------------------------
 
   import_and_deploy/
-    update_deploy_scripts.sh          Brings this directory up to a release.
+    update_deploy_scripts.sh          Brings this directory up to a release
+                                      or a git revision.
                                       The first command of every upgrade.
     run_full_opus_import.sh           A full import, under a new installation
                                       of the release being deployed.
@@ -231,16 +294,25 @@ for a while.
                                       database it imported.
     deploy_new_code_only.sh           Deploys a release against the database
                                       already being served.
-    _*.sh                             Sourced by those: the deploy
+    run_incremental_opus_update.sh    Imports, adds or drops bundles of the
+                                      served database, as a generation it
+                                      does not show yet.
+    promote_generation.sh             Switches that generation in, or, with
+                                      --revert, back out.
+    _*.sh                             Sourced or run by those: the deploy
                                       configuration, the deploy lock, the
                                       virtual environment, the version check,
-                                      one installation, the import, the switch,
-                                      and the switch's steps that can fail on
-                                      their own.
+                                      one installation, the import, the
+                                      update's steps, the copy to a second
+                                      server, the switch, and the switch's
+                                      steps that can fail on their own.
 
   database/                           dump_db.sh and load_db.sh: copy a finished
                                       database to the server OPUS_PEER_DB_HOST
-                                      names, through OPUS_DB_DUMP_DIR.
+                                      names, through OPUS_DB_DUMP_DIR. Both run
+                                      scripts end with them when deploy.env
+                                      sets those; load_db.sh can give the copy
+                                      a name of its own.
   log_analyzer/                       Cron templates for the log-analyzer
                                       reports. Fill in the placeholders.
   deploy.env.template                 The contract for secrets/deploy.env.

@@ -250,6 +250,11 @@ def _compare_with_main_run(case: Case, main_run: build_run.ImportRun) -> None:
     assert differences == []
 
 
+def _no_version_table(case: Case) -> bool:
+    """Return whether a case's schema has no version table, which nothing finalized."""
+    return not case.rows("SHOW TABLES LIKE 'schema_version'")
+
+
 def test_a_killed_importer_frees_its_lock_and_its_bundle_is_imported_again(
     case: Case, main_run: build_run.ImportRun
 ) -> None:
@@ -341,7 +346,7 @@ def test_a_bundle_lost_twice_fails_and_nothing_is_finalized(case: Case) -> None:
     assert case.bundle(other)[0] == 'done'
     assert f'{doomed} failed: its importer died holding it 2 times' in output
     assert f"{doomed} (its importer's log: " in output
-    assert not case.rows("SHOW TABLES LIKE 'schema_version'")
+    assert _no_version_table(case)
 
 
 def test_two_interrupts_abort_and_a_rerun_resumes_to_the_same_result(
@@ -372,7 +377,7 @@ def test_two_interrupts_abort_and_a_rerun_resumes_to_the_same_result(
     assert 'importing' not in states.values()
     assert 'pending' in states.values()
     assert case.rows('SELECT MAX(losses) FROM import_bundle') == [(0,)]
-    assert not case.rows("SHOW TABLES LIKE 'schema_version'")
+    assert _no_version_table(case)
 
     status, output = _finish(case.start('opus_import.import_all', arguments))
 

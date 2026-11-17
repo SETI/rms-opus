@@ -321,6 +321,10 @@ def api_string_search_choices(request: HttpRequest, slug: str, *, api_code: int)
         max_time = settings.STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2
         select = sql_builder.Select(distinct=True, max_execution_time=max_time)
         select.add_column(param_column)
+        # Every stored value, as the mult choices list theirs: a value only a pending
+        # generation holds is suggested before its switch, and one only a retired
+        # generation holds until the purge. A join to the obs_general view would cost the
+        # column's skip scan.
         select.add_from(category.source)
         category.restrict(select)
 

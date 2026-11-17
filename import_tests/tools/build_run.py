@@ -34,6 +34,7 @@ import coverage
 
 from import_tests.tools import fixture_layout, golden_io, holdings_survey, shelf_manifests
 from import_tests.tools.golden_io import DatabaseCredentials
+from opus_import import generations
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
@@ -915,7 +916,9 @@ def clone_schema(credentials: DatabaseCredentials, source: str, target: str) -> 
 
     Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
     keys and foreign keys, with ``foreign_key_checks`` off so that tables may be created
-    and filled in any order. The target is dropped first if it exists.
+    and filled in any order. Each view is then created from ``SHOW CREATE VIEW``, its
+    source schema's name replaced by the target's and its definer left out. The target is
+    dropped first if it exists.
 
     Parameters:
         credentials: How to reach the database server.
@@ -927,10 +930,15 @@ def clone_schema(credentials: DatabaseCredentials, source: str, target: str) -> 
     with contextlib.closing(golden_io.connect(credentials, target)) as connection:
         with contextlib.closing(connection.cursor()) as cursor:
             cursor.execute('SET SESSION foreign_key_checks = 0')
-            for table in golden_io.list_tables(credentials, source):
+            for listed in golden_io.list_tables(credentials, source):
+                table = generations.physical_table_name(listed)
                 cursor.execute(f'SHOW CREATE TABLE `{source}`.`{table}`')
                 cursor.execute(cursor.fetchall()[0][1])
                 cursor.execute(f'INSERT INTO `{table}` SELECT * FROM `{source}`.`{table}`')
+            for view in golden_io.list_views(credentials, source):
+                cursor.execute(f'SHOW CREATE VIEW `{source}`.`{view}`')
+                definition = str(cursor.fetchall()[0][1]).replace(f'`{source}`.', f'`{target}`.')
+                cursor.execute(re.sub(r' DEFINER=`[^`]*`@`[^`]*`', '', definition))
             cursor.execute('SET SESSION foreign_key_checks = 1')
         connection.commit()
 

@@ -295,6 +295,35 @@ those joins; and a source may be a plain table name, a
 The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a
 tree: a statement can hold a statement.
 
+**The served observations.** ``obs_general`` is a view of the rows of the import
+generation the database serves (:ref:`dev_guide_import_generations`); the child tables
+carry no generation. While the database holds rows outside that generation, a statement
+that reads a child table's rows outside a search's results -- the empty search's mult
+counts and range endpoints of a child's column, the product types and the files of an
+OPUS ID or of the empty search -- hangs
+:func:`~opus_app.apps.tools.sql_builder.served_observations_join` off the child's
+source, an inner join to ``obs_general`` on ``obs_general_id``, so a generation the
+database does not serve reaches no response.
+
+Those rows exist from ``--begin-generation`` until the pending generation is switched in
+or abandoned, and from the switch until the purge has deleted the rows it retired;
+``schema_version`` says so for exactly that long, by a ``pending_generation`` or a
+``revertible`` of 1, since the begin records the pending generation before any of its
+rows is written and the purge clears ``revertible`` only after the last retired row is
+gone (:ref:`dev_guide_import_steps_do_generation`). The row is read for each such
+statement (:func:`~opus_app.apps.tools.db_utils.unserved_observations_exist`), once for
+the two statements of a child's range endpoints, and the join is hung only while it says
+so. Otherwise the join
+drops no row and costs every child row a lookup into ``obs_general_rows`` by its primary
+key. The answer is never kept from one request to the next: a begin runs while the site
+serves, and a stale answer would show the pending generation's child rows.
+
+A statement joined to a search's results needs no join: the search was built from the
+view. The autocomplete from every observation takes no join at any time: like the mult
+choices, it suggests every stored value, so a value only a pending generation holds is
+offered before the switch and one only a retired generation holds until the purge, and
+the field's index answers it as it would without generations.
+
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
 order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable
 classes here, each accumulating what a caller adds to it.
@@ -509,8 +538,16 @@ Model lookup by category name, and the labels behind the mult ids.
     value is the empty string, is reported as nothing unless the caller asks for its
     label.
 
+:func:`~opus_app.apps.tools.db_utils.unserved_observations_exist`
+    Whether the database holds observation rows outside the generation it serves, read
+    from ``schema_version`` on every call: true while ``pending_generation`` is set or
+    ``revertible`` is 1, false otherwise and when the table or its row is absent. It
+    decides whether a statement joins the served observations
+    (:ref:`dev_guide_webapp_tools_sql_builder`).
+
 The MySQL error numbers declared here for callers to match a database exception against
-are ``MYSQL_TABLE_NOT_EXISTS``; ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
+are ``MYSQL_TABLE_NOT_EXISTS``, which is how a database with no version table is told;
+``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
 autocomplete endpoint learns its restricted query timed out; and
 ``MYSQL_LOCK_WAIT_TIMEOUT``, which
 :func:`~opus_app.apps.tools.db_utils.is_lock_timeout_error` matches, and which is how a
@@ -576,7 +613,10 @@ opus_app.apps.tools.file_utils
 ------------------------------
 
 Lookups against ``obs_files``, the table listing every file of every observation. Every
-function here starts from one or more OPUS IDs and returns files that belong to them.
+function here starts from one or more OPUS IDs and returns files that belong to them,
+joined to the ``obs_general`` view while the database holds another generation's rows, so
+an OPUS ID a generation the database does not serve shares returns only the served
+observation's files.
 **Nothing here writes to the database, and nothing here touches the filesystem** -- the
 size and the checksum are columns the import wrote from a shelf.
 

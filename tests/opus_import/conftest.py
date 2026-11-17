@@ -135,7 +135,8 @@ def _opus_config(ci_config_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def row_selected(row: dict[str, Any], where: str, params: list[Any]) -> bool:
-    """Return whether a row meets a conjunction of ```col`=%s`` and ```col` IS [NOT] NULL``.
+    """Return whether a row meets a conjunction of ```col`=%s``, ```col` < %s``, ```col` <=
+    %s`` and ```col` IS [NOT] NULL``; ``1=1`` holds for every row.
 
     Parameters:
         row: The row, by column.
@@ -147,6 +148,8 @@ def row_selected(row: dict[str, Any], where: str, params: list[Any]) -> bool:
     """
     values = iter(params)
     for term in where.split(' AND '):
+        if term == '1=1':
+            continue
         column = re.match(r'`(\w+)`', term)
         assert column is not None, term
         value = row[column[1]]
@@ -154,6 +157,10 @@ def row_selected(row: dict[str, Any], where: str, params: list[Any]) -> bool:
             matched = value is not None
         elif term.endswith('IS NULL'):
             matched = value is None
+        elif term.endswith(' <= %s'):
+            matched = value is not None and value <= next(values)
+        elif term.endswith(' < %s'):
+            matched = value is not None and value < next(values)
         else:
             assert term.endswith('=%s'), term
             matched = value == next(values)
@@ -207,7 +214,9 @@ class RegistryDB:
     ) -> list[tuple[Any, ...]]:
         """Return the rows' values in `columns` order, as the registry's reads select them."""
         rows = self.tables[table_name]
-        if where is not None and where.startswith('1=1 ORDER BY'):
+        if where is not None and ' ORDER BY ' in where:
+            condition = where.split(' ORDER BY ', 1)[0]
+            rows = self._matching(table_name, condition, list(where_params or []))
             rows = sorted(rows, key=lambda row: row['bundle_number'])
         elif where is not None:
             assert where_params is not None
@@ -252,10 +261,12 @@ class RegistryDB:
         state_count = where.split(' IN (', 1)[1].split(')', 1)[0].count('%s')
         states, started = rest[:state_count], rest[state_count:]
         unheld = where.endswith('`process_id` IS NULL')
+        live = '`retired_generation` IS NULL' in where
         changed = 0
         for existing in self._matching(table_name, '`bundle_id`=%s', [bundle_id]):
             if (
-                existing['state'] in states
+                (not live or existing.get('retired_generation') is None)
+                and existing['state'] in states
                 and (not started or existing.get('started_at') == started[0])
                 and (not unheld or existing.get('process_id') is None)
             ):
@@ -294,15 +305,18 @@ class RegistryDB:
     def lock_first_row(
         self, table_name: str, column: str, where: str, where_params: list[Any], order_by: list[str]
     ) -> Any:
-        """Return the first pending row of the ones the claim may take, highest first."""
+        """Return the first pending row of the ones the claim may take, highest first; a
+        retired copy only when the clause does not ask for live rows."""
         state, *names = where_params
         excluded_count = where.split('NOT IN (', 1)[1].count('%s') if 'NOT IN' in where else 0
         among = names[: len(names) - excluded_count]
         excluded = names[len(names) - excluded_count :]
+        live = '`retired_generation` IS NULL' in where
         rows = [
             row
             for row in self.tables[table_name]
             if row['state'] == state
+            and (not live or row.get('retired_generation') is None)
             and (not among or row['bundle_id'] in among)
             and row['bundle_id'] not in excluded
         ]
@@ -385,6 +399,8 @@ def registry_rows(states: dict[str, str]) -> list[dict[str, Any]]:
             'process_id': None,
             'rows_done': 0,
             'losses': 0,
+            'generation': 1,
+            'retired_generation': None,
         }
         for number, (bundle, state) in enumerate(states.items(), start=1)
     ]

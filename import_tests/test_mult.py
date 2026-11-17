@@ -18,7 +18,7 @@ import pdslogger
 import pytest
 
 from import_tests.tools import build_run, golden_io
-from opus_import import importdb, mult_fields
+from opus_import import generations, importdb, mult_fields
 from opus_import.cli import _create_argument_parser
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
@@ -79,15 +79,16 @@ def _unreferenced(credentials: DatabaseCredentials, schema: str) -> dict[str, li
             continue
         field_id = _field_id(credentials, schema, name)
         table, field = column.table_name, column.entry['field_name']
+        stored = generations.physical_table_name(table)
         if table not in tables:
             holds = 'FALSE'
         elif column.entry['field_type'] == 'mult_list':
             holds = (
-                f'EXISTS (SELECT 1 FROM `{table}` AS `t`, JSON_TABLE(`t`.`{field}`, '
+                f'EXISTS (SELECT 1 FROM `{stored}` AS `t`, JSON_TABLE(`t`.`{field}`, '
                 "'$[*]' COLUMNS (`v` INT PATH '$')) AS `j` WHERE `j`.`v` = `m`.`id`)"
             )
         else:
-            holds = f'EXISTS (SELECT 1 FROM `{table}` AS `t` WHERE `t`.`{field}` = `m`.`id`)'
+            holds = f'EXISTS (SELECT 1 FROM `{stored}` AS `t` WHERE `t`.`{field}` = `m`.`id`)'
         rows = golden_io.query(
             credentials,
             schema,

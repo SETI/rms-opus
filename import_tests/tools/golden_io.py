@@ -45,7 +45,7 @@ from typing import TYPE_CHECKING, Any
 
 import MySQLdb
 
-from opus_import import import_util, list_junctions, mult_fields
+from opus_import import generations, import_util, list_junctions, mult_fields
 from opus_support import collation_key
 
 if TYPE_CHECKING:
@@ -252,7 +252,13 @@ def query(
 
 
 def list_tables(credentials: DatabaseCredentials, schema: str) -> list[str]:
-    """Return every table a schema holds, sorted.
+    """Return every base table a schema holds, sorted, under the names the import uses.
+
+    A view is not listed (`list_views` lists them). ``obs_general_rows``, the base table
+    the ``obs_general`` view shows the served generation of, is listed as ``obs_general``
+    (`opus_import.generations.logical_table_name`), as the import names it; every function
+    here that reads a table by name reads that base table for ``obs_general``, so its
+    golden holds every generation's rows and the generation columns.
 
     Parameters:
         credentials: How to reach the server.
@@ -265,7 +271,27 @@ def list_tables(credentials: DatabaseCredentials, schema: str) -> list[str]:
     rows = query(
         credentials,
         None,
-        'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s',
+        'SELECT TABLE_NAME FROM information_schema.TABLES '
+        "WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'BASE TABLE'",
+        [schema],
+    )
+    return sorted(generations.logical_table_name(str(row[0])) for row in rows)
+
+
+def list_views(credentials: DatabaseCredentials, schema: str) -> list[str]:
+    """Return every view a schema holds, sorted.
+
+    Parameters:
+        credentials: How to reach the server.
+        schema: The schema to list.
+
+    Returns:
+        The view names; none for an absent schema.
+    """
+    rows = query(
+        credentials,
+        None,
+        'SELECT TABLE_NAME FROM information_schema.VIEWS WHERE TABLE_SCHEMA = %s',
         [schema],
     )
     return sorted(str(row[0]) for row in rows)
@@ -289,7 +315,7 @@ def table_columns(
         None,
         'SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS '
         'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s ORDER BY ORDINAL_POSITION',
-        [schema, table],
+        [schema, generations.physical_table_name(table)],
     )
     return [(str(row[0]), str(row[1])) for row in rows]
 
@@ -311,7 +337,7 @@ def _primary_key(credentials: DatabaseCredentials, schema: str, table: str) -> l
         'SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE '
         'WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND CONSTRAINT_NAME = %s '
         'ORDER BY ORDINAL_POSITION',
-        [schema, table, 'PRIMARY'],
+        [schema, generations.physical_table_name(table), 'PRIMARY'],
     )
     return [str(row[0]) for row in rows]
 
@@ -489,7 +515,8 @@ def serialize_table(
     order_by = key if len(key) > 0 else columns
     quoted = ', '.join(f'`{name}`' for name in columns)
     ordering = ', '.join(f'`{name}`' for name in order_by)
-    rows = query(credentials, schema, f'SELECT {quoted} FROM `{table}` ORDER BY {ordering}')
+    physical = generations.physical_table_name(table)
+    rows = query(credentials, schema, f'SELECT {quoted} FROM `{physical}` ORDER BY {ordering}')
     mult_columns = _mult_columns().get(table, {}) if mult_values else {}
     values = (
         _mult_values(credentials, schema)
@@ -563,8 +590,9 @@ def tables_holding_bundle(
     """Return which of those tables carry rows belonging to one bundle.
 
     A table with `BUNDLE_COLUMN` is asked by it, and one with only `OBSERVATION_COLUMN`
-    by joining ``obs_general`` through it. A table with neither carries none: that is
-    every mult table, and every table the dictionary and finalization steps write.
+    by joining ``obs_general``'s base table through it, so every generation's rows are
+    asked about, as they are in ``obs_general`` itself. A table with neither carries none:
+    that is every mult table, and every table the dictionary and finalization steps write.
 
     Parameters:
         credentials: How to reach the server.
@@ -579,10 +607,14 @@ def tables_holding_bundle(
     for table in tables:
         names = [name for name, _type in table_columns(credentials, schema, table)]
         if BUNDLE_COLUMN in names:
-            statement = f'SELECT 1 FROM `{table}` WHERE `{BUNDLE_COLUMN}` = %s LIMIT 1'
+            statement = (
+                f'SELECT 1 FROM `{generations.physical_table_name(table)}` '
+                f'WHERE `{BUNDLE_COLUMN}` = %s LIMIT 1'
+            )
         elif OBSERVATION_COLUMN in names:
             statement = (
-                f'SELECT 1 FROM `{table}` t JOIN `obs_general` g '
+                f'SELECT 1 FROM `{table}` t '
+                f'JOIN `{generations.physical_table_name("obs_general")}` g '
                 f'ON g.`id` = t.`{OBSERVATION_COLUMN}` WHERE g.`{BUNDLE_COLUMN}` = %s LIMIT 1'
             )
         else:

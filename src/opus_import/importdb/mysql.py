@@ -41,7 +41,7 @@ except ImportError:
     MYSQLDB_AVAILABLE = False
 
 from opus_config.config import DEFAULT_TRANSACTION_ROWS
-from opus_import import list_junctions
+from opus_import import generations, list_junctions
 from opus_import.importdb.super import (
     CarriedOver,
     DBRow,
@@ -102,6 +102,14 @@ MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
 
 #: The rows `ImportDBMySQL.stream_select` asks the server for at a time.
 STREAM_FETCH_ROWS = 10_000
+
+#: The leaf pages InnoDB samples for a table's persistent statistics, set on every table
+#: `ImportDBMySQL.create_table` creates. The server's default of 20 pages estimates the
+#: row count of a table whose pages hold very different numbers of rows, such as
+#: ``obs_ring_geometry``, at anywhere from below to several times the true count, from
+#: one ``ANALYZE`` to the next, and the optimizer's choice of plan follows the estimate.
+#: A table with fewer leaf pages is read whole.
+STATS_SAMPLE_PAGES = 500
 
 #: A ``field_type`` that names a variable-width string and its most characters, such as
 #: ``varchar255``: the width is the group.
@@ -237,6 +245,10 @@ ERRS_RETRYABLE = frozenset({ERR_DEADLOCK, ERR_LOCK_WAIT_TIMEOUT})
 
 #: The server's "duplicate entry for key".
 ERR_DUPLICATE_KEY = 1062
+
+#: ``INFORMATION_SCHEMA.TABLES``'s ``TABLE_TYPE`` of a view and of a base table.
+_VIEW_TABLE_TYPE = 'VIEW'
+_BASE_TABLE_TYPE = 'BASE TABLE'
 
 #: The errors that mean the server or the connection refuses ``LOAD DATA LOCAL INFILE``:
 #: the server's "not allowed" (1148) and "loading local data is disabled" (3948), and the
@@ -638,6 +650,11 @@ class ImportDBMySQL(ImportDBSuper):
     def quote_identifier(self, s: str) -> str:
         """Return `s` backtick-quoted for use as an identifier.
 
+        The import reads and writes ``obs_general``'s base table, so the name
+        ``obs_general`` is rendered as ``obs_general_rows``
+        (`opus_import.generations.physical_table_name`); no column or schema has that
+        name.
+
         Parameters:
             s: The table, column or schema name.
 
@@ -650,7 +667,7 @@ class ImportDBMySQL(ImportDBSuper):
         """
         if not isinstance(s, str) or not _IDENTIFIER_RE.match(s):
             raise ImportDBError(f'Unsafe SQL identifier: {s!r}')
-        return '`' + s + '`'
+        return '`' + generations.physical_table_name(s) + '`'
 
     def _quoted_column_list(self, column_names: Sequence[str]) -> str:
         """Return the column names quoted and comma-separated.
@@ -711,7 +728,7 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
                 # Note: SQL table names are case-insensitive on SOME OSes and this
                 # query returns them in whatever case SQL returns them in.
                 # But table_exists does a case-insensitive match.
-                self._table_names = {x[0] for x in res}
+                self._table_names = {generations.logical_table_name(x[0]) for x in res}
                 # if self.logger:
                 #     self.logger.log('debug',
                 #             f'  Current table names: {sorted(self._table_names)}')
@@ -772,7 +789,9 @@ SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
 `CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`, `CHARACTER_SET_NAME`
 FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 `TABLE_NAME`=%s ORDER BY `ORDINAL_POSITION`"""
-            rows = self._execute_and_fetchall(cmd, 'table_info', [self.db_schema, table_name])
+            rows = self._execute_and_fetchall(
+                cmd, 'table_info', [self.db_schema, generations.physical_table_name(table_name)]
+            )
 
             column_list = []
 
@@ -854,7 +873,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     raise ImportDBError()
             else:
                 try:
-                    cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
+                    if table_name == generations.OBS_GENERAL_VIEW:
+                        cmd = self._drop_obs_general_statement()
+                    else:
+                        cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
                     self._execute(cmd, mutates=True)
                 except MySQLdb.Error as e:
                     self._log_failure(f'Failed in drop_table on "{table_name}": {e}')
@@ -916,28 +938,9 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     self.logger.log('debug', f'[SIM] Renamed tables: {cmd}')
                 return
 
-            previous = self._execute_and_fetchall(
-                'SELECT @@SESSION.lock_wait_timeout', 'rename_tables_atomically'
-            )[0][0]
-            self._execute('SET SESSION lock_wait_timeout = %s', [lock_wait_timeout_s])
-            try:
-                for attempt in range(1, attempts + 1):
-                    try:
-                        self._execute(cmd, mutates=True)
-                        break
-                    except MySQLdb.Error as e:
-                        if e.args and e.args[0] == ERR_LOCK_WAIT_TIMEOUT and attempt < attempts:
-                            if self.logger:
-                                self.logger.log(
-                                    'info',
-                                    f'  RENAME TABLE waited {lock_wait_timeout_s} s for a lock '
-                                    f'(attempt {attempt} of {attempts}); trying again',
-                                )
-                            continue
-                        self._log_failure(f'Failed in RENAME TABLE: {e}')
-                        raise ImportDBError(e) from e
-            finally:
-                self._execute('SET SESSION lock_wait_timeout = %s', [previous])
+            self._execute_waiting_for_locks(
+                cmd, 'RENAME TABLE', lock_wait_timeout_s=lock_wait_timeout_s, attempts=attempts
+            )
 
             if self.logger:
                 self.logger.log('debug', f'Renamed tables: {cmd}')
@@ -982,6 +985,10 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         """
         with self._operation('create_table'):
             if ignore_if_exists and self.table_exists(table_name):
+                if table_name == generations.OBS_GENERAL_VIEW and self._obs_general_type() is None:
+                    # The base table is there but not its view, as when the view's
+                    # statement failed after the table's: create it, as for a new table.
+                    self.create_obs_general_view(schema)
                 return False
 
             cmd = ''
@@ -1054,7 +1061,7 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             cmd = (
                 f'CREATE TABLE {if_not_exists}{self.quote_identifier(table_name)} (\n' + cmd + '\n)'
             )
-            cmd += f' ENGINE={self.default_engine}\n'
+            cmd += f' ENGINE={self.default_engine} STATS_SAMPLE_PAGES={STATS_SAMPLE_PAGES}\n'
 
             try:
                 self._execute(cmd, mutates=True)
@@ -1076,7 +1083,170 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             self.tables_created.append(table_name)
             self._table_info_cache.clear()
 
+        if table_name == generations.OBS_GENERAL_VIEW:
+            self.create_obs_general_view(schema)
         return True
+
+    def _execute_waiting_for_locks(
+        self, cmd: str, what: str, *, lock_wait_timeout_s: int, attempts: int
+    ) -> None:
+        """Run a DDL statement with a bounded wait for the locks it needs, retried.
+
+        Each attempt runs with the session's ``lock_wait_timeout`` lowered to
+        ``lock_wait_timeout_s``, so a statement waiting behind a reader's transaction does
+        not in turn hold up every reader queued behind it for the server's default of a
+        year. A timed-out attempt is logged at info level and tried again; the session's
+        own value is restored afterwards.
+
+        Parameters:
+            cmd: The statement.
+            what: What the log and the failure call it.
+            lock_wait_timeout_s: How long one attempt waits for the locks.
+            attempts: How many times to try before the wait is a failure, at least 1.
+
+        Raises:
+            ImportDBError: If the server rejects the statement, or every attempt timed out.
+        """
+        previous = self._execute_and_fetchall('SELECT @@SESSION.lock_wait_timeout', what)[0][0]
+        self._execute('SET SESSION lock_wait_timeout = %s', [lock_wait_timeout_s])
+        try:
+            for attempt in range(1, attempts + 1):
+                try:
+                    self._execute(cmd, mutates=True)
+                    return
+                except MySQLdb.Error as e:
+                    timed_out = bool(e.args) and e.args[0] == ERR_LOCK_WAIT_TIMEOUT
+                    if timed_out and attempt < attempts:
+                        if self.logger:
+                            self.logger.log(
+                                'info',
+                                f'  {what} waited {lock_wait_timeout_s} s for a lock '
+                                f'(attempt {attempt} of {attempts}); trying again',
+                            )
+                        continue
+                    if timed_out:
+                        self._log_failure(
+                            f'{what} waited {lock_wait_timeout_s} s for a lock {attempts} '
+                            'times, each time behind a transaction reading the table; '
+                            f'nothing was changed: {e}'
+                        )
+                    else:
+                        self._log_failure(f'Failed in {what}: {e}')
+                    raise ImportDBError(e) from e
+        finally:
+            self._execute('SET SESSION lock_wait_timeout = %s', [previous])
+
+    def create_obs_general_view(
+        self,
+        schema: Sequence[SchemaColumn],
+        served: int | None = None,
+        *,
+        lock_wait_timeout_s: int | None = None,
+        attempts: int = 1,
+    ) -> None:
+        """Create, or re-create, ``obs_general`` as the view of the served generation.
+
+        While every row of ``obs_general_rows`` is in the served generation the view
+        selects every row, with no condition, so a statement that names it reads the
+        table exactly as it would read the table itself. While a generation is pending,
+        or retired rows wait for the purge, it selects the rows in the served generation,
+        which it names as a number (`opus_import.generations.in_generation_condition`
+        with the number in place of each placeholder).
+
+        Re-creating the view of a schema being served waits for every transaction that has
+        read it to end; ``lock_wait_timeout_s`` bounds each wait, as a swap's rename does
+        (`rename_tables_atomically`).
+
+        Parameters:
+            schema: ``obs_general``'s table schema, whose columns, less the generation
+                columns, the view lists.
+            served: The served generation, when the view must hide the rows of others;
+                None for a view of every row.
+            lock_wait_timeout_s: How long one attempt waits for the view's lock, or None
+                for the session's own wait, as for a view no request reads yet.
+            attempts: How many times to try before a bounded wait is a failure.
+
+        Raises:
+            ImportDBError: If the server rejects the statement, or every bounded attempt
+                timed out.
+            ValueError: If ``attempts`` is less than 1, before anything is changed.
+        """
+        if attempts < 1:
+            raise ValueError(f'attempts must be at least 1, not {attempts}')
+        with self._operation('create_obs_general_view'):
+            q = self.quote_identifier
+            columns = ', '.join(q(name) for name in generations.view_columns(schema))
+            # Every identifier is quoted by quote_identifier and the generation is an int;
+            # the view's own name is the one place obs_general is rendered as itself.
+            cmd = (
+                'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW '  # nosec B608
+                f'`{generations.OBS_GENERAL_VIEW}` AS SELECT {columns} '
+                f'FROM {q(generations.OBS_GENERAL_ROWS)}'
+            )
+            if served is not None:
+                condition = generations.in_generation_condition(q, generations.OBS_GENERAL_ROWS)
+                cmd += ' WHERE ' + condition.replace('%s', str(int(served)))
+            if lock_wait_timeout_s is not None and not self.read_only:
+                self._execute_waiting_for_locks(
+                    cmd,
+                    'CREATE VIEW obs_general',
+                    lock_wait_timeout_s=lock_wait_timeout_s,
+                    attempts=attempts,
+                )
+                return
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to create the view "obs_general": {e}')
+                raise ImportDBError(e) from e
+
+    def drop_obs_general_view(self) -> None:
+        """Drop the ``obs_general`` view, if the schema has it.
+
+        A schema of an earlier version, whose ``obs_general`` is a base table, keeps it:
+        `drop_table` drops that table in its turn.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        if self._obs_general_type() != _VIEW_TABLE_TYPE:
+            return
+        try:
+            self._execute(f'DROP VIEW `{generations.OBS_GENERAL_VIEW}`', mutates=True)
+        except MySQLdb.Error as e:
+            self._log_failure(f'Failed to drop the view "obs_general": {e}')
+            raise ImportDBError(e) from e
+
+    def _obs_general_type(self) -> str | None:
+        """Return what ``obs_general`` is: ``VIEW``, ``BASE TABLE``, or None when absent.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        cmd = (
+            'SELECT `TABLE_TYPE` FROM `INFORMATION_SCHEMA`.`TABLES` '
+            'WHERE `TABLE_SCHEMA`=%s AND `TABLE_NAME`=%s'
+        )
+        rows = self._execute_and_fetchall(
+            cmd, 'obs_general_type', [self.db_schema, generations.OBS_GENERAL_VIEW]
+        )
+        return None if not rows else str(rows[0][0])
+
+    def _drop_obs_general_statement(self) -> str:
+        """Drop the ``obs_general`` view, and return the statement that drops its table.
+
+        DROP TABLE refuses a view, and the view reads the table, so the view goes first.
+        In a schema of an earlier version ``obs_general`` is the base table itself, and the
+        statement drops it under that name.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        legacy = self._obs_general_type() == _BASE_TABLE_TYPE
+        self.drop_obs_general_view()
+        if legacy:
+            return f'DROP TABLE `{generations.OBS_GENERAL_VIEW}`'
+        return f'DROP TABLE {self.quote_identifier(generations.OBS_GENERAL_VIEW)}'
 
     def _create_key_clause(self, key: TableKey) -> str:
         """Return a key as a ``CREATE TABLE`` clause names it.
@@ -1149,7 +1319,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         spatial index is not a key here and is left out.
 
         Returns:
-            Each table's keys, keyed by table name, plain, unique and primary keys
+            Each table's keys, keyed by table name (``obs_general`` for its base table,
+            and in what a foreign key references), plain, unique and primary keys
             first, in the order the server lists them; a table with no key is absent.
 
         Raises:
@@ -1188,12 +1359,14 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 kind = 'unique'
             else:
                 kind = 'key'
+            table_name = generations.logical_table_name(table_name)
             indexes.setdefault((table_name, index_name), (kind, []))[1].append(column_name)
         foreign: dict[tuple[str, str], tuple[str, list[str], list[str], OnDelete]] = {}
         for table_name, constraint_name, column_name, ref_table, ref_column, rule in foreign_rows:
             on_delete: OnDelete = 'cascade' if rule == 'CASCADE' else 'restrict'
             entry = foreign.setdefault(
-                (table_name, constraint_name), (ref_table, [], [], on_delete)
+                (generations.logical_table_name(table_name), constraint_name),
+                (generations.logical_table_name(ref_table), [], [], on_delete),
             )
             entry[1].append(column_name)
             entry[2].append(ref_column)
@@ -1234,7 +1407,7 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             'SELECT `TABLE_ROWS` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
             'AND `TABLE_NAME`=%s',
             'key_space_bytes',
-            [self.db_schema, table_name],
+            [self.db_schema, generations.physical_table_name(table_name)],
         )
         rows = int(res[0][0] or 0) if res else 0
         columns_by_name = {
@@ -1384,6 +1557,60 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 self._log_failure(f'Failed in "{cmd}": {e}')
                 raise ImportDBError(e) from e
             self._table_info_cache.clear()
+
+    def repoint_cart(self, generation: int) -> tuple[int, int]:
+        """Point every cart row at an observation of a generation, by OPUS id.
+
+        One transaction. A cart row whose observation is not in the generation is pointed
+        at the generation's row with the same ``opus_id``; one the generation has no row
+        for is deleted. A cart row already in the generation is left alone, so running it
+        again changes nothing.
+
+        Parameters:
+            generation: The generation the cart is to name.
+
+        Returns:
+            How many rows were pointed at another observation, and how many deleted.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        q = self.quote_identifier
+        cart, old, new = q('cart'), q('o'), q('n')
+        rows = q(generations.OBS_GENERAL_ROWS)
+        old_in = generations.in_generation_condition(q, 'o')
+        new_in = generations.in_generation_condition(q, 'n')
+        # Every identifier is quoted by quote_identifier; the values are parameters.
+        update = (
+            f'UPDATE {cart} AS {q("c")} '  # nosec B608
+            f'JOIN {rows} AS {old} ON {old}.{q("id")} = {q("c")}.{q("obs_general_id")} '
+            f'JOIN {rows} AS {new} ON {new}.{q("opus_id")} = {old}.{q("opus_id")} AND {new_in} '
+            f'SET {q("c")}.{q("obs_general_id")} = {new}.{q("id")} WHERE NOT ({old_in})'
+        )
+        delete = (
+            f'DELETE {q("c")} FROM {cart} AS {q("c")} '  # nosec B608
+            f'JOIN {rows} AS {old} ON {old}.{q("id")} = {q("c")}.{q("obs_general_id")} '
+            f'WHERE NOT ({old_in})'
+        )
+        with self._operation('repoint_cart'):
+            if not MYSQLDB_AVAILABLE or self.read_only:
+                self._execute(update, [generation] * 4, mutates=True)
+                self._execute(delete, [generation] * 2, mutates=True)
+                return 0, 0
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(update, [generation] * 4, cur=cur, mutates=True)
+                    pointed = int(cur.rowcount)
+                    self._execute(delete, [generation] * 2, cur=cur, mutates=True)
+                    deleted = int(cur.rowcount)
+                if not self._in_transaction:
+                    self.conn.commit()
+            except MySQLdb.Error as e:
+                if not self._in_transaction:
+                    self.conn.rollback()
+                self._log_failure(f'Failed to point the cart at generation {generation}: {e}')
+                raise ImportDBError(e) from e
+        return pointed, deleted
 
     def carry_over_sessions(self, source_schema: str) -> CarriedOver:
         """Replace this schema's sessions and cart rows with another schema's.
@@ -2231,14 +2458,20 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
                 raise ImportDBError(e) from e
 
     def list_junction_mismatches(
-        self, table_name: str, column: str, junction: str, observation_column: str
+        self,
+        table_name: str,
+        column: str,
+        junction: str,
+        observation_column: str,
+        first_id: int | None = None,
     ) -> tuple[int, int | None]:
         """Compare a ``mult_list`` column's lists with its junction table's rows.
 
         Each list is read as rows by ``JSON_TABLE``. One anti-join finds the ids of a list
         with no junction row, reading the junction table's primary key; the other finds
         the junction rows whose observation's list lacks their id, reading the table by
-        its observation column. Both scan their whole table.
+        its observation column. Both scan their whole table, or with `first_id` the range
+        of each table's key on its observation column from `first_id` up.
 
         Parameters:
             table_name: The table holding the column.
@@ -2246,6 +2479,8 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
             junction: Its junction table.
             observation_column: The table's column holding the observation's
                 ``obs_general`` id, the key of its rows.
+            first_id: Compare only the observations whose ``obs_general`` id is at least
+                this, or every observation when None.
 
         Returns:
             How many observations disagree, and the least ``obs_general`` id among them,
@@ -2259,25 +2494,31 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         value, observation = q('v'), q(observation_column)
         mult_id = q(list_junctions.JUNCTION_MULT_COLUMN)
         linked = q(list_junctions.JUNCTION_OBSERVATION_COLUMN)
-        # Every identifier is validated by quote_identifier; the statement binds no value.
+        listed_from = f'{table}.{observation} >= %s AND ' if first_id is not None else ''
+        linked_from = f'{rows}.{linked} >= %s AND ' if first_id is not None else ''
+        # Every identifier is validated by quote_identifier; the only value is a parameter.
         listed = (
             f'{q(table_name)} AS {table}, JSON_TABLE({table}.{q(column)}, '
             f"'$[*]' COLUMNS ({value} INT PATH '$')) AS {ids}"
         )
         unlinked = (
             f'SELECT {table}.{observation} AS {q("obs")} FROM {listed} '  # nosec B608
-            f'WHERE NOT EXISTS (SELECT 1 FROM {q(junction)} AS {rows} '
+            f'WHERE {listed_from}NOT EXISTS (SELECT 1 FROM {q(junction)} AS {rows} '
             f'WHERE {rows}.{mult_id} = {ids}.{value} AND {rows}.{linked} = {table}.{observation})'
         )
         unlisted = (
             f'SELECT {rows}.{linked} FROM {q(junction)} AS {rows} '  # nosec B608
-            f'WHERE NOT EXISTS (SELECT 1 FROM {listed} '
+            f'WHERE {linked_from}NOT EXISTS (SELECT 1 FROM {listed} '
             f'WHERE {table}.{observation} = {rows}.{linked} AND {ids}.{value} = {rows}.{mult_id})'
         )
-        ((count, first),) = self.general_select(
+        statement = (
             f'COUNT(DISTINCT {found}.{q("obs")}), MIN({found}.{q("obs")}) '  # nosec B608
             f'FROM ({unlinked} UNION ALL {unlisted}) AS {found}'
         )
+        if first_id is None:
+            ((count, first),) = self.general_select(statement)
+        else:
+            ((count, first),) = self.general_select(statement, [first_id, first_id])
         return int(count), None if first is None else int(first)
 
     def find_column_max(self, table_name: str, column_name: str) -> Any:
@@ -2582,6 +2823,17 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         """
         granted = self._execute_and_fetchall('SELECT GET_LOCK(%s, 0)', 'try_named_lock', [name])
         return bool(granted) and granted[0][0] == 1
+
+    def release_named_lock(self, name: str) -> None:
+        """Free a lock `try_named_lock` took on this connection.
+
+        Parameters:
+            name: The lock's name.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'release_named_lock', [name])
 
     def holds_named_lock(self, name: str) -> bool:
         """Return whether ``IS_USED_LOCK(name)`` is this connection's ``CONNECTION_ID()``.

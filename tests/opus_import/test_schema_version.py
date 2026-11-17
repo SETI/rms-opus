@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from opus_config import OPUS_CONFIG_ENV_VAR
+from opus_import.generations import FIRST_GENERATION, SERVED_GENERATION_COLUMN, STATE_COLUMNS
 from opus_import.schema_version import (
     SCHEMA_STATE_APPENDING,
     SCHEMA_STATE_READY,
@@ -49,23 +50,25 @@ class _VersionDB:
         return table_name == SCHEMA_VERSION_TABLE and self.rows is not None
 
     def read_rows(self, table_name: str, columns: Sequence[str]) -> list[Any]:
-        """Return the rows."""
-        assert (table_name, list(columns)) == (
-            SCHEMA_VERSION_TABLE,
-            ['version', 'state'],
-        )
+        """Return the rows, with no generation pending when the generation columns are
+        asked for too."""
+        assert table_name == SCHEMA_VERSION_TABLE
         assert self.rows is not None
-        return list(self.rows)
+        if list(columns) == ['version', 'state']:
+            return list(self.rows)
+        assert list(columns) == list(STATE_COLUMNS)
+        return [(version, state, 1, None, None, 0) for version, state in self.rows]
 
     def create_table(self, table_name: str, schema: Any, *, ignore_if_exists: bool) -> None:
         """Create the empty table from the packaged schema."""
-        assert [column['field_name'] for column in schema] == ['version', 'state']
+        assert [column['field_name'] for column in schema] == list(STATE_COLUMNS)
         self.created.append(table_name)
         self.rows = []
 
     def insert_row(self, table_name: str, row: dict[str, Any]) -> None:
-        """Append a row."""
+        """Append a row, which serves the first generation."""
         assert self.rows is not None
+        assert row[SERVED_GENERATION_COLUMN] == FIRST_GENERATION
         self.rows.append((row['version'], row['state']))
 
     def update_row(
@@ -89,6 +92,9 @@ class _VersionDB:
     def drop_table(self, table_name: str) -> None:
         """Record the drop."""
         self.dropped.append(table_name)
+
+    def drop_obs_general_view(self) -> None:
+        """Drop no table: the view is not one."""
 
     def table_names(self) -> list[str]:
         """Report the tables an erase drops: the version table, while it exists, and others."""

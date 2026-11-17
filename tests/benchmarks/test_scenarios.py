@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks import bench_server, import_scenarios, web_scenarios
+from benchmarks import import_scenarios, opus_config_file, web_scenarios
 from benchmarks.app_servers import ServerError
 from benchmarks.web_scenarios import ScenarioError
 from import_tests.tools import holdings_survey
@@ -111,6 +111,77 @@ def test_a_pages_scenario_builds_untimed_and_completes_its_last_page(tmp_path: P
     assert scenario.last_page_of == 'broad'
 
 
+def test_a_pages_scenario_asks_for_its_column_set(tmp_path: Path) -> None:
+    """A column set replaces the default columns on every page, and names the scenario."""
+    path = tmp_path / 'web.toml'
+    path.write_text(
+        '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 1\n'
+        '[runs]\nfixture = 1\n[searches]\nbroad = "time1=2000-01-01"\n'
+        '[columns]\nwide = "opusid,RINGGEOringradius1"\n'
+        '[[scenarios]]\nkind = "pages"\nsearch = "broad"\n'
+        '[[scenarios]]\nkind = "pages"\nsearch = "broad"\ncolumns = "wide"\n'
+    )
+    plain, wide = web_scenarios.load_web_config(path).scenarios
+    assert plain.name == 'pages.broad'
+    assert wide.name == 'pages.broad_wide'
+    assert wide.last_page_of == 'broad'
+    assert wide.requests[0].url == plain.requests[0].url
+    assert [request.url for request in wide.requests[1:]] == [
+        'api/data.json?time1=2000-01-01&cols=opusid,RINGGEOringradius1&page=1&limit=100',
+        'api/data.json?time1=2000-01-01&cols=opusid,RINGGEOringradius1&page=10&limit=100',
+        'api/data.json?time1=2000-01-01&cols=opusid,RINGGEOringradius1&page={last}&limit=100',
+    ]
+
+
+@pytest.mark.parametrize(
+    ('entry', 'message'),
+    [
+        ('kind = "pages"\nsearch = "broad"\ncolumns = "none"\n', 'unknown columns'),
+        ('kind = "search"\nsearch = "broad"\ncolumns = "wide"\n', 'only a pages scenario'),
+    ],
+)
+def test_a_column_set_that_cannot_be_asked_for_is_refused(
+    tmp_path: Path, entry: str, message: str
+) -> None:
+    """An unknown column set, or one on a scenario that pages nothing, fails at load."""
+    path = tmp_path / 'web.toml'
+    path.write_text(
+        '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 1\n'
+        '[runs]\nfixture = 1\n[searches]\nbroad = "time1=2000-01-01"\n'
+        '[columns]\nwide = "opusid"\n'
+        f'[[scenarios]]\n{entry}'
+    )
+    with pytest.raises(web_scenarios.ScenarioError, match=message):
+        web_scenarios.load_web_config(path)
+
+
+def test_a_mults_scenario_builds_untimed_then_counts_the_default_widgets_and_its_own(
+    tmp_path: Path,
+) -> None:
+    """The result count is untimed; the default widgets' counts come first, then
+    [mults] widgets'."""
+    path = tmp_path / 'web.toml'
+    path.write_text(
+        '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 1\n'
+        '[runs]\nfixture = 1\n[searches]\nbroad = "time1=2000-01-01"\n'
+        '[fanout]\nmult_widgets = ["instrument"]\nrange_slugs = []\n'
+        '[mults]\nwidgets = ["imagetype"]\n'
+        '[[scenarios]]\nkind = "mults"\nsearch = "broad"\n'
+    )
+    scenario = web_scenarios.load_web_config(path).scenarios[0]
+    assert scenario.name == 'mults.broad'
+    assert [(request.name, request.timed) for request in scenario.requests] == [
+        ('build', False),
+        ('mults_instrument', True),
+        ('mults_imagetype', True),
+    ]
+    assert [request.url for request in scenario.requests] == [
+        '__api/meta/result_count.json?time1=2000-01-01&reqno=1',
+        '__api/meta/mults/instrument.json?time1=2000-01-01&reqno=1',
+        '__api/meta/mults/imagetype.json?time1=2000-01-01&reqno=1',
+    ]
+
+
 def test_an_unknown_search_is_refused(tmp_path: Path) -> None:
     """A scenario naming a search web.toml does not define fails at load."""
     path = tmp_path / 'web.toml'
@@ -180,7 +251,7 @@ def test_a_warm_flag_that_is_not_a_cold_states_boolean_is_refused(
 
 def test_the_written_configuration_is_one_opus_reads(tmp_path: Path) -> None:
     """Every key the harness writes is one the loader accepts, cache location included."""
-    path = bench_server.write_opus_config(
+    path = opus_config_file.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
@@ -196,14 +267,14 @@ def test_the_written_configuration_is_one_opus_reads(tmp_path: Path) -> None:
 
 def test_a_session_sets_import_keys_the_loader_reads(tmp_path: Path) -> None:
     """``--import-key`` values reach the side's configuration with their types."""
-    path = bench_server.write_opus_config(
+    path = opus_config_file.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
         pds4_holdings=tmp_path / 'pds4-holdings',
         run_dir=tmp_path / 'run',
         cache_location='127.0.0.1:21211',
-        extra_import=bench_server.parse_import_keys(
+        extra_import=opus_config_file.parse_import_keys(
             ['index_workers=22', 'bulk_load=false', 'server_tmpdir=/var/tmp/x']
         ),
     )
@@ -215,7 +286,7 @@ def test_a_session_sets_import_keys_the_loader_reads(tmp_path: Path) -> None:
 
 def test_a_harness_import_key_given_by_its_caller_is_written_once(tmp_path: Path) -> None:
     """``log_file`` passed to `write_opus_config` replaces the harness's own, once."""
-    path = bench_server.write_opus_config(
+    path = opus_config_file.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
@@ -231,14 +302,14 @@ def test_a_control_character_in_an_import_value_survives_the_configuration(
     tmp_path: Path,
 ) -> None:
     """A newline in a value is escaped rather than breaking the file."""
-    path = bench_server.write_opus_config(
+    path = opus_config_file.write_opus_config(
         tmp_path / 'opus.toml',
         schema='bench_x',
         pds3_holdings=tmp_path / 'holdings',
         pds4_holdings=tmp_path / 'pds4-holdings',
         run_dir=tmp_path / 'run',
         cache_location='127.0.0.1:21211',
-        extra_import=bench_server.parse_import_keys(['server_tmpdir=/var/tmp/a\nb\x7f']),
+        extra_import=opus_config_file.parse_import_keys(['server_tmpdir=/var/tmp/a\nb\x7f']),
     )
     assert load_config(path).import_.server_tmpdir == '/var/tmp/a\nb\x7f'
 
@@ -262,25 +333,25 @@ def test_an_import_key_value_is_a_number_a_boolean_or_else_a_string(
     text: str, value: object
 ) -> None:
     """A value that does not read as a finite number or a boolean stays as written."""
-    assert bench_server.parse_import_keys([f'k={text}']) == {'k': value}
+    assert opus_config_file.parse_import_keys([f'k={text}']) == {'k': value}
 
 
 @pytest.mark.parametrize('pair', ['index_workers', '=3'])
 def test_an_import_key_without_a_key_and_value_is_refused(pair: str) -> None:
     """Each ``--import-key`` is ``KEY=VALUE``."""
     with pytest.raises(ValueError, match='KEY=VALUE'):
-        bench_server.parse_import_keys([pair])
+        opus_config_file.parse_import_keys([pair])
 
 
 @pytest.mark.parametrize('pair', ['index workers=2', 'index.workers=2', 'a"b=1'])
 def test_an_import_key_that_is_not_a_key_name_is_refused(pair: str) -> None:
     """A key TOML would not read bare is refused before any configuration is written."""
     with pytest.raises(ValueError, match='not an \\[import\\] key name'):
-        bench_server.parse_import_keys([pair])
+        opus_config_file.parse_import_keys([pair])
 
 
-@pytest.mark.parametrize('key', bench_server.HARNESS_IMPORT_KEYS)
+@pytest.mark.parametrize('key', opus_config_file.HARNESS_IMPORT_KEYS)
 def test_an_import_key_naming_a_log_the_harness_reads_is_refused(key: str) -> None:
     """The harness reads its runs' logs from where it put them."""
     with pytest.raises(ValueError, match='the harness sets'):
-        bench_server.parse_import_keys([f'{key}=/tmp/x.log'])
+        opus_config_file.parse_import_keys([f'{key}=/tmp/x.log'])
