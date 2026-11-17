@@ -8930,6 +8930,19 @@ Nothing above this line is rewritten by an executor.
     the true count, with no flip in 15 `ANALYZE`s, and analyzing those tables takes 7.8 s
     against 0.7 s. At the operator's decision, every table the import creates is created
     with `STATS_SAMPLE_PAGES = 500`; the benchmarks above were measured without it.
+  - *The 500-page sample, measured* (session `rings`: a fresh import of PR-23's head
+    against the base's, `bench_db` and `bench_web` alternated three runs a side, and 30
+    rounds a side of `ANALYZE` and `EXPLAIN`). Warm, PR-23 scanned `obs_ring_geometry` in
+    every round and run (0.99 s); the base walked `time1` in 9 of 30 rounds and one
+    `bench_db` run (1.64 s). On the scan, PR-23's ring count and re-sort are 5–7% slower,
+    as the broad search is: the view and the generation columns. The db-cold re-sort is
+    65% slower in every run (3.36 s against 2.04 s), and the statistics decide it, not
+    the view: after a restart and the default-order build, with part of the data cached,
+    MySQL walks `time1` (3.4 s) in place of the scan (2.45 s forced) at PR-23's estimate
+    during the runs, 0.90 times the true count. With the 500-page sample the base's
+    schema did so in 3 of 3 rounds and PR-23's in 3 of 4; with the 20-page sample, 2 of
+    6. `prefer_ordering_index=off` does not change it. The sample fixes the warm flip;
+    the re-sort after a restart needs the plan fixed in the query.
 
 ### 2026-11-16, PR-23a (written against this file at 54760861)
 
