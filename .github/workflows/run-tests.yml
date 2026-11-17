@@ -188,6 +188,7 @@ jobs:
         run: |
           pytest import_tests \
             --ignore=import_tests/test_obs_execution.py \
+            --durations=0 --durations-min=2 \
             --cov --cov-report=term-missing \
             --cov-report=xml:coverage.xml --cov-report=json:coverage.json
 
