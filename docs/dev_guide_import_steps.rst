@@ -61,7 +61,9 @@ The order, and what forces it
   foreign key onto ``obs_general``, which must exist first; a schema without it logs an
   error and gets no cart.
 * **The tables are analyzed after them**, so that the statistics count every table's
-  rows.
+  rows, and the range-search histograms are built after the analysis, from the
+  ``param_info`` the auxiliary step has just written
+  (:ref:`dev_guide_import_steps_histograms`).
 * **The dictionary comes after them** because nothing else depends on it.
 * **The schema version comes last** because its row is what makes the schema
   servable, so it is written only once everything else, validation included, has run.
@@ -1272,8 +1274,29 @@ Its functions:
 :func:`~opus_import.steps.do_import_tables.analyze_all_tables`
     Runs the backend's analyze over every ``obs_`` table and the mult tables, for
     ``--analyze-tables``, which :mod:`opus_import.cli` runs after the auxiliary, cart
-    and search tables. ``cart`` and the auxiliary tables are not analyzed; each auxiliary
-    table is analyzed by its swap.
+    and search tables, then
+    :func:`~opus_import.steps.do_import_tables.update_histograms`. ``cart`` and the
+    auxiliary tables are not analyzed; each auxiliary table is analyzed by its swap.
+
+.. _dev_guide_import_steps_histograms:
+
+:func:`~opus_import.steps.do_import_tables.update_histograms`
+    Builds a histogram on every column a range search filters on that leads no index,
+    so that the optimizer estimates a range on it from the column's values rather than
+    guessing a fixed share of the table. The columns come from
+    :mod:`opus_import.histograms`: every row of ``param_info`` whose form type is a
+    range, displayed or not (a search on the ``1`` column of a pair filters on its
+    ``2`` partner too), at the table its category's rows are written to, less every
+    column the server lists first in a plain, unique or primary key, since the optimizer
+    estimates such a column from its index. A longitude is searched by its angular
+    distance from the requested centre, an expression no histogram estimates, so it is
+    not one of them. Each histogram is built again on every run, so an append's rows are
+    counted, and a histogram on any other column of an ``obs_`` table -- one that has
+    gained an index, or stopped being range-searched -- is removed. A schema without
+    ``param_info`` gets none. The purge of a generation runs the same step. Whether a
+    histogram helps a search depends on the search: it makes the estimate of the range
+    it covers right, and the optimizer then compares that estimate with the others the
+    search's plan rests on, a time range's among them.
 
 .. _dev_guide_import_steps_do_import_index:
 

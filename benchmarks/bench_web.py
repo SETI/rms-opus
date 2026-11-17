@@ -48,6 +48,13 @@ Every command holds the server's web-runs lock shared while it runs, and a gener
 switch holds it exclusive (`benchmarks.bench_server.MysqlServer.web_runs_held`), so a
 switch never empties the tables a web run is measuring.
 
+**A thread sweep.** ``--threads``, ``--users`` and ``--concurrency-only`` replace
+``web.toml``'s threads per worker and concurrent users, and drop its sequential
+scenarios (`benchmarks.web_scenarios.with_overrides`); the environment records all three,
+and ``benchmarks.compare --sweep`` sets one session per thread count side by side. Every
+request slot keeps a database connection, so the command refuses a server whose
+``max_connections`` could not hold them all (`benchmarks.bench_server.require_connection_room`).
+
 Example, one side's web runs at fixture scale against the schema its import built::
 
     python -m benchmarks.bench_web --scale fixture --side before --pr PR-nn \\

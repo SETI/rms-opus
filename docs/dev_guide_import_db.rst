@@ -56,6 +56,9 @@ caller.
             +drop_table()*
             +rename_tables_atomically()*
             +analyze_table()*
+            +read_histograms()*
+            +update_histograms()*
+            +drop_histograms()*
             +insert_row()*
             +insert_rows()*
             +bulk_load_rows()*
@@ -263,6 +266,12 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
        swap (:ref:`dev_guide_import_steps_table_swap`).
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.analyze_table`\ ``(table_name)``
      - Recompute the table's key distribution statistics.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_histograms`\ ``()``
+     - The columns of each table that carry a histogram.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.update_histograms` / :meth:`~opus_import.importdb.super.ImportDBSuper.drop_histograms`\ ``(table_name, column_names)``
+     - Build a histogram on each column, or build it again; or remove it. A failure the
+       server reports for a column, as a row of the statement's result rather than as an
+       error, raises.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.insert_row` / :meth:`~opus_import.importdb.super.ImportDBSuper.insert_rows`
      - Insert one row, or many.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.bulk_load_rows`\ ``(table_name, rows)``

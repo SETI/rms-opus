@@ -779,6 +779,38 @@ that warmed as ``warm_states`` (none on a side without the command) and the cart
 each promotion asked for as ``promotion_carts`` (none on a side without the option), and a
 result file refuses web runs that differ in either, or in ``promotion_cart_rows``.
 
+Every request slot -- each thread of each gunicorn worker -- keeps the database connection
+its first request opened, so before it starts gunicorn ``bench_web`` refuses a server
+whose ``max_connections`` does not exceed the slots plus the harness's own connections
+(``HARNESS_CONNECTIONS`` in ``benchmarks/bench_server.py``): a server out of
+connections would fail requests, and the run would time the refusals.
+
+.. _dev_guide_benchmarks_thread_sweep:
+
+**A thread sweep** chooses the threads per worker rather than measuring a change. Three
+options change what a run serves and issues, each recorded in the environment, so a
+result file holds runs of one setting only:
+
+``--threads N``
+    gunicorn's threads per worker in place of ``web.toml``'s, with as many connections
+    per worker; ``server_model`` names it.
+
+``--users N``
+    The concurrency scenario's simulated users in place of ``web.toml``'s, recorded as
+    ``concurrency_users``. Give at least twice the largest number of request slots the
+    sweep reaches, so that every setting is saturated.
+
+``--concurrency-only``
+    The concurrency scenario alone, without the sequential scenarios, recorded as
+    ``concurrency_only``.
+
+Give each thread count a session of its own, and the same users to each; ``compare
+--sweep`` (below) prints them side by side::
+
+    python -m benchmarks.bench_web --scale test --side after --pr <tag> \
+        --session t2 --python venv/bin/python --repo-root . --schema <schema> \
+        --threads 2 --users 64 --concurrency-only --runs 3
+
 What bench_db records
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -1008,6 +1040,19 @@ them, and can show as a regression, an improvement or nothing, by how the execut
 The statement is matched across runs by its block, its place in the block, and its text
 with its numbers set aside. A plan changing between the sides is not flagged, since the
 sides may plan differently by design.
+
+**A thread sweep** (:ref:`made by bench_web <dev_guide_benchmarks_thread_sweep>`) is the one set of results
+whose ``server_model`` must differ, so it has a command of its own, which takes two or
+more result files::
+
+    python -m benchmarks.compare --sweep "$t2" "$t4" "$t8"
+
+prints one table, a column per result in order of thread count and a row per metric,
+each cell the median and the spread, and judges nothing. It accepts the files only when
+they are of one change, side and scale, their ``server_model`` differs in the thread
+count alone, and every other environment entry is the same in all of them; each run's
+load average is recorded with the run, so it may differ. It names any other entry that
+differs and refuses.
 
 A spread leaves out an **outlying run**: one more than three robust standard deviations
 (1.4826 times the median absolute deviation) from its session's median. The median every

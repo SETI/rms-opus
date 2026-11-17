@@ -341,7 +341,9 @@ Import steps
        prompts.
    * - ``--analyze-tables``
      - Recompute the key distributions of every ``obs_`` table and the mult tables,
-       after the auxiliary, cart and search tables are created.
+       after the auxiliary, cart and search tables are created, then build a histogram
+       on every range-searched column that leads no index
+       (:ref:`dev_guide_import_steps_histograms`).
 
 Parallelism
 ~~~~~~~~~~~

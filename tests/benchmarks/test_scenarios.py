@@ -382,13 +382,13 @@ def test_sixty_four_concurrent_users_ask_for_distinct_searches() -> None:
 
 
 @pytest.mark.parametrize(
-    ('changes', 'message'),
-    [({'threads': 0}, 'threads'), ({'users': 0}, 'users')],
+    ('threads', 'users', 'message'),
+    [(0, None, 'threads'), (None, 0, 'users')],
 )
-def test_a_count_below_one_is_refused(changes: dict[str, int], message: str) -> None:
+def test_a_count_below_one_is_refused(threads: int | None, users: int | None, message: str) -> None:
     """No server serves with no threads, and no scenario runs with no users."""
     with pytest.raises(ScenarioError, match=message):
-        web_scenarios.with_overrides(web_scenarios.load_web_config(), **changes)
+        web_scenarios.with_overrides(web_scenarios.load_web_config(), threads=threads, users=users)
 
 
 def test_concurrency_overrides_need_a_concurrency_scenario(tmp_path: Path) -> None:

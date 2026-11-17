@@ -3,8 +3,9 @@
 
 [server]
 # gunicorn: gthread workers, with as many connections per worker as threads. Four
-# workers of two threads are the eight request slots of the mod_wsgi arrangement in
-# docs/user_guide_web_server.rst.
+# workers of two threads are the eight request slots the noise floors are measured at;
+# bench_web --threads changes the threads for a thread sweep, which is how the
+# examples in docs/user_guide_web_server.rst were chosen.
 port = 18321
 workers = 4
 threads = 2

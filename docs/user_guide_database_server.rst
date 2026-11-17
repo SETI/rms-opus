@@ -10,7 +10,8 @@ what each one does for it, and how to tell whether the indexes the database carr
 the ones its traffic reads.
 
 One server can import and serve at once, or the import can run on one server and the
-database be copied to another that serves it (:ref:`user_guide_deployment_refresh`).
+database be copied to another that serves it, which the deploy chain's ``database/``
+scripts do (:ref:`user_guide_deployment`).
 Each setting below says which of those it is for. Settings go in the ``[mysqld]``
 section of the server's option file. Those marked **startup only** take effect when the
 server restarts; every other one can also be changed while it runs, with ``SET
