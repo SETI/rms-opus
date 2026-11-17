@@ -143,8 +143,13 @@ jobs:
           MYSQL_ROOT_PASSWORD: opus_import_tests
         ports:
           - 3306:3306
-        # Without this the first connection races the server's startup.
+        # The health check keeps the first connection from racing the server's
+        # startup. The data directory is in memory: the suite creates, fills,
+        # renames and drops tables throughout, and on the runner's disk the
+        # flushes behind each of those cost far more than the work itself. The
+        # server is thrown away with the job, so nothing is lost by not syncing.
         options: >-
+          --tmpfs /var/lib/mysql:rw
           --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
