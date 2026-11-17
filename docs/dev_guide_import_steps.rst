@@ -1005,6 +1005,15 @@ other tables are the ones whose ``obs_general_id`` is from there up, read by the
 observation table has on that column. No served row's id is that high. The log names the
 generation, how many observations it added and that first id before the checks run.
 
+**With no generation pending the checks read the generation the site serves.** From a
+switch until the purge, ``obs_general_rows`` still holds the observations the switch
+retired, with their rows of the other tables, which the ``obs_general`` view hides. The
+checks then leave them out, as the site does
+(:func:`~opus_import.steps.do_validate.served_generation_only`), and the log names the
+served generation before the checks run; so a filter whose wavelengths the update
+corrected is not compared with its retired observations. Otherwise every row is served,
+and every row is read with no condition.
+
 The checks, in this order:
 
 :func:`~opus_import.steps.do_validate.validate_param_info`
@@ -1029,7 +1038,8 @@ The checks, in this order:
     fault in the data. ``obs_surface_geometry_target`` is counted once, over every body's
     rows. With a pending generation it does not run, and logs that it did not: it
     describes the whole schema, and the few bundles an update writes would report
-    columns falsely.
+    columns falsely. Until the purge after a switch it counts the served generation's rows
+    alone.
 
 :func:`~opus_import.steps.do_validate.validate_min_max_order`
     For every ``X1``/``X2`` pair, reports rows where ``X2 < X1``, listing the first
@@ -1039,7 +1049,8 @@ The checks, in this order:
     ``param_info`` row, or more than one, is an error; the row is looked up under the
     category ``validate_param_info`` uses. A table other than ``obs_general`` names a bad
     row by the OPUS ID of the ``obs_general`` row it joins. With a pending generation
-    only its observations and their rows are read.
+    only its observations and their rows are read, and until the purge after a switch
+    only the served generation's.
 
 :func:`~opus_import.steps.do_validate.validate_filter_wavelength_consistency`
     For every table with a ``filter_name`` or ``combined_filter`` column, checks that
@@ -1051,7 +1062,8 @@ The checks, in this order:
     its own, and not the ones it retires -- so a bundle that disagrees with the served
     observations of its filter is still reported. A table holding none of the
     generation's observations is not read; a table without a key on its filter column
-    is read whole for the filters it does carry.
+    is read whole for the filters it does carry. Until the purge after a switch every
+    filter is compared across the served generation's observations alone.
 
 :func:`~opus_import.steps.do_validate.validate_orphans`
     Counts, for every observation table other than ``obs_general`` and for ``cart``,
@@ -1065,20 +1077,24 @@ The checks, in this order:
     child row it could leave behind, since the only observations it deletes are its
     own, those of a bundle it imported and then dropped included, whose registry row is
     gone. The served rows an update hides are retired, never deleted, and keep their
-    child rows.
+    child rows. With no generation pending every row is counted against every
+    ``obs_general_rows`` row too: a retired observation's rows are not orphans, and the
+    purge deletes them with it.
 
 :func:`~opus_import.steps.do_validate.validate_pds_bundle_ids`
     Counts the ``obs_pds`` rows whose ``bundle_id`` differs from their ``obs_general``
     row's. ``obs_pds.bundle_id`` is the public bundle field, written beside
     ``obs_general.bundle_id``, which the per-bundle delete selects by, so a search by
     bundle and the delete would otherwise see different bundles. Any such row is an
-    error. With a pending generation only its observations' rows are compared.
+    error. With a pending generation only its observations' rows are compared, and until
+    the purge after a switch only the served generation's.
 
 :func:`~opus_import.steps.do_validate.validate_previews`
     Counts the ``obs_general`` rows with no ``obs_preview`` row, by an anti-join. The
     import writes one for every observation, and the results pages read an
     observation's preview images from it. Any such row is an error. With a pending
-    generation only its observations are read.
+    generation only its observations are read, and until the purge after a switch only
+    the served generation's.
 
 :func:`~opus_import.steps.do_validate.validate_junctions`
     For each ``mult_list`` column, compares the distinct ids of each observation's JSON
@@ -1090,7 +1106,9 @@ The checks, in this order:
     junction table, how many observations disagree and the least ``obs_general`` id
     among them; a missing junction table is an error too. With a pending generation only
     the lists and the junction rows of ids from the generation's first id up are
-    compared.
+    compared. With none pending every list is compared, a retired observation's
+    included: it keeps both its list and its junction rows until the purge deletes them
+    together.
 
 :func:`~opus_import.steps.do_validate.validate_unique_opus_ids`
     Groups ``obs_general`` by ``opus_id`` and reports any OPUS ID more than one row
