@@ -189,9 +189,9 @@ The scripts
     by ``deploy_new_code_and_database.sh``.
 
 ``update_deploy_scripts.sh [<version spec>]``
-    Brings this copy of the chain up to a release: it upgrades ``rms-opus`` in
-    ``OPUS_DEPLOY_VENV`` and rewrites the scripts from it. **The first command of every
-    upgrade**, before either deploy script.
+    Brings this copy of the chain up to a release, or to a git revision: it upgrades
+    ``rms-opus`` in ``OPUS_DEPLOY_VENV`` and rewrites the scripts from it. **The first
+    command of every upgrade**, before either deploy script.
 
     It rewrites the file it is running from, which is safe because
     ``opus_deploy_scripts`` replaces each file by renaming a new one over it rather than
@@ -248,10 +248,11 @@ The scripts
     Then it dumps the database and loads it onto a second server as
     ``run_full_opus_import.sh`` does, under a new name, when ``deploy.env`` asks for that.
     It runs detached, mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone, and
-    holds the deploy lock until it ends. Without a version specifier it installs the
-    release being served, read from the deployed installation, and aborts before
-    changing anything when that release is a development build, which PyPI does not
-    have.
+    holds the deploy lock until it ends. Without a version spec it installs what is being
+    served, read from the deployed installation: its release, or, for an installation
+    built from a git revision, the commit pip recorded it was built from. It aborts before
+    changing anything when the installation is a development build with no recorded
+    commit, which neither PyPI nor the repository can give again.
 
 ``promote_generation.sh [--revert]``
     **Switches the pending generation in.** It stops the web service, runs
@@ -267,7 +268,10 @@ The scripts
 
 The optional ``<version spec>`` of each is a **PEP 440 version specifier** appended to the
 distribution name -- ``==<release>`` for a particular release, omitted for the newest, or,
-for ``run_incremental_opus_update.sh``, for the release being served.
+for ``run_incremental_opus_update.sh``, for what is being served -- or **"@" and a git
+branch, tag or commit**, which installs that revision of the rms-opus repository instead
+of a release (:ref:`user_guide_deployment_revision`). Each script refuses anything else
+before it runs anything.
 
 **One deploy runs at a time.** Each deploy script takes an exclusive ``flock`` on
 ``deploy.lock`` in ``OPUS_DIR`` right after reading ``deploy.env``, before it reads which
@@ -907,8 +911,33 @@ against Test PyPI and runs only on demand. :ref:`dev_guide_environment` describe
 and the ``Package`` job that exercises the whole release path except the upload itself on
 every push.
 
-A deploy then installs that release by version specifier, which is why the deploy scripts
-take a PEP 440 specifier rather than a branch name.
+A deploy then installs that release by version specifier. A revision with no release is
+deployed by naming it instead (:ref:`user_guide_deployment_revision`).
+
+.. _user_guide_deployment_revision:
+
+Deploying a revision with no release
+------------------------------------
+
+A branch under review, or any commit, is deployed with the same commands as a release,
+giving ``@<branch, tag or commit>`` where a release's ``==<release>`` would go. pip builds
+the distribution from a clone of the repository, so the server needs ``git`` and access to
+GitHub, and the installation reports a development version. For this branch, on a test
+server, an import and a deploy of its database and then an incremental update::
+
+    cd /opt/opus/deploy
+    /seti/newnav/capped-run.sh ./import_and_deploy/update_deploy_scripts.sh @db-perf-pr-23
+    /seti/newnav/capped-run.sh ./import_and_deploy/run_full_opus_import.sh @db-perf-pr-23
+    #    ... read the log, check ERRORS.log ...
+    /seti/newnav/capped-run.sh ./import_and_deploy/deploy_new_code_and_database.sh <database> @db-perf-pr-23
+    /seti/newnav/capped-run.sh ./import_and_deploy/run_incremental_opus_update.sh COISS_2001
+    /seti/newnav/capped-run.sh ./import_and_deploy/promote_generation.sh
+
+The first command matters as it does for a release: the chain is part of the
+distribution, and a revision's deploy steps are its own. A branch moves, so each command
+installs whatever commit it names at the time; give a commit instead when the commands
+must agree. The incremental update needs no spec: given none, it installs the commit the
+served installation was built from, which pip records.
 
 Operating checklist
 -------------------

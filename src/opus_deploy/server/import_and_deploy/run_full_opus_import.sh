@@ -3,11 +3,20 @@
 # Usage: run_full_opus_import.sh [<version_spec>]
 #
 #   <version_spec>  a PEP 440 specifier appended to the distribution name, for
-#                   example '==3.23.0'. Omit it to install the newest release.
+#                   example '==3.23.0', or '@' and a git branch, tag or commit to
+#                   install an unreleased revision, for example '@main'
+#                   (_version_spec.sh). Omit it to install the newest release.
 #
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 export SCRIPT_DIR=$(dirname "${IMPORT_SCRIPT_DIR}")
 export SECRETS_DIR="${SCRIPT_DIR}/secrets"
+
+# Checked here, so a mistyped spec is refused now rather than by pip in the detached
+# process.
+source "${IMPORT_SCRIPT_DIR}/_version_spec.sh"
+if ! check_version_spec run_full_opus_import.sh "${1:-}"; then
+    exit 1
+fi
 
 # Read here as well as inside, so that a deploy.env that is missing something, or a
 # run started by the wrong account, is refused now rather than inside a detached

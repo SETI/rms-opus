@@ -9,14 +9,14 @@
 # it means running one release's deploy against another release's application --
 # which is how a step that a release added, or one it stopped needing, goes missing.
 #
-# Refreshing the copy is two commands in the environment the chain's own commands come
-# from, and it is part of deploying a new release rather than an occasional chore:
+# Refreshing the copy is one command, and it is part of deploying a new release rather
+# than an occasional chore:
 #
-#     python -m pip install --upgrade "rms-opus==<the release>"
-#     opus_deploy_scripts --directory <this directory> --force
+#     ./import_and_deploy/update_deploy_scripts.sh ==<the release>
 #
-# `--force` replaces the scripts; it does not touch secrets/, which is not part of
-# what ships and so is not part of what is written.
+# It installs that release, or with "@<ref>" that git revision, in the environment the
+# chain's own commands come from, and rewrites the scripts out of it; it does not touch
+# secrets/, which is not part of what ships and so is not part of what is written.
 #
 # Inputs (exported by the caller): SCRIPT_DIR, and OPUS_VERSION_SPEC when one was
 # given on the command line.
@@ -44,8 +44,14 @@ if [[ -n ${OPUS_VERSION_SPEC:-} && ${OPUS_VERSION_SPEC} == ==* && ${OPUS_VERSION
         echo "***          and you are deploying ${DEPLOYING_VERSION}."
         echo "***"
         echo "*** Refresh them first:"
-        echo "***   python -m pip install --upgrade \"rms-opus==${DEPLOYING_VERSION}\""
-        echo "***   opus_deploy_scripts --directory \"${SCRIPT_DIR}\" --force"
+        echo "***   ${IMPORT_SCRIPT_DIR}/update_deploy_scripts.sh \"==${DEPLOYING_VERSION}\""
         echo
     fi
+fi
+# A git revision's version is not known until pip has built it, so it cannot be compared
+# either; the reminder names the command that makes the two the same.
+if [[ ${OPUS_VERSION_SPEC:-} == @* ]]; then
+    echo "Deploying the git revision ${OPUS_VERSION_SPEC#@}. If these scripts did not come from"
+    echo "it, refresh them first:"
+    echo "  ${IMPORT_SCRIPT_DIR}/update_deploy_scripts.sh \"${OPUS_VERSION_SPEC}\""
 fi

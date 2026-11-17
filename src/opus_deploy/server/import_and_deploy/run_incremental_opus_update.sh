@@ -4,7 +4,9 @@
 #            [--drop <bundle>[,<bundle>...]] [<bundle> ...]
 #
 #   <version_spec>  a PEP 440 specifier appended to the distribution name, for
-#                   example '==3.23.0'. Omit it to install the release being served.
+#                   example '==3.23.0', or '@' and a git branch, tag or commit, for
+#                   example '@main' (_version_spec.sh). Omit it to install what is
+#                   being served: its release, or the commit it was built from.
 #   --drop          bundles to drop from the served database without importing them
 #                   again. A bundle named here and as a <bundle> is imported again.
 #   <bundle>        bundles to import into the served database: a bundle it holds is
@@ -19,6 +21,7 @@ export SCRIPT_DIR=$(dirname "${IMPORT_SCRIPT_DIR}")
 export SECRETS_DIR="${SCRIPT_DIR}/secrets"
 
 # The arguments first, so that a mistyped command runs nothing at all.
+source "${IMPORT_SCRIPT_DIR}/_version_spec.sh"
 source "${IMPORT_SCRIPT_DIR}/_incremental_opus_update_steps.sh"
 if ! parse_update_arguments "$@"; then
     exit 1
