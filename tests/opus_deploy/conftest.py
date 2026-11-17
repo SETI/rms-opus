@@ -103,6 +103,7 @@ def run_deploy(
     deployed_schema: str | None = 'served',
     deployed_release: str = '3.25.0',
     generation_refusal: str = '',
+    failing_sudo: str | None = None,
 ) -> tuple[int, str, list[str]]:
     """Run a deploy script with its helpers stubbed and its commands faked.
 
@@ -127,6 +128,8 @@ def run_deploy(
             interpreter reports; empty for one that cannot report it.
         generation_refusal: What the fake ``python`` prints when asked why a switch or a
             revert would be refused; empty when it would run. It is not recorded.
+        failing_sudo: The arguments, joined by spaces, for which the fake ``sudo`` exits
+            1, as sudo does when its password is mistyped; every other call exits 0.
 
     Returns:
         The script's status, everything it printed, and each faked command it ran, as its
@@ -176,6 +179,9 @@ def run_deploy(
     fake_bin = tmp_path / 'bin'
     fake_bin.mkdir()
     statuses = {
+        'sudo': f'[[ "$*" == {shlex.quote(failing_sudo)} ]] && exit 1'
+        if failing_sudo is not None
+        else '',
         'opus_manage': (
             f'[[ "$*" == "migrate --plan --check" ]] && {{ {MIGRATION_CHECKS[migration_check]}; }}'
         ),

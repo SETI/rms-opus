@@ -47,6 +47,7 @@ def _run_step(
     manage_status: int = 0,
     help_text: str = _HELP_WITH,
     help_status: int = 0,
+    service_status: int = 0,
     environment: dict[str, str] | None = None,
 ) -> tuple[int, str, list[str], list[str]]:
     """Source the steps with fakes under ``set -e``, as the callers do, and run one line.
@@ -58,6 +59,8 @@ def _run_step(
         manage_status: What the fake ``opus_manage`` exits with.
         help_text: What the fake ``opus_import --help`` prints.
         help_status: What the fake ``opus_import --help`` exits with.
+        service_status: What the service command exits with, as sudo does after a
+            mistyped password when it is not 0.
         environment: Further variables to set.
 
     Returns:
@@ -80,7 +83,8 @@ def _run_step(
         fake.chmod(0o755)
     recorder = fake_bin / 'record_service'
     recorder.write_text(
-        f'#!/bin/bash\necho "$*" >> {shlex.quote(str(services))}\n', encoding='utf-8'
+        f'#!/bin/bash\necho "$*" >> {shlex.quote(str(services))}\nexit {service_status}\n',
+        encoding='utf-8',
     )
     recorder.chmod(0o755)
     assert _BASH is not None
@@ -219,3 +223,33 @@ def test_sourcing_the_steps_runs_nothing(tmp_path: Path) -> None:
             assert line.endswith('() {'), line
         depth += line.count('{') - line.count('}')
     assert depth == 0
+
+
+@pytest.mark.skipif(_BASH is None, reason='needs bash')
+def test_a_service_action_that_fails_names_the_command_and_returns_its_status(
+    tmp_path: Path,
+) -> None:
+    """The caller runs it with ``||`` or in an ``if``, so ``set -e`` does not end the script
+    unannounced."""
+    status, output, _ran, asked = _run_step(
+        tmp_path,
+        'service_action stop opus-web || echo "CALLER: $?"',
+        service_status=1,
+    )
+    assert status == 0, output
+    assert asked == ['stop opus-web']
+    assert 'ERROR: sudo systemctl stop opus-web failed with status 1' in output
+    assert 'mistyped password' in output
+    assert 'CALLER: 1' in output
+
+
+@pytest.mark.skipif(_BASH is None, reason='needs bash')
+def test_a_carry_over_whose_restart_fails_says_the_site_is_down(tmp_path: Path) -> None:
+    """The carry-over still fails the promotion, and the way to start the site is named."""
+    status, output, _ran, asked = _run_step(
+        tmp_path, _CARRY_OVER, import_status=1, service_status=1
+    )
+    assert status == 1
+    assert asked == ['start opus-web']
+    assert 'CONTINUED' not in output
+    assert 'The site is down. Start it with: sudo systemctl start opus-web' in output

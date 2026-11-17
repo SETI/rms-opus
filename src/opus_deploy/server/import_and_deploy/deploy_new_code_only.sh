@@ -113,8 +113,14 @@ if ${NO_DATABASE}; then
 fi
 echo
 
-# Get sudo password input and cached, before anything long runs.
-sudo echo
+# Get sudo password input and cached, before anything long runs: the switch at the
+# end needs it. A password sudo does not accept ends the deploy here, saying so, rather
+# than at the switch.
+if ! sudo -v; then
+    echo "ERROR: sudo did not accept a password, and the switch at the end needs it."
+    echo "*** ABORTING: nothing was built or switched ***"
+    exit 1
+fi
 
 # Beside the running installation, which goes on serving until the switch.
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh

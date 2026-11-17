@@ -51,7 +51,10 @@ echo "Promoting ${INSTALL_DIR}"
 # has already happened by the time this runs. They are stopped rather than restarted
 # afterwards because a worker that read the old installation's configuration would go
 # on answering from the old database until it was replaced.
-sudo systemctl stop "${OPUS_WEB_SERVICE}"
+if ! service_action stop "${OPUS_WEB_SERVICE}"; then
+    echo "       Nothing has been switched; the running installation is untouched."
+    exit 1
+fi
 
 # The served schema takes no requests from here, so nothing written to it is left behind.
 # A failure starts the web service again on the unchanged installation.
@@ -73,7 +76,7 @@ if ! ln -sfn "${INSTALL_DIR}" "${OPUS_DIR}/deployed.new" ||
    ! mv -Tf "${OPUS_DIR}/deployed.new" "${OPUS_DIR}/deployed"; then
     echo "ERROR: could not switch ${OPUS_DIR}/deployed to ${INSTALL_DIR}."
     echo "       Restarting what was running before."
-    sudo systemctl start "${OPUS_WEB_SERVICE}"
+    start_web_service_again
     exit 1
 fi
 
@@ -87,14 +90,20 @@ fi
 # installation with no shared cache falls back to a per-worker one, which the restart
 # below empties anyway, and says so by leaving OPUS_CACHE_SERVICE empty.
 if [[ -n ${OPUS_CACHE_SERVICE} ]]; then
-    if ! sudo systemctl restart "${OPUS_CACHE_SERVICE}"; then
+    if ! service_action restart "${OPUS_CACHE_SERVICE}"; then
         echo "WARNING: ${OPUS_CACHE_SERVICE} did not restart. If this installation"
         echo "         uses it, the shared cache still holds entries the previous"
         echo "         release wrote."
     fi
 fi
 
-sudo systemctl start "${OPUS_WEB_SERVICE}"
+# The switch is made, so a web service that does not start leaves the site down on the
+# new installation, which is said rather than left to set -e.
+if ! service_action start "${OPUS_WEB_SERVICE}"; then
+    echo "       ${OPUS_DIR}/deployed is switched to ${INSTALL_DIR}, and the site is"
+    echo "       down. Start it with: sudo systemctl start ${OPUS_WEB_SERVICE}"
+    exit 1
+fi
 
 # The empty search, its first page and the widgets' counts, into the cache just emptied.
 # A failure warns and the deploy goes on. The warm-up registers a search and a session as

@@ -70,7 +70,12 @@ mkdir -p ${OPUS_LOG_DIR}
 # deploy that ran as another account is made writable again rather than being an
 # installation that starts and cannot log.
 if [ -f ${OPUS_LOG_DIR}/opus_log.txt ]; then
-    sudo chmod ug+w ${OPUS_LOG_DIR}/opus_log.txt
+    if ! sudo chmod ug+w ${OPUS_LOG_DIR}/opus_log.txt; then
+        echo "ERROR: could not make ${OPUS_LOG_DIR}/opus_log.txt writable: sudo refused,"
+        echo "       as after a mistyped password, or chmod failed."
+        echo "*** ABORTING: nothing was built or switched ***"
+        exit 1
+    fi
 fi
 mkdir -p ${OPUS_SRC_DIR}
 
@@ -89,8 +94,13 @@ echo
 
 # Get sudo password input and cached, before anything long runs: the switch at the
 # end needs it, and being asked for it then would leave a built installation waiting
-# on a prompt nobody is watching.
-sudo echo
+# on a prompt nobody is watching. A password sudo does not accept ends the deploy here,
+# saying so, rather than at the switch.
+if ! sudo -v; then
+    echo "ERROR: sudo did not accept a password, and the switch at the end needs it."
+    echo "*** ABORTING: nothing was built or switched ***"
+    exit 1
+fi
 
 # Everything from here to the switch happens beside the running installation, which
 # goes on serving.
