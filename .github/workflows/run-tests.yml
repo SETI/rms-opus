@@ -168,8 +168,8 @@ jobs:
       - name: Set up Python 3.14
         # Coverage follows every opus_import subprocess the suite starts. Under
         # Python 3.12 its tracer costs several seconds in each one, most of it
-        # in the interpreter's own startup; from 3.14 coverage measures lines
-        # and branches through sys.monitoring, which costs a fraction of that.
+        # in the interpreter's own startup, and the suite takes several times as
+        # long; under 3.13 and later it costs a fraction of a second.
         uses: actions/setup-python@v7
         with:
           python-version: 3.14

@@ -173,7 +173,7 @@ Never set it outside a test.
 
 That plain form is the everyday one -- about two minutes, no coverage, with the three
 executed-functions tests skipping because the report they read is not there. Measuring
-coverage costs about two and a half times that and takes two commands;
+coverage takes two commands, and under Python 3.12 several times as long;
 :ref:`dev_guide_import_fixture` gives both and says when each is wanted.
 
 .. _running-the-integration-suites:

@@ -18,9 +18,12 @@ That is the everyday form and the one to use: about two minutes, no coverage. Th
 executed-functions tests **skip** in it, saying what to run instead, because the report
 they read is not there.
 
-Coverage is the other form, and it costs about two and a half times the runtime. It is two invocations,
-because the executed-functions check reads the report the rest of the suite writes and
-that report does not exist until the session producing it has ended::
+Coverage is the other form. Coverage follows every ``opus_import`` process the suite
+starts, and under Python 3.12 its tracer costs several seconds in each, so the suite takes
+several times as long there; under Python 3.13 and later it costs a fraction of a second
+in each. It is two invocations, because the executed-functions check reads the report the
+rest of the suite writes and that report does not exist until the session producing it
+has ended::
 
     pytest import_tests --ignore=import_tests/test_obs_execution.py \
         --cov --cov-report=json:coverage.json
