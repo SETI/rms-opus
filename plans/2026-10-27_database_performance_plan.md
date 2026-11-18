@@ -9506,3 +9506,33 @@ reversions, each failing a test).
   as benchmarks of a range on an unindexed child-table column, at a broad and a narrow
   time range, a shape no other scenario covers and whose plan rests on the optimizer's
   guess for the unindexed range; `queries.sql`, captured with them, needs no recapture.
+
+### 2026-11-18, PR-25a (written against this file at b1105264)
+
+- **Not in the plan; added at the operator's request** because the import suite, meant as
+  the quick suite for anyone without the holdings, took 1,695–1,998 s of pytest on CI
+  (3,449 s on a slow runner) against 344 s on `main`. The import was not slower: the
+  stack's generation, append, coordinator and concurrent-import cases run many more
+  `opus_import` invocations, and on CI each paid three costs unrelated to the step under
+  test.
+- **Coverage under Python 3.12** was about 70% of the suite's time: its tracer turns an
+  invocation of under a second into five to eight, mostly tracing interpreter startup
+  (`test_schema_version.py`: 29 s unmeasured, 157 s measured). The Import Tests job runs
+  under 3.14, where measuring costs a fraction of a second, and reports every test,
+  setup and teardown of 2 s or more. A MySQL data directory in memory made no
+  difference and was reverted.
+- **Fixed-length holds** slept at every bundle. `hold_after_claim` and
+  `hold_after_chunk` take a file's path, as `hold_before_lock` does; an importer waits
+  while the file exists, each site has a file of its own, and each test removes the file
+  once it has seen what it needs. The concurrent-import fixture fails unless all three
+  importers held a bundle at once.
+- **The coordinator** looks for an exited importer of its own five times a second between
+  passes over the registry and makes a pass at once when it finds one, so a lost
+  importer's bundle is recovered sooner and a run ends sooner after its last importer.
+  `TRACK_SECONDS` is unchanged.
+- **The generation cases** copy one update a module fixture makes once, instead of each
+  making the same update; `copy_run_schema` takes the schema to copy.
+- **CI pytest time** for the import suite: 610 s under 3.14; 534 s with the file holds
+  and the coordinator's wake; 775 s with the shared update on a runner about 1.5× slower,
+  about 505 s scaled. The MySQL service's health check pings over TCP, which the image's
+  initialization server does not listen on, so the job waits for the server it uses.
