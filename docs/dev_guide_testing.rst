@@ -172,7 +172,7 @@ wait.
 
 Never set it outside a test.
 
-That plain form is the everyday one -- about two minutes, no coverage, with the three
+That plain form is the everyday one -- five or six minutes, no coverage, with the three
 executed-functions tests skipping because the report they read is not there. Measuring
 coverage takes two commands, and under Python 3.12 several times as long;
 :ref:`dev_guide_import_fixture` gives both and says when each is wanted.
@@ -369,7 +369,7 @@ other two suites need a server or a database, so neither is in a default run.
 
 ``--import-tests`` adds the import suite to whatever else is running -- on its own, to the
 full run; alongside another ``--*`` flag, to that selection. It is opt-in because it is the
-one check that needs a reachable MySQL server, and because it takes about two minutes
+one check that needs a reachable MySQL server, and because it takes five or six minutes
 against the eighteen seconds everything else costs. It uses the bare form, without
 coverage, and finds its server itself, from ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER``
 and ``OPUS_TEST_DB_PASSWORD`` or, with none of those set, from the ``OPUS_CONFIG`` file --

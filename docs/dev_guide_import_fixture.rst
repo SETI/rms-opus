@@ -14,7 +14,7 @@ for by name::
 
     pytest import_tests
 
-That is the everyday form and the one to use: about two minutes, no coverage. The three
+That is the everyday form and the one to use: five or six minutes, no coverage. The three
 executed-functions tests **skip** in it, saying what to run instead, because the report
 they read is not there.
 
