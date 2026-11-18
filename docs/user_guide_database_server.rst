@@ -5,9 +5,9 @@ Configuring the Database Server
 
 OPUS runs against MySQL with nothing but a user allowed to create and drop databases and
 tables (:ref:`user_guide_installation_prereqs`), but a server left at MySQL's defaults
-imports slowly and searches from disk. This chapter is the settings that matter to OPUS,
-what each one does for it, and how to tell whether the indexes the database carries are
-the ones its traffic reads.
+imports slowly and searches from disk. This chapter describes the settings that matter to
+OPUS, what each one does for it, and how to tell whether the indexes the database carries
+are the ones its traffic reads.
 
 One server can import and serve at once, or the import can run on one server and the
 database be copied to another that serves it, which the deploy chain's ``database/``

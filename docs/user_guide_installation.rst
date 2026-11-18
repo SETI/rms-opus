@@ -3,7 +3,7 @@
 Installing OPUS on a Server
 ===========================
 
-This chapter brings a complete OPUS server up from nothing.
+This chapter describes bringing a complete OPUS server up from nothing.
 
 **Almost none of it is done by hand.** The distribution ships the scripts that install
 OPUS, import the holdings and deploy the result, and ``opus_deploy_scripts`` writes them

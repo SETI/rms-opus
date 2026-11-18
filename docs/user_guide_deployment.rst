@@ -3,12 +3,12 @@
 Deployment and Operations
 =========================
 
-:ref:`user_guide_installation` brings a server up from nothing with the deploy scripts,
-and :ref:`user_guide_web_server` puts a web server in front of it. This chapter is the
-running of it afterwards: what a deploy actually does, how a release is deployed onto a
-running site, the two things that always have to happen when a database changes, the
-runbook for replacing one, and the cron jobs that keep the stored searches bounded and the
-log reports current.
+:ref:`user_guide_installation` describes bringing a server up from nothing with the deploy
+scripts, and :ref:`user_guide_web_server` describes putting a web server in front of it.
+This chapter describes running it afterwards: what a deploy actually does, how a release
+is deployed onto a running site, the two things that always have to happen when a
+database changes, the runbook for replacing one, and the cron jobs that keep the stored
+searches bounded and the log reports current.
 
 The scripts are the same ones the installation chapter wrote out with
 ``opus_deploy_scripts``, in the deploy directory beside their ``secrets/deploy.env``.
