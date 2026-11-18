@@ -395,10 +395,12 @@ registration's command to the first importer's start, is
 ``import.registration.wall_s``; the importers' phase, from there to the first closing
 command, is ``import.bundle_imports.wall_s``; and each closing invocation, to the next
 command or the coordinator's exit, is ``import.invocation.<role>.wall_s``, which with the
-migration make ``import.finalization.wall_s``. The coordinator notices an exited importer
-of its own within a fraction of a second, so its importers' phase, and its
-``import.wall_s``, carry that much past the last importer's exit, which a run with
-``--importers`` does not; the idle times stop at the last exit either way. The
+migration make ``import.finalization.wall_s``. Between its passes over the registry the
+coordinator stops waiting within a fraction of a second of an importer of its own
+exiting, then makes a pass, recovering and reporting, before it can return; its
+importers' phase, and its ``import.wall_s``, carry that time past the last importer's
+exit, which a run with ``--importers`` does not. The idle times stop at the last exit
+either way. The
 coordinator's importers cannot be
 given a timing file each, so each bundle's ``import_bundle`` time is its ``Importing``
 block's elapsed time in its importer's log, which covers the same call the timing

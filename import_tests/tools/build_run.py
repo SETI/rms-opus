@@ -912,7 +912,7 @@ def copy_run_schema(
     """
     schema = fixture_layout.schema_name(os.getpid(), case)
     created_schemas.append(schema)
-    clone_schema(credentials, source or run.schema, schema)
+    clone_schema(credentials, run.schema if source is None else source, schema)
     paths = sibling_paths(run, case)
     write_opus_config(paths, schema, credentials)
     return SchemaCopy(schema, paths)
@@ -1001,20 +1001,30 @@ def run_concurrently(
 
     Returns:
         What each invocation did, in the order of `config_files`.
+
+    Raises:
+        OSError: A process could not be started; the ones already started are killed
+            and reaped first.
     """
-    processes = []
-    for config_file in config_files:
-        environment = {**run_environment(config_file), **(extra_environment or {})}
-        processes.append(
-            subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's own module
-                [str(THIS_PYTHON), '-m', 'opus_import', *arguments],
-                cwd=fixture_layout.REPO_ROOT,
-                env=environment,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
+    processes: list[subprocess.Popen[str]] = []
+    try:
+        for config_file in config_files:
+            environment = {**run_environment(config_file), **(extra_environment or {})}
+            processes.append(
+                subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's own module
+                    [str(THIS_PYTHON), '-m', 'opus_import', *arguments],
+                    cwd=fixture_layout.REPO_ROOT,
+                    env=environment,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
             )
-        )
+    except BaseException:
+        for process in processes:
+            process.kill()
+            process.communicate()
+        raise
     with ThreadPoolExecutor(max_workers=1) as executor:
         drained = executor.submit(communicate_all, processes)
         try:

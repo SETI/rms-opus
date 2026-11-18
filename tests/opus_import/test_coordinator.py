@@ -225,6 +225,27 @@ def test_the_wait_between_readings_ends_when_an_importer_exits(
     assert (clock.slept == []) is not waits_out
 
 
+def test_the_wait_between_readings_ends_at_the_poll_after_an_importer_exits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An importer that exits partway through the wait ends it at the next poll."""
+    clock = _Clock()
+    process = _Process(None)
+
+    def sleep_then_exit(seconds: float) -> None:
+        clock.sleep(seconds)
+        process.code = -9
+
+    monkeypatch.setattr(time, 'monotonic', clock.monotonic)
+    monkeypatch.setattr(time, 'sleep', sleep_then_exit)
+    coordinator = _coordinator()
+    coordinator._own = [opus_coordinator._Importer(process, 1)]  # type: ignore[arg-type]
+
+    coordinator._wait_for_an_exit()
+
+    assert clock.slept == [opus_coordinator._EXIT_POLL_SECONDS]
+
+
 def test_a_lost_importer_is_replaced_while_bundles_are_pending(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

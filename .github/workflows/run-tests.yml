@@ -143,10 +143,11 @@ jobs:
           MYSQL_ROOT_PASSWORD: opus_import_tests
         ports:
           - 3306:3306
-        # The health check keeps the first connection from racing the server's
-        # startup.
+        # The health check pings over TCP, as the suite connects, and the image's
+        # initialization server listens on no TCP port, so the job starts only once the
+        # server the suite uses is up.
         options: >-
-          --health-cmd="mysqladmin ping --silent"
+          --health-cmd="mysqladmin ping --protocol=tcp -h 127.0.0.1 --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12

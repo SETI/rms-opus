@@ -105,12 +105,19 @@ def join_run(
         finally:
             hold_file.unlink(missing_ok=True)
 
-    imported = build_run.run_concurrently(
-        [importer.config_file for importer in paths],
-        build_run.JOIN_ARGS,
-        extra_environment={import_fault.IMPORT_FAULT_ENV_VAR: hold},
-        while_running=release_once_every_importer_holds,
-    )
+    try:
+        imported = build_run.run_concurrently(
+            [importer.config_file for importer in paths],
+            build_run.JOIN_ARGS,
+            extra_environment={import_fault.IMPORT_FAULT_ENV_VAR: hold},
+            while_running=release_once_every_importer_holds,
+        )
+    finally:
+        hold_file.unlink(missing_ok=True)
+    if held_at_once[0] != IMPORTERS:
+        # Without the overlap the run proves nothing about concurrent importers.
+        output = '\n'.join(result.stdout[-2000:] + result.stderr[-2000:] for result in imported)
+        pytest.fail(f'{held_at_once[0]} of {IMPORTERS} importers held a bundle at once\n{output}')
     closing = [
         build_run.run_pipeline_step(config_file, build_run.AUX_ARGS),
         build_run.run_pipeline_step(config_file, build_run.DICTIONARY_ARGS),

@@ -148,10 +148,11 @@ and each site decides what its argument selects. The sites are:
     it, so a test can see that the failed index leaves none of its rows.
 
 The three ``hold_`` sites take a file's path as their argument. An importer waits at
-the site while the file exists, for at most
-:data:`~opus_import.import_processes.HOLD_LIMIT_SECONDS`, so a test holds importers for
-exactly as long as it needs them there, however slowly the computer runs, and removes the
-file to let them go on; an importer that reaches the site after that does not wait.
+the site until the file is removed or
+:data:`~opus_import.import_processes.HOLD_LIMIT_SECONDS` pass, whichever comes first, so
+a test holds importers there however slowly the computer runs, as long as it removes the
+file within that limit; an importer that reaches the site after the file is gone does not
+wait.
 
 ``hold_after_claim``
     After a queue importer's claim of a bundle commits, before it imports the bundle.

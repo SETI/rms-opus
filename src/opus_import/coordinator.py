@@ -38,8 +38,9 @@ if TYPE_CHECKING:
     from opus_import.import_processes import Snapshot
     from opus_import.importdb.super import ImportDBSuper
 
-#: The most seconds between two readings of the registry while importers run. An importer
-#: of the coordinator's own that exits brings the next reading forward.
+#: The seconds the coordinator waits after one pass over the registry before the next,
+#: while importers run. An importer of the coordinator's own that exits during the wait
+#: ends it early.
 TRACK_SECONDS = 5.0
 
 #: How often the coordinator looks, between two readings, for an importer of its own that
