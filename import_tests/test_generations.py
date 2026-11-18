@@ -310,10 +310,14 @@ def _orphan_last_added_observation(credentials: DatabaseCredentials, schema: str
 def _start_holding_import(
     copy: build_run.SchemaCopy, bundle: str, credentials: DatabaseCredentials
 ) -> subprocess.Popen[str]:
-    """Start a plain ``--import`` of a bundle that sleeps after its first chunk commits,
-    and return once it is that far; if it never gets there, stop it before failing."""
+    """Start a plain ``--import`` of a bundle that waits after its first chunk commits,
+    on a file nothing removes, and return once it is that far; if it never gets there,
+    stop it before failing. The caller kills it."""
+    hold_file = copy.paths.log_dir / 'hold_after_chunk'
+    hold_file.parent.mkdir(parents=True, exist_ok=True)
+    hold_file.touch()
     environment = build_run.run_environment(copy.paths.config_file)
-    environment[IMPORT_FAULT_ENV_VAR] = f'{HOLD_AFTER_CHUNK_FAULT_SITE}:600'
+    environment[IMPORT_FAULT_ENV_VAR] = f'{HOLD_AFTER_CHUNK_FAULT_SITE}:{hold_file}'
     process = subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's module
         [str(build_run.THIS_PYTHON), '-m', 'opus_import', *build_run.IMPORT_ARGS, bundle],
         cwd=fixture_layout.REPO_ROOT,

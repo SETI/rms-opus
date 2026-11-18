@@ -60,15 +60,16 @@ LOCK_CONNECTION_IDLE_SECONDS = 31_536_000
 #: the file exists, so the test that made it decides when the importer goes on.
 HOLD_BEFORE_LOCK_FAULT_SITE = 'hold_before_lock'
 
-#: How long an importer waits at `HOLD_BEFORE_LOCK_FAULT_SITE` before it goes on with the
-#: file still there, so a test that never removes it does not leave the importer waiting.
+#: How long an importer waits at a hold fault site before it goes on with the file still
+#: there, so a test that never removes it does not leave the importer waiting.
 HOLD_LIMIT_SECONDS = 300.0
 
-#: How often an importer at `HOLD_BEFORE_LOCK_FAULT_SITE` looks for its file.
+#: How often an importer at a hold fault site looks for its file.
 _HOLD_POLL_SECONDS = 0.1
 
-#: The `opus_import.import_fault` site after a bundle's first chunk commits. Its
-#: argument is the seconds the importer sleeps there.
+#: The `opus_import.import_fault` site after a bundle's first chunk commits. Its argument
+#: is a file's path: the importer waits there while the file exists, as it does at
+#: `HOLD_BEFORE_LOCK_FAULT_SITE`.
 HOLD_AFTER_CHUNK_FAULT_SITE = 'hold_after_chunk'
 
 
@@ -321,9 +322,9 @@ class BundleGuard:
         self.ids.rows_done = self._pending_rows
         self.chunks += 1
         if self.chunks == 1:
-            hold = import_fault_argument(HOLD_AFTER_CHUNK_FAULT_SITE)
-            if hold is not None:
-                time.sleep(float(hold))
+            hold_file = import_fault_argument(HOLD_AFTER_CHUNK_FAULT_SITE)
+            if hold_file is not None:
+                hold_while_present(hold_file)
 
 
 @dataclass(frozen=True)

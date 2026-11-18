@@ -37,7 +37,7 @@ from import_tests.tools.golden_io import DatabaseCredentials
 from opus_import import generations
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping, Sequence
+    from collections.abc import Callable, Iterable, Mapping, Sequence
 
 #: The environment variable the pipeline reads its configuration file from.
 CONFIG_ENV_VAR = 'OPUS_CONFIG'
@@ -980,6 +980,7 @@ def run_concurrently(
     arguments: Sequence[str],
     *,
     extra_environment: Mapping[str, str] | None = None,
+    while_running: Callable[[], None] | None = None,
 ) -> list[StepResult]:
     """Start one ``opus_import`` invocation per configuration at once, and wait for all.
 
@@ -987,6 +988,9 @@ def run_concurrently(
         config_files: Each process's configuration, which names its own log directory.
         arguments: The command line every process runs, after ``python -m opus_import``.
         extra_environment: Variables added to every process's environment, or None.
+        while_running: Called once the processes have started, while their pipes are
+            drained, or None. If it raises, every process is killed and the exception
+            propagates.
 
     Returns:
         What each invocation did, in the order of `config_files`.
@@ -1004,6 +1008,16 @@ def run_concurrently(
                 text=True,
             )
         )
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        drained = executor.submit(communicate_all, processes)
+        try:
+            if while_running is not None:
+                while_running()
+        except BaseException:
+            for process in processes:
+                process.kill()
+            raise
+        outputs = drained.result()
     return [
         StepResult(
             arguments=tuple(arguments),
@@ -1011,5 +1025,5 @@ def run_concurrently(
             stdout=stdout,
             stderr=stderr,
         )
-        for process, (stdout, stderr) in zip(processes, communicate_all(processes), strict=True)
+        for process, (stdout, stderr) in zip(processes, outputs, strict=True)
     ]

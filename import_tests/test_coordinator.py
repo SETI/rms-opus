@@ -95,6 +95,27 @@ class Case:
         self.started.append(process)
         return process
 
+    @property
+    def hold_file(self) -> Path:
+        """The file the case's importers wait on at a hold fault site."""
+        return self.paths.log_dir / 'hold'
+
+    def hold(self, site: str) -> str:
+        """Create the hold file, and return the ``OPUS_IMPORT_FAULT`` value that waits on it.
+
+        Parameters:
+            site: The hold fault site.
+
+        Returns:
+            The fault: an importer waits at the site while the file exists.
+        """
+        self.hold_file.touch()
+        return f'{site}:{self.hold_file}'
+
+    def release(self) -> None:
+        """Remove the hold file, so every importer waiting at the site goes on."""
+        self.hold_file.unlink(missing_ok=True)
+
     def has(self, table: str) -> bool:
         """Return whether the case's schema has a table yet."""
         found = golden_io.query(
@@ -217,6 +238,7 @@ def case(
     try:
         yield found
     finally:
+        found.release()
         for process in found.started:
             if process.poll() is None:
                 process.kill()
@@ -261,7 +283,7 @@ def test_a_killed_importer_frees_its_lock_and_its_bundle_is_imported_again(
     """``SIGKILL`` to one of three importers while its pool runs, mid-bundle: its lock is
     free within seconds, the coordinator returns its bundle to the queue and replaces it,
     and the finished schema equals the one-importer schema."""
-    hold = f'{import_processes.HOLD_AFTER_CHUNK_FAULT_SITE}:5'
+    hold = case.hold(import_processes.HOLD_AFTER_CHUNK_FAULT_SITE)
     coordinator = case.start(
         'opus_import.import_all',
         ['--sets', ','.join(main_run.bundles), '--importers', '3', '--workers', '4'],
@@ -301,6 +323,7 @@ def test_a_killed_importer_frees_its_lock_and_its_bundle_is_imported_again(
     _wait(lambda: case.lock_holder(process_id) is None, 'the lock to be freed', _LOCK_FREED_WITHIN)
     assert time.monotonic() - killed < _LOCK_FREED_WITHIN
     assert pool
+    case.release()
 
     status, output = _finish(coordinator)
 
@@ -317,7 +340,7 @@ def test_a_bundle_lost_twice_fails_and_nothing_is_finalized(case: Case) -> None:
     """Its importer killed twice, the bundle is failed; the coordinator names it with its
     importer's log, exits with failure, and writes no schema version row."""
     doomed, other = 'VG_2801', 'VG_2810'
-    hold = f'{do_import.HOLD_AFTER_CLAIM_FAULT_SITE}:3'
+    hold = case.hold(do_import.HOLD_AFTER_CLAIM_FAULT_SITE)
     coordinator = case.start(
         'opus_import.import_all',
         ['--sets', f'{doomed},{other}', '--importers', '1', '--workers', '1'],
@@ -337,6 +360,7 @@ def test_a_bundle_lost_twice_fails_and_nothing_is_finalized(case: Case) -> None:
         process_id, pid = _wait(holder_of_doomed, f'an importer holding {doomed}')
         os.kill(pid, signal.SIGKILL)
         killed.append(process_id)
+    case.release()
 
     status, output = _finish(coordinator)
 
@@ -356,7 +380,7 @@ def test_two_interrupts_abort_and_a_rerun_resumes_to_the_same_result(
     nothing is finalized, no bundle is left importing or counted lost, and running the
     coordinator again finishes a schema equal to the one-importer schema."""
     arguments = ['--sets', ','.join(main_run.bundles), '--importers', '2', '--workers', '2']
-    hold = f'{do_import.HOLD_AFTER_CLAIM_FAULT_SITE}:3'
+    hold = case.hold(do_import.HOLD_AFTER_CLAIM_FAULT_SITE)
     coordinator = case.start('opus_import.import_all', arguments, fault=hold)
     _wait(
         lambda: (
@@ -378,6 +402,7 @@ def test_two_interrupts_abort_and_a_rerun_resumes_to_the_same_result(
     assert 'pending' in states.values()
     assert case.rows('SELECT MAX(losses) FROM import_bundle') == [(0,)]
     assert _no_version_table(case)
+    case.release()
 
     status, output = _finish(case.start('opus_import.import_all', arguments))
 
@@ -391,7 +416,7 @@ def test_an_importer_whose_lock_connection_is_killed_aborts_its_bundle(case: Cas
     its lock, and its bundle is pending with no row of it committed."""
     bundle_id = 'COCIRS_1101'
     _register(case, [bundle_id])
-    hold = f'{import_processes.HOLD_AFTER_CHUNK_FAULT_SITE}:5'
+    hold = case.hold(import_processes.HOLD_AFTER_CHUNK_FAULT_SITE)
     importer = case.start('opus_import', ['--join'], fault=hold)
 
     def in_the_hold() -> int | None:
@@ -411,6 +436,7 @@ def test_an_importer_whose_lock_connection_is_killed_aborts_its_bundle(case: Cas
     holder = _wait(in_the_hold, "the bundle's first chunk")
     lock = import_processes.importer_lock_name(case.schema, case.importers()[0][0])
     golden_io.execute(case.credentials, None, f'KILL {int(holder)}')
+    case.release()
 
     status, output = _finish(importer)
 
@@ -443,7 +469,7 @@ def test_a_recovery_deletes_rows_in_tables_created_after_it_connected(case: Case
         "the coordinator's importer to find nothing it may claim",
     )
     assert not case.has('obs_general')
-    hold = f'{import_processes.HOLD_AFTER_CHUNK_FAULT_SITE}:5'
+    hold = case.hold(import_processes.HOLD_AFTER_CHUNK_FAULT_SITE)
     importer = case.start('opus_import', ['--join'], fault=hold)
 
     def committed() -> int | None:
@@ -458,6 +484,7 @@ def test_a_recovery_deletes_rows_in_tables_created_after_it_connected(case: Case
     process_id = _wait(committed, "the bundle's first chunk")
     importer.kill()
     importer.wait()
+    case.release()
 
     status, output = _finish(coordinator)
 
