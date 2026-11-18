@@ -7,8 +7,8 @@ larger than its floor (or, with ``--all``, every metric either file holds), and 
 it how many reported metrics it left out. A row holds each side's median, spread and
 maximum, the change, the floor (as a fraction and
 in the metric's units at the before median), the metric's role, and the verdict. A metric's p95 over its runs is its maximum, since a session has
-fewer than twenty runs, so the maximum column is its p95 too. It refuses two results whose ``server_model``, server ownership, cache backend
-or brand differ, because their numbers are not comparable.
+fewer than twenty runs, so the maximum column is its p95 too. It refuses two results whose ``server_model``, server ownership, cache backend,
+brand or concurrent users differ, because their numbers are not comparable.
 
 A metric's **role** decides whether it is judged. A **target** (``--target``) is judged
 on improving beyond its floor. A **guard** -- the metrics `GUARD_PATTERNS` matches: the
@@ -36,6 +36,11 @@ and may show as a regression, an improvement or nothing, by how the executions f
 A comparison refuses two files of different scales, an after file given before a before
 file, a target metric neither file holds, and a floors file of another scale or brand.
 
+``python -m benchmarks.compare --sweep RESULT.json RESULT.json [RESULT.json ...]``
+prints the results of a thread sweep side by side, one column per thread count
+(`benchmarks.sweep`), refusing results that differ in anything but the threads per
+worker.
+
 ``python -m benchmarks.compare --floors SESSION.json SESSION.json [SESSION.json]``
 writes the floors file of the sessions' scale and brand into the results directory,
 and lists the metrics the sessions disagree on and those some session lacks. Every
@@ -56,7 +61,10 @@ sessions' medians covers all of them.
 The **change** is ``(after - before) / before``. The **floor** of a metric is the
 floors file's ``floor``, or its absolute noise over the before median where that is
 larger (`effective_floor`), or the before side's own spread where that is larger
-still, or the before side's spread alone where there is no floors file. The absolute
+still, or the before side's spread alone where there is no floors file. A time metric
+the floors file has no entry for -- one newer than its sessions -- takes its family's
+jitter over the before median where that is larger than the spread
+(`unfloored_time_floor`). The absolute
 noise is the metric's ``floor_abs``, in its own units, or for a time metric its
 family's **jitter** where that is larger: small times scatter by a roughly fixed
 amount whatever their size, so a fraction measured on one median does not carry over
@@ -99,6 +107,7 @@ from benchmarks.results import (
     spread,
     without_outliers,
 )
+from benchmarks.sweep import render_sweep
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -143,7 +152,13 @@ GUARD_PATTERNS = tuple(
 CEILING_FRACTION = 0.10
 
 #: Environment entries two compared results must share.
-MATCHING_ENVIRONMENT_KEYS = ('server_model', 'server_owned', 'cache_backend', 'brand')
+MATCHING_ENVIRONMENT_KEYS = (
+    'server_model',
+    'server_owned',
+    'cache_backend',
+    'brand',
+    'concurrency_users',
+)
 
 #: The metric families whose time metrics share a jitter: each family's is the median of
 #: its time metrics' absolute floors (`family_jitter`). A metric's family is its name's
@@ -408,6 +423,28 @@ def effective_floor(
     return max(floor, absolute_noise(metric, entry, jitter) / abs(before))
 
 
+def unfloored_time_floor(metric: str, jitter: Mapping[str, float], before: float) -> float | None:
+    """Return the floor of a metric the floors file holds no entry for.
+
+    A metric newer than the floor sessions -- a scenario added since -- has no floor of
+    its own, and is judged against the before side's spread (`render`). A time metric
+    still scatters by its family's jitter whatever its size, so that is its floor too.
+
+    Parameters:
+        metric: The metric.
+        jitter: The floors file's ``jitter``, by family.
+        before: The before side's median.
+
+    Returns:
+        The family's jitter over ``before`` for a time metric whose family has one and
+        whose before median is not zero; otherwise None, leaving the spread alone.
+    """
+    family_jitter_s = jitter.get(metric_family(metric))
+    if not is_time(metric) or family_jitter_s is None or before == 0:
+        return None
+    return family_jitter_s / abs(before)
+
+
 def verdict(metric: str, relative: float | None, floor: float | None) -> str:
     """Judge one change against its floor.
 
@@ -621,6 +658,8 @@ def render(
             floor = effective_floor(
                 name, floors[name], {} if jitter is None else jitter, left.center if left else 0.0
             )
+        elif floors is not None and left is not None:
+            floor = unfloored_time_floor(name, {} if jitter is None else jitter, left.center)
         if left is not None and len(left.values) > 1:
             floor = left.spread if floor is None else max(floor, left.spread)
         metric_role = role(name, targets, warm_statements, import_guards=ceiling is None)
@@ -850,11 +889,17 @@ def main(argv: Sequence[str] | None = None) -> None:
     """
     parser = argparse.ArgumentParser(
         prog='python -m benchmarks.compare',
-        description='Compare two result files, or compute floors from floor sessions.',
+        description='Compare two result files, print a thread sweep, or compute floors from '
+        'floor sessions.',
     )
     parser.add_argument('results', nargs='+', type=Path, help='result files')
     parser.add_argument(
         '--floors', action='store_true', help='write the floors file of these floor sessions'
+    )
+    parser.add_argument(
+        '--sweep',
+        action='store_true',
+        help="print a thread sweep's results side by side, one column per thread count",
     )
     parser.add_argument('--floors-file', type=Path, default=None, help='judge against these floors')
     parser.add_argument(
@@ -871,6 +916,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         help='also show the reported metrics that changed by no more than their floor',
     )
     args = parser.parse_args(argv)
+    if args.floors and args.sweep:
+        parser.error('--floors and --sweep are two different commands; give one')
     if args.floors:
         output, disagreeing = write_floors(args.results)
         sys.stdout.write(f'wrote {output}\n')
@@ -886,6 +933,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                 f'{len(disagreeing)} metrics disagree between the sessions:\n'
                 + ''.join(f'  {name}\n' for name in disagreeing)
             )
+        return
+    if args.sweep:
+        if args.floors_file is not None or len(args.target) > 0:
+            parser.error('a sweep judges nothing; it takes neither --floors-file nor --target')
+        results = [(path, load_result(path)) for path in args.results]
+        summaries = [summarize(content) for _, content in results]
+        sys.stdout.write(render_sweep(results, summaries))
         return
     if len(args.results) != 2:
         parser.error('a comparison takes exactly two result files, before then after')

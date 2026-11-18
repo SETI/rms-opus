@@ -101,7 +101,8 @@ itself.
     Environment=OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
     ExecStart=/opt/opus/deployed/opus_venv/bin/gunicorn \
-        --workers 8 \
+        --workers 4 \
+        --threads 4 \
         --timeout 300 \
         --bind unix:/run/opus/opus.sock \
         --access-logfile - \
@@ -114,7 +115,21 @@ itself.
     [Install]
     WantedBy=multi-user.target
 
-Two of those options are chosen rather than default. ``--timeout 300`` is generous
+Three of those options are chosen rather than default. ``--threads 4`` gives each worker
+four threads, which makes gunicorn use its threaded worker: a request spends most of its
+time waiting on the database, so while one thread waits, another can parse a request or
+render a response, and a worker serves several requests at once without a process of its
+own for each. **Four threads to each of four workers** is the count chosen by measuring
+many users at once, each loading the search page, against two and eight threads: when
+every user asked for a search of their own, four answered about a third more of them a
+second than two; when they all asked for the same search, which one request builds while
+the others wait, two answered somewhat more a second than four; and eight was slower than
+four in both. Once the searches were built and answered from the cache, two and four
+were alike and eight was no faster. The same count is used for uWSGI and ``mod_wsgi``
+below; the number of workers is the machine's to choose (below). Every thread keeps its
+own database connection open between requests (``[django] conn_max_age``), so the database server
+must allow workers times threads connections from each web host, beside the others it
+serves (:ref:`user_guide_database_server_settings`). ``--timeout 300`` is generous
 because building a cart archive of thousands of files is a slow request. **The
 configuration's** ``[django] search_build_timeout`` **has to be at least 30 seconds below
 it** (:ref:`user_guide_installation_configuring`). That is how long a request waits while
@@ -224,7 +239,8 @@ and gunicorn replaced by a uWSGI instance. **The environment variable is set wit
     env = OPUS_CONFIG=/opt/opus/deployed/opus.toml
 
     master    = true
-    processes = 8
+    processes = 4
+    threads   = 4
     harakiri  = 300
 
     socket    = /run/opus/opus.sock
@@ -242,6 +258,10 @@ Two things the gunicorn arrangement got from systemd have to be arranged here. `
 is created by that unit's ``RuntimeDirectory=opus``; running uWSGI instead means either
 its own unit with the same line or a ``/etc/tmpfiles.d`` entry, since ``/run`` does not
 survive a reboot. And ``chown-socket`` is what lets nginx reach the socket at all.
+
+``processes`` and ``threads`` are the four workers of four threads chosen for gunicorn
+above, for the same reason: a request mostly waits on the database. Giving ``threads``
+also turns on uWSGI's thread support, which it otherwise leaves off.
 
 ``harakiri`` is uWSGI's request timeout and plays the role gunicorn's ``--timeout``
 plays above, so the same rule holds: ``[django] search_build_timeout`` has to be at least
@@ -313,7 +333,7 @@ The vhost
         # application is imported inside it.
         WSGIDaemonProcess opus \
             user=opus group=opus \
-            processes=4 threads=2 \
+            processes=4 threads=4 \
             python-home=/opt/opus/deployed/opus_venv
         WSGIProcessGroup opus
         WSGIApplicationGroup %{GLOBAL}
@@ -359,6 +379,9 @@ The vhost
         ErrorLog  ${APACHE_LOG_DIR}/opus_error.log
         CustomLog ${APACHE_LOG_DIR}/opus_access.log combined
     </VirtualHost>
+
+``processes=4 threads=4`` are the four workers of four threads chosen for gunicorn above,
+for the same reason: a request mostly waits on the database.
 
 ``WSGIApplicationGroup %{GLOBAL}`` puts the application in the main interpreter, which is
 what C extensions -- the MySQL driver among them -- want.
