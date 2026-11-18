@@ -144,12 +144,8 @@ jobs:
         ports:
           - 3306:3306
         # The health check keeps the first connection from racing the server's
-        # startup. The data directory is in memory: the suite creates, fills,
-        # renames and drops tables throughout, and on the runner's disk the
-        # flushes behind each of those cost far more than the work itself. The
-        # server is thrown away with the job, so nothing is lost by not syncing.
+        # startup.
         options: >-
-          --tmpfs /var/lib/mysql:rw
           --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
@@ -169,10 +165,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.14
+        # Coverage follows every opus_import subprocess the suite starts. Under
+        # Python 3.12 its tracer costs several seconds in each one, most of it
+        # in the interpreter's own startup; from 3.14 coverage measures lines
+        # and branches through sys.monitoring, which costs a fraction of that.
         uses: actions/setup-python@v7
         with:
-          python-version: 3.12
+          python-version: 3.14
 
       - name: Install MySQL client headers
         # mysqlclient is a runtime dependency and ships no Linux wheel, so it
