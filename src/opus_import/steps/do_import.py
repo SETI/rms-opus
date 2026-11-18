@@ -49,7 +49,6 @@ The per-bundle work is split across four modules that are not steps of their own
 from __future__ import annotations
 
 import contextlib
-import time
 import traceback
 from typing import TYPE_CHECKING
 
@@ -545,7 +544,8 @@ def _register(
 
 
 #: The `opus_import.import_fault` site after a queue importer's claim commits. Its
-#: argument is a number of seconds the importer sleeps there before importing.
+#: argument is a file's path: the importer waits there while the file exists, before
+#: importing (`opus_import.import_processes.hold_while_present`).
 HOLD_AFTER_CLAIM_FAULT_SITE = 'hold_after_claim'
 
 #: How the log line naming a claimed bundle starts.
@@ -731,9 +731,9 @@ def _import_claimed_bundle(
     ctx.bundle_has_errors = False
     imported = False
     try:
-        hold = import_fault_argument(HOLD_AFTER_CLAIM_FAULT_SITE)
-        if hold is not None:
-            time.sleep(float(hold))
+        hold_file = import_fault_argument(HOLD_AFTER_CLAIM_FAULT_SITE)
+        if hold_file is not None:
+            import_processes.hold_while_present(hold_file)
         with ctx.timed(f'delete_bundle:{bundle_id}'):
             if not do_recover.release_bundle(ctx, bundle_id, number, importer.process_id, None):
                 raise import_processes.LostImporterError(

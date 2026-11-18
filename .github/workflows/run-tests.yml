@@ -143,9 +143,11 @@ jobs:
           MYSQL_ROOT_PASSWORD: opus_import_tests
         ports:
           - 3306:3306
-        # Without this the first connection races the server's startup.
+        # The health check pings over TCP, as the suite connects, and the image's
+        # initialization server listens on no TCP port, so the job starts only once the
+        # server the suite uses is up.
         options: >-
-          --health-cmd="mysqladmin ping --silent"
+          --health-cmd="mysqladmin ping --protocol=tcp -h 127.0.0.1 --silent"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12
@@ -164,10 +166,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.14
+        # Coverage follows every opus_import subprocess the suite starts. Under
+        # Python 3.12 its tracer costs several seconds in each one, most of it
+        # in the interpreter's own startup, and the suite takes several times as
+        # long; under 3.13 and later it costs a fraction of a second.
         uses: actions/setup-python@v7
         with:
-          python-version: 3.12
+          python-version: 3.14
 
       - name: Install MySQL client headers
         # mysqlclient is a runtime dependency and ships no Linux wheel, so it
@@ -188,6 +194,7 @@ jobs:
         run: |
           pytest import_tests \
             --ignore=import_tests/test_obs_execution.py \
+            --durations=0 --durations-min=2 \
             --cov --cov-report=term-missing \
             --cov-report=xml:coverage.xml --cov-report=json:coverage.json
 

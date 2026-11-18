@@ -38,8 +38,14 @@ if TYPE_CHECKING:
     from opus_import.import_processes import Snapshot
     from opus_import.importdb.super import ImportDBSuper
 
-#: The seconds between two readings of the registry while importers run.
+#: The seconds the coordinator waits after one pass over the registry before the next,
+#: while importers run. An importer of the coordinator's own that exits during the wait
+#: ends it early.
 TRACK_SECONDS = 5.0
+
+#: How often the coordinator looks, between two readings, for an importer of its own that
+#: has exited.
+_EXIT_POLL_SECONDS = 0.2
 
 #: How many of the latest events a terminal's table shows beneath it.
 EVENTS_SHOWN = 8
@@ -395,7 +401,7 @@ class Coordinator:
                     if status is not None:
                         self._show_events()
                         return status
-                    time.sleep(TRACK_SECONDS)
+                    self._wait_for_an_exit()
             finally:
                 signal.signal(signal.SIGINT, previous)
         finally:
@@ -415,6 +421,15 @@ class Coordinator:
         ctx = ImportContext(args=argparse.Namespace(), logger=logger)
         ctx.db = import_all.open_target_db(self.config, self.schema, read_only=False, logger=logger)
         return ctx
+
+    def _wait_for_an_exit(self) -> None:
+        """Wait `TRACK_SECONDS`, or less if an importer of its own exits that no pass has
+        reported, so its bundle is recovered and its place filled at once."""
+        deadline = time.monotonic() + TRACK_SECONDS
+        while time.monotonic() < deadline:
+            if any(i.process.poll() is not None and not i.reported for i in self._own):
+                return
+            time.sleep(_EXIT_POLL_SECONDS)
 
     def _pass(self, ctx: ImportContext) -> int | None:
         """Read, recover, replace and report once.

@@ -807,7 +807,8 @@ import on one computer; its tracking, recovery and table are
    N, and N is divided among the M importers as evenly as whole numbers allow: the first
    ``N mod M`` take one more. Each importer is one ``opus_import --join --workers <share>``
    process (`Several import processes`_).
-3. **Track.** Every few seconds it reads the bundle registry and ``import_process``. On a
+3. **Track.** Every few seconds, and as soon as one of its own importers exits, it reads
+   the bundle registry and ``import_process``. On a
    terminal it redraws a table: a totals line (bundles done, importing, pending and
    failed; rows done of the estimated total; time elapsed; and the remaining time,
    estimated from the row rate it has observed), then one line per running importer on

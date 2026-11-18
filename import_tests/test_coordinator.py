@@ -45,6 +45,13 @@ _TIMEOUT = 240.0
 #: The most seconds an importer's lock may stay held after its process is killed.
 _LOCK_FREED_WITHIN = 5.0
 
+#: The hold fault sites, each waiting on a file of its own.
+_HOLD_SITES = [
+    import_processes.HOLD_BEFORE_LOCK_FAULT_SITE,
+    do_import.HOLD_AFTER_CLAIM_FAULT_SITE,
+    import_processes.HOLD_AFTER_CHUNK_FAULT_SITE,
+]
+
 
 @dataclass
 class Case:
@@ -94,6 +101,33 @@ class Case:
         process.output_path = output  # type: ignore[attr-defined]
         self.started.append(process)
         return process
+
+    def hold_file(self, site: str) -> Path:
+        """The file the case's importers wait on at a hold fault site, one per site."""
+        return self.paths.log_dir / f'hold_{site}'
+
+    def hold(self, site: str) -> str:
+        """Create a site's hold file, and return the ``OPUS_IMPORT_FAULT`` value that waits
+        on it.
+
+        Parameters:
+            site: The hold fault site.
+
+        Returns:
+            The fault: an importer waits at the site while the file exists.
+        """
+        self.hold_file(site).touch()
+        return f'{site}:{self.hold_file(site)}'
+
+    def release(self, site: str | None = None) -> None:
+        """Remove a site's hold file, or every site's, so the importers waiting there go on.
+
+        Parameters:
+            site: The hold fault site, or None for all of them.
+        """
+        sites = [site] if site is not None else _HOLD_SITES
+        for each in sites:
+            self.hold_file(each).unlink(missing_ok=True)
 
     def has(self, table: str) -> bool:
         """Return whether the case's schema has a table yet."""
@@ -217,6 +251,7 @@ def case(
     try:
         yield found
     finally:
+        found.release()
         for process in found.started:
             if process.poll() is None:
                 process.kill()
@@ -237,6 +272,20 @@ def _register(case: Case, bundles: list[str]) -> None:
         case.paths.config_file, [*build_run.REGISTER_ARGS, ','.join(bundles)]
     )
     assert registered.returncode == 0, registered.stdout[-2000:]
+
+
+def _uncommitted_insert(case: Case) -> bool:
+    """Return whether a transaction on the case's schema has written a row and not
+    committed it, as an importer waiting between its row and its lock has."""
+    found = golden_io.query(
+        case.credentials,
+        None,
+        'SELECT COUNT(*) FROM information_schema.innodb_trx t JOIN '
+        'information_schema.processlist p ON p.id = t.trx_mysql_thread_id '
+        'WHERE p.db = %s AND t.trx_rows_modified > 0',
+        (case.schema,),
+    )
+    return bool(found[0][0])
 
 
 def _compare_with_main_run(case: Case, main_run: build_run.ImportRun) -> None:
@@ -261,7 +310,7 @@ def test_a_killed_importer_frees_its_lock_and_its_bundle_is_imported_again(
     """``SIGKILL`` to one of three importers while its pool runs, mid-bundle: its lock is
     free within seconds, the coordinator returns its bundle to the queue and replaces it,
     and the finished schema equals the one-importer schema."""
-    hold = f'{import_processes.HOLD_AFTER_CHUNK_FAULT_SITE}:5'
+    hold = case.hold(import_processes.HOLD_AFTER_CHUNK_FAULT_SITE)
     coordinator = case.start(
         'opus_import.import_all',
         ['--sets', ','.join(main_run.bundles), '--importers', '3', '--workers', '4'],
@@ -301,6 +350,7 @@ def test_a_killed_importer_frees_its_lock_and_its_bundle_is_imported_again(
     _wait(lambda: case.lock_holder(process_id) is None, 'the lock to be freed', _LOCK_FREED_WITHIN)
     assert time.monotonic() - killed < _LOCK_FREED_WITHIN
     assert pool
+    case.release()
 
     status, output = _finish(coordinator)
 
@@ -317,7 +367,7 @@ def test_a_bundle_lost_twice_fails_and_nothing_is_finalized(case: Case) -> None:
     """Its importer killed twice, the bundle is failed; the coordinator names it with its
     importer's log, exits with failure, and writes no schema version row."""
     doomed, other = 'VG_2801', 'VG_2810'
-    hold = f'{do_import.HOLD_AFTER_CLAIM_FAULT_SITE}:3'
+    hold = case.hold(do_import.HOLD_AFTER_CLAIM_FAULT_SITE)
     coordinator = case.start(
         'opus_import.import_all',
         ['--sets', f'{doomed},{other}', '--importers', '1', '--workers', '1'],
@@ -337,6 +387,7 @@ def test_a_bundle_lost_twice_fails_and_nothing_is_finalized(case: Case) -> None:
         process_id, pid = _wait(holder_of_doomed, f'an importer holding {doomed}')
         os.kill(pid, signal.SIGKILL)
         killed.append(process_id)
+    case.release()
 
     status, output = _finish(coordinator)
 
@@ -356,7 +407,7 @@ def test_two_interrupts_abort_and_a_rerun_resumes_to_the_same_result(
     nothing is finalized, no bundle is left importing or counted lost, and running the
     coordinator again finishes a schema equal to the one-importer schema."""
     arguments = ['--sets', ','.join(main_run.bundles), '--importers', '2', '--workers', '2']
-    hold = f'{do_import.HOLD_AFTER_CLAIM_FAULT_SITE}:3'
+    hold = case.hold(do_import.HOLD_AFTER_CLAIM_FAULT_SITE)
     coordinator = case.start('opus_import.import_all', arguments, fault=hold)
     _wait(
         lambda: (
@@ -366,7 +417,11 @@ def test_two_interrupts_abort_and_a_rerun_resumes_to_the_same_result(
         'both importers to hold a bundle',
     )
     coordinator.send_signal(signal.SIGINT)
-    time.sleep(0.5)
+    # Two signals that arrive before the handler runs can count as one.
+    _wait(
+        lambda: 'Interrupted: ' in coordinator.output_path.read_text(encoding='utf-8'),
+        'the coordinator to handle the first interrupt',
+    )
     coordinator.send_signal(signal.SIGINT)
 
     status, output = _finish(coordinator)
@@ -378,6 +433,7 @@ def test_two_interrupts_abort_and_a_rerun_resumes_to_the_same_result(
     assert 'pending' in states.values()
     assert case.rows('SELECT MAX(losses) FROM import_bundle') == [(0,)]
     assert _no_version_table(case)
+    case.release()
 
     status, output = _finish(case.start('opus_import.import_all', arguments))
 
@@ -391,7 +447,7 @@ def test_an_importer_whose_lock_connection_is_killed_aborts_its_bundle(case: Cas
     its lock, and its bundle is pending with no row of it committed."""
     bundle_id = 'COCIRS_1101'
     _register(case, [bundle_id])
-    hold = f'{import_processes.HOLD_AFTER_CHUNK_FAULT_SITE}:5'
+    hold = case.hold(import_processes.HOLD_AFTER_CHUNK_FAULT_SITE)
     importer = case.start('opus_import', ['--join'], fault=hold)
 
     def in_the_hold() -> int | None:
@@ -411,6 +467,7 @@ def test_an_importer_whose_lock_connection_is_killed_aborts_its_bundle(case: Cas
     holder = _wait(in_the_hold, "the bundle's first chunk")
     lock = import_processes.importer_lock_name(case.schema, case.importers()[0][0])
     golden_io.execute(case.credentials, None, f'KILL {int(holder)}')
+    case.release()
 
     status, output = _finish(importer)
 
@@ -431,24 +488,26 @@ def test_a_recovery_deletes_rows_in_tables_created_after_it_connected(case: Case
     """A coordinator connected to a schema holding only the registry recovers a killed
     importer's bundle: the rows the importer committed, in the tables it created since,
     are deleted. The coordinator's own importers may not claim the bundle, so nothing
-    else deletes them."""
+    else deletes them.
+
+    The coordinator's own importer waits before its lock until the other importer is
+    running, so the coordinator, which ends once no importer anywhere is alive, cannot end
+    before that one registers."""
     bundle_id = 'COCIRS_1101'
     _register(case, [bundle_id])
     coordinator = case.start(
         'opus_import.import_all',
         ['--sets', bundle_id, '--exclude-bundles', bundle_id, '--importers', '1'],
+        fault=case.hold(import_processes.HOLD_BEFORE_LOCK_FAULT_SITE),
     )
-    _wait(
-        lambda: 'exited with status 0' in coordinator.output_path.read_text(encoding='utf-8'),
-        "the coordinator's importer to find nothing it may claim",
-    )
+    _wait(lambda: _uncommitted_insert(case), "the coordinator's importer's uncommitted row")
     assert not case.has('obs_general')
-    hold = f'{import_processes.HOLD_AFTER_CHUNK_FAULT_SITE}:5'
+    hold = case.hold(import_processes.HOLD_AFTER_CHUNK_FAULT_SITE)
     importer = case.start('opus_import', ['--join'], fault=hold)
 
     def committed() -> int | None:
         """The running importer's ``process_id``, once a chunk of the bundle is committed;
-        the coordinator's own importer, which exited, has a row too."""
+        the coordinator's own importer's row is not yet committed."""
         running = [p for p, _pid, state in case.importers() if state == 'running']
         rows = (
             running and case.has('obs_files') and case.rows('SELECT COUNT(*) FROM obs_files')[0][0]
@@ -456,8 +515,14 @@ def test_a_recovery_deletes_rows_in_tables_created_after_it_connected(case: Case
         return running[0] if rows else None
 
     process_id = _wait(committed, "the bundle's first chunk")
+    case.release(import_processes.HOLD_BEFORE_LOCK_FAULT_SITE)
+    _wait(
+        lambda: 'exited with status 0' in coordinator.output_path.read_text(encoding='utf-8'),
+        "the coordinator's importer to find nothing it may claim",
+    )
     importer.kill()
     importer.wait()
+    case.release()
 
     status, output = _finish(coordinator)
 
@@ -481,30 +546,16 @@ def test_no_reader_sees_an_importer_before_it_holds_its_lock(
     done, so the reads fall inside the hold however slowly the computer runs them.
     """
     _register(case, main_run.bundles)
-    hold_file = case.paths.log_dir / 'hold_before_lock'
-    hold_file.touch()
-    hold = f'{import_processes.HOLD_BEFORE_LOCK_FAULT_SITE}:{hold_file}'
+    hold = case.hold(import_processes.HOLD_BEFORE_LOCK_FAULT_SITE)
     case.start('opus_import', ['--join', '--workers', '1'], fault=hold)
 
-    def uncommitted_insert() -> bool:
-        """A transaction on the schema has written a row and not committed it."""
-        found = golden_io.query(
-            case.credentials,
-            None,
-            'SELECT COUNT(*) FROM information_schema.innodb_trx t JOIN '
-            'information_schema.processlist p ON p.id = t.trx_mysql_thread_id '
-            'WHERE p.db = %s AND t.trx_rows_modified > 0',
-            (case.schema,),
-        )
-        return bool(found[0][0])
-
     try:
-        _wait(uncommitted_insert, "the importer's uncommitted row")
+        _wait(lambda: _uncommitted_insert(case), "the importer's uncommitted row")
         rows_during = _read_committed(case, 'SELECT COUNT(*) FROM import_process')
         recovered_during = _status(case, '--recover')
-        recovered_in_the_hold = uncommitted_insert()
+        recovered_in_the_hold = _uncommitted_insert(case)
     finally:
-        hold_file.unlink()
+        case.release()
 
     process_id = _wait(
         lambda: case.importers()[0][0] if case.importers() else None, "the importer's row"

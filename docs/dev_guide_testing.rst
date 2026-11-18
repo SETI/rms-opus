@@ -147,30 +147,34 @@ and each site decides what its argument selects. The sites are:
     when it reaches the task in index order, having replayed and loaded the tasks before
     it, so a test can see that the failed index leaves none of its rows.
 
+The three ``hold_`` sites take a file's path as their argument. An importer waits at
+the site until the file is removed or
+:data:`~opus_import.import_processes.HOLD_LIMIT_SECONDS` pass, whichever comes first, so
+a test holds importers there however slowly the computer runs, as long as it removes the
+file within that limit; an importer that reaches the site after the file is gone does not
+wait.
+
 ``hold_after_claim``
-    After a queue importer's claim of a bundle commits; its argument is a number of
-    seconds. ``hold_after_claim:5`` makes every ``opus_import --join`` process sleep
-    that long before importing each bundle it claims, so a test can start several and
-    know that they hold bundles at the same time
+    After a queue importer's claim of a bundle commits, before it imports the bundle.
+    ``hold_after_claim:<path>`` lets a test start several ``opus_import --join``
+    processes and know that they hold bundles at the same time
     (:ref:`dev_guide_import_steps_do_import`).
 
 ``hold_after_chunk``
-    After the first chunk of each bundle's rows commits; its argument is a number of
-    seconds. ``hold_after_chunk:5`` holds an import mid-bundle, so a test can kill an
-    importer or its lock connection there.
+    After the first chunk of each bundle's rows commits. ``hold_after_chunk:<path>``
+    holds an import mid-bundle, so a test can kill an importer or its lock connection
+    there.
 
 ``hold_before_lock``
-    Between an importer's ``import_process`` insert and its lock; its argument is a
-    file's path, and the importer waits there while the file exists, for at most
-    :data:`~opus_import.import_processes.HOLD_LIMIT_SECONDS`. ``hold_before_lock:<path>`` lets a test read the importers'
-    table while the row is written and not yet committed, for as long as its reads
-    take, and then remove the file to let the importer go on.
+    Between an importer's ``import_process`` insert and its lock.
+    ``hold_before_lock:<path>`` lets a test read the importers' table while the row is
+    written and not yet committed, for as long as its reads take.
 
 Never set it outside a test.
 
 That plain form is the everyday one -- about two minutes, no coverage, with the three
 executed-functions tests skipping because the report they read is not there. Measuring
-coverage costs about two and a half times that and takes two commands;
+coverage takes two commands, and under Python 3.12 several times as long;
 :ref:`dev_guide_import_fixture` gives both and says when each is wanted.
 
 .. _running-the-integration-suites:

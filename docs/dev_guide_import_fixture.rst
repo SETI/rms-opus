@@ -18,9 +18,12 @@ That is the everyday form and the one to use: about two minutes, no coverage. Th
 executed-functions tests **skip** in it, saying what to run instead, because the report
 they read is not there.
 
-Coverage is the other form, and it costs about two and a half times the runtime. It is two invocations,
-because the executed-functions check reads the report the rest of the suite writes and
-that report does not exist until the session producing it has ended::
+Coverage is the other form. Coverage follows every ``opus_import`` process the suite
+starts, and under Python 3.12 its tracer costs several seconds in each, so the suite takes
+several times as long there; under Python 3.13 and later it costs a fraction of a second
+in each. It is two invocations, because the executed-functions check reads the report the
+rest of the suite writes and that report does not exist until the session producing it
+has ended::
 
     pytest import_tests --ignore=import_tests/test_obs_execution.py \
         --cov --cov-report=json:coverage.json
@@ -249,13 +252,13 @@ The pool of workers
 Several importers
     A schema of its own has the fixture's volumes registered in the main run's order,
     and three ``opus_import --join`` processes, each with a configuration and a log
-    directory of its own, then import them at once, each holding every volume it claims
-    for a few seconds at the ``hold_after_claim`` fault site
-    (:ref:`the import's fault sites <dev_guide_testing_faults>`); the schema is then
+    directory of its own, then import them at once, each held after its first claim at
+    the ``hold_after_claim`` fault site (:ref:`the import's fault sites
+    <dev_guide_testing_faults>`) until all three hold a volume; the schema is then
     finished as the main run's is. Every registry row must be a volume OPUS imports, in
-    the order given, and ``done``. The importers' logs must show the three first claims
-    within one hold of each other, every volume claimed once, and no importer exiting
-    before the last claim. Every goldened table must equal the main run's in the
+    the order given, and ``done``. All three importers must have held a volume at once,
+    and their logs must show every volume claimed once and no importer exiting before
+    the last claim. Every goldened table must equal the main run's in the
     mult-value mode of ``import_tests.tools.golden_io.serialize_table``, which
     writes each mult column as the value its id names, since several importers number a
     field's new values in the order they meet them; it writes each value as the server's
