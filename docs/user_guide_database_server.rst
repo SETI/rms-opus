@@ -102,8 +102,10 @@ The settings, and what each does for OPUS
        The files are read from the computer running the import, not from the server's
        disk. The setting is the server's, for every client: any client that also enables
        local loading on its own connection, as the import does, may then load files from
-       its own computer, so a server shared with clients you do not trust may keep it off
-       and let the import write ``INSERT`` statements.
+       its own computer. To keep it off on a server shared with clients you do not trust,
+       set ``[import] bulk_load = false`` (:ref:`user_guide_installation_configuring`), or
+       give the import's account no privilege to change global settings, since an import
+       that may turn it on does so; the import then writes ``INSERT`` statements.
    * - ``log_bin``
      - import
      - **Startup only.** ``skip-log-bin`` in the option file turns the binary log off. An
