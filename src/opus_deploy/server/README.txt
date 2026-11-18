@@ -14,6 +14,11 @@ User Guide -- bringing a server up, then running it:
     https://rms-opus.readthedocs.io/en/latest/user_guide_installation.html
     https://rms-opus.readthedocs.io/en/latest/user_guide_deployment.html
 
+The MySQL server's settings -- its memory, the import's settings, and how to
+read which indexes the site's traffic uses -- are in their own chapter:
+
+    https://rms-opus.readthedocs.io/en/latest/user_guide_database_server.html
+
 
 --------------------------------------------------------------------------------
   THE ONE RULE

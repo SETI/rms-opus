@@ -355,3 +355,52 @@ def test_an_import_key_naming_a_log_the_harness_reads_is_refused(key: str) -> No
     """The harness reads its runs' logs from where it put them."""
     with pytest.raises(ValueError, match='the harness sets'):
         opus_config_file.parse_import_keys([f'{key}=/tmp/x.log'])
+
+
+def test_a_thread_sweep_s_overrides_change_only_what_they_name() -> None:
+    """The threads, the users and the scenario list each change alone."""
+    config = web_scenarios.load_web_config()
+    assert config.concurrency is not None
+    swept = web_scenarios.with_overrides(config, threads=8, users=64, concurrency_only=True)
+    assert swept.server.threads == 8
+    assert swept.server.workers == config.server.workers
+    assert swept.concurrency is not None
+    assert swept.concurrency.users == 64
+    assert swept.concurrency.distinct == config.concurrency.distinct
+    assert swept.scenarios == ()
+    assert web_scenarios.with_overrides(config) == config
+
+
+def test_sixty_four_concurrent_users_ask_for_distinct_searches() -> None:
+    """The sweep's user count still gives every user a search of its own."""
+    config = web_scenarios.with_overrides(web_scenarios.load_web_config(), users=64)
+    concurrency = config.concurrency
+    assert concurrency is not None
+    distinct = [concurrency.distinct.format(i=i) for i in range(concurrency.users)]
+    assert len(set(distinct)) == 64
+    assert concurrency.shared not in distinct
+
+
+@pytest.mark.parametrize(
+    ('threads', 'users', 'message'),
+    [(0, None, 'threads'), (None, 0, 'users')],
+)
+def test_a_count_below_one_is_refused(threads: int | None, users: int | None, message: str) -> None:
+    """No server serves with no threads, and no scenario runs with no users."""
+    with pytest.raises(ScenarioError, match=message):
+        web_scenarios.with_overrides(web_scenarios.load_web_config(), threads=threads, users=users)
+
+
+def test_concurrency_overrides_need_a_concurrency_scenario(tmp_path: Path) -> None:
+    """A file without the scenario cannot have its users changed or run it alone."""
+    path = tmp_path / 'web.toml'
+    path.write_text(
+        '[server]\nport = 1\nworkers = 1\nthreads = 1\nmemcached_port = 2\nmemcached_mb = 8\n'
+        '[runs]\nfixture = 1\n[searches]\nempty = ""\n',
+        encoding='utf-8',
+    )
+    config = web_scenarios.load_web_config(path, scale='fixture')
+    with pytest.raises(ScenarioError, match='no concurrency scenario'):
+        web_scenarios.with_overrides(config, users=4)
+    with pytest.raises(ScenarioError, match='no concurrency scenario'):
+        web_scenarios.with_overrides(config, concurrency_only=True)
