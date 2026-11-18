@@ -3,7 +3,9 @@
 Each case starts from a copy of the main run's finished schema, which serves generation
 1, and runs real ``opus_import`` invocations against it: ``--begin-generation``, the
 re-import of one bundle and the drop of another into the pending generation, the closing
-invocations, then the switch, the revert, the purge or the abandon. What a request would
+invocations, then the switch, the revert, the purge or the abandon. The cases that take
+the same update further start from a copy of one schema the update was made in once, for
+the module. What a request would
 see is read through the ``obs_general`` view, as the web application reads it; what the
 import wrote is read from the base table, ``obs_general_rows``.
 """
@@ -12,6 +14,7 @@ from __future__ import annotations
 
 import subprocess  # nosec B404
 import time
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -196,34 +199,106 @@ def _update(copy: build_run.SchemaCopy, reimported: str, dropped: str) -> None:
         _ok(copy.step(*arguments))
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def bundles(main_run: build_run.ImportRun) -> tuple[str, str]:
     """Return the re-imported bundle and the dropped one."""
     reimported = build_run.reimport_bundle_id(main_run)
     return reimported, _drop_bundle(main_run, reimported)
 
 
-def test_an_update_is_hidden_until_the_switch_and_whole_after_it(
+@dataclass(frozen=True)
+class _Updated:
+    """A schema with an update closed in it and not yet switched, and what it served before.
+
+    Attributes:
+        schema: The schema, which the cases copy rather than change.
+        reimported: The bundle the update re-imported.
+        dropped: The bundle the update dropped.
+        old_cart_target: The observation of the re-imported bundle the planted cart row
+            named before the update.
+        before: Every row the view served before the update.
+        reimported_count: How many observations of the re-imported bundle it served then.
+        dropped_count: How many of the dropped bundle's it served then.
+        condition_before: Whether the view had a generation condition then.
+        errors: What the update's invocations wrote to the error log.
+    """
+
+    schema: str
+    reimported: str
+    dropped: str
+    old_cart_target: int
+    before: list[tuple[Any, ...]]
+    reimported_count: int
+    dropped_count: int
+    condition_before: bool
+    errors: str
+
+
+@pytest.fixture(scope='module')
+def updated(
     main_run: build_run.ImportRun,
     db_credentials: DatabaseCredentials,
     created_schemas: list[str],
     bundles: tuple[str, str],
-) -> None:
-    """Begin, re-import, drop and close; then switch, revert, switch again, and purge."""
+) -> _Updated:
+    """Plant a cart row for the re-imported bundle and a value for the dropped one in a copy
+    of the main run's schema, then begin, re-import, drop and close an update there.
+
+    Returns:
+        The schema, and what it served before the update.
+    """
     reimported, dropped = bundles
-    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'generation')
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'updated')
     schema = copy.schema
     old_cart_target = _plant_cart_row(db_credentials, schema, reimported)
     _plant_value(db_credentials, schema, dropped)
     before = _served(db_credentials, schema)
     reimported_count = _served_count(db_credentials, schema, reimported)
     dropped_count = _served_count(db_credentials, schema, dropped)
+    condition_before = _view_has_condition(db_credentials, schema)
+    _update(copy, reimported, dropped)
+    return _Updated(
+        schema,
+        reimported,
+        dropped,
+        old_cart_target,
+        before,
+        reimported_count,
+        dropped_count,
+        condition_before,
+        copy.errors(),
+    )
+
+
+def _copy_updated(
+    main_run: build_run.ImportRun,
+    credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    updated: _Updated,
+    case: str,
+) -> build_run.SchemaCopy:
+    """Copy the updated schema for one case."""
+    return build_run.copy_run_schema(
+        main_run, credentials, created_schemas, case, source=updated.schema
+    )
+
+
+def test_an_update_is_hidden_until_the_switch_and_whole_after_it(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    updated: _Updated,
+) -> None:
+    """Begin, re-import, drop and close; then switch, revert, switch again, and purge."""
+    reimported, dropped = updated.reimported, updated.dropped
+    old_cart_target, before = updated.old_cart_target, updated.before
+    reimported_count, dropped_count = updated.reimported_count, updated.dropped_count
     assert reimported_count > 0
     assert dropped_count > 0
-    assert not _view_has_condition(db_credentials, schema)
-
-    _update(copy, reimported, dropped)
-    assert copy.errors() == ''
+    assert not updated.condition_before
+    assert updated.errors == ''
+    copy = _copy_updated(main_run, db_credentials, created_schemas, updated, 'generation')
+    schema = copy.schema
 
     # Before the switch, nothing a request reads has changed.
     assert _view_has_condition(db_credentials, schema)
@@ -391,14 +466,12 @@ def test_an_interrupted_switch_completes_when_run_again(
     main_run: build_run.ImportRun,
     db_credentials: DatabaseCredentials,
     created_schemas: list[str],
-    bundles: tuple[str, str],
+    updated: _Updated,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Killed after each of its steps in turn, the switch is completed by running it again."""
-    reimported, dropped = bundles
-    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'switch_fault')
-    _plant_cart_row(db_credentials, copy.schema, reimported)
-    _update(copy, reimported, dropped)
+    dropped = updated.dropped
+    copy = _copy_updated(main_run, db_credentials, created_schemas, updated, 'switch_fault')
     for step in range(1, len(do_generation.SWITCH_STEPS) + 1):
         monkeypatch.setenv(IMPORT_FAULT_ENV_VAR, f'{do_generation.SWITCH_FAULT_SITE}:{step}')
         assert copy.step('--switch-generation').returncode != 0
@@ -437,7 +510,7 @@ def test_an_interrupted_purge_refuses_a_revert_and_finishes_when_run_again(
     main_run: build_run.ImportRun,
     db_credentials: DatabaseCredentials,
     created_schemas: list[str],
-    bundles: tuple[str, str],
+    updated: _Updated,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Killed after each of its steps in turn, each run redoing what the last did: until
@@ -445,10 +518,9 @@ def test_an_interrupted_purge_refuses_a_revert_and_finishes_when_run_again(
     view, but the __prev tables are gone from the first, so the revert, the begin, the
     switch and a rebuild of the served auxiliary tables are refused, changing nothing; a
     run with no fault finishes the purge."""
-    reimported, dropped = bundles
-    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'purge_fault')
+    dropped = updated.dropped
+    copy = _copy_updated(main_run, db_credentials, created_schemas, updated, 'purge_fault')
     schema = copy.schema
-    _update(copy, reimported, dropped)
     _ok(copy.step('--switch-generation'))
     served = _served_without_ids(db_credentials, schema, dropped)
     assert _retired_count(db_credentials, schema) > 0
@@ -503,16 +575,15 @@ def test_an_unfinished_switch_or_revert_refuses_what_would_lose_the_way_back(
     main_run: build_run.ImportRun,
     db_credentials: DatabaseCredentials,
     created_schemas: list[str],
-    bundles: tuple[str, str],
+    updated: _Updated,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A part-way switch refuses the abandon and a write to its generation; a part-way
     revert refuses the purge; finishing each lets them run with the cart intact."""
-    reimported, dropped = bundles
-    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'unfinished')
+    reimported, dropped = updated.reimported, updated.dropped
+    copy = _copy_updated(main_run, db_credentials, created_schemas, updated, 'unfinished')
     schema = copy.schema
-    old_target = _plant_cart_row(db_credentials, schema, reimported)
-    _update(copy, reimported, dropped)
+    old_target = updated.old_cart_target
 
     # A switch stopped after pointing the cart at the pending generation.
     monkeypatch.setenv(IMPORT_FAULT_ENV_VAR, f'{do_generation.SWITCH_FAULT_SITE}:2')

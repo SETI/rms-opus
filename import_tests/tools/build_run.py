@@ -889,23 +889,30 @@ class SchemaCopy:
 
 
 def copy_run_schema(
-    run: ImportRun, credentials: DatabaseCredentials, created_schemas: list[str], case: str
+    run: ImportRun,
+    credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    case: str,
+    *,
+    source: str | None = None,
 ) -> SchemaCopy:
-    """Copy a finished run's schema for one case.
+    """Copy a finished run's schema, or a schema built from it, for one case.
 
     Parameters:
-        run: The finished run, usually the main run.
+        run: The finished run, usually the main run, whose built tree the copy reads.
         credentials: How to reach the server.
         created_schemas: The session's schemas, which the copy joins, so the session
             drops it.
         case: What distinguishes the copy's schema, configuration and logs.
+        source: The schema to copy, when not the run's own: one that invocations against
+            the run's tree have taken further, so that several cases start from it.
 
     Returns:
         The copy.
     """
     schema = fixture_layout.schema_name(os.getpid(), case)
     created_schemas.append(schema)
-    clone_schema(credentials, run.schema, schema)
+    clone_schema(credentials, source or run.schema, schema)
     paths = sibling_paths(run, case)
     write_opus_config(paths, schema, credentials)
     return SchemaCopy(schema, paths)
