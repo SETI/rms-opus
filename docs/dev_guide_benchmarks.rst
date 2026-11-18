@@ -1025,7 +1025,7 @@ prints each metric's medians, change, spreads, maxima, floor (as a fraction and 
 metric's units) and verdict, for every target and guard, every metric only one side
 holds, and every other metric whose change is larger than its floor; it says how many it
 left out, and ``--all`` prints them too. ``compare`` refuses two results whose server model, server
-ownership, cache backend or brand differ, two of different scales, the after file given
+ownership, cache backend, brand or concurrent users differ, two of different scales, the after file given
 first, a target neither file holds, and a floors file of another scale or brand. Its
 module docstring defines the statistics:
 medians over runs, the spread as the range over the median, the change relative to the

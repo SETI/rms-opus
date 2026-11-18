@@ -300,7 +300,7 @@ def test_skipped_steps_are_printed_under_the_table() -> None:
 
 @pytest.mark.parametrize('key', compare.MATCHING_ENVIRONMENT_KEYS)
 def test_results_measured_differently_are_refused(key: str) -> None:
-    """Two server models, ownerships, cache backends or brands are not compared."""
+    """Two server models, ownerships, cache backends, brands or user counts are not compared."""
     before = _result([{'a_s': 1.0}], environment={key: 'one'})
     after = _result([{'a_s': 1.0}], environment={key: 'two'})
     with pytest.raises(ResultError, match=f'differ in {key}'):

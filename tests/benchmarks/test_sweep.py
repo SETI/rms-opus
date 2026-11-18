@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from benchmarks import compare, sweep
-from benchmarks.results import ResultError
+from benchmarks.results import FORMAT_VERSION, ResultError
 
 _P95 = 'web.warm.concurrency.shared.p95_s'
 _THROUGHPUT = 'web.warm.concurrency.shared.throughput_per_s'
@@ -42,7 +42,11 @@ def _result(threads: int, p95_values: list[float], **changes: Any) -> dict[str, 
                 'details': {},
             }
         )
-    return {'format': 2, 'environment': _environment(threads, **changes), 'runs': runs}
+    return {
+        'format': FORMAT_VERSION,
+        'environment': _environment(threads, **changes),
+        'runs': runs,
+    }
 
 
 def _path(session: str) -> Path:
@@ -132,15 +136,15 @@ def test_a_server_model_without_a_usable_thread_count_is_refused(model: str) -> 
 
 
 def test_compare_prints_a_sweep_and_refuses_its_judging_options(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``--sweep`` prints the table; a floors file or a target would judge, so it refuses them."""
+    """``--sweep`` reads the files through the result loader and prints the table; a floors
+    file or a target would judge, so it refuses them."""
     paths = []
     for threads in (2, 4):
         path = tmp_path / _path(f't{threads}').name
         path.write_text(json.dumps(_result(threads, [1.0, 1.0, 1.0])), encoding='utf-8')
         paths.append(str(path))
-    monkeypatch.setattr(compare, 'load_result', lambda path: json.loads(path.read_text()))
     compare.main(['--sweep', *paths])
     assert '| Metric | threads=2 | threads=4 |' in capsys.readouterr().out
     with pytest.raises(SystemExit):

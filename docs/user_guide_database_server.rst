@@ -99,8 +99,11 @@ The settings, and what each does for OPUS
        from a scratch file, much faster than ``INSERT`` statements. An import whose
        account may change it turns it on itself; otherwise it writes ``INSERT``
        statements, and its log says so and names the statement an administrator can run.
-       It reads files from the computer running the import, never from the server's own
-       disk, and only for the import's connections, which ask for it.
+       The files are read from the computer running the import, not from the server's
+       disk. The setting is the server's, for every client: any client that also enables
+       local loading on its own connection, as the import does, may then load files from
+       its own computer, so a server shared with clients you do not trust may keep it off
+       and let the import write ``INSERT`` statements.
    * - ``log_bin``
      - import
      - **Startup only.** ``skip-log-bin`` in the option file turns the binary log off. An
@@ -253,13 +256,14 @@ used no index at all, so a table with many such reads is searched by a column wi
   the list leaves out much of the traffic; raise ``performance_schema_digests_size``
   and collect again.
 
-**What to do with them.** The result is the input for removing indexes, by this rule: a
-key goes when the window shows no read of
-it, or when it leads a composite key on the same table (the composite answers everything
-the shorter key does), **unless** the import, or a part of the application the traffic in
-the window did not exercise, reads by it; a foreign key needs it; its column is one
-autocomplete searches, whose prefix match reads it; or the other column of its ``1``/``2``
-pair keeps one. A key that leads a composite goes even then. Keys are declared in the
+**What to do with them.** The result is the input for removing plain keys -- a primary or
+unique key enforces a rule about the rows, and stays whatever its reads -- by this rule:
+a plain key goes when the window shows no read of it, or when it leads a composite key on
+the same table (the composite answers every read the shorter key does), **unless** the
+import, or a part of the application the traffic in the window did not exercise, reads by
+it; a foreign key needs it; its column is one autocomplete searches, whose prefix match
+reads it; or the other column of its ``1``/``2`` pair keeps one. A key that leads a
+composite goes even then. Keys are declared in the
 table schemas that ship with each release (:ref:`dev_guide_table_schemas`), so removing
 one is a change to a release, which takes effect at the next full import. A search whose
 key was removed still answers, by a scan; the ``NULL`` rows above show it, and ``ALTER

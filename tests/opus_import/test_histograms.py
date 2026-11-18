@@ -241,6 +241,44 @@ def test_a_read_only_run_builds_no_histogram() -> None:
     assert db.executed == ['ANALYZE TABLE `obs_pds` UPDATE HISTOGRAM ON `note`']
 
 
+class _RecordingConnection:
+    """A connection whose cursors record every statement run on them."""
+
+    def __init__(self) -> None:
+        self.statements: list[str] = []
+
+    def cursor(self) -> _RecordingConnection:
+        return self
+
+    def __enter__(self) -> _RecordingConnection:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def execute(self, cmd: str, params: Any = None) -> None:
+        self.statements.append(cmd)
+
+    def commit(self) -> None:
+        return None
+
+
+def test_a_read_only_run_sends_no_histogram_statement_to_the_server() -> None:
+    """Through the backend's own execution guard, the statement never reaches a cursor."""
+
+    class _ReadOnlyDB(ImportDBMySQL):
+        def __init__(self) -> None:
+            ImportDBSuper.__init__(
+                self, 'host', 'db', 'schema', 'user', 'password', logger=None, read_only=True
+            )
+            self.conn = _RecordingConnection()
+
+    db = _ReadOnlyDB()
+    db.update_histograms('obs_pds', ['note'])
+    db.drop_histograms('obs_pds', ['note'])
+    assert db.conn.statements == []
+
+
 def test_read_histograms_reports_the_base_table_as_obs_general() -> None:
     """The import names ``obs_general``'s base table by the view's name."""
     db = _AnswerDB([('obs_general_rows', 'opus_id'), ('obs_pds', 'note'), ('obs_pds', 'zz')])
