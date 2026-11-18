@@ -589,6 +589,43 @@ def counter_deltas(
     return {name: after[name] - before[name] for name in names if name in before and name in after}
 
 
+#: The connections the harness holds open on the owned server beside a web run's request
+#: slots: its own, and the side's import or management command that resets the search
+#: tables or warms the landing page.
+HARNESS_CONNECTIONS = 2
+
+
+def require_connection_room(connection: Any, slots: int) -> int:
+    """Refuse a web run whose request slots the server could not all connect.
+
+    Each request slot keeps the database connection its first request opened, so every
+    slot may hold one at once, beside the harness's own (`HARNESS_CONNECTIONS`). A server
+    that refused one would fail requests that a larger ``max_connections`` would have
+    served, and a thread sweep would time the refusals.
+
+    Parameters:
+        connection: An open connection to the owned server.
+        slots: The web run's request slots, workers times threads.
+
+    Returns:
+        The server's ``max_connections``.
+
+    Raises:
+        ServerError: If ``max_connections`` does not exceed the slots plus the harness's
+            own connections.
+    """
+    rows = query(connection, 'SELECT @@GLOBAL.max_connections')
+    limit = int(rows[0][0])
+    needed = slots + HARNESS_CONNECTIONS
+    if limit <= needed:
+        raise ServerError(
+            f"the server's max_connections is {limit}, which does not exceed the {slots} "
+            f"request slots and the harness's {HARNESS_CONNECTIONS} connections; raise it "
+            "in the owned server's my.cnf.template or ask for fewer slots"
+        )
+    return limit
+
+
 def server_settings(connection: Any, names: Sequence[str]) -> dict[str, str]:
     """Return the current values of the named server variables.
 

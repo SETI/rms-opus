@@ -297,8 +297,8 @@ importer, its registry row held on a second connection, so no claim and no plain
 ``--import`` takes it meanwhile, and is then marked ``failed`` in that same hold
 (:func:`~opus_import.steps.do_recover.release_bundle`); the importer goes on, the bundle is never claimed again, and the importer exits with failure
 at the end. Under the
-test-only fault ``OPUS_IMPORT_FAULT=hold_after_claim:<seconds>`` an importer sleeps
-that long after each claim commits (:ref:`the import's fault sites
+test-only fault ``OPUS_IMPORT_FAULT=hold_after_claim:<path>`` an importer waits after
+each claim commits while that file exists (:ref:`the import's fault sites
 <dev_guide_testing_faults>`).
 
 Each chunk of rows an importer loads runs under the bundle's guard

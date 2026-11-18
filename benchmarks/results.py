@@ -69,8 +69,8 @@ HIGHER_IS_BETTER_SUFFIX = '_per_s'
 #: Environment entries that must not change within one result file: a file whose runs
 #: came from two commits, two interpreters, two servers, imports shared among importers
 #: in two ways, incremental updates of two schemas or bundle sets mixed with each other or
-#: with full imports, or web runs that warmed, promoted or reset differently is not one
-#: label's runs.
+#: with full imports, or web runs that warmed, promoted, reset, served or ran the
+#: concurrency scenario differently is not one label's runs.
 PINNED_ENVIRONMENT_KEYS = (
     'git_sha',
     'git_dirty',
@@ -88,6 +88,9 @@ PINNED_ENVIRONMENT_KEYS = (
     'promotion_carts',
     'promotion_cart_rows',
     'cold_states',
+    'server_model',
+    'concurrency_users',
+    'concurrency_only',
 )
 
 #: What a pinned entry is compared as in a file whose earlier runs do not record it: a

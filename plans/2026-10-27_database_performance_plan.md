@@ -9319,3 +9319,190 @@ reversions, each failing a test).
   development build with no recorded commit is still refused.
 - `opus_deploy_scripts --from` was considered and not added: `update_deploy_scripts.sh`
   already installs a spec and rewrites the chain.
+
+### 2026-11-17, PR-25 (written against this file at fbdff2d5)
+
+- The branch is `db-perf`'s head, fbdff2d5 (PR-00 to PR-24a merged).
+- **The operator deferred #1557 (keep `obs_general` a table while no generation is
+  pending) and #1560 (the connection each web thread opens on its first request) until
+  after the stack merges into `main`.** Neither is touched here.
+- **The histogram columns** (`opus_import.histograms`): every `param_info` row whose form
+  type parses to `RANGE`, mapped to its physical table by
+  `surface_geometry.physical_table`, less every column `information_schema.STATISTICS`
+  lists first in a plain, unique or primary key (`read_table_keys`). The rows are taken
+  whatever their `display`: a range's `2` column (`ring_radius2`, `time2`) usually has
+  `display` 0, yet the search on its `1` slug filters on it. On the test-scale schema no
+  `RANGE` row outside the surface geometry categories has `display` 0 without a
+  displayed partner, so no unsearched column is added. `LONG` rows are left out:
+  `get_longitude_query` filters on an expression, which no histogram estimates. On the
+  test-scale schema the rule gives 108 columns on 11 tables, out of 149 range columns.
+- `--analyze-tables` runs `update_histograms` after its `ANALYZE`s: each wanted column is
+  built again (`ANALYZE TABLE ... UPDATE HISTOGRAM ON`, the server's 100 buckets), and a
+  histogram on any other column of an `obs_` table is dropped, so a column that gains an
+  index loses its histogram. The statement reports a bad column as an `Error` row of its
+  result, not as a server error, so the brand method reads the result and raises. A
+  schema without `param_info` gets none. The generation purge runs the same step through
+  `analyze_all_tables`. PostgreSQL note: `ANALYZE` builds a histogram for every column
+  itself, so the brand methods there have nothing to do.
+- **The plan changes.** `EXPLAIN FORMAT=JSON` of the search build, `obs_general LEFT JOIN
+  obs_ring_geometry` with a time range on `obs_general` and an `observer_ring_opening_angle`
+  range (`opening_angle2 >= low AND opening_angle1 <= high`), on the base's finalized
+  copy with histograms added by hand and then dropped: without them, `obs_ring_geometry`
+  `ALL` (filtered 11.11) then `obs_general_rows` `eq_ref` on `PRIMARY` (filtered 25.00);
+  with them, `obs_general_rows` `ALL` (filtered 25.00) then `obs_ring_geometry` `eq_ref`
+  on `PRIMARY` (filtered 37.70). The same flip came for six other unindexed pairs of
+  `obs_ring_geometry` (`ring_center_emission`, `ring_center_incidence`,
+  `ring_center_north_based_emission`, `emission`, `incidence`, `solar_ring_opening_angle`)
+  with a range around their middle; a range of their lowest 5% or highest 1% read
+  `obs_ring_geometry` first either way. The column chosen is `observer_ring_opening_angle`
+  (both columns unindexed), -10 to 10 degrees.
+- **Why the flip can go either way.** The time range's two conditions (`time2 >= t1` and
+  `time1 <= t2`) each match more than half of `obs_general` at test scale, and InnoDB caps
+  an index dive's estimate at half the table, so the optimizer prices the pair at 25%
+  of the rows whatever the range: 25% for 1980 to 2018 (24,175 rows match) and for 2009
+  alone (155). Without a histogram the ring range is guessed at 11%, so the ring table
+  is read first; with one, the ring range's true share (about 38%) is compared with that
+  25% and `obs_general` is read first. That is right for a narrow time range and wrong
+  for a broad one.
+- `web.toml` gains `ring_opening` (the broad time range with the ring range) and
+  `ring_opening_year` (2009 with the same ring range), each a `search` scenario. The
+  target is `web.app-cold.search.ring_opening.wall_s`, "the time range on `obs_general`"
+  read as the broad search's.
+- **The measurement** (test scale, the harness's own server). The base (fbdff2d5)
+  imported once, stopping before finalization (session `b`, 318.9 s of bundle imports);
+  each side finalized its own copy and ran `bench_db --dump-queries` on it (session
+  `d`). Then on the head's copy, at e4916fff: `bench_web` and `bench_db` with the
+  histograms (`after_test_mysql_h`) and without (`before_test_mysql_n`), the histograms
+  dropped and rebuilt by `ANALYZE TABLE ... DROP/UPDATE HISTOGRAM` alone, so the index
+  statistics did not change between the states; web runs alternated with, without,
+  without, with, with, without (three a state), `bench_db` once a state. Judged against
+  `2026-11-05_PR-00_floors_test_mysql.json`.
+- The guards were judged on that one copy rather than on each side's copy: the base's
+  and the head's application code are identical, and their finalized copies differ only
+  in the histograms, so one copy compares the same thing with one less source of noise.
+  Every §2.5 guard held; schema data and index bytes are unchanged.
+- **The target did not improve beyond its noise.** In `h` against `n`,
+  `web.app-cold.search.ring_opening.wall_s` went from 120.6 ms to 112.2 ms (-6.9%, spreads
+  1.2% and 16.3%). `compare` printed "improved", judging against the before side's spread
+  alone because the floors file has no entry for a scenario it predates, so the web
+  family's jitter (12.88 ms) was not applied; §2.6 applies it to every time metric, and
+  the 8 ms change is within it. `compare` now applies it (`unfloored_time_floor`). The
+  statement the request runs went the other way: `db.plan.search.ring_opening/result_count`
+  20.4 ms without, 43.4 ms with (+112%, rows examined 41,510 to 62,630); db-cold, 144 ms
+  to 152 ms (+5.7%). For `ring_opening_year` the histograms helped: the statement 14.0 ms
+  to 5.6 ms (-60%), db-cold 88.9 ms to 66.7 ms (-25%); app-cold moved within its 61%
+  spread.
+- **The repeat** (§2.6: the change lay within twice its 10.7% floor): five web runs a
+  state at 9bf75c39 (`h5` with, `n5` without, alternated A B B A A B B A A B), replacing
+  `h` and `n` for the target. The target went from 117.8 ms to 142.4 ms (+20.9%, spreads
+  1.0% and 47.9%), "not improved". The repeat was disturbed: four single-threaded jobs of
+  other sessions started at 15:57 local time and ran to its end, and its last runs
+  started at one-minute load averages of 13.1 (`h5`) and 19.6 (`n5`), against 1.8 to 5.0
+  before. Over the three runs a state that ended before 15:57, the target went from
+  117.2 ms to 129.7 ms (+10.7%), db-cold 154.8 ms to 170.4 ms, and `ring_opening_year`'s
+  db-cold 99.4 ms to 70.8 ms (-28.7%). Both guard regressions `compare` reports for the
+  repeat, `web.app-cold.concurrency.shared.p95_s` (+30.0%) and
+  `web.warm.concurrency.distinct.p95_s` (+217%), are of searches the histograms do not
+  touch (a time range and a planet), moved by 1.0% and -2.5% in `h`/`n`, and the second
+  is +120% even over the three undisturbed runs, beside its own floor of 107%; they are
+  read as the load, not the histograms. **This is a stop-and-report under §2.5**: the
+  histograms are in the PR as the section specifies, and the orchestrator decides whether
+  they stay, or whether the repeat is taken again on an idle machine.
+- **Every statement whose plan the histograms changed**, by its exact `rows_examined`:
+  on one copy (`h` against `n`), `search.ring_opening/result_count` (+50.9%, +112% in
+  time), `search.ring_opening_year/result_count` (-22.0%, -60%),
+  `fanout.complex/endpoints_time1` (+34.5%, +22.4%) and `fanout.complex/mults_instrument`
+  (+33.6%, +27.5%). Between the two sides' copies (session `d`) the ring opening pair
+  changed the same way, `fanout.complex`'s two did not, and `search.complex/result_count`
+  (-13.7%, -32.4%) and `resort.complex/resorted` (-15.4%, -43.0%) did, which on one copy
+  did not change at all. The complex search's plans therefore follow something other than
+  the histograms alone; `bench_db` runs `ANALYZE TABLE` before it replays, and why the
+  plans differ between those runs was not investigated. The ring opening pair's plans
+  were the same in every `bench_db` run of either state.
+- **Finalization.** The base's whole finalization on its copy took 23.48 s, the head's
+  23.55 s (+0.07 s); `analyze_tables` 0.48 s and 0.98 s. The ceiling is 10% of the base's
+  342.4 s full import (bundle imports and its finalization), 34.2 s: within it. `compare`
+  prints no ceiling line here, because the bundle imports are in session `b`'s file and
+  the finalizations in session `d`'s; it was computed from the two files' metrics.
+- **The thread sweep** (`bench_web --threads N --users 64 --concurrency-only`, sessions
+  `t2`, `t4`, `t8` on the head's copy with its histograms, run in the order 2 4 8, 8 4 2,
+  2 4 8; `compare --sweep`). Medians:
+  | | 2 threads | 4 threads | 8 threads |
+  |---|---|---|---|
+  | app-cold distinct p95 | 1.075 s | 0.814 s | 0.863 s |
+  | app-cold distinct throughput | 94.7/s | 126.3/s | 118.9/s |
+  | app-cold shared p95 | 0.215 s | 0.225 s | 0.386 s |
+  | warm distinct p95 | 47.9 ms | 47.5 ms | 68.8 ms |
+  | warm distinct throughput | 1,530/s | 1,572/s | 1,250/s |
+  | warm shared p95 | 45.0 ms | 48.2 ms | 50.0 ms |
+
+  The spreads over each count's three runs were 0 to 20.1% (`compare --sweep` prints
+  each); the widest are app-cold distinct throughput at four threads (17.9%) and warm
+  distinct p95 at eight (20.1%). The worker count was four throughout; the gunicorn
+  example's change from eight sync workers to four workers of four threads is the
+  sweep's arrangement, not a measured comparison with eight workers. For one search
+  shared by every user, two threads answered 478 a second app-cold against four's 426
+  (spreads 4.6% and 5.8%).
+  Four threads to a worker is chosen: it answers new searches arriving at once a third
+  faster than two, and is as fast as two warm, where eight is slower in both. The
+  examples in `docs/user_guide_web_server.rst` are four workers of four threads.
+  `web.toml` keeps two threads, the setting the floors were measured at.
+- The connection each thread opens on its first request is inside every cold figure of
+  the sweep: the cold states opened one connection per slot (8, 16 and 32), the warm
+  states none, so the cold cost grows with the threads; the warm figures, which decide
+  between 2 and 4, carry none of it.
+- `max_connections` on the owned server is 151, above the largest sweep's 32 slots and
+  the harness's 2 connections, which `bench_web` checks before every run.
+- **Load.** Another session's single-threaded job (from 14:07 local time, one core of
+  the 30) ran during the last two web runs of `h`/`n` and the whole sweep; the run
+  starts' one-minute load averages were 0.3 to 7.8 for `h`/`n` and 3.5 to 28.6 for the
+  sweep, whose own 64 concurrent users and 32 server threads raise it from one run to the
+  next. The operator's confirmation of an idle machine could not be asked by the
+  executor; the orchestrator's brief authorized the runs.
+- **The server page.** `docs/user_guide_database_server.rst` carries the settings the
+  section names plus `innodb_io_capacity`, `innodb_io_capacity_max`, `max_connections`
+  and `performance_schema_digests_size`. PR-22's ngram text does not exist (PR-22 was
+  reduced to its test fix), so there was none to link; the page says OPUS creates no
+  full-text index. The buffer pool is sized from the query the page gives, read as the
+  total and the total less `obs_files` and `obs_preview`, which are read by primary key a
+  few rows at a time. The installation guide's four-setting paragraph and the
+  benchmarks guide's tuning baseline link to it, as does the deploy README.
+- `benchmarks/scenarios/queries.sql` is the capture of 2026-11-17 from the head's copy
+  (session `capture`), with the two scenarios added.
+- `bench_web.py` was past the module-size rule before this PR; the sweep's override is
+  `web_scenarios.with_overrides`, the connection check is in `bench_server.py`, and the
+  sweep table is `benchmarks/sweep.py`, which `compare.main` calls with the summaries it
+  computes, so `sweep` does not import `compare`. `server_model`, `concurrency_users` and
+  `concurrency_only` are pinned environment entries, so a result file holds runs of one
+  setting.
+- **The pre-PR review** (one independent reviewer, 2026-11-17) found, and this branch
+  fixed: the missing repeat (above); `compare`'s missing jitter for a metric the floors
+  file lacks; `dump_db.sh` dumped without `--column-statistics`, which `mysqldump` leaves
+  off by default, so a peer loaded from the dump would have served without the
+  histograms; `update_histograms` read the served `param_info` while a generation was
+  pending (it reads `param_info__new` where it exists); `innodb_parallel_read_threads`
+  also sets an index build's scan threads from MySQL 8.0.27, which the section's wording
+  ("only the clustered-index `COUNT(*)` and `CHECK TABLE`") leaves out; the digest-length
+  cap was stated the wrong way round; and the web server page claimed more than the sweep
+  showed. Left as they are: `bench_web.py` past the module-size rule before this PR;
+  `sweep.check_sweep` refusing results whose volatile environment entries differ (a sweep
+  session runs no `bench_db`, which writes them); no `import_tests` check that a
+  finalized fixture schema carries histograms (the import suite passes with the step in
+  every finalization: 207 passed, 3 skipped, against the harness's server).
+- The schemas `bench_test_before_b_1`, `bench_test_before_d_finalized` and
+  `bench_test_after_d_finalized` on the harness's server are this PR's and are dropped
+  once its numbers are recorded.
+- **The operator dropped the range-search histograms (2026-11-17)** after the
+  stop-and-report, on the measurements above: the target did not improve beyond its
+  noise, the statement it runs took 2.1 times as long with them, and the plans they
+  change go the right way only for a narrow time range. Removed from this PR:
+  `opus_import.histograms`, `do_import_tables.update_histograms` and its call from
+  `analyze_all_tables`, the brand methods `read_histograms`, `update_histograms` and
+  `drop_histograms`, their tests, `dump_db.sh`'s `--column-statistics` (it existed only to
+  carry the histograms to a peer), and the guides' account of them.
+  `--analyze-tables` is as it was at fbdff2d5.
+  Kept: the server page, the thread sweep and the four-by-four examples, the harness
+  changes, `compare`'s fixes, and both `ring_opening` searches in `web.toml`. The two stay
+  as benchmarks of a range on an unindexed child-table column, at a broad and a narrow
+  time range, a shape no other scenario covers and whose plan rests on the optimizer's
+  guess for the unindexed range; `queries.sql`, captured with them, needs no recapture.

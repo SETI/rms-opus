@@ -3,7 +3,7 @@
 Installing OPUS on a Server
 ===========================
 
-This chapter brings a complete OPUS server up from nothing.
+This chapter describes bringing a complete OPUS server up from nothing.
 
 **Almost none of it is done by hand.** The distribution ships the scripts that install
 OPUS, import the holdings and deploy the result, and ``opus_deploy_scripts`` writes them
@@ -88,25 +88,10 @@ The import pipeline creates every OPUS table itself -- and creates the schema, i
 not exist -- and it writes its multi-row upserts with the ``AS new`` row alias that
 8.0.19 added. See :ref:`dev_guide_import_db_importdb` for why that is the floor.
 
-The server an import writes to does its work faster with four settings, none of which
-the import needs in order to run:
-
-* ``local_infile = ON`` lets the import write its observation rows with ``LOAD DATA
-  LOCAL INFILE`` from a scratch file, much faster than ``INSERT`` statements. An import
-  whose account may change it turns it on itself; otherwise it writes ``INSERT``
-  statements, and its log says so and names the statement an administrator can run.
-* ``skip-log-bin`` turns the binary log off. An import's rows would otherwise be written
-  twice, once to the tables and once to the binary log, which a server that is not a
-  replication source has no use for. Where the log is kept, an account granted
-  ``SESSION_VARIABLES_ADMIN`` lets the import leave its own writes out of it.
-* ``innodb_flush_log_at_trx_commit = 2`` writes the redo log at each commit but flushes
-  it to disk once a second, rather than at every commit. A crash of the machine can then
-  lose the last second of commits, which costs an import server nothing that re-running
-  the import does not restore.
-* ``innodb_redo_log_capacity`` (MySQL 8.0.30 and later) sizes the redo log. The default,
-  100 MiB, is small beside the gigabytes a large import writes, and when the log fills
-  the server holds writes back while it flushes pages to make room; a larger log lets it
-  absorb more before it must.
+The server an import writes to does its work faster with a few settings, none of which
+the import needs in order to run, and the server that answers searches needs its buffer
+pool sized from the imported database. :ref:`user_guide_database_server` gives both, with
+what each setting does for OPUS.
 
 **The MySQL client development headers**, because the ``mysqlclient`` driver ships no
 Linux wheel and is compiled during every install. On Debian or Ubuntu::
@@ -819,6 +804,9 @@ entirely.
 
 Where to go next
 ----------------
+
+:ref:`user_guide_database_server`
+    The MySQL settings that matter to OPUS, and sizing the server's memory.
 
 :ref:`user_guide_web_server`
     Putting Apache or nginx in front of it.

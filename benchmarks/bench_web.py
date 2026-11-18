@@ -48,6 +48,13 @@ Every command holds the server's web-runs lock shared while it runs, and a gener
 switch holds it exclusive (`benchmarks.bench_server.MysqlServer.web_runs_held`), so a
 switch never empties the tables a web run is measuring.
 
+**A thread sweep.** ``--threads``, ``--users`` and ``--concurrency-only`` replace
+``web.toml``'s threads per worker and concurrent users, and drop its sequential
+scenarios (`benchmarks.web_scenarios.with_overrides`); the environment records all three,
+and ``benchmarks.compare --sweep`` sets one session per thread count side by side. Every
+request slot keeps a database connection, so the command refuses a server whose
+``max_connections`` could not hold them all (`benchmarks.bench_server.require_connection_room`).
+
 Example, one side's web runs at fixture scale against the schema its import built::
 
     python -m benchmarks.bench_web --scale fixture --side before --pr PR-nn \\
@@ -81,6 +88,7 @@ from benchmarks.bench_server import (
     load_server_config,
     query,
     reexec_with_socket,
+    require_connection_room,
     restamp_version,
     server_environment,
 )
@@ -107,8 +115,10 @@ from benchmarks.web_scenarios import (
     Concurrency,
     Request,
     Scenario,
+    ScenarioError,
     WebConfig,
     load_web_config,
+    with_overrides,
 )
 from import_tests.tools import build_run
 
@@ -1431,6 +1441,26 @@ def _parse_arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         'cache restart',
     )
     parser.add_argument(
+        '--threads',
+        type=int,
+        default=None,
+        metavar='N',
+        help="threads per gunicorn worker in place of web.toml's, which server_model "
+        'records; for a thread sweep',
+    )
+    parser.add_argument(
+        '--users',
+        type=int,
+        default=None,
+        metavar='N',
+        help="the concurrency scenario's simulated users in place of web.toml's",
+    )
+    parser.add_argument(
+        '--concurrency-only',
+        action='store_true',
+        help='run the concurrency scenario alone, without the sequential scenarios',
+    )
+    parser.add_argument(
         '--app-cold-only',
         action='store_true',
         help='make each run the app-cold pass alone, with its warm repetitions, against a '
@@ -1452,7 +1482,15 @@ def main(argv: Sequence[str] | None = None) -> None:
     reexec_with_socket(
         server_config, 'benchmarks.bench_web', sys.argv[1:] if argv is None else argv
     )
-    config = load_web_config(scale=args.scale)
+    try:
+        config = with_overrides(
+            load_web_config(scale=args.scale),
+            threads=args.threads,
+            users=args.users,
+            concurrency_only=args.concurrency_only,
+        )
+    except ScenarioError as e:
+        sys.exit(str(e))
     server = MysqlServer(server_config)
     memcached = MemcachedServer(
         memcached_binary, config.server.memcached_port, config.server.memcached_mb
@@ -1496,10 +1534,18 @@ def main(argv: Sequence[str] | None = None) -> None:
             **steps.environment(),
             'web_scenario_hash': scenario_hash([config.path]),
             'server_model': bench.gunicorn.server_model,
+            'concurrency_users': None if config.concurrency is None else config.concurrency.users,
+            'concurrency_only': args.concurrency_only,
             'cold_states': list(bench.cold_states),
             'app_loading': 'eager',
             'cache_owned': True,
         }
+        try:
+            require_connection_room(
+                bench.connection, bench.gunicorn.workers * bench.gunicorn.threads
+            )
+        except ServerError as e:
+            sys.exit(str(e))
         bench.stamp_schema_version()
         memcached.start()
         try:

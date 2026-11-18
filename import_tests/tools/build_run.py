@@ -37,7 +37,7 @@ from import_tests.tools.golden_io import DatabaseCredentials
 from opus_import import generations
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping, Sequence
+    from collections.abc import Callable, Iterable, Mapping, Sequence
 
 #: The environment variable the pipeline reads its configuration file from.
 CONFIG_ENV_VAR = 'OPUS_CONFIG'
@@ -889,23 +889,30 @@ class SchemaCopy:
 
 
 def copy_run_schema(
-    run: ImportRun, credentials: DatabaseCredentials, created_schemas: list[str], case: str
+    run: ImportRun,
+    credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    case: str,
+    *,
+    source: str | None = None,
 ) -> SchemaCopy:
-    """Copy a finished run's schema for one case.
+    """Copy a finished run's schema, or a schema built from it, for one case.
 
     Parameters:
-        run: The finished run, usually the main run.
+        run: The finished run, usually the main run, whose built tree the copy reads.
         credentials: How to reach the server.
         created_schemas: The session's schemas, which the copy joins, so the session
             drops it.
         case: What distinguishes the copy's schema, configuration and logs.
+        source: The schema to copy, when not the run's own: one that invocations against
+            the run's tree have taken further, so that several cases start from it.
 
     Returns:
         The copy.
     """
     schema = fixture_layout.schema_name(os.getpid(), case)
     created_schemas.append(schema)
-    clone_schema(credentials, run.schema, schema)
+    clone_schema(credentials, run.schema if source is None else source, schema)
     paths = sibling_paths(run, case)
     write_opus_config(paths, schema, credentials)
     return SchemaCopy(schema, paths)
@@ -980,6 +987,7 @@ def run_concurrently(
     arguments: Sequence[str],
     *,
     extra_environment: Mapping[str, str] | None = None,
+    while_running: Callable[[], None] | None = None,
 ) -> list[StepResult]:
     """Start one ``opus_import`` invocation per configuration at once, and wait for all.
 
@@ -987,23 +995,46 @@ def run_concurrently(
         config_files: Each process's configuration, which names its own log directory.
         arguments: The command line every process runs, after ``python -m opus_import``.
         extra_environment: Variables added to every process's environment, or None.
+        while_running: Called once the processes have started, while their pipes are
+            drained, or None. If it raises, every process is killed and the exception
+            propagates.
 
     Returns:
         What each invocation did, in the order of `config_files`.
+
+    Raises:
+        OSError: A process could not be started; the ones already started are killed
+            and reaped first.
     """
-    processes = []
-    for config_file in config_files:
-        environment = {**run_environment(config_file), **(extra_environment or {})}
-        processes.append(
-            subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's own module
-                [str(THIS_PYTHON), '-m', 'opus_import', *arguments],
-                cwd=fixture_layout.REPO_ROOT,
-                env=environment,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
+    processes: list[subprocess.Popen[str]] = []
+    try:
+        for config_file in config_files:
+            environment = {**run_environment(config_file), **(extra_environment or {})}
+            processes.append(
+                subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's own module
+                    [str(THIS_PYTHON), '-m', 'opus_import', *arguments],
+                    cwd=fixture_layout.REPO_ROOT,
+                    env=environment,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
             )
-        )
+    except BaseException:
+        for process in processes:
+            process.kill()
+            process.communicate()
+        raise
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        drained = executor.submit(communicate_all, processes)
+        try:
+            if while_running is not None:
+                while_running()
+        except BaseException:
+            for process in processes:
+                process.kill()
+            raise
+        outputs = drained.result()
     return [
         StepResult(
             arguments=tuple(arguments),
@@ -1011,5 +1042,5 @@ def run_concurrently(
             stdout=stdout,
             stderr=stderr,
         )
-        for process, (stdout, stderr) in zip(processes, communicate_all(processes), strict=True)
+        for process, (stdout, stderr) in zip(processes, outputs, strict=True)
     ]

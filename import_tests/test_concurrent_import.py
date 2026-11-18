@@ -3,10 +3,11 @@
 The fixture's bundles are registered once, in the main run's order, and three
 ``opus_import --join`` processes then import them from the bundle registry's queue at the
 same time, each with a configuration and a log directory of its own, as importers on
-three computers would have. Each holds every bundle it claims for a few seconds first
-(``OPUS_IMPORT_FAULT=hold_after_claim:<seconds>``), so the three are certain to hold
-bundles at once. The schema is then finished as the main run's is, and compared with the
-main run's, which one process imported a bundle at a time.
+three computers would have. Each waits after its claim while a file exists
+(``OPUS_IMPORT_FAULT=hold_after_claim:<path>``), and the file is removed once all three
+hold a bundle, so the three are certain to hold bundles at once and go on from there
+without waiting again. The schema is then finished as the main run's is, and compared
+with the main run's, which one process imported a bundle at a time.
 """
 
 from __future__ import annotations
@@ -35,8 +36,8 @@ if TYPE_CHECKING:
 #: How many importers run at once.
 IMPORTERS = 3
 
-#: How long each importer holds a bundle after claiming it, in seconds.
-HOLD_SECONDS = 5
+#: How long the fixture waits for every importer to hold a bundle, in seconds.
+HOLD_TIMEOUT = 240.0
 
 #: Each importer's ``[import]`` keys: loads split across several transactions and
 #: observations computed by a small pool, as the main run's are, at a pool size that keeps
@@ -56,6 +57,8 @@ class JoinRun:
     Attributes:
         schema: The schema they imported into.
         registered: What the registration did.
+        held_at_once: The most importers seen holding a bundle at the same time, before
+            the hold was released.
         importers: Each importer's log directory, in start order.
         imported: What each importer did, in the same order.
         closing: What each closing invocation did, in order.
@@ -63,6 +66,7 @@ class JoinRun:
 
     schema: str
     registered: build_run.StepResult
+    held_at_once: int
     importers: list[Path]
     imported: list[build_run.StepResult]
     closing: list[build_run.StepResult]
@@ -89,12 +93,31 @@ def join_run(
     registered = build_run.run_pipeline_step(
         config_file, [*build_run.REGISTER_ARGS, ','.join(main_run.bundles)]
     )
-    hold = f'{do_import.HOLD_AFTER_CLAIM_FAULT_SITE}:{HOLD_SECONDS}'
-    imported = build_run.run_concurrently(
-        [importer.config_file for importer in paths],
-        build_run.JOIN_ARGS,
-        extra_environment={import_fault.IMPORT_FAULT_ENV_VAR: hold},
-    )
+    hold_file = paths[0].log_dir / 'hold_after_claim'
+    hold_file.touch()
+    hold = f'{do_import.HOLD_AFTER_CLAIM_FAULT_SITE}:{hold_file}'
+    held_at_once: list[int] = []
+
+    def release_once_every_importer_holds() -> None:
+        """Remove the hold file once every importer holds a bundle, or the wait ends."""
+        try:
+            held_at_once.append(_wait_for_holders(db_credentials, schema))
+        finally:
+            hold_file.unlink(missing_ok=True)
+
+    try:
+        imported = build_run.run_concurrently(
+            [importer.config_file for importer in paths],
+            build_run.JOIN_ARGS,
+            extra_environment={import_fault.IMPORT_FAULT_ENV_VAR: hold},
+            while_running=release_once_every_importer_holds,
+        )
+    finally:
+        hold_file.unlink(missing_ok=True)
+    if held_at_once[0] != IMPORTERS:
+        # Without the overlap the run proves nothing about concurrent importers.
+        output = '\n'.join(result.stdout[-2000:] + result.stderr[-2000:] for result in imported)
+        pytest.fail(f'{held_at_once[0]} of {IMPORTERS} importers held a bundle at once\n{output}')
     closing = [
         build_run.run_pipeline_step(config_file, build_run.AUX_ARGS),
         build_run.run_pipeline_step(config_file, build_run.DICTIONARY_ARGS),
@@ -102,7 +125,28 @@ def join_run(
         build_run.run_pipeline_step(config_file, build_run.VALIDATE_ARGS),
         build_run.run_pipeline_step(config_file, build_run.VERSION_ARGS),
     ]
-    return JoinRun(schema, registered, [p.log_dir for p in paths], imported, closing)
+    return JoinRun(
+        schema, registered, held_at_once[0], [p.log_dir for p in paths], imported, closing
+    )
+
+
+def _wait_for_holders(credentials: DatabaseCredentials, schema: str) -> int:
+    """Wait until every importer holds a bundle, or `HOLD_TIMEOUT` passes.
+
+    Returns:
+        The most importers seen holding a bundle at once.
+    """
+    most = 0
+    deadline = time.monotonic() + HOLD_TIMEOUT
+    while most < IMPORTERS and time.monotonic() < deadline:
+        ((holding,),) = golden_io.query(
+            credentials,
+            schema,
+            "SELECT COUNT(DISTINCT process_id) FROM import_bundle WHERE state = 'importing'",
+        )
+        most = max(most, int(holding))
+        time.sleep(0.1)
+    return most
 
 
 def _records(log_dir: Path) -> list[tuple[datetime.datetime, str]]:
@@ -143,8 +187,8 @@ def test_every_registered_bundle_is_one_opus_imports(
 def test_each_importer_claimed_while_the_others_held_theirs(
     join_run: JoinRun, main_run: build_run.ImportRun
 ) -> None:
-    """The first claims fall within one hold of each other, every bundle is claimed once,
-    and no importer exits before the last claim, while a bundle was still pending."""
+    """Every importer held a bundle at once, every bundle is claimed once, and no importer
+    exits before the last claim, while a bundle was still pending."""
     claims: list[list[tuple[datetime.datetime, str]]] = []
     exits: list[datetime.datetime] = []
     for log_dir in join_run.importers:
@@ -159,9 +203,8 @@ def test_each_importer_claimed_while_the_others_held_theirs(
         (exit_time,) = [time for time, message in records if message == do_import.QUEUE_EMPTY_LINE]
         exits.append(exit_time)
 
+    assert join_run.held_at_once == IMPORTERS
     assert all(claimed for claimed in claims)
-    firsts = [claimed[0][0] for claimed in claims]
-    assert max(firsts) - min(firsts) < datetime.timedelta(seconds=HOLD_SECONDS)
     bundles = [bundle for claimed in claims for _time, bundle in claimed]
     assert sorted(bundles) == sorted(main_run.bundles)
     last_claim = max(time for claimed in claims for time, _bundle in claimed)
