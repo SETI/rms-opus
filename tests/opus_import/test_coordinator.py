@@ -187,6 +187,44 @@ class _Process:
         return self.code
 
 
+class _Clock:
+    """A monotonic clock that `time.sleep` advances, and a record of every sleep."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+        self.slept: list[float] = []
+
+    def monotonic(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.slept.append(seconds)
+        self.now += seconds
+
+
+@pytest.mark.parametrize(
+    ('code', 'reported', 'waits_out'),
+    [(None, False, True), (0, True, True), (-9, False, False)],
+    ids=['running', 'exit-reported', 'exit-unreported'],
+)
+def test_the_wait_between_readings_ends_when_an_importer_exits(
+    code: int | None, reported: bool, waits_out: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The coordinator waits the whole interval while its importers run or their exits
+    are reported, and goes on at once when one has exited that no pass has reported."""
+    clock = _Clock()
+    monkeypatch.setattr(time, 'monotonic', clock.monotonic)
+    monkeypatch.setattr(time, 'sleep', clock.sleep)
+    coordinator = _coordinator()
+    importer = opus_coordinator._Importer(_Process(code), 1, reported=reported)  # type: ignore[arg-type]
+    coordinator._own = [importer]
+
+    coordinator._wait_for_an_exit()
+
+    assert (clock.now >= opus_coordinator.TRACK_SECONDS) is waits_out
+    assert (clock.slept == []) is not waits_out
+
+
 def test_a_lost_importer_is_replaced_while_bundles_are_pending(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
