@@ -9492,3 +9492,17 @@ reversions, each failing a test).
 - The schemas `bench_test_before_b_1`, `bench_test_before_d_finalized` and
   `bench_test_after_d_finalized` on the harness's server are this PR's and are dropped
   once its numbers are recorded.
+- **The operator dropped the range-search histograms (2026-11-17)** after the
+  stop-and-report, on the measurements above: the target did not improve beyond its
+  noise, the statement it runs took 2.1 times as long with them, and the plans they
+  change go the right way only for a narrow time range. Removed from this PR:
+  `opus_import.histograms`, `do_import_tables.update_histograms` and its call from
+  `analyze_all_tables`, the brand methods `read_histograms`, `update_histograms` and
+  `drop_histograms`, their tests, `dump_db.sh`'s `--column-statistics` (it existed only to
+  carry the histograms to a peer), and the guides' account of them; the server page says
+  the import builds no column histograms. `--analyze-tables` is as it was at fbdff2d5.
+  Kept: the server page, the thread sweep and the four-by-four examples, the harness
+  changes, `compare`'s fixes, and both `ring_opening` searches in `web.toml`. The two stay
+  as benchmarks of a range on an unindexed child-table column, at a broad and a narrow
+  time range, a shape no other scenario covers and whose plan rests on the optimizer's
+  guess for the unindexed range; `queries.sql`, captured with them, needs no recapture.

@@ -45,10 +45,5 @@ echo "Dumping ${DATABASE} from ${OPUS_DB_HOST} to ${SQLDUMP}"
 # locks, so the dump of a database that is being served is whole while the site goes on
 # writing carts and searches to it. The snapshot does not survive DDL on the tables it
 # reads, which is why nothing that runs DDL on the database may run during a dump.
-#
-# --column-statistics writes an ANALYZE TABLE ... UPDATE HISTOGRAM statement for each
-# histogram the database carries, so the copy loaded from the dump has the range-search
-# histograms the import's finalization built; mysqldump leaves them out otherwise.
-mysqldump --single-transaction --column-statistics \
-    -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" \
+mysqldump --single-transaction -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" \
     -h "${OPUS_DB_HOST}" "${DATABASE}" > "${SQLDUMP}"

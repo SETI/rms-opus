@@ -170,33 +170,9 @@ The settings, and what each does for OPUS
        with ``LIKE``. Leave them at their defaults; ``ngram_token_size`` is startup
        only.
 
-.. _user_guide_database_server_histograms:
-
-Range-search histograms
------------------------
-
-MySQL estimates how many rows a condition on a column selects from that column's index,
-and has no estimate for a column without one unless the column carries a histogram: a
-summary of its values that ``ANALYZE TABLE ... UPDATE HISTOGRAM`` builds and the server
-keeps with the table. Without one, the optimizer guesses a fixed share of the rows, and
-when it chooses which table of a search to read first by that guess, it can read the
-wrong one first.
-
-``opus_import --analyze-tables``, the last step of every finalization, gives a histogram
-to each column a range search filters on that leads no index: the columns of the
-searchable ranges in ``param_info``, less those the server lists in the first position of
-an index. It removes any histogram on a column that has stopped being one of them, so a
-column that gains an index loses its histogram. An indexed column gets none, since the
-optimizer estimates its ranges from the index itself. The histograms of a served database
-are rebuilt by running the step again, which an append or an incremental update does as
-part of its finalization, and a copy made by the deploy chain's ``dump_db.sh`` and
-``load_db.sh`` carries them, the load building them again on the copy. To see which
-columns carry one::
-
-    SELECT table_name, column_name,
-           JSON_EXTRACT(histogram, '$."last-updated"') AS updated
-      FROM information_schema.COLUMN_STATISTICS
-     WHERE schema_name = 'opus';
+The optimizer's statistics are the ones ``ANALYZE TABLE`` keeps for each index:
+``opus_import --analyze-tables``, the last step of every finalization, refreshes them for
+every observation and mult table. The import builds no column histograms.
 
 .. _user_guide_database_server_statistics:
 

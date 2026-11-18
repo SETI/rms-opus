@@ -49,11 +49,12 @@ selected = "time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&planet=Saturn"
 # obs_general and its target junction, a ring radius range on obs_ring_geometry, and a
 # latitude range on Saturn's surface geometry.
 complex = "time1=2004-01-01T00:00:00&time2=2018-01-01T00:00:00&instrument=Cassini+ISS&target=Saturn&RINGGEOringradius1=60000&RINGGEOringradius2=140000&surfacegeometrytargetname=Saturn&SURFACEGEOsaturn_planetographiclatitude1=-30&SURFACEGEOsaturn_planetographiclatitude2=30"
-# A range on a column of obs_ring_geometry that leads no index, which finalization gives
-# a histogram, with the broad time range on obs_general: which of the two tables the
-# search reads first is decided by their estimated rows.
+# A range on a column of obs_ring_geometry that leads no index, with the broad time range
+# on obs_general: which of the two tables the search reads first is decided by their
+# estimated rows, and the unindexed range has no estimate but a guess.
 ring_opening = "time1=1980-01-01T00:00:00&time2=2018-01-01T00:00:00&RINGGEOobserverringopeningangle1=-10&RINGGEOobserverringopeningangle2=10"
-# The same range with a one-year time range.
+# The same range with a one-year time range, for which obs_general is the better table
+# to read first.
 ring_opening_year = "time1=2009-01-01T00:00:00&time2=2010-01-01T00:00:00&RINGGEOobserverringopeningangle1=-10&RINGGEOobserverringopeningangle2=10"
 
 # Column sets a pages scenario can ask for (`columns`) in place of the default columns,
