@@ -9499,8 +9499,8 @@ reversions, each failing a test).
   `opus_import.histograms`, `do_import_tables.update_histograms` and its call from
   `analyze_all_tables`, the brand methods `read_histograms`, `update_histograms` and
   `drop_histograms`, their tests, `dump_db.sh`'s `--column-statistics` (it existed only to
-  carry the histograms to a peer), and the guides' account of them; the server page says
-  the import builds no column histograms. `--analyze-tables` is as it was at fbdff2d5.
+  carry the histograms to a peer), and the guides' account of them.
+  `--analyze-tables` is as it was at fbdff2d5.
   Kept: the server page, the thread sweep and the four-by-four examples, the harness
   changes, `compare`'s fixes, and both `ring_opening` searches in `web.toml`. The two stay
   as benchmarks of a range on an unindexed child-table column, at a broad and a narrow
