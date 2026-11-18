@@ -172,7 +172,7 @@ The settings, and what each does for OPUS
 
 The optimizer's statistics are the ones ``ANALYZE TABLE`` keeps for each index:
 ``opus_import --analyze-tables``, the last step of every finalization, refreshes them for
-every observation and mult table. The import builds no column histograms.
+every observation and mult table.
 
 .. _user_guide_database_server_statistics:
 
