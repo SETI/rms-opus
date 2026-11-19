@@ -9536,3 +9536,56 @@ reversions, each failing a test).
   and the coordinator's wake; 775 s with the shared update on a runner about 1.5× slower,
   about 505 s scaled. The MySQL service's health check pings over TCP, which the image's
   initialization server does not listen on, so the job waits for the server it uses.
+
+### 2026-11-19, PR-26 (written against this file at 38e292b5)
+
+- **The final A/B session** (§2.3), session `a`, 2026-11-18 22:50 to 2026-11-19 02:38: PR-00
+  (dc9174c3) as the before side and `db-perf`'s head (b1105264) as the after side, both
+  importing, on the workstation with the harness's own server (MySQL 8.0.46, the tuning
+  baseline), Python 3.13.16 on both sides and the harness's server model, gunicorn with
+  4 workers of 2 threads. The harness ran from a checkout of this branch at acd79b40,
+  whose code is b1105264's. The operator stated the machine would stay idle for the night
+  and authorized the 48 GB memory scope every step ran in; the only other process the
+  five-minute samples show using CPU is a browser page whose renderers took about one CPU
+  for a second or two at a time.
+- **Counts** (§2.6): at fixture scale three imports a side in the order A B B A A B, five
+  web runs a side alternating A B B A, then `bench_db`; at test scale one import a side,
+  three web runs a side A B B A A B, then `bench_db`. Every guard held at both scales
+  against PR-00's floors, and no metric is flagged as a regression or as a changed plan.
+  Results: `2026-11-18_PR-26_{before,after}_{fixture,test}_mysql_a.json`.
+- **PR-00's test-scale import** failed at first on `GO_0016,GO_0017,GO_0018` with a
+  duplicate `opus_id` (`go-ssi-c0368977800`): PR-00's own scenario gives that group
+  `--import-check-duplicate-id`, which PR-08 removed with the import-tables path, so the
+  head's scenario no longer carries it, while the head settles the duplicate in
+  finalization's duplicate step. PR-00's test-scale import ran from a second checkout at
+  acd79b40 whose `import_test.toml` gives that group PR-00's option; every other step
+  ran from the first. The failed attempt recorded nothing.
+- **The first `bench_db` runs lacked `--dump-queries`** and recorded the schema and table
+  sizes alone; each schema's plans were replayed afterwards on the same schema, as a
+  second `db` run in the same result file, the fixture schemas before the test-scale
+  imports began.
+- **The complete-scale run at the head** (session `full`, 2026-11-19): one import from
+  `import_complete.toml` as 6 importers of 4 workers (`--coordinator 6`, `workers = 24`,
+  `cpu_fraction = 0.8`), 3,032 s, against PR-00's 18,235 s on 2026-11-05; bundle imports
+  1,617 s against 17,620 s; finalization 1,273 s against 613 s; 60.1 GB written against
+  350.3 GB. Then `bench_db` with its plan replay and one `bench_web` run (§2.6's
+  complete-scale count), and one more `bench_web` run warming both cold states with
+  `opus_manage warm_search` (session `fullwarm`), whose `warm_search` took 35–41 s at
+  each of its 72 resets (median 39.3 s after an app-cold reset, 36.4 s after a db-cold
+  one). Warmed, the two scenario searches it builds answered from the cache: the empty
+  search in 1.9 ms app-cold and 1.2 ms db-cold against 4.32 s and 4.38 s unwarmed, and
+  the selective search (`planet=Uranus`) in 2.0 ms and 1.2 ms against 95.7 ms and
+  148.6 ms. The scenarios it does not build moved between −21% and +80% in that one
+  run. Results:
+  `2026-11-19_PR-26_after_complete_mysql_{full,fullwarm}.json`.
+- **At complete scale the cold concurrency scenario is slower than PR-00's run**: app-cold
+  distinct-search throughput 1.5/s against 2.0/s and p95 18.98 s against 16.28 s; db-cold
+  shared-search p95 7.82 s against 5.39 s. Both runs used the same server model and
+  server settings; the scenario's requests are dominated by the slowest cold searches,
+  which changed little app-cold (ring radius 3.54 s against 3.65 s, surface geometry
+  3.09 s against 3.12 s); a complete-scale web metric is one run, and the two runs are
+  from different days, so the table is historical, not a comparison (§1).
+- The schemas `bench_fixture_{before,after}_a_3`, `bench_test_{before,after}_a_1` and
+  `bench_complete_after_full_1` on the harness's server are this session's and are
+  dropped once its numbers are recorded.
+- **Not yet done:** the operator's deploy rehearsal on the Node.
