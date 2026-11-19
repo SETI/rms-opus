@@ -9581,10 +9581,14 @@ reversions, each failing a test).
 - **At complete scale the cold concurrency scenario is slower than PR-00's run**: app-cold
   distinct-search throughput 1.5/s against 2.0/s and p95 18.98 s against 16.28 s; db-cold
   shared-search p95 7.82 s against 5.39 s. Both runs used the same server model and
-  server settings; the scenario's requests are dominated by the slowest cold searches,
-  which changed little app-cold (ring radius 3.54 s against 3.65 s, surface geometry
-  3.09 s against 3.12 s); a complete-scale web metric is one run, and the two runs are
-  from different days, so the table is historical, not a comparison (§1).
+  server settings. The scenario's users each issue the fan-out for a broad time range on
+  Saturn, and the same fan-out issued by one user alone (`fanout.selected`) was 18%
+  faster app-cold and db-cold in the same runs (14.55 s against 17.81 s, 15.89 s against
+  19.39 s), so the slowdown appears only with many users at once. In the plan replay the
+  fan-out's menu and its instrument and observation-type mult counts examine about 18%
+  more rows and take 25–44% longer, and its target mult count takes 59% less time. A
+  complete-scale web metric is one run, and the two runs are from different days, so the
+  table is historical, not a comparison (§1).
 - The schemas `bench_fixture_{before,after}_a_3`, `bench_test_{before,after}_a_1` and
   `bench_complete_after_full_1` on the harness's server are this session's and are
   dropped once its numbers are recorded.
