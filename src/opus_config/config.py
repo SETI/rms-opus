@@ -74,6 +74,9 @@ LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
 #: The memcached server `DjangoConfig.cache_location` names when the file does not.
 DEFAULT_CACHE_LOCATION = '127.0.0.1:11211'
 
+#: What begins a server address naming a Unix socket rather than a TCP port.
+UNIX_SOCKET_PREFIX = 'unix:'
+
 #: Seconds a worker thread keeps its database connection open when the file does not say.
 DEFAULT_CONN_MAX_AGE = 300
 
@@ -196,8 +199,9 @@ class DjangoConfig:
         cache_server_prefix: Prefix for every memcached key, which lets several
             installations share one memcached without colliding.
         cache_location: The memcached server the web application uses, as
-            ``host:port``. The default is ``127.0.0.1:11211``, memcached's own port on
-            the same machine.
+            ``host:port`` for a TCP port or ``unix:`` and an absolute path for a Unix
+            socket. The default is ``127.0.0.1:11211``, memcached's own port on the
+            same machine.
         conn_max_age: Seconds each worker thread keeps its database connection open
             across requests, Django's ``CONN_MAX_AGE``; 0 opens and closes one for every
             request. The default is 300.
@@ -637,8 +641,11 @@ class _TableReader:
             self._fail(f'{key!r} must be at most {maximum:g}, not {value}')
         return float(value)
 
-    def read_host_port(self, key: str, *, default: Any = _REQUIRED) -> str:
-        """Read a ``host:port`` network address.
+    def read_server_address(self, key: str, *, default: Any = _REQUIRED) -> str:
+        """Read a server address: a ``host:port`` network address or a Unix socket.
+
+        A Unix socket is written ``unix:`` and the socket's absolute path, the form
+        Django's memcached backends take.
 
         Parameters:
             key: The key to read.
@@ -650,15 +657,22 @@ class _TableReader:
 
         Raises:
             ConfigError: If the key is missing and has no default, its value is not a
-                string, or the string is not a non-empty host, a colon, and a port
-                number from 1 to 65535.
+                string, or the string is neither ``unix:`` and an absolute path nor a
+                non-empty host, a colon, and a port number from 1 to 65535.
         """
         value = self.read_str(key, default=default)
+        if value.startswith(UNIX_SOCKET_PREFIX):
+            if not value.removeprefix(UNIX_SOCKET_PREFIX).startswith('/'):
+                self._fail(f'{key!r} must name a socket by its absolute path, not {value!r}')
+            return value
         host, separator, port = value.rpartition(':')
         # isdigit alone accepts digits int() rejects, such as superscripts.
         valid_port = port.isascii() and port.isdigit() and 0 < int(port) < 65536
         if separator == '' or host == '' or not valid_port:
-            self._fail(f'{key!r} must be "host:port" with a port from 1 to 65535, not {value!r}')
+            self._fail(
+                f'{key!r} must be "host:port" with a port from 1 to 65535, or '
+                f'"unix:/path/to/socket", not {value!r}'
+            )
         return value
 
     def read_str_tuple(self, key: str) -> tuple[str, ...]:
@@ -770,7 +784,7 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
         debug=table.read_bool('debug'),
         allowed_hosts=table.read_str_tuple('allowed_hosts'),
         cache_server_prefix=table.read_str('cache_server_prefix'),
-        cache_location=table.read_host_port('cache_location', default=DEFAULT_CACHE_LOCATION),
+        cache_location=table.read_server_address('cache_location', default=DEFAULT_CACHE_LOCATION),
         conn_max_age=table.read_int('conn_max_age', default=DEFAULT_CONN_MAX_AGE, minimum=0),
         conn_health_checks=table.read_bool('conn_health_checks', default=True),
         search_build_timeout=table.read_int(

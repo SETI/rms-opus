@@ -225,6 +225,12 @@ def test_load_config_defaults_every_optional_key(
         ('django', 'fake_error404_probability', '0.25', 0.25),
         ('django', 'log_console_level', '"CRITICAL"', 'CRITICAL'),
         ('django', 'cache_location', '"cache.example.org:21211"', 'cache.example.org:21211'),
+        (
+            'django',
+            'cache_location',
+            '"unix:/run/memcached/memcached.socket"',
+            'unix:/run/memcached/memcached.socket',
+        ),
         ('django', 'conn_max_age', '0', 0),
         ('django', 'conn_health_checks', 'false', False),
         ('django', 'search_build_timeout', '60', 60),
@@ -435,7 +441,16 @@ def test_load_config_accepts_a_whole_number_probability(
         (
             adding('django', 'cache_location', '"127.0.0.1"'),
             '[django] \'cache_location\' must be "host:port" with a port from 1 to 65535, '
-            "not '127.0.0.1'",
+            'or "unix:/path/to/socket", not \'127.0.0.1\'',
+        ),
+        (
+            adding('django', 'cache_location', '"unix:memcached.socket"'),
+            "[django] 'cache_location' must name a socket by its absolute path, "
+            "not 'unix:memcached.socket'",
+        ),
+        (
+            adding('django', 'cache_location', '"unix:"'),
+            "[django] 'cache_location' must name a socket by its absolute path",
         ),
         (
             adding('django', 'cache_location', '":11211"'),
@@ -509,6 +524,8 @@ def test_load_config_accepts_a_whole_number_probability(
         'scratch-dir-given-a-number',
         'health-checks-given-a-string',
         'cache-location-without-a-port',
+        'cache-location-socket-path-relative',
+        'cache-location-socket-path-empty',
         'cache-location-without-a-host',
         'cache-location-port-not-a-number',
         'cache-location-port-too-large',

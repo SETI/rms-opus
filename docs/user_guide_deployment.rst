@@ -526,8 +526,9 @@ restarting the application is the only thing that clears them. See
 The import runbook
 ------------------
 
-A production import is long -- hours to days for the full holdings -- and it replaces
-what users see, so it is done deliberately.
+A production import of the full holdings takes about an hour when six importers share two
+dozen workers (``OPUS_IMPORT_WORKERS`` and ``OPUS_IMPORT_IMPORTERS`` in ``deploy.env``),
+and it replaces what users see, so it is done deliberately.
 
 1. **Import into a new database, under an installation of the release being deployed.**
    ``run_full_opus_import.sh`` does both: a new installation under ``staged/``, a

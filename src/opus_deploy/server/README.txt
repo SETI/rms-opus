@@ -70,6 +70,14 @@ everything else the chain needs underneath it, it creates.
     source /opt/opus/deploy_venv/bin/activate
     python -m pip install "rms-opus==3.24.0"
 
+   A revision with no release -- a branch, a tag or a commit -- is installed
+   from the repository instead, and every step below then takes "@<branch>"
+   where it shows "==3.24.0". pip builds it from a clone, so the server needs
+   git and access to GitHub:
+
+    python -m pip install \
+        "rms-opus @ git+https://github.com/SETI/rms-opus.git@<branch>"
+
 2. This directory, and its configuration.
 
     opus_deploy_scripts --directory /opt/opus/deploy
@@ -99,7 +107,9 @@ everything else the chain needs underneath it, it creates.
 --------------------------------------------------------------------------------
 
 3. Import the holdings, under an installation of the release being deployed.
-   Hours to days. It runs detached and mails the log when it finishes.
+   About an hour with OPUS_IMPORT_IMPORTERS=6 sharing OPUS_IMPORT_WORKERS=24;
+   left empty, those two run one importer of one worker. It runs detached and
+   mails the log when it finishes.
 
     ./import_and_deploy/run_full_opus_import.sh ==3.24.0
 

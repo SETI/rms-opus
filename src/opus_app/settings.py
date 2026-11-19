@@ -11,12 +11,13 @@ rather than at first request.
 
 from pathlib import Path
 
-from opus_config import get_config
+from opus_config import UNIX_SOCKET_PREFIX, get_config
 
 _config = get_config()
 
-# The memcached server, as "host:port". The probe below and CACHES both read it, so
-# the server the probe found answering is the one the cache is pointed at.
+# The memcached server, as "host:port" or "unix:" and a socket's path. The probe below
+# and CACHES both read it, so the server the probe found answering is the one the cache
+# is pointed at. Django's memcached backends take either form as it is.
 CACHE_LOCATION = _config.django.cache_location
 
 # Module-level helpers in this file are lower-case on purpose. Django treats every
@@ -45,10 +46,17 @@ _memcache_timeout = 1.0
 
 # Now check to see if memcached is actually running
 if _has_memcache:
-    try:
+    # pymemcache's client takes a socket as its bare path and a TCP port as a
+    # (host, port) pair.
+    _memcache_server: str | tuple[str, int]
+    if CACHE_LOCATION.startswith(UNIX_SOCKET_PREFIX):
+        _memcache_server = CACHE_LOCATION.removeprefix(UNIX_SOCKET_PREFIX)
+    else:
         _cache_host, _, _cache_port = CACHE_LOCATION.rpartition(':')
+        _memcache_server = (_cache_host, int(_cache_port))
+    try:
         _memcache_client = pymemcache.client.base.Client(
-            (_cache_host, int(_cache_port)),
+            _memcache_server,
             connect_timeout=_memcache_timeout,
             timeout=_memcache_timeout,
         )

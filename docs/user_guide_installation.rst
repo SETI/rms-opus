@@ -132,14 +132,21 @@ computed against the old one. Install the **daemon** here; the scripts install i
 
 Without memcached running, OPUS falls back to Django's per-process local-memory cache: it
 works, more slowly, and the cache-emptying step of a deploy has nothing shared to empty.
-:ref:`dev_guide_webapp_running` describes the fallback and its one sharp edge.
+:ref:`dev_guide_webapp_running` describes the fallback.
+
+OPUS reaches memcached at ``127.0.0.1:11211``, the port the distribution's package
+listens on, unless ``OPUS_CACHE_LOCATION`` in ``deploy.env`` names another. **A memcached
+started with** ``-s`` **listens on that Unix socket alone**, with no TCP port at all, so a
+server set up that way names the socket there, as ``unix:`` and its path. ``systemctl
+status memcached`` shows the command line memcached was started with.
 
 Nothing else is needed to install it. **Later**, once the site is serving, this is how to
 watch the cache being used -- the counters once a second, with what changed highlighted,
 which is how you see requests being answered from it and a deploy emptying it::
 
-    watch -n1 -d 'memcstat --servers localhost'
+    watch -n1 -d 'memcstat --servers 127.0.0.1'
 
+For a memcached on a socket, ``--servers`` takes the socket's path instead.
 ``memcstat`` comes from ``libmemcached-tools`` rather than from ``memcached``, which is
 why the install line above takes both packages.
 
@@ -175,8 +182,16 @@ application needs them to serve product files. Both a PDS3 and a PDS4 root are
 configured, and the scripts check that ``volumes/`` exists under the first and
 ``bundles/`` under the second before doing anything.
 
+**Each root has to be a directory of a particular name**: ``holdings`` for PDS3 and
+``pds4-holdings`` for PDS4. ``pdsfile``, which reads the holdings for the import, finds a
+file's place in them by that name, and the scripts refuse a root named otherwise. It does
+not resolve symbolic links, so a root mounted under another name is given a link of the
+right name::
+
+    sudo ln -s /volumes/pdsdata-production/pds3-holdings /opt/opus/holdings
+
 **A mail transport**, only if you want the import to mail its log when it finishes. An
-import runs for hours or days detached, so that mail is how anyone finds out it ended.
+import runs detached, so that mail is how anyone finds out it ended.
 Without one, leave ``OPUS_IMPORT_MAIL_TO`` empty and read the log where it was written.
 
 .. _user_guide_installation_bootstrap:
@@ -201,6 +216,15 @@ distribution once, by hand, into an environment of its own::
 
 ``opus`` there is the account from the prerequisites, and ``<release>`` the release you
 are deploying.
+
+**To install a revision with no release** -- a branch under review, a tag or a commit --
+name it in place of the release, as pip's direct reference to the repository::
+
+    python -m pip install "rms-opus @ git+https://github.com/SETI/rms-opus.git@<branch>"
+
+pip builds it from a clone, so the server needs ``git`` and access to GitHub. Every step
+below then takes ``@<branch>`` wherever it shows ``==<release>``, and each script installs
+that revision the same way (:ref:`user_guide_deployment_revision`).
 
 **This environment does not serve anything.** It exists so that the scripts have commands
 to run; the installations that serve and import are built by the scripts under
@@ -328,8 +352,9 @@ containing a space.
    * - ``OPUS_SECRET_KEY``
      - Django's signing key: unique to this server, and secret.
    * - ``PDS3_HOLDINGS_DIR``, ``PDS4_HOLDINGS_DIR``
-     - The two holdings roots. The scripts check that ``volumes/`` and ``bundles/``
-       exist under them.
+     - The two holdings roots, which have to end in directories named ``holdings`` and
+       ``pds4-holdings`` -- a symbolic link of that name serves. The scripts check the
+       names, and that ``volumes/`` and ``bundles/`` exist under them.
    * - ``LAST_BLOG_UPDATE_FILE``, ``NOTIFICATION_FILE``
      - The two files of site content the interface displays. Neither has to exist -- an
        absent one means there is nothing to show.
@@ -346,6 +371,18 @@ containing a space.
    * - ``OPUS_CACHE_PREFIX``
      - The prefix on this installation's keys in the shared cache. Two installations
        sharing one memcached need different prefixes, or each reads the other's answers.
+   * - ``OPUS_CACHE_LOCATION``
+     - *Optional.* Where the application reaches memcached, written into ``opus.toml``
+       as ``cache_location``: ``host:port``, or ``unix:`` and the socket's absolute
+       path for a memcached started with ``-s``. Empty means ``127.0.0.1:11211``. A
+       socket has to be one the web server's account can write to.
+   * - ``OPUS_IMPORT_WORKERS``, ``OPUS_IMPORT_IMPORTERS``, ``OPUS_IMPORT_CPU_FRACTION``
+     - *Optional.* The import's parallelism, written into ``opus.toml``'s ``[import]``
+       table as ``workers``, ``importers`` and ``cpu_fraction``: the total of worker
+       processes on this computer (``max`` for the ceiling), how many importers share
+       them, and the share of the cores the ceiling allows. Empty leaves a key out, and
+       its default applies -- for the first two together, **one importer of one worker**,
+       the slowest way to import (:ref:`user_guide_deployment_several_importers`).
    * - ``OPUS_PUBLIC_URL``, ``OPUS_PRODUCT_HTTP_PATH``, ``OPUS_VIEWMASTER_URL``,
        ``OPUS_TAR_FILE_URL``
      - What the site calls itself and where it serves things from. They appear in what
@@ -404,7 +441,9 @@ That one command builds an installation of that release under ``staged/``, point
 for the moment it started. It runs **detached**, and prints the log file it is writing
 to; with ``OPUS_IMPORT_MAIL_TO`` filled in, it mails that log when it ends.
 
-A full-holdings import is **hours to days**. What it runs is ``opus_import_all``, the
+A full-holdings import takes **about an hour** when six importers share two dozen
+workers, and longer with fewer, so set the parallelism in ``deploy.env`` before this
+step (below). What it runs is ``opus_import_all``, the
 installed command. It registers every bundle set in order -- Galileo and New Horizons
 first, then the rest roughly from the quickest to the slowest -- which fixes each
 bundle's number and the ids its observations take. It then starts importers, each
@@ -417,10 +456,10 @@ the release being installed rather than in the scripts, so it cannot disagree wi
 code importing.
 
 How much of the computer it uses is ``[import] workers``, the total of worker processes,
-divided among ``[import] importers`` importers. ``workers`` defaults to 1 and the
-importers are capped at it, so the import uses one process unless the configuration asks
-for more
-(:ref:`user_guide_deployment_several_importers`).
+divided among ``[import] importers`` importers, which the generated ``opus.toml`` takes
+from ``OPUS_IMPORT_WORKERS`` and ``OPUS_IMPORT_IMPORTERS`` in ``deploy.env``. ``workers``
+defaults to 1 and the importers are capped at it, so with neither set the import uses
+one process (:ref:`user_guide_deployment_several_importers`).
 
 The database is new, so nothing is erased. ``opus_import_all`` erases the OPUS tables of
 the database it is pointed at only when given ``--scorched-earth``, and asks first;
@@ -664,9 +703,10 @@ entirely.
        one memcached without colliding.
    * - ``cache_location``
      - optional
-     - The memcached the web application caches in, as ``"host:port"``. Default
-       ``"127.0.0.1:11211"``, memcached's own port on the same machine. A generated file
-       never contains it.
+     - The memcached the web application caches in, as ``"host:port"``, or as
+       ``"unix:"`` and an absolute path for a memcached listening on a Unix socket.
+       Default ``"127.0.0.1:11211"``, memcached's own port on the same machine. A
+       generated file contains it only when ``OPUS_CACHE_LOCATION`` names one.
    * - ``conn_max_age``
      - optional
      - How many seconds each web worker thread keeps its database connection open across

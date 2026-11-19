@@ -19,6 +19,10 @@ unset OPUS_DB_HOST
 unset OPUS_DB_DUMP_DIR
 unset OPUS_WEB_SERVICE
 unset OPUS_CACHE_SERVICE
+unset OPUS_CACHE_LOCATION
+unset OPUS_IMPORT_WORKERS
+unset OPUS_IMPORT_IMPORTERS
+unset OPUS_IMPORT_CPU_FRACTION
 unset OPUS_PEER_DB_HOST
 unset OPUS_IMPORT_MAIL_TO
 unset OPUS_DEBUG
@@ -113,6 +117,17 @@ export OPUS_WEB_SERVICE=${OPUS_WEB_SERVICE:-apache2}
 # `-` rather than `:-`: for this one key an empty value is an answer -- there is no
 # shared cache to empty -- so only an absent line takes the default.
 export OPUS_CACHE_SERVICE=${OPUS_CACHE_SERVICE-memcached}
+# Where the application reaches that cache, written into opus.toml as cache_location
+# when set: "host:port", or "unix:" and a socket's path for a memcached that listens on
+# a socket alone. Empty leaves the key out, and the application uses 127.0.0.1:11211.
+export OPUS_CACHE_LOCATION=${OPUS_CACHE_LOCATION:-}
+# The import's parallelism, written into opus.toml's [import] table when set: the total
+# of worker processes ("max" for the cpu_fraction ceiling), how many importers
+# opus_import_all divides them among, and the share of the cores the ceiling allows.
+# Empty leaves each key out, and the import takes its default.
+export OPUS_IMPORT_WORKERS=${OPUS_IMPORT_WORKERS:-}
+export OPUS_IMPORT_IMPORTERS=${OPUS_IMPORT_IMPORTERS:-}
+export OPUS_IMPORT_CPU_FRACTION=${OPUS_IMPORT_CPU_FRACTION:-}
 export OPUS_DEBUG
 export OPUS_ALLOWED_HOSTS
 export OPUS_CACHE_PREFIX
@@ -167,6 +182,23 @@ if [[ ! -d ${OPUS_DIR} ]]; then
     echo "${OPUS_DIR} does not exist"
     exit 1
 fi
+
+# pdsfile finds a file's logical path by the holdings root's own name, so each root has
+# to be a directory of exactly that name: "holdings" for PDS3 and "pds4-holdings" for
+# PDS4. It does not resolve symbolic links, so a link of that name to a root named
+# otherwise serves as well. Checked here because the import otherwise fails only once
+# an installation is built, inside pdsfile, naming neither variable.
+for _root in PDS3_HOLDINGS_DIR:holdings PDS4_HOLDINGS_DIR:pds4-holdings; do
+    _variable=${_root%%:*}
+    _name=${_root#*:}
+    if [[ $(basename "${!_variable}") != "${_name}" ]]; then
+        echo "${_variable} must end in a directory named '${_name}', which is how pdsfile"
+        echo "finds a file's logical path; '${!_variable}' does not. A symbolic link named"
+        echo "'${_name}' that points at the root serves as well."
+        exit 1
+    fi
+done
+unset _root _variable _name
 
 if [[ ! -d ${PDS3_HOLDINGS_DIR}/volumes ]]; then
     echo "${PDS3_HOLDINGS_DIR}/volumes does not exist"

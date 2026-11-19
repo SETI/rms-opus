@@ -787,8 +787,9 @@ checked-in mini-holdings fixture, which needs a MySQL server and nothing else::
 A full-holdings run
 -------------------
 
-A complete import is hours to days and replaces everything a user sees, so it is done
-into a new schema and switched over afterwards rather than in place.
+A complete import takes about an hour with six importers sharing two dozen workers, and
+it replaces everything a user sees, so it is done into a new schema and switched over
+afterwards rather than in place.
 
 The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
 ``opus_import_all``. With no step named it is the **coordinator**, which runs the whole

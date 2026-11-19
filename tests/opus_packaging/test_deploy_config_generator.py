@@ -139,6 +139,76 @@ def test_one_allowed_host_still_produces_an_array(tmp_path: Path) -> None:
     assert list(hosts) == ['opus.example.org']
 
 
+def test_without_a_cache_location_the_file_takes_the_default(tmp_path: Path) -> None:
+    """An environment without ``OPUS_CACHE_LOCATION`` writes no ``cache_location``."""
+    result = _generate(tmp_path)
+    assert result.returncode == 0, result.stderr
+    assert 'cache_location' not in (tmp_path / 'opus.toml').read_text()
+    assert load_config(tmp_path / 'opus.toml').django.cache_location == '127.0.0.1:11211'
+
+
+@pytest.mark.parametrize(
+    'location', ['unix:/var/run/memcached/memcached.socket', 'cache.example.org:21211']
+)
+def test_a_cache_location_reaches_the_loader(tmp_path: Path, location: str) -> None:
+    """``OPUS_CACHE_LOCATION`` is written as ``cache_location``, socket or TCP port."""
+    result = _generate(tmp_path, OPUS_CACHE_LOCATION=location)
+    assert result.returncode == 0, result.stderr
+    assert load_config(tmp_path / 'opus.toml').django.cache_location == location
+
+
+def test_a_control_character_in_the_cache_location_is_refused(tmp_path: Path) -> None:
+    """The optional value is checked as the required ones are, before anything is written."""
+    result = _generate(tmp_path, OPUS_CACHE_LOCATION='unix:/run/mem\ncached.socket')
+    assert result.returncode == 1
+    assert 'OPUS_CACHE_LOCATION contains a control character' in result.stderr
+    assert not (tmp_path / 'opus.toml').exists()
+
+
+def test_without_import_parallelism_the_file_takes_the_defaults(tmp_path: Path) -> None:
+    """No ``OPUS_IMPORT_*`` value writes none of the three keys."""
+    result = _generate(tmp_path)
+    assert result.returncode == 0, result.stderr
+    text = (tmp_path / 'opus.toml').read_text()
+    for key in ('workers', 'importers', 'cpu_fraction'):
+        assert f'\n{key} =' not in text
+
+
+@pytest.mark.parametrize(('workers', 'expected'), [('24', 24), ('max', 'max')])
+def test_import_parallelism_reaches_the_loader(
+    tmp_path: Path, workers: str, expected: int | str
+) -> None:
+    """The three values arrive in ``[import]`` as the loader reads them."""
+    result = _generate(
+        tmp_path,
+        OPUS_IMPORT_WORKERS=workers,
+        OPUS_IMPORT_IMPORTERS='6',
+        OPUS_IMPORT_CPU_FRACTION='0.8',
+    )
+    assert result.returncode == 0, result.stderr
+    config = load_config(tmp_path / 'opus.toml').import_
+    assert config.workers == expected
+    assert config.importers == 6
+    assert config.cpu_fraction == 0.8
+
+
+@pytest.mark.parametrize(
+    ('variable', 'value'),
+    [
+        ('OPUS_IMPORT_WORKERS', 'all'),
+        ('OPUS_IMPORT_WORKERS', '2.5'),
+        ('OPUS_IMPORT_IMPORTERS', 'max'),
+        ('OPUS_IMPORT_CPU_FRACTION', '80%'),
+    ],
+)
+def test_a_malformed_import_value_is_refused(tmp_path: Path, variable: str, value: str) -> None:
+    """A value not of its key's form stops the generator, naming the variable."""
+    result = _generate(tmp_path, **{variable: value})
+    assert result.returncode == 1
+    assert variable in result.stderr
+    assert not (tmp_path / 'opus.toml').exists()
+
+
 def test_debug_true_reaches_the_loader_as_a_boolean(tmp_path: Path) -> None:
     """``OPUS_DEBUG`` is written as a TOML boolean, not as a quoted string."""
     result = _generate(tmp_path, OPUS_DEBUG='true')
