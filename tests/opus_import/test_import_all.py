@@ -16,7 +16,6 @@ from typing import Any
 import pytest
 
 import opus_config.config
-from opus_config import ConfigError
 from opus_import import import_all
 
 from .conftest import import_table
@@ -98,10 +97,11 @@ def test_a_ceiling_that_floors_to_zero_is_one() -> None:
     assert (division.ceiling, division.workers, division.importers) == (1, 1, 1)
 
 
-def test_a_total_above_the_ceiling_is_refused() -> None:
+def test_a_total_above_the_ceiling_is_lowered_to_it() -> None:
     """No request takes every core: eight cores at three quarters allow six."""
-    with pytest.raises(ConfigError, match='--workers 7 is above the ceiling of 6'):
-        import_all.resolve_division(import_table(), 7, 2, detected=8)
+    division = import_all.resolve_division(import_table(), 7, 2, detected=8)
+    assert (division.workers, division.per_importer) == (6, (3, 3))
+    assert division.describe().endswith('; capped at the ceiling: --workers 7')
 
 
 def test_the_first_line_states_the_cores_the_fraction_the_ceiling_and_the_division() -> None:
@@ -155,15 +155,12 @@ def test_scorched_earth_erases_first_as_its_own_invocation(
     assert recorded_steps[2] == ['coordinate', '1']
 
 
-def test_a_total_above_the_ceiling_stops_the_run_before_anything_runs(
+def test_a_total_above_the_ceiling_runs_at_the_ceiling(
     monkeypatch: pytest.MonkeyPatch, recorded_steps: list[list[str]]
 ) -> None:
-    """The division is resolved before the erase."""
-    monkeypatch.setattr('builtins.input', lambda _prompt: import_all.CONFIRMATION)
-    with pytest.raises(SystemExit) as raised:
-        _run(monkeypatch, '--scorched-earth', '--workers', '7')
-    assert raised.value.code == 2
-    assert recorded_steps == []
+    """Seven workers on eight cores at three quarters run as six, divided as six."""
+    _run(monkeypatch, '--override-db-schema', 'opus3_new', '--importers', '4', '--workers', '7')
+    assert ['coordinate', '2,2,1,1'] in recorded_steps
 
 
 def test_yes_alone_is_refused(

@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 import pdslogger
 from pdsfile import Pds3File, Pds4File
 
-from opus_config import MAX_WORKERS, ConfigError, get_config, resolve_parallelism
+from opus_config import MAX_WORKERS, get_config, resolve_parallelism
 from opus_import import bundle_registry, import_util, importdb
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
@@ -1010,11 +1010,7 @@ def main() -> None:
 
     # First, so the log says how much of the computer the run may use before anything
     # uses it.
-    try:
-        parallelism = resolve_parallelism(config.import_, args.workers)
-    except ConfigError as e:
-        logger.log('fatal', str(e))
-        sys.exit(-1)
+    parallelism = resolve_parallelism(config.import_, args.workers)
     logger.log('info', parallelism.describe())
     ctx.workers = parallelism.workers
     ctx.index_workers = parallelism.index_workers

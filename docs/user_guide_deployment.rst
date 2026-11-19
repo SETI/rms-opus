@@ -723,9 +723,10 @@ the largest bundle no other has taken, import it, and take the next, until none 
 ``--workers`` is the total of worker processes on the computer and ``--importers`` how
 many importers share them; ``[import] workers`` and ``[import] importers`` give the
 defaults, 1 and 4. The importers are capped at the total of workers, so the defaults
-start one importer of one worker. The total may not pass the ceiling of ``[import] cpu_fraction`` of the
-computer's cores. Six importers of four workers each, for one, need a ceiling of at
-least 24, which 30 cores give at a ``cpu_fraction`` of 0.8::
+start one importer of one worker. A total above the ceiling, ``[import] cpu_fraction`` of
+the computer's cores, is lowered to it, and the run's first line names it. Six importers
+of four workers each, for one, need a ceiling of at least 24, which 30 cores give at a
+``cpu_fraction`` of 0.8::
 
     OPUS_CONFIG=<config> opus_import_all --override-db-schema <database> --importers 6 --workers 24
 

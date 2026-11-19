@@ -111,7 +111,7 @@ into the same schema.
 **The import counts the cores of the machine a session runs on**, and the main run's
 ``workers = "max"`` and ``index_workers = "max"`` resolve to the ceiling they give; the
 goldens do not depend on the count. A session that asks for a fixed count asks for no
-more than a four-core machine's ceiling, 3, so it is never refused on a GitHub-hosted
+more than a four-core machine's ceiling, 3, so it is never lowered on a GitHub-hosted
 runner. The main run computes its observations in a pool at that ceiling, in tasks of 5
 index rows so that the fixture's small indexes split across several workers, and builds
 its keys over as many connections; a session that sets no ``workers`` of its own, as the

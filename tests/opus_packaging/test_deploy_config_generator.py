@@ -197,8 +197,11 @@ def test_import_parallelism_reaches_the_loader(
     [
         ('OPUS_IMPORT_WORKERS', 'all'),
         ('OPUS_IMPORT_WORKERS', '2.5'),
+        ('OPUS_IMPORT_WORKERS', '024'),
         ('OPUS_IMPORT_IMPORTERS', 'max'),
+        ('OPUS_IMPORT_IMPORTERS', '06'),
         ('OPUS_IMPORT_CPU_FRACTION', '80%'),
+        ('OPUS_IMPORT_CPU_FRACTION', '00.8'),
     ],
 )
 def test_a_malformed_import_value_is_refused(tmp_path: Path, variable: str, value: str) -> None:

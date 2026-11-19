@@ -54,6 +54,7 @@ import functools
 import math
 import os
 import tomllib
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NoReturn
@@ -317,6 +318,8 @@ class Parallelism:
         ceiling: ``max(1, floor(cores * cpu_fraction))``, the most either count may be.
         workers: The processes that compute an index's observations.
         index_workers: The tables finalization builds indexes on at once.
+        capped: Each count asked for above the ceiling and lowered to it, as its
+            source and the number asked for, such as ``[import] workers 24``.
     """
 
     cores: int
@@ -324,18 +327,34 @@ class Parallelism:
     ceiling: int
     workers: int
     index_workers: int
+    capped: tuple[str, ...] = ()
 
     def describe(self) -> str:
         """Return the one line an import logs about its parallelism.
 
         Returns:
-            The cores detected, the fraction, the ceiling, and both counts.
+            The cores detected, the fraction, the ceiling, both counts, and any count
+            lowered to the ceiling.
         """
         return (
             f'Parallelism: {self.cores} cores detected, cpu_fraction '
             f'{self.cpu_fraction:g}, ceiling {self.ceiling}; workers {self.workers}, '
-            f'index_workers {self.index_workers}'
+            f'index_workers {self.index_workers}{describe_capped(self.capped)}'
         )
+
+
+def describe_capped(capped: Sequence[str]) -> str:
+    """Return the clause a parallelism line ends with when a count was lowered.
+
+    Parameters:
+        capped: Each count lowered to the ceiling, as `Parallelism.capped` holds them.
+
+    Returns:
+        ``"; capped at the ceiling: "`` and the counts, or an empty string for none.
+    """
+    if len(capped) == 0:
+        return ''
+    return '; capped at the ceiling: ' + ', '.join(capped)
 
 
 @dataclass(frozen=True)
@@ -657,10 +676,15 @@ class _TableReader:
 
         Raises:
             ConfigError: If the key is missing and has no default, its value is not a
-                string, or the string is neither ``unix:`` and an absolute path nor a
-                non-empty host, a colon, and a port number from 1 to 65535.
+                string, the string holds a comma or a semicolon, or it is neither
+                ``unix:`` and an absolute path nor a non-empty host, a colon, and a port
+                number from 1 to 65535.
         """
         value = self.read_str(key, default=default)
+        # Django reads a memcached location holding a comma or a semicolon as several
+        # servers, so such an address would be probed as one and used as others.
+        if ',' in value or ';' in value:
+            self._fail(f'{key!r} names one server, without "," or ";", not {value!r}')
         if value.startswith(UNIX_SOCKET_PREFIX):
             if not value.removeprefix(UNIX_SOCKET_PREFIX).startswith('/'):
                 self._fail(f'{key!r} must name a socket by its absolute path, not {value!r}')
@@ -869,11 +893,13 @@ def resolve_parallelism(
     *,
     detected: int | None = None,
 ) -> Parallelism:
-    """Resolve the import's worker counts against the ceiling no request may exceed.
+    """Resolve the import's worker counts against the ceiling no count may exceed.
 
     The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is the number of cores the
     process may run on (`detected_cores`), because the database server or another user may
-    share the computer. `MAX_WORKERS` asks for the ceiling itself.
+    share the computer. `MAX_WORKERS` asks for the ceiling itself, and a count above it is
+    lowered to it and named in `Parallelism.capped`, so one configuration serves
+    computers of different sizes.
 
     Parameters:
         config: The ``[import]`` table.
@@ -883,34 +909,32 @@ def resolve_parallelism(
             None counts them with `detected_cores`.
 
     Returns:
-        The resolved counts and how the ceiling was reached.
-
-    Raises:
-        ConfigError: If either count is above the ceiling, naming the ceiling and how it
-            was reached.
+        The resolved counts, how the ceiling was reached, and which counts it lowered.
     """
     cores = detected_cores() if detected is None else detected
     ceiling = max(1, math.floor(cores * config.cpu_fraction))
+    capped: list[str] = []
 
     def resolve(value: int | str, name: str) -> int:
-        """Return one count, the ceiling for `MAX_WORKERS`, refusing one above it."""
+        """Return one count, the ceiling for `MAX_WORKERS` or for one above it."""
         if value == MAX_WORKERS:
             return ceiling
         assert isinstance(value, int)
         if value > ceiling:
-            raise ConfigError(
-                f'{name} {value} is above the ceiling of {ceiling}: {cores} cores detected '
-                f'times cpu_fraction {config.cpu_fraction:g}'
-            )
+            capped.append(f'{name} {value}')
+            return ceiling
         return value
 
     workers_name = '--workers' if workers is not None else '[import] workers'
+    resolved_workers = resolve(config.workers if workers is None else workers, workers_name)
+    resolved_index_workers = resolve(config.index_workers, '[import] index_workers')
     return Parallelism(
         cores=cores,
         cpu_fraction=config.cpu_fraction,
         ceiling=ceiling,
-        workers=resolve(config.workers if workers is None else workers, workers_name),
-        index_workers=resolve(config.index_workers, '[import] index_workers'),
+        workers=resolved_workers,
+        index_workers=resolved_index_workers,
+        capped=tuple(capped),
     )
 
 

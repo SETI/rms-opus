@@ -60,7 +60,10 @@ if _has_memcache:
             connect_timeout=_memcache_timeout,
             timeout=_memcache_timeout,
         )
-        _memcache_client.set('__test_key__', 'test_val')
+        # noreply=False makes the client wait for memcached's answer, so a server that
+        # accepts the connection but does not answer counts as missing. A refusal of the
+        # write is False rather than an exception.
+        _has_memcache = _memcache_client.set('__test_key__', 'test_val', noreply=False) is True
         _memcache_client.close()
     except (OSError, pymemcache.exceptions.MemcacheError):
         _has_memcache = False

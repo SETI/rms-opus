@@ -249,15 +249,16 @@ def test_the_first_line_logged_says_how_much_of_the_computer_the_run_may_use(
     )
 
 
-def test_a_worker_count_above_the_ceiling_is_refused_before_the_database_opens(
+def test_a_worker_count_above_the_ceiling_is_lowered_and_logged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The refusal names the ceiling and how it was reached, and nothing connects."""
-    logger, opened = _main_until_refused(['--workers', '7', '--import', 'COISS_2002'], monkeypatch)
-    assert opened == []
-    assert logger.messages_at('fatal') == [
-        '--workers 7 is above the ceiling of 6: 8 cores detected times cpu_fraction 0.75'
-    ]
+    """The run goes on at the ceiling, and its first line names what was asked for."""
+    logger, _opened = _main_until_refused(['--workers', '7', '--scorched-earth'], monkeypatch)
+    assert logger.messages[0] == (
+        'info',
+        'Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, '
+        'index_workers 1; capped at the ceiling: --workers 7',
+    )
 
 
 @pytest.mark.parametrize(

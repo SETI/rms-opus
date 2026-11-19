@@ -100,18 +100,18 @@ the computer. The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is the
 the process may run on -- its CPU affinity set where the platform has one, so a run
 confined by ``taskset`` or a container's CPU set counts only those. ``cpu_fraction`` is greater than 0 and at most 1,
 0.75 by default. :func:`opus_config.config.resolve_parallelism` resolves both counts,
-and a count above the ceiling is **refused**, not lowered: the run logs a fatal message
-naming the count, the ceiling, the cores and the fraction, and exits non-zero before it
-opens the database.
+and a count above the ceiling is **lowered to it**, so one configuration serves
+computers of different sizes; the parallelism line below names each count it lowered
+and the number asked for.
 
 ``--workers N`` replaces ``[import] workers`` for one invocation, and takes a whole
-number of at least 1 or ``max``, checked against the same ceiling.
+number of at least 1 or ``max``, held to the same ceiling.
 
 **The first line of every run's log states the parallelism**: the cores detected,
-``cpu_fraction``, the ceiling, and the resolved ``workers`` and ``index_workers``, as
-in::
+``cpu_fraction``, the ceiling, and the resolved ``workers`` and ``index_workers``, then
+any count lowered to the ceiling, as in::
 
-    Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1
+    Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1; capped at the ceiling: [import] workers 24
 
 An index with fewer rows than ``[import] worker_rows`` is computed in the import's own
 process whatever ``workers`` says, and so is every index on a platform that cannot
@@ -354,7 +354,7 @@ Parallelism
      - Meaning
    * - ``--workers N``
      - Compute each index's observations in ``N`` processes, or ``max`` for the ceiling;
-       replaces ``[import] workers``. A count above the ceiling is a fatal error
+       replaces ``[import] workers``. A count above the ceiling is lowered to it
        (:ref:`dev_guide_import_running_parallelism`).
 
 Import behavior
@@ -803,7 +803,7 @@ import on one computer; its tracking, recovery and table are
    comma-separated descriptors name instead.
 2. **Divide.** ``--workers N`` is the total of worker processes on this computer, from
    ``[import] workers`` when it is not given, so the default is 1. A total above the
-   ceiling (`How many processes a run uses`_) is refused before anything runs.
+   ceiling (`How many processes a run uses`_) is lowered to it.
    ``--importers M`` (``auto``, the default, reads ``[import] importers``) is capped at
    N, and N is divided among the M importers as evenly as whole numbers allow: the first
    ``N mod M`` take one more. Each importer is one ``opus_import --join --workers <share>``

@@ -236,10 +236,11 @@ its client is not a declared dependency. The behavior to know here is the fallba
 :mod:`opus_app.settings` decides at import time, and it decides **twice** -- whether
 ``pymemcache`` imports, and whether the memcached named by the configuration's
 ``[django] cache_location`` (``127.0.0.1:11211`` unless it says otherwise, or ``unix:``
-and a socket's path) accepts a write within a second -- falling back to Django's
-per-process local-memory cache if the import fails or the write does not succeed, for
-whatever reason: refused, timed out, a name that does not resolve, or a socket that is
-missing or not writable. The same address is the one ``CACHES`` points Django's cache at,
+and a socket's path) stores a test key and says so, with a second allowed for the
+connection and a second for the answer -- falling back to Django's per-process
+local-memory cache if the import fails or the write does not succeed, for whatever
+reason: refused, unanswered, a name that does not resolve, or a socket that is missing
+or not writable. The same address is the one ``CACHES`` points Django's cache at,
 so the server the check found answering is the one used.
 
 Emptying the shared cache is one module::

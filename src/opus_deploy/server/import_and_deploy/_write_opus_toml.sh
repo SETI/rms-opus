@@ -121,7 +121,11 @@ fi
 
 # The import's parallelism, each optional: empty or unset leaves the key out, and the
 # import takes its default. They are TOML numbers, or for workers the string "max", so
-# each is checked by its form here and by its range when the file is loaded.
+# each is checked by its form here and by its range when the file is loaded. TOML
+# forbids a leading zero on a number, so "024" and "00.8" are refused here rather than
+# written into a file that would not load.
+_toml_whole='^(0|[1-9][0-9]*)$'
+_toml_decimal='^(0|[1-9][0-9]*)(\.[0-9]+)?$'
 OPUS_IMPORT_WORKERS=${OPUS_IMPORT_WORKERS:-}
 OPUS_IMPORT_IMPORTERS=${OPUS_IMPORT_IMPORTERS:-}
 OPUS_IMPORT_CPU_FRACTION=${OPUS_IMPORT_CPU_FRACTION:-}
@@ -129,7 +133,7 @@ import_lines=""
 if [[ -n ${OPUS_IMPORT_WORKERS} ]]; then
     if [[ ${OPUS_IMPORT_WORKERS} == max ]]; then
         import_lines+=$'\nworkers = "max"'
-    elif [[ ${OPUS_IMPORT_WORKERS} =~ ^[0-9]+$ ]]; then
+    elif [[ ${OPUS_IMPORT_WORKERS} =~ ${_toml_whole} ]]; then
         import_lines+=$'\n'"workers = ${OPUS_IMPORT_WORKERS}"
     else
         echo "ERROR: OPUS_IMPORT_WORKERS must be a whole number or 'max' (got '${OPUS_IMPORT_WORKERS}')." >&2
@@ -137,14 +141,14 @@ if [[ -n ${OPUS_IMPORT_WORKERS} ]]; then
     fi
 fi
 if [[ -n ${OPUS_IMPORT_IMPORTERS} ]]; then
-    if [[ ! ${OPUS_IMPORT_IMPORTERS} =~ ^[0-9]+$ ]]; then
+    if [[ ! ${OPUS_IMPORT_IMPORTERS} =~ ${_toml_whole} ]]; then
         echo "ERROR: OPUS_IMPORT_IMPORTERS must be a whole number (got '${OPUS_IMPORT_IMPORTERS}')." >&2
         exit 1
     fi
     import_lines+=$'\n'"importers = ${OPUS_IMPORT_IMPORTERS}"
 fi
 if [[ -n ${OPUS_IMPORT_CPU_FRACTION} ]]; then
-    if [[ ! ${OPUS_IMPORT_CPU_FRACTION} =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    if [[ ! ${OPUS_IMPORT_CPU_FRACTION} =~ ${_toml_decimal} ]]; then
         echo "ERROR: OPUS_IMPORT_CPU_FRACTION must be a number such as 0.8 (got '${OPUS_IMPORT_CPU_FRACTION}')." >&2
         exit 1
     fi
