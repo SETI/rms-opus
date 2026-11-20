@@ -94,8 +94,9 @@ BUNDLE_SETS = (
 )
 
 #: What finishes the database once every bundle is in it. They are the finalization
-#: group -- the secondary keys, one copy of each OPUS id, and the auxiliary tables that
-#: describe the search form -- the dictionary the tooltips come from, the validation that
+#: group -- the secondary keys, one copy of each OPUS id, the mult values some observation
+#: holds, and the auxiliary tables that describe the search form -- the dictionary the
+#: tooltips come from, the validation that
 #: reads the result back, and the schema version row that lets the web application serve
 #: the result, which comes last. None of them names a bundle.
 FINALIZATION_OPTIONS = (

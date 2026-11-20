@@ -513,8 +513,9 @@ space-separated: a bundle id (``COISS_2002``), a whole bundleset (``COISS_2xxx``
 the shorthands for a mission or an instrument (``CASSINI``, ``GALILEO``, ``HST``,
 ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their relatives, matched without regard to
 case), or ``ALL``. ``--do-it-all`` imports them and then runs ``--finalize``, which
-adds the database's indexes, keeps one copy of each observation two bundles share and
-builds the tables that describe the search form. The three steps after it finish the
+adds the database's indexes, keeps one copy of each observation two bundles share,
+deletes the checkbox values no observation holds, and builds the tables that describe the
+search form. The three steps after it finish the
 database, the last of them what lets the web application serve it, and a direct
 invocation is the one path that does not run them for you. ``opus_import --help`` lists
 every option and works without a configuration file; :ref:`dev_guide_import_running` is

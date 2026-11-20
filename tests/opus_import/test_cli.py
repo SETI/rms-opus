@@ -39,6 +39,7 @@ from opus_import.steps import (
     do_indexes,
     do_param_info,
     do_partables,
+    do_schema_version,
     do_table_names,
 )
 
@@ -653,6 +654,78 @@ class _ErasedSchema:
 
     db_schema = 'opus_ci_db'
     log_sql = False
+
+
+@pytest.mark.parametrize(
+    ('outcome', 'failed'),
+    [
+        ('true', False),
+        ('none', False),
+        ('warning', False),
+        ('false', True),
+        ('error', True),
+        ('fatal', True),
+        ('cache', True),
+    ],
+)
+def test_a_finishing_step_fails_by_its_result_or_by_an_error_it_logs(
+    outcome: str, failed: bool
+) -> None:
+    """A step that returns nothing, as the cart and the analysis do, still fails when it
+    logs an error, from itself or the database layer; a warning does not fail it."""
+    logger = RecordingLogger()
+
+    def step() -> object:
+        if outcome in ('warning', 'error', 'fatal'):
+            logger.log(outcome, 'something happened')
+        if outcome == 'cache':
+            raise do_django.CacheFlushError('the flush exited with status 1')
+        return {'true': True, 'false': False}.get(outcome)
+
+    failed_steps: list[str] = []
+    cli._run_finishing_step(logger, failed_steps, '--create-cart', step)
+    assert failed_steps == (['--create-cart'] if failed else [])
+    if outcome == 'cache':
+        assert logger.messages_at('error') == ['--create-cart: the flush exited with status 1']
+
+
+def test_a_finishing_step_that_logs_an_error_keeps_the_schema_unmarked(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The cart step logs its failure and returns nothing; --write-schema-version refuses,
+    naming it, and the invocation exits with failure."""
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+    monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: _ErasedSchema())
+    monkeypatch.setattr(cli, '_prepare_holdings', lambda *args: None)
+    monkeypatch.setattr(cli, '_registry_finished', lambda ctx, step: True)
+    monkeypatch.setattr(
+        do_generation, 'load_generation_state', lambda ctx: setattr(ctx, 'generation_state', None)
+    )
+    monkeypatch.setattr(do_import, 'do_import_steps', lambda ctx: True)
+    monkeypatch.setattr(
+        do_cart, 'create_cart', lambda ctx: logger.log('error', 'Unable to create cart')
+    )
+    stamped: list[bool] = []
+
+    def write_schema_version(ctx: ImportContext) -> bool:
+        stamped.append(True)
+        return True
+
+    monkeypatch.setattr(do_schema_version, 'write_schema_version', write_schema_version)
+    monkeypatch.setattr(sys, 'argv', ['opus_import', '--create-cart', '--write-schema-version'])
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code == -1
+    assert stamped == []
+    assert logger.messages_at('error')[-1] == (
+        '--create-cart failed, so the schema is not marked ready; --ignore-errors marks it '
+        'ready regardless'
+    )
 
 
 def test_an_erase_forgets_the_pending_generation_it_dropped(

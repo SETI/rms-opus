@@ -728,11 +728,14 @@ Verifying that a run succeeded
 ------------------------------
 
 **The exit status is not sufficient.** A non-zero status means the run stopped; a zero
-status does **not** mean it was clean. Several steps report failure through the log and
-still exit zero. These are not among them: a failed ``--create-indexes``, duplicate
-step, ``--create-param-info``, ``--update-mult-info``, ``--import-dictionary`` or
-``--validate`` makes the invocation exit with failure and keeps it from marking the
-schema ready.
+status does **not** mean it was clean. The import of bundles reports a bundle's problems
+through the log and still exits zero. The finishing steps do not: every step of the
+finalization group (the duplicate and mult steps among them), ``--update-mult-info``,
+``--validate`` and ``--import-dictionary`` fails when it reports failure, logs an error
+or fatal message while it runs (the database layer's included), or, for
+``--reset-search-tables``, cannot empty the cache. A failed finishing step makes the
+invocation exit with failure, once its other steps have run, and keeps it from marking
+the schema ready; ``--ignore-errors`` overrides both.
 
 The check that matters is, with ``<import_log_dir>`` standing for the directory that
 ``[paths] import_log_dir`` names::
