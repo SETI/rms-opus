@@ -888,8 +888,8 @@ def generation_problem(db: ImportDBSuper, action: str) -> str | None:
     tables for its switch while the dictionary and the mult labels changed in place. It
     asks what the action itself checks before it changes anything: the version row, the
     generation lock, the invocations writing the pending generation (except for a rebuild,
-    which an append may run beside), and for a switch, a revert or a rebuild whether a
-    switch, a revert or a purge stopped part way.
+    which an append may run beside), and whether a switch, a revert or a purge stopped
+    part way: for a continuation a switch, which refuses every write to the generation.
 
     Parameters:
         db: A connection to the schema, which may be read-only.
@@ -919,7 +919,11 @@ def generation_problem(db: ImportDBSuper, action: str) -> str | None:
     if action == CHECK_REBUILD:
         return unfinished_switch_problem(db, state) or unfinished_purge_problem(db, state)
     writers = _writers_message(db)
-    if writers is not None or action == CHECK_CONTINUE:
+    if action == CHECK_CONTINUE:
+        # A switch that stopped part way refuses every write to the generation it was
+        # switching until it is completed or reverted.
+        return writers or unfinished_switch_problem(db, state)
+    if writers is not None:
         return writers
     if action == CHECK_REVERT:
         return _revert_refusal(state) or unfinished_purge_problem(db, state)

@@ -165,26 +165,70 @@ def test_a_dead_importers_bundle_is_deleted_under_its_row_lock_and_requeued(
     ]
 
 
+class _RecoveryWriter:
+    """A recovery's writer registration, recording its events into a shared list."""
+
+    def __init__(self, events: list[str]) -> None:
+        self.events = events
+
+    def exit(self) -> None:
+        self.events.append('writer exited')
+
+
 def test_a_recovery_deletes_by_the_version_row_it_reads_itself(
     monkeypatch: pytest.MonkeyPatch, queue: _QueueDB
 ) -> None:
-    """A coordinator's context never read the version row; the recovery reads it under
-    the bundle's row lock, so with a generation pending the delete retires the served
-    rows rather than deleting them."""
+    """A coordinator's context never read the version row; the recovery reads it and
+    registers as a writer before it takes the bundle's row lock, so with a generation
+    pending the delete retires the served rows rather than deleting them, and no
+    generation command runs until the writer exits."""
     pending = GenerationState(SCHEMA_VERSION, 'ready', 1, 2, PENDING_WRITING, False)
     monkeypatch.setattr(do_generation, 'read_generation_state', lambda db: pending)
-    seen: list[tuple[str, int | None, set[int]]] = []
+    events: list[str] = []
+
+    def register_writer(ctx: Any, *, sole: bool = False) -> _RecoveryWriter:
+        events.append(f'registered, rows held {sorted(queue.held)}')
+        return _RecoveryWriter(events)
+
+    monkeypatch.setattr(do_generation, 'register_writer', register_writer)
     monkeypatch.setattr(
         do_import_tables,
         'delete_bundle_from_obs_tables',
-        lambda ctx, bundle: seen.append((bundle, ctx.pending_generation, set(queue.held))),
+        lambda ctx, bundle: events.append(
+            f'deleted {bundle} at pending {ctx.pending_generation}, rows held {sorted(queue.held)}'
+        ),
     )
     ctx = make_context(db=queue)
     assert ctx.generation_state is None
 
     do_recover.recover_lost_importers(ctx)
 
-    assert seen == [('B_1', 2, {1})]
+    assert events == [
+        'registered, rows held []',
+        'deleted B_1 at pending 2, rows held [1]',
+        'writer exited',
+    ]
+
+
+def test_a_recovery_a_generation_command_refuses_is_left_for_a_later_pass(
+    monkeypatch: pytest.MonkeyPatch, queue: _QueueDB
+) -> None:
+    """Nothing is deleted or moved, and the importer is not marked lost while its bundle
+    is still held."""
+    pending = GenerationState(SCHEMA_VERSION, 'ready', 1, 2, PENDING_WRITING, False)
+    monkeypatch.setattr(do_generation, 'read_generation_state', lambda db: pending)
+
+    def register_writer(ctx: Any, *, sole: bool = False) -> _RecoveryWriter:
+        raise do_generation.GenerationRefusedError('A generation command holds the lock')
+
+    monkeypatch.setattr(do_generation, 'register_writer', register_writer)
+
+    done = do_recover.recover_lost_importers(make_context(db=queue))
+
+    assert done == []
+    assert queue.deleted == []
+    assert queue.bundle('B_1')['state'] == 'importing'
+    assert queue.process(1)['state'] == 'running'
 
 
 def test_a_bundle_lost_twice_fails_keeping_its_importer(queue: _QueueDB) -> None:

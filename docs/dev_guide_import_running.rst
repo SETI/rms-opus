@@ -479,10 +479,12 @@ Auxiliary tables and other steps
        holdings. A refused command changes nothing and exits with status 3, which
        ``promote_generation.sh`` tells from a command that stopped part way.
    * - ``--require-pending-generation``
-     - Refuses, writing nothing, unless the schema has a pending generation when the
-       invocation registers as its writer, and exits with status 3. The registration
-       reads the version row again under the generation lock and holds off every
-       generation command from then on, so the answer cannot change before the writes.
+     - Refuses, writing nothing, unless the invocation registers as a writer of the schema
+       and the schema has a pending generation when it does, and exits with status 3. The
+       registration reads the version row again under the generation lock and holds off
+       every generation command from then on, so the answer cannot change before the
+       writes; an invocation that registers no writer is refused, since it has only the
+       row it read as it started.
        ``run_incremental_opus_update.sh`` gives it to every invocation after
        ``--begin-generation``, so an ``--abandon-generation`` run between two of them
        leaves the next writing nothing rather than the served rows.
@@ -727,15 +729,16 @@ at, where the serial loop would have written it, so the log reads the same whate
 Verifying that a run succeeded
 ------------------------------
 
-**The exit status is not sufficient.** A non-zero status means the run stopped; a zero
-status does **not** mean it was clean. The import of bundles reports a bundle's problems
-through the log and still exits zero. The finishing steps do not: every step of the
-finalization group (the duplicate and mult steps among them), ``--update-mult-info``,
-``--validate`` and ``--import-dictionary`` fails when it reports failure, logs an error
-or fatal message while it runs (the database layer's included), or, for
-``--reset-search-tables``, cannot empty the cache. A failed finishing step makes the
+**The exit status is not sufficient.** A non-zero status means the run stopped or a step
+failed. An error logged while a bundle is imported stops the import of bundles and makes
+the invocation exit with failure. Every finishing step -- each step of the finalization
+group (the duplicate and mult steps among them), ``--update-mult-info``, ``--validate``
+and ``--import-dictionary`` -- fails when it reports failure, logs an error or fatal
+message while it runs (the database layer's included), or, for
+``--reset-search-tables``, cannot empty the cache; a failed finishing step makes the
 invocation exit with failure, once its other steps have run, and keeps it from marking
-the schema ready; ``--ignore-errors`` overrides both.
+the schema ready. ``--ignore-errors`` overrides all of these, so under it the errors are
+in the log alone. The log is the gate either way.
 
 The check that matters is, with ``<import_log_dir>`` standing for the directory that
 ``[paths] import_log_dir`` names::

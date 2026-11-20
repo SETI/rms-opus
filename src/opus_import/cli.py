@@ -507,8 +507,9 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--require-pending-generation',
         action='store_true',
         default=False,
-        help='Refuse, writing nothing, unless the schema has a pending generation when this '
-        'invocation registers as its writer, which no generation command can change after; '
+        help='Refuse, writing nothing, unless this invocation registers as a writer of the '
+        'schema and the schema has a pending generation when it does, which no generation '
+        'command can change after; '
         'exits with status '
         f'{do_generation.GENERATION_REFUSED_EXIT_STATUS}. An update gives it to every '
         'invocation after --begin-generation, so none writes the served rows',
@@ -1102,10 +1103,9 @@ def main() -> None:
             fails when it reports failure or logs an error while it runs
             (`_run_finishing_step`), and a failed one also keeps the invocation from
             marking the schema ready.
-            **A non-zero status means the run stopped, not that a zero status means it
-            was clean:** the import of bundles reports a bundle's problems through the
-            log and leaves the status zero. Read ``ERRORS.log`` to judge whether a run
-            was clean.
+            An error logged while a bundle is imported fails the invocation the same
+            way, unless ``--ignore-errors``, under which the errors are in the log alone.
+            Read ``ERRORS.log`` to judge whether a run was clean.
     """
     command_list = sys.argv[1:]
 
@@ -1290,7 +1290,16 @@ def main() -> None:
             atexit.register(writer.exit)
         # After the registration, which read the version row again under the generation
         # lock and holds off every generation command from then on, so an abandon cannot
-        # come between this answer and the writes.
+        # come between this answer and the writes. An invocation that does not register
+        # has only the row it read as it started, which an abandon may have changed.
+        if args.require_pending_generation and ctx.writer is None:
+            logger.log(
+                'fatal',
+                '--require-pending-generation: this invocation does not register as a '
+                'writer of the schema, so nothing holds a generation command off while it '
+                'writes; it writes nothing',
+            )
+            sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
         if args.require_pending_generation and ctx.pending_generation is None:
             logger.log(
                 'fatal',
