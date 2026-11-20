@@ -20,7 +20,7 @@ _SCRIPT = 'import_and_deploy/deploy_new_code_only.sh'
 
 
 def _run_deploy(
-    tmp_path: Path, *arguments: str, migration_check: str = 'clean'
+    tmp_path: Path, *arguments: str, migration_check: str = 'clean', check_refusal: str = ''
 ) -> tuple[int, str, list[str]]:
     """Run the code-only deploy through `run_deploy`.
 
@@ -29,25 +29,47 @@ def _run_deploy(
         arguments: The script's arguments.
         migration_check: What ``opus_manage migrate --plan --check`` finds, as
             `run_deploy` takes it.
+        check_refusal: Why ``opus_import --check`` refuses, as `run_deploy` takes it.
 
     Returns:
         The script's status, everything it printed, and each faked command it ran.
     """
-    return run_deploy(tmp_path, _SCRIPT, *arguments, migration_check=migration_check)
+    return run_deploy(
+        tmp_path,
+        _SCRIPT,
+        *arguments,
+        migration_check=migration_check,
+        check_refusal=check_refusal,
+    )
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
 def test_the_plain_deploy_migrates_and_rebuilds_the_aux_tables(tmp_path: Path) -> None:
-    """Without the flag, Django migrates, the four tables are rebuilt, and the mult rows
-    take the release's presentation."""
+    """Without the flag, the rebuild is asked about first, Django migrates, the four
+    tables are rebuilt, and the mult rows take the release's presentation; no warm-up
+    follows the switch, since the stored searches and the database server's cache are
+    as they were."""
     status, output, ran = _run_deploy(tmp_path, '==3.25.0')
     assert status == 0, output
-    assert 'opus_manage migrate' in ran
-    assert ran[-1] == 'promote warm=true lock=held'
+    assert ran.index('opus_import --check rebuild') < ran.index('opus_manage migrate')
+    assert ran[-1] == 'promote warm=false lock=held'
     assert (
         'opus_import --create-param-info --create-partables --create-table-names '
         '--import-dictionary --update-mult-info'
     ) in ran
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_pending_generation_stops_the_deploy_before_it_writes(tmp_path: Path) -> None:
+    """The rebuild would leave its tables for the generation's switch, so nothing after
+    the check runs."""
+    refusal = 'generation 2 of "served" is pending; promote or abandon it first'
+    status, output, ran = _run_deploy(tmp_path, '==3.25.0', check_refusal=refusal)
+    assert status == 1
+    assert ran[-1] == 'opus_import --check rebuild'
+    assert 'opus_manage migrate' not in ran
+    assert f'--check rebuild: refused: {refusal}' in output
+    assert 'nothing was written to served' in output
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
@@ -61,7 +83,6 @@ def test_no_database_writes_nothing_to_the_database(tmp_path: Path) -> None:
         'opus_manage collectstatic --noinput',
     ]
     assert 'nothing will be written to served' in output
-    # The warm-up registers a search and a session, as a visitor's first requests do.
     assert ran[-1] == 'promote warm=false lock=held'
 
 

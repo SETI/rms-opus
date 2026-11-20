@@ -106,9 +106,9 @@ if ! service_action start "${OPUS_WEB_SERVICE}"; then
 fi
 
 # The empty search, its first page and the widgets' counts, into the cache just emptied.
-# A failure warns and the deploy goes on. The warm-up registers a search and a session as
-# a visitor's first requests do, so a deploy that promises to write nothing to the
-# database sets OPUS_WARM_SEARCH to false, which skips it; any other value warms.
+# A failure warns and the deploy goes on. A code-only deploy, whose database keeps its
+# searches and the database server's memory of them, sets OPUS_WARM_SEARCH to false,
+# which skips it; any other value warms.
 warm_search
 
 echo

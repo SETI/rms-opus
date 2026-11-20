@@ -280,11 +280,18 @@ once, since the way back there is the database it was serving:
   AFTER A DEPLOY
 --------------------------------------------------------------------------------
 
-Every deploy ends with `opus_manage warm_search`, which asks the site, over
-its public URL, for the landing page and for one search per planet, mission,
-instrument and the like, so that the first visitors find them ready. A failure
-of it is a warning, not a failed deploy. --no-database skips it, since it
-writes searches and a session as visitors' requests do.
+deploy_new_code_and_database.sh and promote_generation.sh end with
+`opus_manage warm_search`, which asks the site, over its public URL, for the
+landing page and for one search per planet, mission, instrument and the
+like, so that their results are built and the rows they read are in the
+database server's memory when the first visitors come. It takes minutes. A
+failure of it is a warning, not a failed deploy. deploy_new_code_only.sh
+does not run it: the database it goes on serving keeps both.
+
+deploy_new_code_only.sh refuses, before writing anything, while an
+incremental update's generation is pending (opus_import --check rebuild),
+unless given --no-database: its rebuild of the description tables would be
+left for the generation's switch.
 
 deploy_new_code_and_database.sh also carries the sessions and carts over from
 the database being served into the new one, while the web server is stopped.

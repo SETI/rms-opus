@@ -153,8 +153,12 @@ The scripts
     against the database already being served. It reads the database name out of the
     installation currently deployed, builds a new installation at the new release naming
     that same database, runs the same migration, static-file and description-table steps,
-    and switches to it the same way, warming the common searches afterwards. The database
-    does not change, so there is nothing to carry over. It does not upgrade anything in
+    and switches to it the same way. It runs no warm-up after the switch: the database
+    keeps its stored searches, and the database server its cache of the rows they read,
+    so there is nothing to warm (:ref:`user_guide_deployment_warm_search`). It refuses,
+    before writing anything, while an incremental update's generation is pending
+    (``opus_import --check rebuild``). The database does not change, so there is nothing
+    to carry over. It does not upgrade anything in
     place. It leaves the
     search tables alone, so the searches users have made are still stored after the
     release; a release that changes either search table's columns changes the schema
@@ -171,9 +175,8 @@ The scripts
     It changes no id, so no observation row is touched.
 
     ``--no-database`` writes nothing to the database: it skips Django's migrations and
-    the description-table step, ``--update-mult-info`` with it, and the warm-up after the
-    switch, which stores searches and a session as visitors' requests do; it
-    still installs the release, collects its static files and switches to it. It is for a release that
+    the description-table step, ``--update-mult-info`` with it, and the pending-generation
+    check, which only that step needs; it still installs the release, collects its static files and switches to it. It is for a release that
     changes neither the import nor the table schemas -- the web application, its
     templates and static files, the documentation. Whether a release is one of those is
     your call, from its release notes, as whether it changed the schema is. It still
@@ -371,6 +374,11 @@ installation that would act:
      - Whether an update could write into the pending generation without beginning one:
        refused when no generation is pending, another generation command is running, or
        an ``opus_import`` is still writing it.
+   * - ``rebuild``
+     - Whether the served description tables could be rebuilt in place, as
+       ``deploy_new_code_only.sh`` rebuilds them: refused while a generation is pending,
+       another generation command is running, or a switch, a revert or a purge stopped
+       part way.
 
 It exits 0 when the action would run, and 3 when it would be refused, having logged why
 on a line beginning ``--check <action>: refused:``. Any other status means the database
@@ -464,9 +472,12 @@ Warming the common searches
 
 Every visitor's first search is the empty one, and most next choose one planet, mission or
 instrument. A search's results are built in the database the first time anyone asks for
-it, and its answers are cached in memcached; a new database has no search built, and a
-deploy restarts memcached. So both deploy scripts run this once the workers are started
-again::
+it, the rows it read are then in the database server's memory, and its answers are
+cached in memcached. A new database has no search built and none of its rows in memory, a
+switched-in generation's rows are new, and both deploys restart memcached. So
+``deploy_new_code_and_database.sh`` and ``promote_generation.sh`` run this once the
+workers are started again, and it takes minutes. ``deploy_new_code_only.sh`` does not: the
+database it goes on serving keeps its searches, and the server its memory of them::
 
     opus_manage warm_search
 
@@ -742,8 +753,9 @@ part way, until ``promote_generation.sh`` or ``promote_generation.sh --revert`` 
 finished what was begun: either would delete rows the carts were already pointed at.
 
 **Deploy no code while a generation is pending.** A code-only deploy rebuilds the
-auxiliary tables, and with a generation pending it leaves them for the switch rather than
-serving them; promote or abandon the update first.
+auxiliary tables, and with a generation pending it would leave them for the switch rather
+than serving them, so ``deploy_new_code_only.sh`` refuses, before writing anything, unless
+given ``--no-database``; promote or abandon the update first.
 
 **Take a dump first when no second server holds a copy.** The update writes the database
 being served, so a copy is the way back from anything the generation commands cannot

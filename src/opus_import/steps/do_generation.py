@@ -867,11 +867,13 @@ def revert_generation(ctx: ImportContext) -> None:
     load_generation_state(ctx)
 
 
-#: What `generation_problem` answers for: a switch, a revert, and an update that writes
-#: into the pending generation without beginning one.
+#: What `generation_problem` answers for: a switch, a revert, an update that writes into
+#: the pending generation without beginning one, and a rebuild of the served auxiliary
+#: tables in place, as a code-only deploy runs.
 CHECK_SWITCH = 'switch'
 CHECK_REVERT = 'revert'
 CHECK_CONTINUE = 'continue'
+CHECK_REBUILD = 'rebuild'
 
 
 def generation_problem(db: ImportDBSuper, action: str) -> str | None:
@@ -879,15 +881,19 @@ def generation_problem(db: ImportDBSuper, action: str) -> str | None:
 
     The deploy chain asks, through ``opus_import --check``, before it acts: before it
     stops the web service for a switch or a revert, so a command that would change nothing
-    leaves the site up; and before an update that skips ``--begin-generation`` writes
+    leaves the site up; before an update that skips ``--begin-generation`` writes
     anything, since without a pending generation its imports would take the append path
-    and write the served rows. It asks what the action itself checks before it changes
-    anything: the version row, the generation lock, the invocations writing the pending
-    generation, and for a switch or a revert whether a purge has started.
+    and write the served rows; and before a code-only deploy rebuilds the served
+    auxiliary tables, since with a generation pending the rebuild would leave the new
+    tables for its switch while the dictionary and the mult labels changed in place. It
+    asks what the action itself checks before it changes anything: the version row, the
+    generation lock, the invocations writing the pending generation (except for a rebuild,
+    which an append may run beside), and for a switch, a revert or a rebuild whether a
+    switch, a revert or a purge stopped part way.
 
     Parameters:
         db: A connection to the schema, which may be read-only.
-        action: `CHECK_SWITCH`, `CHECK_REVERT` or `CHECK_CONTINUE`.
+        action: `CHECK_SWITCH`, `CHECK_REVERT`, `CHECK_CONTINUE` or `CHECK_REBUILD`.
 
     Returns:
         None when the action would run; otherwise the reason it would be refused.
@@ -903,8 +909,15 @@ def generation_problem(db: ImportDBSuper, action: str) -> str | None:
             f'"{db.db_schema}" has no pending generation to continue (generation '
             f'{state.generation} served); an update without --continue begins one'
         )
+    if action == CHECK_REBUILD and state.pending is not None:
+        return (
+            f'generation {state.pending} of "{db.db_schema}" is pending, and a rebuild would '
+            'leave the auxiliary tables it builds for its switch; promote or abandon it first'
+        )
     if db.named_lock_holder(_generation_lock(db)) is not None:
         return _lock_held_message(db)
+    if action == CHECK_REBUILD:
+        return unfinished_switch_problem(db, state) or unfinished_purge_problem(db, state)
     writers = _writers_message(db)
     if writers is not None or action == CHECK_CONTINUE:
         return writers

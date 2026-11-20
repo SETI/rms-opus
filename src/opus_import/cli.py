@@ -520,7 +520,9 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         f'{CHECK_SERVE} (this release would serve it), {do_generation.CHECK_SWITCH} '
         f'(--switch-generation), {do_generation.CHECK_REVERT} (--revert-generation), or '
         f'{do_generation.CHECK_CONTINUE} (an import into the pending generation without '
-        '--begin-generation, which requires one). Exits 0 when it would run, and '
+        f'--begin-generation, which requires one), or {do_generation.CHECK_REBUILD} (a '
+        'rebuild of the served auxiliary tables in place, refused while a generation is '
+        'pending). Exits 0 when it would run, and '
         f'{do_generation.GENERATION_REFUSED_EXIT_STATUS} after logging why when it would be '
         'refused; runs alone',
     )
@@ -651,6 +653,7 @@ CHECK_ACTIONS = (
     do_generation.CHECK_SWITCH,
     do_generation.CHECK_REVERT,
     do_generation.CHECK_CONTINUE,
+    do_generation.CHECK_REBUILD,
 )
 
 #: The generation commands, each run alone under the schema's generation lock.

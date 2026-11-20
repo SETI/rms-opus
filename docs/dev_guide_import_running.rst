@@ -493,7 +493,9 @@ Auxiliary tables and other steps
        application's rule); ``switch`` and ``revert``, whether ``--switch-generation`` or
        ``--revert-generation`` would be refused; and ``continue``, whether an import could
        write into the pending generation without ``--begin-generation``, which requires
-       one (:func:`~opus_import.steps.do_generation.generation_problem`). It exits 0 when
+       one; and ``rebuild``, whether the served auxiliary tables could be rebuilt in
+       place, refused while a generation is pending
+       (:func:`~opus_import.steps.do_generation.generation_problem`). It exits 0 when
        the action would run, and status 3 when it would be refused, logging the reason at
        the info level, so a refusal writes nothing into ``ERRORS.log``; an unreadable
        schema exits otherwise. It runs alone. The deploy chain asks it before it acts

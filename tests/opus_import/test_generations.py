@@ -1427,6 +1427,53 @@ def test_an_update_continues_only_a_pending_generation_no_invocation_is_writing(
     assert db.events == []
 
 
+@pytest.mark.parametrize(
+    ('row', 'tables', 'lock_holder', 'problem'),
+    [
+        (_ready(), (), None, None),
+        (_ready(generation=2, revertible=1), _PREV, None, None),
+        (
+            _ready(pending_generation=2, pending_state=PENDING_WRITING),
+            (),
+            None,
+            'generation 2 of "opus_test" is pending',
+        ),
+        (_ready(), (), 41, 'another generation command holds'),
+        (_ready(generation=2, revertible=1), _NEW, None, 'revert'),
+        (_ready(generation=2, revertible=1), (), None, 'purge'),
+        (None, (), None, 'has no single schema_version row'),
+    ],
+    ids=[
+        'served',
+        'revertible',
+        'pending',
+        'locked',
+        'part-way-revert',
+        'part-way-purge',
+        'no-row',
+    ],
+)
+def test_a_code_only_rebuild_is_refused_while_a_generation_is_pending(
+    monkeypatch: pytest.MonkeyPatch,
+    row: tuple[Any, ...] | None,
+    tables: tuple[str, ...],
+    lock_holder: int | None,
+    problem: str | None,
+) -> None:
+    """A rebuild with a generation pending would leave its tables for the switch; one
+    beside a switch, a revert or a purge stopped part way is refused as the import refuses
+    it. A live writer does not refuse it: an append may run beside a rebuild."""
+    db = _ReadOnlyStateDB(row, lock_holder=lock_holder, tables=tables)
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [7])
+    found = do_generation.generation_problem(db, do_generation.CHECK_REBUILD)  # type: ignore[arg-type]
+    if problem is None:
+        assert found is None
+    else:
+        assert found is not None
+        assert problem in found
+    assert db.events == []
+
+
 def test_the_deploy_chains_pre_check_refuses_a_switch_or_revert_once_the_purge_has_started(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
