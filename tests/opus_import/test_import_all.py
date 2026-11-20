@@ -358,6 +358,19 @@ def test_a_dry_run_shows_the_division_and_runs_nothing(
     assert printed.count('opus_import ') == 2 + 3 + len(import_all.FINALIZATION_OPTIONS)
 
 
+def test_a_configuration_that_cannot_be_read_is_a_usage_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """An unset OPUS_CONFIG ends the command with its usage and the reason, not a
+    traceback."""
+    monkeypatch.delenv(opus_config.config.OPUS_CONFIG_ENV_VAR, raising=False)
+    opus_config.config.get_config.cache_clear()
+    with pytest.raises(SystemExit) as excinfo:
+        _run(monkeypatch, '--dry-run')
+    assert excinfo.value.code == 2
+    assert 'The OPUS_CONFIG environment variable is not set' in capsys.readouterr().err
+
+
 def test_a_dry_run_of_one_step_prints_that_step_alone(
     monkeypatch: pytest.MonkeyPatch,
     recorded_steps: list[list[str]],

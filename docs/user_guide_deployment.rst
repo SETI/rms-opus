@@ -239,19 +239,26 @@ The scripts
     update that stopped part way goes on once its cause is fixed, named again with the
     bundles it named. Before writing anything it asks, with ``opus_import --check
     continue``, whether the served database has a pending generation that no
-    ``opus_import`` is still writing, and aborts, having changed nothing, when it has
-    not: an import with no pending generation would write the rows the site serves.
+    ``opus_import`` is still writing, and aborts before writing the database when it has
+    not: an import with no pending generation would write the rows the site serves. The
+    installation it built and its log directory remain.
 
     It builds an installation of the release under ``staged/`` naming the served
     database, with a log directory of its own, and runs these against it, each as its
     own process, stopping at the first that fails or writes to ``ERRORS.log``::
 
-        opus_import --begin-generation              # unless --continue is given
-        opus_import --delete-bundles <bundle> ...   # when --drop names any
-        opus_import --import <bundle> ...           # when bundles are named
-        opus_import --finalize
-        opus_import --validate
-        opus_import --write-schema-version
+        opus_import --begin-generation                       # unless --continue is given
+        opus_import --require-pending-generation --delete-bundles <bundle> ...
+                                                             # when --drop names any
+        opus_import --require-pending-generation --import <bundle> ...
+                                                             # when bundles are named
+        opus_import --require-pending-generation --finalize
+        opus_import --require-pending-generation --validate
+        opus_import --require-pending-generation --write-schema-version
+
+    ``--require-pending-generation`` makes a command that finds no pending generation --
+    after an ``opus_import --abandon-generation`` run between two of them -- write
+    nothing, rather than the rows the site serves; the update then stops, saying so.
 
     Then it dumps the database and loads it onto a second server as
     ``run_full_opus_import.sh`` does, under a new name, when ``deploy.env`` asks for that.
@@ -700,7 +707,10 @@ only when you switch it in. The steps, from the deploy directory::
    the first command that fails or logs an error, before the generation is marked ready
    to switch, and its log names the commands left to run. Once the cause is fixed, run
    the update again with ``--continue`` and the same bundles, or run those commands from
-   the installation the update built, or throw the generation away (below).
+   the installation the update built, or throw the generation away (below). An import
+   stopped while it held a bundle -- killed, or the server restarted -- leaves that
+   bundle ``importing``, and the next import refuses it until ``opus_import --requeue
+   <bundle>``, run from the installation the update built, returns it to the queue.
 3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run
    (``opus_import --check switch``), and stops nothing when it would be refused: no generation ready to switch, another
    generation command running, an ``opus_import`` still writing the update, or a purge

@@ -503,6 +503,16 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        '--require-pending-generation',
+        action='store_true',
+        default=False,
+        help='Refuse, writing nothing, unless the schema has a pending generation when this '
+        'invocation registers as its writer, which no generation command can change after; '
+        'exits with status '
+        f'{do_generation.GENERATION_REFUSED_EXIT_STATUS}. An update gives it to every '
+        'invocation after --begin-generation, so none writes the served rows',
+    )
+    parser.add_argument(
         '--check',
         choices=CHECK_ACTIONS,
         default=None,
@@ -1234,6 +1244,16 @@ def main() -> None:
             # Registered rather than run in a finally block, since the run leaves through
             # sys.exit from several places.
             atexit.register(writer.exit)
+        # After the registration, which read the version row again under the generation
+        # lock and holds off every generation command from then on, so an abandon cannot
+        # come between this answer and the writes.
+        if args.require_pending_generation and ctx.pending_generation is None:
+            logger.log(
+                'fatal',
+                f'--require-pending-generation: "{our_schema_name}" has no pending '
+                'generation, so this invocation writes nothing',
+            )
+            sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
         state = ctx.generation_state
         if pending is None and state is not None and _rebuilds_served(args):
             unfinished = do_generation.unfinished_switch_problem(

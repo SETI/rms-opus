@@ -37,9 +37,9 @@ _USAGE = (
 #: The invocations every update begins and ends with.
 _BEGIN = 'opus_import --begin-generation'
 _CLOSING = [
-    'opus_import --finalize',
-    'opus_import --validate',
-    'opus_import --write-schema-version',
+    'opus_import --require-pending-generation --finalize',
+    'opus_import --require-pending-generation --validate',
+    'opus_import --require-pending-generation --write-schema-version',
 ]
 
 
@@ -48,6 +48,7 @@ def _run_steps(
     call: str,
     *,
     failing: str | None = None,
+    refusing: str | None = None,
     logs_error: str | None = None,
 ) -> tuple[int, str, list[str]]:
     """Source the steps with a fake ``opus_import`` under ``set -e`` and run one line.
@@ -57,6 +58,8 @@ def _run_steps(
             the update's log directory, named to the line as ``$LOGS``.
         call: The line to run after sourcing.
         failing: The arguments, joined by spaces, for which the fake exits 1.
+        refusing: The arguments for which the fake exits with the refused status, as an
+            invocation that wrote nothing does.
         logs_error: The arguments for which the fake writes a line into ERRORS.log and
             exits 0, as an import step that reports a failure through the log does.
 
@@ -73,6 +76,8 @@ def _run_steps(
     body = ''
     if failing is not None:
         body += f'[[ "$*" == {shlex.quote(failing)} ]] && exit 1\n'
+    if refusing is not None:
+        body += f'[[ "$*" == {shlex.quote(refusing)} ]] && exit 3\n'
     if logs_error is not None:
         errors = shlex.quote(str(logs / 'ERRORS.log'))
         body += f'[[ "$*" == {shlex.quote(logs_error)} ]] && echo "ERROR: bad label" >> {errors}\n'
@@ -131,7 +136,11 @@ def test_the_update_runs_its_invocations_in_order(
     before the drop, and a bundle named both ways is imported and not dropped."""
     status, output, ran = _run_steps(tmp_path, _update(arguments))
     assert status == 0, output
-    assert ran == [_BEGIN, *[f'opus_import {step}' for step in middle], *_CLOSING]
+    assert ran == [
+        _BEGIN,
+        *[f'opus_import --require-pending-generation {step}' for step in middle],
+        *_CLOSING,
+    ]
     assert 'DONE' in output
 
 
@@ -154,7 +163,10 @@ def test_a_continued_update_begins_no_generation(
     """--continue leaves out --begin-generation and nothing else."""
     status, output, ran = _run_steps(tmp_path, _update(arguments))
     assert status == 0, output
-    assert ran == [*[f'opus_import {step}' for step in middle], *_CLOSING]
+    assert ran == [
+        *[f'opus_import --require-pending-generation {step}' for step in middle],
+        *_CLOSING,
+    ]
     assert 'DONE' in output
 
 
@@ -249,18 +261,26 @@ def test_arguments_that_name_nothing_to_do_print_the_usage_line(
 def test_a_failed_invocation_stops_the_update_and_names_what_is_left(tmp_path: Path) -> None:
     """Nothing runs after it; the message names it, the rest, and the abandon."""
     status, output, ran = _run_steps(
-        tmp_path, _update('COISS_2001 --drop COISS_2002'), failing='--import COISS_2001'
+        tmp_path,
+        _update('COISS_2001 --drop COISS_2002'),
+        failing='--require-pending-generation --import COISS_2001',
     )
     assert status != 0
     assert ran == [
         _BEGIN,
-        'opus_import --delete-bundles COISS_2002',
-        'opus_import --import COISS_2001',
+        'opus_import --require-pending-generation --delete-bundles COISS_2002',
+        'opus_import --require-pending-generation --import COISS_2001',
     ]
-    assert 'ERROR: opus_import --import COISS_2001 failed or logged errors.' in output
-    assert '    opus_import --import COISS_2001\n' in output
-    assert '    opus_import --delete-bundles COISS_2002\n' not in output
-    assert '    opus_import --write-schema-version\n' in output
+    assert (
+        'ERROR: opus_import --require-pending-generation --import COISS_2001 failed or logged errors.'
+        in output
+    )
+    assert '    opus_import --require-pending-generation --import COISS_2001\n' in output
+    assert (
+        '    opus_import --require-pending-generation --delete-bundles COISS_2002\n' not in output
+    )
+    assert '    opus_import --require-pending-generation --write-schema-version\n' in output
+    assert 'opus_import --requeue <bundle>' in output
     assert '    opus_import --abandon-generation\n' in output
     assert 'DONE' not in output
 
@@ -272,22 +292,48 @@ def test_a_continued_update_that_fails_first_names_the_generation_it_left(
     """Its first invocation writes the pending generation, so the message offers the
     continue and the abandon, not that nothing was begun."""
     status, output, ran = _run_steps(
-        tmp_path, _update('--continue COISS_2001'), failing='--import COISS_2001'
+        tmp_path,
+        _update('--continue COISS_2001'),
+        failing='--require-pending-generation --import COISS_2001',
     )
     assert status != 0
-    assert ran == ['opus_import --import COISS_2001']
+    assert ran == ['opus_import --require-pending-generation --import COISS_2001']
     assert 'No generation was begun' not in output
     assert 'the update again with --continue' in output
     assert '    opus_import --abandon-generation\n' in output
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_an_invocation_that_finds_no_pending_generation_offers_no_continue(
+    tmp_path: Path,
+) -> None:
+    """Refused under --require-pending-generation, it wrote nothing, and there is no
+    generation to continue or abandon."""
+    status, output, ran = _run_steps(
+        tmp_path,
+        _update('COISS_2001'),
+        refusing='--require-pending-generation --import COISS_2001',
+    )
+    assert status != 0
+    assert ran == [_BEGIN, 'opus_import --require-pending-generation --import COISS_2001']
+    assert 'It wrote nothing: the database has no pending generation' in output
+    assert '--continue' not in output
+    assert '--abandon-generation\n' not in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
 def test_an_error_in_the_log_stops_the_update_before_the_stamp(tmp_path: Path) -> None:
     """A step that logs an error and exits zero still stops the update, so the generation
     is never stamped ready to switch."""
-    status, output, ran = _run_steps(tmp_path, _update('COISS_2001'), logs_error='--validate')
+    status, output, ran = _run_steps(
+        tmp_path, _update('COISS_2001'), logs_error='--require-pending-generation --validate'
+    )
     assert status != 0
-    assert ran == [_BEGIN, 'opus_import --import COISS_2001', *_CLOSING[:2]]
+    assert ran == [
+        _BEGIN,
+        'opus_import --require-pending-generation --import COISS_2001',
+        *_CLOSING[:2],
+    ]
     assert 'ERROR: bad label' in output
     assert 'THE UPDATE LOGGED ERRORS' in output
     assert 'DONE' not in output

@@ -222,9 +222,18 @@ or the git commit it was built from.
 
 An update that stopped part way goes on, once its cause is fixed, when run
 again with --continue and the same bundles: it writes into the pending
-generation instead of beginning one, and aborts, having changed nothing,
-when the served database has no pending generation (opus_import --check
-continue).
+generation instead of beginning one, and aborts before writing the
+database when it has no pending generation (opus_import --check
+continue); the installation it built and its log directory remain. A
+bundle an import left importing when it was stopped is refused until it
+is returned to the queue, from the installation the update built:
+
+    OPUS_CONFIG=<that installation>/opus.toml \
+        <that installation>/opus_venv/bin/opus_import --requeue <bundle>
+
+Every command of an update after the begin is given
+--require-pending-generation, so one that finds no pending generation (an
+--abandon-generation ran after the begin) writes nothing.
 
 promote_generation.sh takes the deploy lock, asks whether the switch would
 run (opus_import --check switch, which stops nothing when it would be

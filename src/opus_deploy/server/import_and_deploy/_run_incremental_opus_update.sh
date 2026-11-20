@@ -125,12 +125,12 @@ if ${UPDATE_CONTINUE}; then
     opus_import --check continue || STATUS=$?
     if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
         echo "ERROR: the update cannot continue; the check above says why."
-        echo "*** ABORTING: nothing was changed ***"
+        echo "*** ABORTING: the database was not changed ***"
         exit 1
     fi
     if [[ ${STATUS} -ne 0 ]]; then
         echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
-        echo "*** ABORTING: nothing was changed ***"
+        echo "*** ABORTING: the database was not changed ***"
         exit 1
     fi
 fi

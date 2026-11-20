@@ -6,6 +6,7 @@ without running an import, and the entry point reads no settings until it has ar
 to act on, so `--help` works on a machine that has none.
 """
 
+import atexit
 import json
 import os
 import signal
@@ -444,6 +445,7 @@ _STEP_MODIFIERS = frozenset(
         'log_sql',
         'log_suppress_traceback',
         'profile',
+        'require_pending_generation',
     }
 )
 
@@ -721,6 +723,82 @@ def test_an_erase_forgets_the_pending_generation_it_dropped(
         'analyze_all_tables',
     ]
     assert logger.messages_at('fatal') == []
+
+
+class _Writer:
+    """A writer's record, which the run frees at exit."""
+
+    def exit(self) -> None:
+        """Free nothing."""
+
+
+@pytest.mark.parametrize(
+    ('started', 'registered', 'code'),
+    [
+        (None, None, do_generation.GENERATION_REFUSED_EXIT_STATUS),
+        (2, 2, None),
+    ],
+    ids=['none-pending', 'pending'],
+)
+def test_an_invocation_requiring_a_pending_generation_writes_only_into_one(
+    monkeypatch: pytest.MonkeyPatch,
+    started: int | None,
+    registered: int | None,
+    code: int | None,
+) -> None:
+    """The answer is the version row the registration read under the generation lock
+    (a generation changed since the invocation started is refused there): with none
+    pending the invocation stops before its steps, with the refused status, as it does
+    when an abandon ran before it started."""
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+    monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: _ErasedSchema())
+    monkeypatch.setattr(cli, '_prepare_holdings', lambda *args: None)
+    monkeypatch.setattr(atexit, 'register', lambda function: None)
+
+    def state(pending: int | None) -> GenerationState:
+        return GenerationState(
+            SCHEMA_VERSION, 'ready', 1, pending, None if pending is None else 'writing', False
+        )
+
+    monkeypatch.setattr(
+        do_generation,
+        'load_generation_state',
+        lambda ctx: setattr(ctx, 'generation_state', state(started)),
+    )
+
+    def register_writer(ctx: ImportContext, *, sole: bool) -> _Writer:
+        ctx.generation_state = state(registered)
+        return _Writer()
+
+    monkeypatch.setattr(do_generation, 'register_writer', register_writer)
+    monkeypatch.setattr(do_import, 'choose_import_path', lambda ctx: True)
+    ran: list[str] = []
+
+    def steps(ctx: ImportContext) -> bool:
+        ran.append('steps')
+        return True
+
+    monkeypatch.setattr(do_import, 'do_import_steps', steps)
+    monkeypatch.setattr(
+        sys, 'argv', ['opus_import', '--require-pending-generation', '--import', 'COISS_2002']
+    )
+    if code is None:
+        cli.main()
+        assert ran == ['steps']
+        return
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code == code
+    assert ran == []
+    assert logger.messages_at('fatal') == [
+        '--require-pending-generation: "opus_ci_db" has no pending generation, so this '
+        'invocation writes nothing'
+    ]
 
 
 @pytest.mark.parametrize(

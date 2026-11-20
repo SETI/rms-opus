@@ -55,7 +55,13 @@ import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from opus_config import MAX_WORKERS, describe_capped, get_config, resolve_parallelism
+from opus_config import (
+    MAX_WORKERS,
+    ConfigError,
+    describe_capped,
+    get_config,
+    resolve_parallelism,
+)
 from opus_import import bundle_registry, coordinator, importdb
 
 if TYPE_CHECKING:
@@ -520,18 +526,26 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _division(arguments: argparse.Namespace) -> Division:
+def _division(parser: argparse.ArgumentParser, arguments: argparse.Namespace) -> Division:
     """Resolve the division the arguments ask for, from the configuration.
 
     Parameters:
+        parser: The parser, whose ``error`` reports a configuration that cannot be read.
         arguments: The parsed arguments.
 
     Returns:
         The division.
+
+    Raises:
+        SystemExit: If ``OPUS_CONFIG`` is unset, or the file it names cannot be read or
+            is not valid.
     """
     default = 1 if arguments.join else AUTO_IMPORTERS
     importers = arguments.importers if arguments.importers is not None else default
-    return resolve_division(get_config().import_, arguments.workers, importers)
+    try:
+        return resolve_division(get_config().import_, arguments.workers, importers)
+    except ConfigError as e:
+        parser.error(str(e))
 
 
 def _print_plan(
@@ -680,7 +694,7 @@ def main() -> None:
         or arguments.status
     )
     starts_importers = arguments.join or not step_named
-    division = _division(arguments) if starts_importers else None
+    division = _division(parser, arguments) if starts_importers else None
 
     if arguments.dry_run:
         _print_plan(arguments, extra_options, division)
