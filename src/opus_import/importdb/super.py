@@ -1127,10 +1127,35 @@ class ImportDBSuper:
             Nothing; the body runs with the checks off.
         """
         self._set_foreign_key_checks(False)
+        with self._restoring(lambda: self._set_foreign_key_checks(True)):
+            yield
+
+    @contextlib.contextmanager
+    def _restoring(self, restore: Callable[[], None]) -> Iterator[None]:
+        """Run the body, then put back what it changed, keeping the body's own failure.
+
+        When the body fails and the restore fails too, the body's failure is raised, with
+        the restore's noted on it, rather than replaced by it: what went wrong first is
+        what the caller and its retry need to see.
+
+        Parameters:
+            restore: What puts the session back.
+
+        Yields:
+            Nothing; the body runs before the restore.
+
+        Raises:
+            ImportDBError: If the body succeeded and the restore failed.
+        """
         try:
             yield
-        finally:
-            self._set_foreign_key_checks(True)
+        except BaseException as failure:
+            try:
+                restore()
+            except Exception as restore_failure:
+                failure.add_note(f'Putting the session back afterwards failed: {restore_failure}')
+            raise
+        restore()
 
     def _set_foreign_key_checks(self, enabled: bool) -> None:
         """Turn this connection's foreign key checks on or off.

@@ -1108,8 +1108,8 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             ImportDBError: If the server rejects the statement, or every attempt timed out.
         """
         previous = self._execute_and_fetchall('SELECT @@SESSION.lock_wait_timeout', what)[0][0]
-        self._execute('SET SESSION lock_wait_timeout = %s', [lock_wait_timeout_s])
-        try:
+        self._set_lock_wait_timeout(lock_wait_timeout_s, what)
+        with self._restoring(lambda: self._set_lock_wait_timeout(previous, what)):
             for attempt in range(1, attempts + 1):
                 try:
                     self._execute(cmd, mutates=True)
@@ -1133,8 +1133,22 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
                     else:
                         self._log_failure(f'Failed in {what}: {e}')
                     raise ImportDBError(e) from e
-        finally:
-            self._execute('SET SESSION lock_wait_timeout = %s', [previous])
+
+    def _set_lock_wait_timeout(self, seconds: object, what: str) -> None:
+        """Set the session's ``lock_wait_timeout``.
+
+        Parameters:
+            seconds: The value, as the server reported it or a whole number of seconds.
+            what: What the failure calls the statement it is set for.
+
+        Raises:
+            ImportDBError: If the server rejects it.
+        """
+        try:
+            self._execute('SET SESSION lock_wait_timeout = %s', [seconds])
+        except MySQLdb.Error as e:
+            self._log_failure(f'Failed setting lock_wait_timeout for {what}: {e}')
+            raise ImportDBError(e) from e
 
     def create_obs_general_view(
         self,
@@ -1747,8 +1761,15 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
 
         Parameters:
             enabled: True to check foreign keys, False not to.
+
+        Raises:
+            ImportDBError: If the server rejects it.
         """
-        self._execute(f'SET SESSION foreign_key_checks = {1 if enabled else 0}')
+        try:
+            self._execute(f'SET SESSION foreign_key_checks = {1 if enabled else 0}')
+        except MySQLdb.Error as e:
+            self._log_failure(f'Failed setting foreign_key_checks: {e}')
+            raise ImportDBError(e) from e
 
     def close(self) -> None:
         """Close the connection; an instance without the driver has none to close."""
@@ -2545,14 +2566,31 @@ ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
         return res[0][0]
 
     def _commit(self) -> None:
-        """Commit the connection's open transaction; nothing when the driver is absent."""
+        """Commit the connection's open transaction; nothing when the driver is absent.
+
+        Raises:
+            ImportDBError: If the server does not commit it, raised from the driver's
+                error, so that `ImportDBSuper.retrying` reads its code.
+        """
         if MYSQLDB_AVAILABLE:
-            self.conn.commit()
+            try:
+                self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed committing a transaction: {e}')
+                raise ImportDBError(e) from e
 
     def _rollback(self) -> None:
-        """Roll back the connection's open transaction; nothing when the driver is absent."""
+        """Roll back the connection's open transaction; nothing when the driver is absent.
+
+        Raises:
+            ImportDBError: If the server does not roll it back, raised from the driver's
+                error.
+        """
         if MYSQLDB_AVAILABLE:
-            self.conn.rollback()
+            try:
+                self.conn.rollback()
+            except MySQLdb.Error as e:
+                raise ImportDBError(e) from e
 
     @staticmethod
     def _error_code(exc: BaseException) -> int | None:
