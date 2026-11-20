@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import contextlib
 import os
-import re
 import subprocess  # nosec B404
 import sys
 from typing import TYPE_CHECKING, Any
@@ -27,6 +26,7 @@ from opus_import.schema_version import (
     SCHEMA_VERSION,
     SCHEMA_VERSION_TABLE,
 )
+from opus_import.steps.do_generation import GENERATION_REFUSED_EXIT_STATUS
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -55,6 +55,9 @@ _SERVE_ONE = (
 
 #: The deploy chain's schema version check, inside the packaged chain.
 _DEPLOY_CHECK = 'import_and_deploy/_check_schema_version.sh'
+
+#: The ``opus_import --check`` action the deploy check asks.
+_SERVE = 'serve'
 
 #: What `_LOAD_WSGI` prints when the entry point serves Django.
 _DJANGO_HANDLER = 'WSGIHandler'
@@ -202,28 +205,34 @@ def _serve_one(run: build_run.ImportRun) -> tuple[str, str]:
 def _deploy_check(run: build_run.ImportRun, tmp_path: Path) -> str:
     """Ask the deploy check's own question of the run's schema, in a process.
 
-    The program is the ``python -c`` line of the packaged check, so the test runs what a
-    deploy runs.
+    The question is the ``opus_import --check serve`` the packaged check runs, so the test
+    runs what a deploy runs.
 
     Parameters:
         run: The run.
         tmp_path: Where to write the chain out.
 
     Returns:
-        What it printed: empty when the schema may be served.
+        Why it would be refused, as the check logs it: empty when the schema may be
+        served.
     """
     scripts.write_scripts(tmp_path / 'chain')
     text = (tmp_path / 'chain' / _DEPLOY_CHECK).read_text(encoding='utf-8')
-    found = re.search(r"python -c '([^']*)'", text)
-    assert found is not None
-    finished = subprocess.run(  # nosec B603 - this interpreter and the packaged program
-        [sys.executable, '-c', found.group(1)],
+    assert f'opus_import --check {_SERVE}' in text
+    finished = subprocess.run(  # nosec B603 - this interpreter and the pipeline's module
+        [sys.executable, '-m', 'opus_import', '--check', _SERVE],
+        cwd=fixture_layout.REPO_ROOT,
         env=build_run.run_environment(run.paths.config_file),
         capture_output=True,
         text=True,
-        check=True,
+        check=False,
     )
-    return finished.stdout.strip()
+    if finished.returncode == 0:
+        return ''
+    assert finished.returncode == GENERATION_REFUSED_EXIT_STATUS, finished.stdout[-3000:]
+    marker = f'--check {_SERVE}: refused: '
+    (line,) = [line for line in finished.stdout.splitlines() if marker in line]
+    return line.split(marker, 1)[1]
 
 
 def _no_table(credentials: DatabaseCredentials, schema: str) -> None:
