@@ -1406,17 +1406,22 @@ def test_the_deploy_chains_pre_check_names_what_the_command_would_refuse(
     ],
     ids=['writing', 'ready', 'none-pending', 'locked', 'writer', 'no-row'],
 )
+@pytest.mark.parametrize('switch_stopped', [False, True], ids=['', 'switch-stopped'])
 def test_an_update_continues_only_a_pending_generation_no_invocation_is_writing(
     monkeypatch: pytest.MonkeyPatch,
     row: tuple[Any, ...] | None,
     lock_holder: int | None,
     alive: list[int],
     problem: str | None,
+    switch_stopped: bool,
 ) -> None:
-    """The version row, the generation lock and the live writers, read without writing:
-    an update that skips --begin-generation with nothing pending would append to the
-    served rows."""
-    db = _ReadOnlyStateDB(row, lock_holder=lock_holder)
+    """The version row, the generation lock, the live writers and a switch stopped part
+    way, read without writing: an update that skips --begin-generation with nothing
+    pending would append to the served rows, and one beside a part-way switch would write
+    a generation that refuses every write."""
+    if switch_stopped and problem is None:
+        problem = 'stopped part way'
+    db = _ReadOnlyStateDB(row, lock_holder=lock_holder, tables=_PREV if switch_stopped else ())
     monkeypatch.setattr(do_generation, '_alive_writers', lambda db: alive)
     found = do_generation.generation_problem(db, do_generation.CHECK_CONTINUE)  # type: ignore[arg-type]
     if problem is None:
