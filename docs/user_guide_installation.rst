@@ -818,7 +818,7 @@ entirely.
      - The share of the cores the ceiling allows, greater than 0 and at most 1. Default
        ``0.75``. The ceiling is ``max(1, floor(cores * cpu_fraction))``, where cores is
        the number the import may run on, counted when it starts, and a ``workers`` or
-       ``index_workers`` above it stops the import before it starts.
+       ``index_workers`` above it is lowered to it.
    * - ``server_tmpdir``
      - optional
      - A directory on the database server's host, writable by ``mysqld``, where the

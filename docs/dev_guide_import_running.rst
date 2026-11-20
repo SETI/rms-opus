@@ -629,8 +629,8 @@ whole shape. It:
    :class:`~opus_import.context.ImportContext`, and attaches the five log destinations
    described below.
 4. Installs a warning handler that collects Python warnings onto the context.
-5. Resolves ``workers`` and ``index_workers`` against the ceiling and logs the
-   ``Parallelism`` line, exiting non-zero with a fatal message if either is above it
+5. Resolves ``workers`` and ``index_workers`` against the ceiling, lowering either that
+   is above it, and logs the ``Parallelism`` line, which names each count lowered
    (:ref:`dev_guide_import_running_parallelism`).
 6. Rejects ``--scorched-earth`` without ``--yes``, ``--yes`` without
    ``--scorched-earth``, ``--join`` with any option it is refused with, and
