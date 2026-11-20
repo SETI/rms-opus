@@ -58,6 +58,10 @@ OPTIONAL_KEYS = [
     'OPUS_PYTHON',
     'OPUS_WEB_SERVICE',
     'OPUS_CACHE_SERVICE',
+    'OPUS_CACHE_LOCATION',
+    'OPUS_IMPORT_WORKERS',
+    'OPUS_IMPORT_IMPORTERS',
+    'OPUS_IMPORT_CPU_FRACTION',
 ]
 
 pytestmark = pytest.mark.skipif(
@@ -281,11 +285,22 @@ def test_a_missing_file_is_reported_rather_than_ignored(tmp_path: Path) -> None:
     assert 'deploy.env' in result.stdout
 
 
+def _point_at(secrets: Path, key: str, path: Path) -> None:
+    """Rewrite *key*'s line in the deploy.env under *secrets* to name *path*."""
+    text = (secrets / 'deploy.env').read_text()
+    line = next(ln for ln in text.splitlines() if ln.startswith(f'{key}='))
+    (secrets / 'deploy.env').write_text(text.replace(line, f"{key}='{path}'"))
+
+
 @pytest.mark.parametrize(
-    ('key', 'subdir'), [('PDS3_HOLDINGS_DIR', 'volumes'), ('PDS4_HOLDINGS_DIR', 'bundles')]
+    ('key', 'name', 'subdir'),
+    [
+        ('PDS3_HOLDINGS_DIR', 'holdings', 'volumes'),
+        ('PDS4_HOLDINGS_DIR', 'pds4-holdings', 'bundles'),
+    ],
 )
 def test_a_holdings_root_without_its_subdirectory_is_refused(
-    tmp_path: Path, key: str, subdir: str
+    tmp_path: Path, key: str, name: str, subdir: str
 ) -> None:
     """A holdings path that exists but is not a holdings tree is caught here.
 
@@ -293,15 +308,52 @@ def test_a_holdings_root_without_its_subdirectory_is_refused(
     misses, and the import would then fail bundle by bundle instead of at once.
     """
     secrets = _make_environment(tmp_path)
-    wrong = tmp_path / 'not-holdings'
-    wrong.mkdir()
-    text = (secrets / 'deploy.env').read_text()
-    line = next(ln for ln in text.splitlines() if ln.startswith(f'{key}='))
-    (secrets / 'deploy.env').write_text(text.replace(line, f"{key}='{wrong}'"))
+    wrong = tmp_path / 'elsewhere' / name
+    wrong.mkdir(parents=True)
+    _point_at(secrets, key, wrong)
 
     result = _read(secrets)
     assert result.returncode != 0
     assert subdir in result.stdout
+
+
+@pytest.mark.parametrize(
+    ('key', 'name', 'subdir'),
+    [
+        ('PDS3_HOLDINGS_DIR', 'holdings', 'volumes'),
+        ('PDS4_HOLDINGS_DIR', 'pds4-holdings', 'bundles'),
+    ],
+)
+def test_a_holdings_root_named_otherwise_is_refused(
+    tmp_path: Path, key: str, name: str, subdir: str
+) -> None:
+    """A complete holdings tree under another name is refused, naming the variable.
+
+    pdsfile finds a file's logical path by the root's own name, so a root named
+    ``pds3-holdings`` fails inside the import once an installation is built.
+    """
+    secrets = _make_environment(tmp_path)
+    root = tmp_path / f'misnamed-{name}'
+    (root / subdir).mkdir(parents=True)
+    _point_at(secrets, key, root)
+
+    result = _read(secrets)
+    assert result.returncode != 0
+    assert f"{key} must end in a directory named '{name}'" in result.stdout
+
+
+def test_a_link_of_the_right_name_to_a_misnamed_root_is_accepted(tmp_path: Path) -> None:
+    """A symbolic link named ``holdings`` serves, since pdsfile does not resolve it."""
+    secrets = _make_environment(tmp_path)
+    root = tmp_path / 'pds3-holdings'
+    (root / 'volumes').mkdir(parents=True)
+    link = tmp_path / 'links' / 'holdings'
+    link.parent.mkdir()
+    link.symlink_to(root)
+    _point_at(secrets, 'PDS3_HOLDINGS_DIR', link)
+
+    result = _read(secrets)
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_the_template_declares_exactly_the_keys_the_reader_reads() -> None:

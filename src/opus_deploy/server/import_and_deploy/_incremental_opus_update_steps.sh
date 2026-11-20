@@ -13,9 +13,11 @@
 # print_update_usage
 #     Prints the usage line of the update's scripts.
 #
-# parse_update_arguments [<version_spec>] [--drop <bundle>[,<bundle>...]] [<bundle> ...]
+# parse_update_arguments [<version_spec>] [--continue] [--drop <bundle>[,<bundle>...]]
+#         [<bundle> ...]
 #     Sets OPUS_VERSION_SPEC to the first argument when it begins with a PEP 440
-#     operator (= < > ! ~) or "@", and empty otherwise; UPDATE_BUNDLES to the bundles to import,
+#     operator (= < > ! ~) or "@", and empty otherwise; UPDATE_CONTINUE to true when
+#     --continue is given, and false otherwise; UPDATE_BUNDLES to the bundles to import,
 #     the positional arguments split at commas; and UPDATE_DROPS to the bundles to drop,
 #     every --drop value split at commas, less any bundle UPDATE_BUNDLES names, since a
 #     bundle imported again already loses every row its earlier copy had. --drop may be
@@ -28,18 +30,25 @@
 #
 # update_invocations
 #     Prints the arguments of each opus_import invocation of the update, one invocation
-#     a line, in order: --begin-generation; --delete-bundles and the bundles to drop, when
-#     there are any; --import and the bundles, when there are any; then --finalize,
-#     --validate and --write-schema-version. The drops come first so that a descriptor
-#     the import expands to a dropped bundle imports it again rather than losing it. Reads
+#     a line, in order: --begin-generation, unless UPDATE_CONTINUE is true, which writes
+#     into the generation an earlier update began; --delete-bundles and the bundles to
+#     drop, when there are any; --import and the bundles, when there are any; then
+#     --finalize, --validate and --write-schema-version. Every invocation after the begin
+#     carries --require-pending-generation, so that one finding no pending generation,
+#     after an --abandon-generation run between two of them, writes nothing rather than
+#     the served rows. The drops come first so that a descriptor the import expands to a
+#     dropped bundle imports it again rather than losing it. Reads UPDATE_CONTINUE,
 #     UPDATE_BUNDLES and UPDATE_DROPS.
 #
 # run_update_invocations <log directory>
 #     Runs each invocation update_invocations prints, as its own opus_import process, and
 #     after each one checks ERRORS.log in the log directory (check_update_error_log).
 #     Returns 0 when every invocation succeeded and logged no error. Otherwise prints
-#     ERRORS.log when there is one, and the invocations still to run, and returns 1,
-#     having run nothing after the one that failed.
+#     ERRORS.log when there is one, and the invocations still to run, with the requeue a
+#     bundle a stopped import left importing needs, and returns 1, having run nothing
+#     after the one that failed. A failed --begin-generation began nothing, and a refused
+#     invocation found no pending generation, so after either nothing is left to
+#     continue.
 #
 # check_update_error_log <log directory>
 #     Returns 0 when ERRORS.log in the directory is absent or empty. Otherwise prints it
@@ -63,12 +72,13 @@
 #     with no recorded commit, which neither PyPI nor the repository can give again.
 
 print_update_usage() {
-    local usage="Usage: run_incremental_opus_update.sh [<version_spec>]"
+    local usage="Usage: run_incremental_opus_update.sh [<version_spec>] [--continue]"
     echo "${usage} [--drop <bundle>[,<bundle>...]] [<bundle> ...]"
 }
 
 parse_update_arguments() {
     local version_spec=""
+    local continuing=false
     local -a bundles=()
     local -a drops=()
     local -a names
@@ -83,6 +93,10 @@ parse_update_arguments() {
     fi
     while [[ $# -gt 0 ]]; do
         case $1 in
+            --continue)
+                continuing=true
+                shift
+                ;;
             --drop)
                 if [[ $# -lt 2 || -z $2 || $2 == -* ]]; then
                     print_update_usage
@@ -124,6 +138,7 @@ parse_update_arguments() {
         return 1
     fi
     OPUS_VERSION_SPEC=${version_spec}
+    UPDATE_CONTINUE=${continuing}
     UPDATE_BUNDLES=("${bundles[@]}")
     UPDATE_DROPS=()
     for name in "${drops[@]}"; do
@@ -141,29 +156,37 @@ parse_update_arguments() {
 }
 
 update_invocations() {
-    echo "--begin-generation"
+    local pending=--require-pending-generation
+    if ! ${UPDATE_CONTINUE}; then
+        echo "--begin-generation"
+    fi
     if [[ ${#UPDATE_DROPS[@]} -gt 0 ]]; then
-        echo "--delete-bundles ${UPDATE_DROPS[*]}"
+        echo "${pending} --delete-bundles ${UPDATE_DROPS[*]}"
     fi
     if [[ ${#UPDATE_BUNDLES[@]} -gt 0 ]]; then
-        echo "--import ${UPDATE_BUNDLES[*]}"
+        echo "${pending} --import ${UPDATE_BUNDLES[*]}"
     fi
-    echo "--finalize"
-    echo "--validate"
-    echo "--write-schema-version"
+    echo "${pending} --finalize"
+    echo "${pending} --validate"
+    echo "${pending} --write-schema-version"
 }
 
 run_update_invocations() {
     local log_dir=$1
+    # The status opus_import exits with when it refuses, having changed nothing
+    # (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+    local refused=3
     local -a invocations
     local -a words
-    local index remaining
+    local index remaining status
     mapfile -t invocations < <(update_invocations)
     for index in "${!invocations[@]}"; do
         read -ra words <<< "${invocations[index]}"
         echo "** opus_import ${invocations[index]} **"
         echo "Start time:" "$(date)"
-        if ! opus_import "${words[@]}"; then
+        status=0
+        opus_import "${words[@]}" || status=$?
+        if [[ ${status} -ne 0 ]]; then
             if [[ -s ${log_dir}/ERRORS.log ]]; then
                 cat "${log_dir}/ERRORS.log"
             fi
@@ -173,16 +196,25 @@ run_update_invocations() {
         fi
         echo
         echo "ERROR: opus_import ${invocations[index]} failed or logged errors."
-        if [[ ${index} -eq 0 ]]; then
+        if [[ ${invocations[index]} == --begin-generation ]]; then
             echo "       No generation was begun, and nothing was changed; the log says why."
             return 1
         fi
+        if [[ ${status} -eq ${refused} ]]; then
+            echo "       It wrote nothing: the database has no pending generation, so an"
+            echo "       --abandon-generation ran after the update began it; the log says why."
+            return 1
+        fi
         echo "       The pending generation is not served. Either fix the cause and run"
-        echo "       what is left, from the installation this update built:"
+        echo "       the update again with --continue, which imports the bundles it names"
+        echo "       into this generation, or run what is left, from the installation this"
+        echo "       update built:"
         for remaining in "${invocations[@]:index}"; do
             echo "           opus_import ${remaining}"
         done
-        echo "       or throw the pending generation away and start again:"
+        echo "       A bundle a stopped import left importing is refused until"
+        echo "       opus_import --requeue <bundle>, from the same installation, returns it."
+        echo "       Or throw the pending generation away and start again:"
         echo "           opus_import --abandon-generation"
         return 1
     done

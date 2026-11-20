@@ -100,18 +100,18 @@ the computer. The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is the
 the process may run on -- its CPU affinity set where the platform has one, so a run
 confined by ``taskset`` or a container's CPU set counts only those. ``cpu_fraction`` is greater than 0 and at most 1,
 0.75 by default. :func:`opus_config.config.resolve_parallelism` resolves both counts,
-and a count above the ceiling is **refused**, not lowered: the run logs a fatal message
-naming the count, the ceiling, the cores and the fraction, and exits non-zero before it
-opens the database.
+and a count above the ceiling is **lowered to it**, so one configuration serves
+computers of different sizes; the parallelism line below names each count it lowered
+and the number asked for.
 
 ``--workers N`` replaces ``[import] workers`` for one invocation, and takes a whole
-number of at least 1 or ``max``, checked against the same ceiling.
+number of at least 1 or ``max``, held to the same ceiling.
 
 **The first line of every run's log states the parallelism**: the cores detected,
-``cpu_fraction``, the ceiling, and the resolved ``workers`` and ``index_workers``, as
-in::
+``cpu_fraction``, the ceiling, and the resolved ``workers`` and ``index_workers``, then
+any count lowered to the ceiling, as in::
 
-    Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1
+    Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1; capped at the ceiling: [import] workers 24
 
 An index with fewer rows than ``[import] worker_rows`` is computed in the import's own
 process whatever ``workers`` says, and so is every index on a platform that cannot
@@ -354,7 +354,7 @@ Parallelism
      - Meaning
    * - ``--workers N``
      - Compute each index's observations in ``N`` processes, or ``max`` for the ceiling;
-       replaces ``[import] workers``. A count above the ceiling is a fatal error
+       replaces ``[import] workers``. A count above the ceiling is lowered to it
        (:ref:`dev_guide_import_running_parallelism`).
 
 Import behavior
@@ -478,6 +478,30 @@ Auxiliary tables and other steps
        (`Updating a served schema by generation`_). Each runs alone and reads no
        holdings. A refused command changes nothing and exits with status 3, which
        ``promote_generation.sh`` tells from a command that stopped part way.
+   * - ``--require-pending-generation``
+     - Refuses, writing nothing, unless the invocation registers as a writer of the schema
+       and the schema has a pending generation when it does, and exits with status 3. The
+       registration reads the version row again under the generation lock and holds off
+       every generation command from then on, so the answer cannot change before the
+       writes; an invocation that registers no writer is refused, since it has only the
+       row it read as it started.
+       ``run_incremental_opus_update.sh`` gives it to every invocation after
+       ``--begin-generation``, so an ``--abandon-generation`` run between two of them
+       leaves the next writing nothing rather than the served rows.
+   * - ``--check <action>``
+     - Says whether an action would be refused, on a read-only connection, writing
+       nothing: ``serve``, whether this release would serve the schema
+       (:func:`~opus_import.schema_version.served_schema_version_problem`, the web
+       application's rule); ``switch`` and ``revert``, whether ``--switch-generation`` or
+       ``--revert-generation`` would be refused; and ``continue``, whether an import could
+       write into the pending generation without ``--begin-generation``, which requires
+       one; and ``rebuild``, whether the served auxiliary tables could be rebuilt in
+       place, refused while a generation is pending
+       (:func:`~opus_import.steps.do_generation.generation_problem`). It exits 0 when
+       the action would run, and status 3 when it would be refused, logging the reason at
+       the info level, so a refusal writes nothing into ``ERRORS.log``; an unreadable
+       schema exits otherwise. It runs alone. The deploy chain asks it before it acts
+       (:ref:`user_guide_deployment_checks`).
 
 .. _dev_guide_import_running_generations:
 
@@ -629,8 +653,8 @@ whole shape. It:
    :class:`~opus_import.context.ImportContext`, and attaches the five log destinations
    described below.
 4. Installs a warning handler that collects Python warnings onto the context.
-5. Resolves ``workers`` and ``index_workers`` against the ceiling and logs the
-   ``Parallelism`` line, exiting non-zero with a fatal message if either is above it
+5. Resolves ``workers`` and ``index_workers`` against the ceiling, lowering either that
+   is above it, and logs the ``Parallelism`` line, which names each count lowered
    (:ref:`dev_guide_import_running_parallelism`).
 6. Rejects ``--scorched-earth`` without ``--yes``, ``--yes`` without
    ``--scorched-earth``, ``--join`` with any option it is refused with, and
@@ -787,8 +811,9 @@ checked-in mini-holdings fixture, which needs a MySQL server and nothing else::
 A full-holdings run
 -------------------
 
-A complete import is hours to days and replaces everything a user sees, so it is done
-into a new schema and switched over afterwards rather than in place.
+A complete import takes about an hour with six importers sharing two dozen workers, and
+it replaces everything a user sees, so it is done into a new schema and switched over
+afterwards rather than in place.
 
 The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
 ``opus_import_all``. With no step named it is the **coordinator**, which runs the whole
@@ -802,7 +827,7 @@ import on one computer; its tracking, recovery and table are
    comma-separated descriptors name instead.
 2. **Divide.** ``--workers N`` is the total of worker processes on this computer, from
    ``[import] workers`` when it is not given, so the default is 1. A total above the
-   ceiling (`How many processes a run uses`_) is refused before anything runs.
+   ceiling (`How many processes a run uses`_) is lowered to it.
    ``--importers M`` (``auto``, the default, reads ``[import] importers``) is capped at
    N, and N is divided among the M importers as evenly as whole numbers allow: the first
    ``N mod M`` take one more. Each importer is one ``opus_import --join --workers <share>``
@@ -813,7 +838,11 @@ import on one computer; its tracking, recovery and table are
    failed; rows done of the estimated total; time elapsed; and the remaining time,
    estimated from the row rate it has observed), then one line per running importer on
    any computer (host and process id, bundle, rows done of the bundle's estimate, time
-   in the bundle, time since its last progress). Without a terminal it writes a line per
+   in the bundle, time since its last progress). A bundle's estimate is the rows its
+   primary index labels declare, which its import can exceed (a COVIMS index row can be
+   both a visible and an infrared observation) or fall short of; so the estimated total
+   counts the rows a done or failed bundle wrote, and the larger of its estimate and its
+   rows so far for any other. Without a terminal it writes a line per
    finished bundle and the totals line every ``[import] status_interval_minutes``. An
    importer alive but with no progress for ``[import] stall_warning_minutes`` is reported
    as stalled, and never stopped.

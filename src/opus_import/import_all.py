@@ -13,8 +13,8 @@ With no step named it is the **coordinator**:
    ``--scorched-earth`` it first erases every OPUS table in the schema. Registration
    leaves registered bundles alone, so a rerun after an interruption resumes.
 2. **Divide.** ``--workers`` is the total of worker processes on this computer
-   (``[import] workers`` when not given), refused above the ceiling every import
-   obeys. It starts ``--importers`` importers (``[import] importers`` when not given),
+   (``[import] workers`` when not given), lowered to the ceiling every import obeys
+   when it is above it. It starts ``--importers`` importers (``[import] importers`` when not given),
    capped at that total, and divides the total among them as evenly as whole numbers
    allow (`divide`). Each importer is an ``opus_import --join`` process drawing bundles
    from the registry's queue, the largest pending first.
@@ -55,7 +55,13 @@ import sys
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from opus_config import MAX_WORKERS, ConfigError, get_config, resolve_parallelism
+from opus_config import (
+    MAX_WORKERS,
+    ConfigError,
+    describe_capped,
+    get_config,
+    resolve_parallelism,
+)
 from opus_import import bundle_registry, coordinator, importdb
 
 if TYPE_CHECKING:
@@ -142,6 +148,8 @@ class Division:
         workers: The total of workers, N.
         importers: The importers, M, at most N.
         per_importer: Each importer's workers, in start order.
+        capped: Each count asked for above the ceiling and lowered to it
+            (`opus_config.Parallelism.capped`).
     """
 
     cores: int
@@ -150,18 +158,21 @@ class Division:
     workers: int
     importers: int
     per_importer: tuple[int, ...]
+    capped: tuple[str, ...] = ()
 
     def describe(self) -> str:
         """Return the line the coordinator writes first.
 
         Returns:
-            The cores, the fraction, the ceiling, N, M, and each importer's workers.
+            The cores, the fraction, the ceiling, N, M, each importer's workers, and
+            any count lowered to the ceiling.
         """
         return (
             f'Parallelism: {self.cores} cores detected, cpu_fraction {self.cpu_fraction:g}, '
             f'ceiling {self.ceiling}; workers {self.workers} in all, importers '
             f'{self.importers}, workers per importer '
             f'{", ".join(str(count) for count in self.per_importer)}'
+            f'{describe_capped(self.capped)}'
         )
 
 
@@ -183,10 +194,7 @@ def resolve_division(
         detected: The cores to take as detected, or None to count them.
 
     Returns:
-        The division.
-
-    Raises:
-        opus_config.config.ConfigError: If the total is above the ceiling, naming it.
+        The division. A total above the ceiling is lowered to it.
     """
     parallelism = resolve_parallelism(config, workers, detected=detected)
     requested = config.importers if importers == AUTO_IMPORTERS else int(importers)
@@ -198,6 +206,7 @@ def resolve_division(
         workers=parallelism.workers,
         importers=count,
         per_importer=tuple(divide(parallelism.workers, count)),
+        capped=parallelism.capped,
     )
 
 
@@ -521,14 +530,15 @@ def _division(parser: argparse.ArgumentParser, arguments: argparse.Namespace) ->
     """Resolve the division the arguments ask for, from the configuration.
 
     Parameters:
-        parser: The parser, whose ``error`` reports a refusal.
+        parser: The parser, whose ``error`` reports a configuration that cannot be read.
         arguments: The parsed arguments.
 
     Returns:
         The division.
 
     Raises:
-        SystemExit: If the total of workers is above the ceiling.
+        SystemExit: If ``OPUS_CONFIG`` is unset, or the file it names cannot be read or
+            is not valid.
     """
     default = 1 if arguments.join else AUTO_IMPORTERS
     importers = arguments.importers if arguments.importers is not None else default
@@ -684,7 +694,6 @@ def main() -> None:
         or arguments.status
     )
     starts_importers = arguments.join or not step_named
-    # Resolved first, so a total above the ceiling stops the run before anything is erased.
     division = _division(parser, arguments) if starts_importers else None
 
     if arguments.dry_run:

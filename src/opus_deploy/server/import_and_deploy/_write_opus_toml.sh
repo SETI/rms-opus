@@ -102,6 +102,59 @@ toml_host_list() {
     printf '%s' "${list}"
 }
 
+# OPUS_CACHE_LOCATION is optional: empty or unset leaves cache_location out of the
+# file, and the application takes its default. A value goes through the same
+# control-character check as the required ones.
+OPUS_CACHE_LOCATION=${OPUS_CACHE_LOCATION:-}
+case "${OPUS_CACHE_LOCATION}" in
+    *[[:cntrl:]]*)
+        echo "ERROR: OPUS_CACHE_LOCATION contains a control character (newline, tab or" >&2
+        echo "       similar). TOML forbids one inside a quoted value, so" >&2
+        echo "       opus.toml cannot be written. Correct the value and re-run." >&2
+        exit 1
+        ;;
+esac
+cache_location_line=""
+if [[ -n ${OPUS_CACHE_LOCATION} ]]; then
+    cache_location_line="cache_location = \"$(toml_escape "${OPUS_CACHE_LOCATION}")\""
+fi
+
+# The import's parallelism, each optional: empty or unset leaves the key out, and the
+# import takes its default. They are TOML numbers, or for workers the string "max", so
+# each is checked by its form here and by its range when the file is loaded. TOML
+# forbids a leading zero on a number, so "024" and "00.8" are refused here rather than
+# written into a file that would not load.
+_toml_whole='^(0|[1-9][0-9]*)$'
+_toml_decimal='^(0|[1-9][0-9]*)(\.[0-9]+)?$'
+OPUS_IMPORT_WORKERS=${OPUS_IMPORT_WORKERS:-}
+OPUS_IMPORT_IMPORTERS=${OPUS_IMPORT_IMPORTERS:-}
+OPUS_IMPORT_CPU_FRACTION=${OPUS_IMPORT_CPU_FRACTION:-}
+import_lines=""
+if [[ -n ${OPUS_IMPORT_WORKERS} ]]; then
+    if [[ ${OPUS_IMPORT_WORKERS} == max ]]; then
+        import_lines+=$'\nworkers = "max"'
+    elif [[ ${OPUS_IMPORT_WORKERS} =~ ${_toml_whole} ]]; then
+        import_lines+=$'\n'"workers = ${OPUS_IMPORT_WORKERS}"
+    else
+        echo "ERROR: OPUS_IMPORT_WORKERS must be a whole number or 'max' (got '${OPUS_IMPORT_WORKERS}')." >&2
+        exit 1
+    fi
+fi
+if [[ -n ${OPUS_IMPORT_IMPORTERS} ]]; then
+    if [[ ! ${OPUS_IMPORT_IMPORTERS} =~ ${_toml_whole} ]]; then
+        echo "ERROR: OPUS_IMPORT_IMPORTERS must be a whole number (got '${OPUS_IMPORT_IMPORTERS}')." >&2
+        exit 1
+    fi
+    import_lines+=$'\n'"importers = ${OPUS_IMPORT_IMPORTERS}"
+fi
+if [[ -n ${OPUS_IMPORT_CPU_FRACTION} ]]; then
+    if [[ ! ${OPUS_IMPORT_CPU_FRACTION} =~ ${_toml_decimal} ]]; then
+        echo "ERROR: OPUS_IMPORT_CPU_FRACTION must be a number such as 0.8 (got '${OPUS_IMPORT_CPU_FRACTION}')." >&2
+        exit 1
+    fi
+    import_lines+=$'\n'"cpu_fraction = ${OPUS_IMPORT_CPU_FRACTION}"
+fi
+
 rm -f "${OUTPUT_PATH}.tmp"
 
 ( umask 077; cat > "${OUTPUT_PATH}.tmp" <<EOF
@@ -130,6 +183,7 @@ secret_key = "$(toml_escape "${OPUS_SECRET_KEY}")"
 debug = ${OPUS_DEBUG}
 allowed_hosts = [$(toml_host_list)]
 cache_server_prefix = "$(toml_escape "${OPUS_CACHE_PREFIX}")"
+${cache_location_line}
 public_url = "$(toml_escape "${OPUS_PUBLIC_URL}")"
 product_http_path = "$(toml_escape "${OPUS_PRODUCT_HTTP_PATH}")"
 viewmaster_url = "$(toml_escape "${OPUS_VIEWMASTER_URL}")"
@@ -143,7 +197,7 @@ fake_error500_probability = 0.0
 
 [import]
 log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_import.log"
-debug_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_import_debug.log"
+debug_log_file = "$(toml_escape "${OPUS_LOG_DIR}")/opus_import_debug.log"${import_lines}
 EOF
 )
 # The rename is atomic within the filesystem, so the destination is never present

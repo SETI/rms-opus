@@ -225,6 +225,12 @@ def test_load_config_defaults_every_optional_key(
         ('django', 'fake_error404_probability', '0.25', 0.25),
         ('django', 'log_console_level', '"CRITICAL"', 'CRITICAL'),
         ('django', 'cache_location', '"cache.example.org:21211"', 'cache.example.org:21211'),
+        (
+            'django',
+            'cache_location',
+            '"unix:/run/memcached/memcached.socket"',
+            'unix:/run/memcached/memcached.socket',
+        ),
         ('django', 'conn_max_age', '0', 0),
         ('django', 'conn_health_checks', 'false', False),
         ('django', 'search_build_timeout', '60', 60),
@@ -435,7 +441,24 @@ def test_load_config_accepts_a_whole_number_probability(
         (
             adding('django', 'cache_location', '"127.0.0.1"'),
             '[django] \'cache_location\' must be "host:port" with a port from 1 to 65535, '
-            "not '127.0.0.1'",
+            'or "unix:/path/to/socket", not \'127.0.0.1\'',
+        ),
+        (
+            adding('django', 'cache_location', '"unix:memcached.socket"'),
+            "[django] 'cache_location' must name a socket by its absolute path, "
+            "not 'unix:memcached.socket'",
+        ),
+        (
+            adding('django', 'cache_location', '"unix:"'),
+            "[django] 'cache_location' must name a socket by its absolute path",
+        ),
+        (
+            adding('django', 'cache_location', '"unix:/run/memcached/cache,blue.sock"'),
+            '[django] \'cache_location\' names one server, without "," or ";"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:11211;127.0.0.1:11212"'),
+            '[django] \'cache_location\' names one server, without "," or ";"',
         ),
         (
             adding('django', 'cache_location', '":11211"'),
@@ -509,6 +532,10 @@ def test_load_config_accepts_a_whole_number_probability(
         'scratch-dir-given-a-number',
         'health-checks-given-a-string',
         'cache-location-without-a-port',
+        'cache-location-socket-path-relative',
+        'cache-location-socket-path-empty',
+        'cache-location-socket-path-with-a-comma',
+        'cache-location-two-servers',
         'cache-location-without-a-host',
         'cache-location-port-not-a-number',
         'cache-location-port-too-large',
@@ -725,35 +752,39 @@ def test_a_command_line_count_replaces_the_files() -> None:
 
 
 @pytest.mark.parametrize(
-    ('keys', 'override', 'message'),
+    ('keys', 'override', 'counts', 'capped'),
     [
+        ({'workers': 7}, None, (6, 1), ('[import] workers 7',)),
+        ({}, 7, (6, 1), ('--workers 7',)),
+        ({'index_workers': 7}, None, (1, 6), ('[import] index_workers 7',)),
         (
-            {'workers': 7},
+            {'workers': 24, 'index_workers': 9},
             None,
-            '[import] workers 7 is above the ceiling of 6: 8 cores detected times '
-            'cpu_fraction 0.75',
-        ),
-        (
-            {},
-            7,
-            '--workers 7 is above the ceiling of 6: 8 cores detected times cpu_fraction 0.75',
-        ),
-        (
-            {'index_workers': 7},
-            None,
-            '[import] index_workers 7 is above the ceiling of 6: 8 cores detected times '
-            'cpu_fraction 0.75',
+            (6, 6),
+            ('[import] workers 24', '[import] index_workers 9'),
         ),
     ],
-    ids=['workers', 'command-line', 'index-workers'],
+    ids=['workers', 'command-line', 'index-workers', 'both'],
 )
-def test_a_count_above_the_ceiling_is_refused_naming_it(
-    keys: dict[str, object], override: int | None, message: str
+def test_a_count_above_the_ceiling_is_lowered_to_it_and_named(
+    keys: dict[str, object],
+    override: int | None,
+    counts: tuple[int, int],
+    capped: tuple[str, ...],
 ) -> None:
-    """No request takes more than the ceiling; the refusal says how it was reached."""
-    with pytest.raises(ConfigError) as caught:
-        resolve_parallelism(_import_table(**keys), override, detected=8)
-    assert str(caught.value) == message
+    """No count takes more than the ceiling; each one lowered is named with its request."""
+    resolved = resolve_parallelism(_import_table(**keys), override, detected=8)
+    assert (resolved.workers, resolved.index_workers) == counts
+    assert resolved.capped == capped
+
+
+def test_the_parallelism_line_names_a_count_lowered_to_the_ceiling() -> None:
+    """The line ends by naming what was asked for, so the log shows the lowering."""
+    resolved = resolve_parallelism(_import_table(workers=24), detected=8)
+    assert resolved.describe() == (
+        'Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, '
+        'index_workers 1; capped at the ceiling: [import] workers 24'
+    )
 
 
 def test_the_parallelism_line_names_everything_it_was_worked_out_from() -> None:

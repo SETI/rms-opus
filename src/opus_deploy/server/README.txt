@@ -70,6 +70,14 @@ everything else the chain needs underneath it, it creates.
     source /opt/opus/deploy_venv/bin/activate
     python -m pip install "rms-opus==3.24.0"
 
+   A revision with no release -- a branch, a tag or a commit -- is installed
+   from the repository instead, and every step below then takes "@<branch>"
+   where it shows "==3.24.0". pip builds it from a clone, so the server needs
+   git and access to GitHub:
+
+    python -m pip install \
+        "rms-opus @ git+https://github.com/SETI/rms-opus.git@<branch>"
+
 2. This directory, and its configuration.
 
     opus_deploy_scripts --directory /opt/opus/deploy
@@ -99,7 +107,9 @@ everything else the chain needs underneath it, it creates.
 --------------------------------------------------------------------------------
 
 3. Import the holdings, under an installation of the release being deployed.
-   Hours to days. It runs detached and mails the log when it finishes.
+   About an hour with OPUS_IMPORT_IMPORTERS=6 sharing OPUS_IMPORT_WORKERS=24;
+   left empty, those two run one importer of one worker. It runs detached and
+   mails the log when it finishes.
 
     ./import_and_deploy/run_full_opus_import.sh ==3.24.0
 
@@ -210,8 +220,27 @@ update runs detached, mails its log, and holds the deploy lock until it
 ends. Without a version spec it installs what is being served: its release,
 or the git commit it was built from.
 
+--continue writes into the pending generation an earlier update began
+instead of beginning one. It breaks an update into several commands on
+purpose -- the first begins the generation with some bundles, and each later
+one adds bundles or drops to it, which the site does not show until it is
+switched in -- and it goes on with an update that stopped part way, once
+its cause is fixed, run again with the same bundles. It aborts before
+writing the database when it has no pending generation (opus_import
+--check continue); the installation it built and its log directory remain. A
+bundle an import left importing when it was stopped is refused until it
+is returned to the queue, from the installation the update built:
+
+    OPUS_CONFIG=<that installation>/opus.toml \
+        <that installation>/opus_venv/bin/opus_import --requeue <bundle>
+
+Every command of an update after the begin is given
+--require-pending-generation, so one that finds no pending generation (an
+--abandon-generation ran after the begin) writes nothing.
+
 promote_generation.sh takes the deploy lock, asks whether the switch would
-run (and stops nothing when it would be refused), stops the web server,
+run (opus_import --check switch, which stops nothing when it would be
+refused), stops the web server,
 switches the generation in, restarts the cache service and the web server,
 and warms the common searches. If the switch fails, the web server stays
 stopped: running promote_generation.sh again completes the switch, and
@@ -254,11 +283,18 @@ once, since the way back there is the database it was serving:
   AFTER A DEPLOY
 --------------------------------------------------------------------------------
 
-Every deploy ends with `opus_manage warm_search`, which asks the site, over
-its public URL, for the landing page and for one search per planet, mission,
-instrument and the like, so that the first visitors find them ready. A failure
-of it is a warning, not a failed deploy. --no-database skips it, since it
-writes searches and a session as visitors' requests do.
+deploy_new_code_and_database.sh and promote_generation.sh end with
+`opus_manage warm_search`, which asks the site, over its public URL, for the
+landing page and for one search per planet, mission, instrument and the
+like, so that their results are built and the rows they read are in the
+database server's memory when the first visitors come. It takes minutes. A
+failure of it is a warning, not a failed deploy. deploy_new_code_only.sh
+does not run it: the database it goes on serving keeps both.
+
+deploy_new_code_only.sh refuses, before writing anything, while an
+incremental update's generation is pending (opus_import --check rebuild),
+unless given --no-database: its rebuild of the description tables would be
+left for the generation's switch.
 
 deploy_new_code_and_database.sh also carries the sessions and carts over from
 the database being served into the new one, while the web server is stopped.

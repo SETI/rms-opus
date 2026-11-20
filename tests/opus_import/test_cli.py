@@ -6,6 +6,7 @@ without running an import, and the entry point reads no settings until it has ar
 to act on, so `--help` works on a machine that has none.
 """
 
+import atexit
 import json
 import os
 import signal
@@ -23,7 +24,7 @@ import pytest
 import opus_config.config
 import opus_import.__main__
 from opus_config import OPUS_CONFIG_ENV_VAR
-from opus_import import cli, importdb
+from opus_import import cli, importdb, schema_version
 from opus_import.context import ImportContext
 from opus_import.generations import PENDING_READY, GenerationState
 from opus_import.schema_version import SCHEMA_VERSION
@@ -238,6 +239,133 @@ def test_a_refused_generation_command_exits_with_its_own_status(
     assert message.startswith('--switch-generation refused: another generation command holds')
 
 
+class _CheckedSchema:
+    """A connection `cli.main` opens for ``--check``, recording its close."""
+
+    def __init__(self) -> None:
+        self.closed = False
+
+    def close(self) -> None:
+        """Record the close."""
+        self.closed = True
+
+
+def _run_check(
+    arguments: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    problem: str | None = None,
+    unreadable: bool = False,
+) -> tuple[int | str | None, RecordingLogger, list[dict[str, object]], _CheckedSchema]:
+    """Run `cli.main` with ``--check`` arguments against a stand-in schema.
+
+    Parameters:
+        arguments: The command line after ``opus_import``.
+        monkeypatch: The fixture.
+        problem: What the check finds, or None for nothing.
+        unreadable: Make the schema unreadable instead.
+
+    Returns:
+        The exit status, the logger, the keywords each connection was opened with, and
+        the connection.
+    """
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+    schema = _CheckedSchema()
+    opened: list[dict[str, object]] = []
+
+    def get_db(*args: object, **kwargs: object) -> _CheckedSchema:
+        opened.append(kwargs)
+        return schema
+
+    def check_problem(db: object, action: str) -> str | None:
+        assert db is schema
+        if unreadable:
+            raise importdb.ImportDBError('lost connection')
+        return problem
+
+    monkeypatch.setattr(importdb, 'get_db', get_db)
+    monkeypatch.setattr(cli, '_check_problem', check_problem)
+    monkeypatch.setattr(sys, 'argv', ['opus_import', *arguments])
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    return excinfo.value.code, logger, opened, schema
+
+
+@pytest.mark.parametrize('action', cli.CHECK_ACTIONS)
+def test_a_check_that_would_run_exits_zero_having_read_only(
+    action: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The connection is read-only and closed, and the answer is logged at info."""
+    code, logger, opened, schema = _run_check(['--check', action], monkeypatch)
+    assert code == 0
+    assert [keywords['read_only'] for keywords in opened] == [True]
+    assert schema.closed
+    assert logger.messages_at('info')[-1] == f'--check {action}: would run'
+
+
+def test_a_check_that_would_be_refused_exits_with_the_refused_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The reason is logged at info, not as an error: the refusal is the caller's to act
+    on, and a deploy reading ERRORS.log afterwards finds nothing of it."""
+    code, logger, _opened, _schema = _run_check(
+        ['--check', 'switch'], monkeypatch, problem='no pending generation is ready'
+    )
+    assert code == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    assert logger.messages_at('info')[-1] == (
+        '--check switch: refused: no pending generation is ready'
+    )
+    assert logger.messages_at('error') == []
+    assert logger.messages_at('fatal') == []
+
+
+def test_a_check_of_an_unreadable_schema_fails_otherwise(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Neither 0 nor the refused status, so the deploy chain tells it from both."""
+    code, logger, _opened, schema = _run_check(['--check', 'serve'], monkeypatch, unreadable=True)
+    assert code == -1
+    assert schema.closed
+    assert logger.messages_at('error') == [
+        '--check serve: "opus_ci_db" cannot be read: lost connection'
+    ]
+
+
+def test_the_check_runs_alone(monkeypatch: pytest.MonkeyPatch) -> None:
+    """It answers a question and does nothing else, so it shares the invocation with
+    nothing, and the refusal comes before any connection."""
+    code, logger, opened, _schema = _run_check(
+        ['--check', 'continue', '--import', 'COISS_2002'], monkeypatch
+    )
+    assert code == -1
+    assert opened == []
+    assert logger.messages_at('fatal') == [
+        '--check runs alone; it is refused with --import, bundle descriptors'
+    ]
+
+
+def test_the_check_asks_the_web_applications_rule_or_the_generation_rule(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``serve`` is the schema version check; the rest are generation actions."""
+    asked: list[tuple[str, object]] = []
+    monkeypatch.setattr(
+        schema_version,
+        'served_schema_version_problem',
+        lambda db: asked.append(('serve', db)),
+    )
+    monkeypatch.setattr(
+        do_generation, 'generation_problem', lambda db, action: asked.append((action, db))
+    )
+    for action in cli.CHECK_ACTIONS:
+        cli._check_problem('db', action)  # type: ignore[arg-type]
+    assert asked == [(action, 'db') for action in cli.CHECK_ACTIONS]
+
+
 def test_the_first_line_logged_says_how_much_of_the_computer_the_run_may_use(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -249,15 +377,16 @@ def test_the_first_line_logged_says_how_much_of_the_computer_the_run_may_use(
     )
 
 
-def test_a_worker_count_above_the_ceiling_is_refused_before_the_database_opens(
+def test_a_worker_count_above_the_ceiling_is_lowered_and_logged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The refusal names the ceiling and how it was reached, and nothing connects."""
-    logger, opened = _main_until_refused(['--workers', '7', '--import', 'COISS_2002'], monkeypatch)
-    assert opened == []
-    assert logger.messages_at('fatal') == [
-        '--workers 7 is above the ceiling of 6: 8 cores detected times cpu_fraction 0.75'
-    ]
+    """The run goes on at the ceiling, and its first line names what was asked for."""
+    logger, _opened = _main_until_refused(['--workers', '7', '--scorched-earth'], monkeypatch)
+    assert logger.messages[0] == (
+        'info',
+        'Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, '
+        'index_workers 1; capped at the ceiling: --workers 7',
+    )
 
 
 @pytest.mark.parametrize(
@@ -316,6 +445,7 @@ _STEP_MODIFIERS = frozenset(
         'log_sql',
         'log_suppress_traceback',
         'profile',
+        'require_pending_generation',
     }
 )
 
@@ -593,6 +723,93 @@ def test_an_erase_forgets_the_pending_generation_it_dropped(
         'analyze_all_tables',
     ]
     assert logger.messages_at('fatal') == []
+
+
+class _Writer:
+    """A writer's record, which the run frees at exit."""
+
+    def exit(self) -> None:
+        """Free nothing."""
+
+
+@pytest.mark.parametrize(
+    ('step', 'started', 'registered', 'refusal'),
+    [
+        (
+            ['--import', 'COISS_2002'],
+            None,
+            None,
+            '--require-pending-generation: "opus_ci_db" has no pending generation, so this '
+            'invocation writes nothing',
+        ),
+        (['--import', 'COISS_2002'], 2, 2, None),
+        (
+            ['--reset-search-tables'],
+            2,
+            2,
+            '--require-pending-generation: this invocation does not register as a writer of '
+            'the schema, so nothing holds a generation command off while it writes; it '
+            'writes nothing',
+        ),
+    ],
+    ids=['none-pending', 'pending', 'not-a-registered-writer'],
+)
+def test_an_invocation_requiring_a_pending_generation_writes_only_into_one(
+    monkeypatch: pytest.MonkeyPatch,
+    step: list[str],
+    started: int | None,
+    registered: int | None,
+    refusal: str | None,
+) -> None:
+    """The answer is the version row the registration read under the generation lock
+    (a generation changed since the invocation started is refused there): with none
+    pending the invocation stops before its steps, with the refused status, as it does
+    when an abandon ran before it started. An invocation that registers no writer has
+    only the row it read as it started, so it is refused even with a generation pending."""
+    monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
+    logger = _HandlerlessLogger()
+    monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
+    for factory in ('file_handler', 'warning_handler', 'error_handler'):
+        monkeypatch.setattr(pdslogger, factory, lambda *args, **kwargs: _FILE_HANDLER)
+    monkeypatch.setattr(opus_config.config, 'detected_cores', lambda: 8)
+    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: _ErasedSchema())
+    monkeypatch.setattr(cli, '_prepare_holdings', lambda *args: None)
+    monkeypatch.setattr(atexit, 'register', lambda function: None)
+
+    def state(pending: int | None) -> GenerationState:
+        return GenerationState(
+            SCHEMA_VERSION, 'ready', 1, pending, None if pending is None else 'writing', False
+        )
+
+    monkeypatch.setattr(
+        do_generation,
+        'load_generation_state',
+        lambda ctx: setattr(ctx, 'generation_state', state(started)),
+    )
+
+    def register_writer(ctx: ImportContext, *, sole: bool) -> _Writer:
+        ctx.generation_state = state(registered)
+        return _Writer()
+
+    monkeypatch.setattr(do_generation, 'register_writer', register_writer)
+    monkeypatch.setattr(do_import, 'choose_import_path', lambda ctx: True)
+    ran: list[str] = []
+
+    def steps(ctx: ImportContext) -> bool:
+        ran.append('steps')
+        return True
+
+    monkeypatch.setattr(do_import, 'do_import_steps', steps)
+    monkeypatch.setattr(sys, 'argv', ['opus_import', '--require-pending-generation', *step])
+    if refusal is None:
+        cli.main()
+        assert ran == ['steps']
+        return
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code == do_generation.GENERATION_REFUSED_EXIT_STATUS
+    assert ran == []
+    assert logger.messages_at('fatal') == [refusal]
 
 
 @pytest.mark.parametrize(

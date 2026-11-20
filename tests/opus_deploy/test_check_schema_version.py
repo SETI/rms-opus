@@ -2,8 +2,9 @@
 
 The deploy scripts run ``sudo`` and are never run by a test. The check is a file of its
 own that defines one function and executes nothing, so it is sourced here with a fake
-``python`` first on ``PATH`` that answers the one question the function asks: what would
-keep the served database from being served.
+``opus_import`` first on ``PATH`` that answers the one question the function asks,
+``--check serve``: whether this release would serve the database, logging why not when it
+would not.
 """
 
 from __future__ import annotations
@@ -28,11 +29,12 @@ _BASH = shutil.which('bash')
 
 
 def _run_check(tmp_path: Path, problem: str, *, unreadable: bool = False) -> tuple[int, str]:
-    """Source the check with a fake python and call it.
+    """Source the check with a fake opus_import and call it.
 
     Parameters:
         tmp_path: A scratch directory.
-        problem: What the fake python prints: empty when the database may be served.
+        problem: What the fake logs as the refusal, with the refused status: empty when
+            the database may be served.
         unreadable: Make the database unreadable instead.
 
     Returns:
@@ -42,21 +44,26 @@ def _run_check(tmp_path: Path, problem: str, *, unreadable: bool = False) -> tup
     scripts.write_scripts(chain)
     fake_bin = tmp_path / 'bin'
     fake_bin.mkdir()
-    fake_python = fake_bin / 'python'
-    answer = 'echo Traceback >&2; exit 1' if unreadable else f"echo '{problem}'"
-    fake_python.write_text(
+    fake_import = fake_bin / 'opus_import'
+    if unreadable:
+        answer = 'echo "ERROR | cannot connect" >&2; exit 255'
+    elif problem:
+        answer = f'echo {shlex.quote(f"INFO | --check serve: refused: {problem}")}; exit 3'
+    else:
+        answer = 'echo "INFO | --check serve: would run"'
+    fake_import.write_text(
         textwrap.dedent(
             f"""\
             #!/bin/bash
-            case "$2" in
-                *served_schema_version_problem*) {answer} ;;
+            case "$*" in
+                "--check serve") {answer} ;;
                 *) exit 2 ;;
             esac
             """
         ),
         encoding='utf-8',
     )
-    fake_python.chmod(0o755)
+    fake_import.chmod(0o755)
     assert _BASH is not None
     finished = subprocess.run(  # nosec B603 - bash and a fixed script
         [_BASH, '-c', f'source {shlex.quote(str(chain / _CHECK))}; check_schema_version'],
@@ -78,11 +85,13 @@ def test_a_servable_database_passes(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(_BASH is None, reason='needs bash')
 def test_a_database_the_application_would_refuse_is_refused(tmp_path: Path) -> None:
-    """The refusal carries the application's own sentence, then the deploy's remedy."""
+    """The check's refusal, carrying the application's own sentence, then the deploy's
+    remedy."""
     problem = 'the schema is version 8, and this release is version 7: re-import it'
     status, output = _run_check(tmp_path, problem)
     assert status == 1
-    assert f'ERROR: this release would not serve the database: {problem}.' in output
+    assert f'--check serve: refused: {problem}' in output
+    assert 'ERROR: this release would not serve the database; the check above says why.' in (output)
     assert 'run_full_opus_import.sh' in output
 
 

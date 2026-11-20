@@ -13,7 +13,10 @@
 #
 # By default it rebuilds the tables that describe the metadata (param_info, partables,
 # table_names and the dictionary) on the served database, each beside the live table and
-# swapped in, so a release that changed a label or a definition describes itself. With
+# swapped in, so a release that changed a label or a definition describes itself; it
+# refuses, before writing anything, while an incremental update's generation is pending
+# (opus_import --check rebuild). It runs no warm-up after the switch: the stored searches
+# and the database server's cache are as the release before left them. With
 # --no-database it writes nothing to the database at all, for a release that changes
 # neither the import nor the table schemas -- the web application, its templates and
 # static files, the docs. Whether a release is one of those is the operator's call,
@@ -29,6 +32,10 @@
 #    /opt/opus/deployed                         a symlink, moved onto it at the end
 #
 set -e
+
+# The status opus_import --check exits with when the action would be refused
+# (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+GENERATION_REFUSED_STATUS=3
 
 echo "*** Starting code-only OPUS deploy ***"
 echo
@@ -138,6 +145,26 @@ if ! check_schema_version; then
     exit 1
 fi
 
+# Before the migration, the first write. With a generation pending, the rebuild below
+# would leave param_info, partables and table_names for its switch while the dictionary
+# and the mult labels changed in place, so the release would describe itself with the
+# previous release's tables; a switch, a revert or a purge stopped part way is refused
+# the same way. The check logs its answer, which says why when it is refused.
+if ! ${NO_DATABASE}; then
+    STATUS=0
+    opus_import --check rebuild || STATUS=$?
+    if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
+        echo "ERROR: the description tables cannot be rebuilt now; the check above says why."
+        echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+        exit 1
+    fi
+    if [[ ${STATUS} -ne 0 ]]; then
+        echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
+        echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+        exit 1
+    fi
+fi
+
 pip install mod-wsgi
 
 if ${NO_DATABASE}; then
@@ -179,10 +206,10 @@ if ! ${NO_DATABASE}; then
     opus_import --create-param-info --create-partables --create-table-names --import-dictionary --update-mult-info
 fi
 
-# The warm-up after the switch writes a search and a session, as a first visitor does.
-if ${NO_DATABASE}; then
-    export OPUS_WARM_SEARCH=false
-fi
+# No warm-up after the switch: it takes minutes, and what it fills -- the stored search
+# results and the database server's cache of the rows they read -- this deploy leaves as
+# it was.
+export OPUS_WARM_SEARCH=false
 
 source ${IMPORT_SCRIPT_DIR}/_promote.sh
 

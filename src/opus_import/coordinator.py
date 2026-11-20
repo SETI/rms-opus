@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 
 import pdslogger
 
-from opus_import import import_all, import_processes, importdb
+from opus_import import bundle_registry, import_all, import_processes, importdb
 from opus_import.context import ImportContext
 from opus_import.steps import do_recover
 
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
     from opus_config import OpusConfig
     from opus_import.import_all import Division
-    from opus_import.import_processes import Snapshot
+    from opus_import.import_processes import BundleStatus, Snapshot
     from opus_import.importdb.super import ImportDBSuper
 
 #: The seconds the coordinator waits after one pass over the registry before the next,
@@ -82,6 +82,27 @@ def _age(now: datetime.datetime, then: datetime.datetime | None) -> str:
     return '-' if then is None else format_duration((now - then).total_seconds())
 
 
+#: The states in which a bundle's rows are final: a done bundle wrote all it will, and a
+#: failed one writes no more in this run.
+_FINISHED_STATES = (bundle_registry.BUNDLE_DONE, bundle_registry.BUNDLE_FAILED)
+
+
+def expected_rows(bundle: BundleStatus) -> int:
+    """Return the rows a bundle is expected to have written once the run is over.
+
+    A bundle's estimate is the rows its primary index labels declare, which its import
+    can exceed (a COVIMS index row can be both a visible and an infrared observation) or
+    fall short of. A finished bundle counts the rows it wrote; any other counts the larger
+    of its estimate and the rows it has written so far.
+
+    Parameters:
+        bundle: The bundle's registry row.
+    """
+    if bundle.state in _FINISHED_STATES:
+        return bundle.rows_done
+    return max(bundle.size_estimate, bundle.rows_done)
+
+
 def totals_line(snapshot: Snapshot, elapsed: float, remaining: float | None) -> str:
     """Return the coordinator's totals line.
 
@@ -92,10 +113,11 @@ def totals_line(snapshot: Snapshot, elapsed: float, remaining: float | None) -> 
 
     Returns:
         The bundles done, importing, pending and failed; the rows done of the estimated
-        total; the time elapsed; and the remaining time, labeled as an estimate.
+        total (`expected_rows` summed); the time elapsed; and the remaining time, labeled
+        as an estimate.
     """
     rows = sum(bundle.rows_done for bundle in snapshot.bundles)
-    estimated = sum(bundle.size_estimate for bundle in snapshot.bundles)
+    estimated = sum(expected_rows(bundle) for bundle in snapshot.bundles)
     left = 'not yet estimated' if remaining is None else f'about {format_duration(remaining)}'
     return (
         f'Bundles: {snapshot.count("done")} done, {snapshot.count("importing")} importing, '
@@ -160,18 +182,18 @@ class RateEstimate:
             snapshot: The latest reading.
 
         Returns:
-            The rows left over the observed rate, or None before any row has been done
-            since the first reading.
+            The rows left (`expected_rows` summed, less the rows done) over the observed
+            rate, or None before any row has been done since the first reading.
         """
         rows = sum(bundle.rows_done for bundle in snapshot.bundles)
-        estimated = sum(bundle.size_estimate for bundle in snapshot.bundles)
+        estimated = sum(expected_rows(bundle) for bundle in snapshot.bundles)
         if self.first_rows is None:
             self.first_rows = rows
         done = rows - self.first_rows
         elapsed = time.monotonic() - self.started
         if done <= 0 or elapsed <= 0:
             return None
-        return max(0, estimated - rows) / (done / elapsed)
+        return (estimated - rows) / (done / elapsed)
 
 
 def _now() -> datetime.datetime:

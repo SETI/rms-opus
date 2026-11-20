@@ -226,7 +226,8 @@ _STUB_PYMEMCACHE = {
         '    def __init__(self, server, **options):\n'
         '        self.server = server\n'
         '        self.options = options\n'
-        '    def set(self, key, value):\n'
+        '    def set(self, key, value, noreply=None):\n'
+        '        self.noreply = noreply\n'
         '        return True\n'
         '    def close(self):\n'
         '        pass\n'
@@ -236,7 +237,8 @@ _STUB_PYMEMCACHE = {
 _DUMP_CACHE = (
     'import json; import opus_app.settings as settings; '
     'print(json.dumps({"caches": settings.CACHES, '
-    '"probed": list(settings._memcache_client.server)}))'
+    '"probed": settings._memcache_client.server, '
+    '"noreply": settings._memcache_client.noreply}))'
 )
 
 
@@ -272,6 +274,33 @@ def test_cache_location_reaches_the_probe_and_caches(distinct_config: Path, tmp_
     dumped = _dump_cache_with_stub(distinct_config, tmp_path)
     assert dumped['probed'] == ['127.0.0.1', 2]
     assert dumped['caches']['default']['LOCATION'] == '127.0.0.1:2'
+
+
+def test_the_probe_waits_for_memcached_to_answer(distinct_config: Path, tmp_path: Path) -> None:
+    """The probe's write asks for a reply, so a server that never answers is not used.
+
+    pymemcache's clients default to not reading one, which proves only that the
+    connection took the bytes.
+    """
+    assert _dump_cache_with_stub(distinct_config, tmp_path)['noreply'] is False
+
+
+def test_a_socket_location_reaches_the_probe_and_caches(tmp_path: Path) -> None:
+    """A memcached on a Unix socket is probed at the socket's path.
+
+    pymemcache's client takes the bare path, and Django's backend the ``unix:`` form,
+    which it hands to pymemcache's own parser.
+    """
+    path = tmp_path / 'opus.toml'
+    path.write_text(
+        DISTINCT_CONFIG.replace(
+            'cache_location = "127.0.0.1:2"',
+            'cache_location = "unix:/run/memcached/memcached.socket"',
+        )
+    )
+    dumped = _dump_cache_with_stub(path, tmp_path)
+    assert dumped['probed'] == '/run/memcached/memcached.socket'
+    assert dumped['caches']['default']['LOCATION'] == 'unix:/run/memcached/memcached.socket'
 
 
 def test_a_failed_memcached_is_a_cache_miss_not_an_error(

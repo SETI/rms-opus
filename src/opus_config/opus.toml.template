@@ -96,8 +96,10 @@ allowed_hosts = ["127.0.0.1", "localhost"]
 # installations share one memcached without colliding.
 cache_server_prefix = "<CACHE_SERVER_PREFIX>"
 
-# The memcached server the web application caches in, as "host:port". Optional;
-# the default is the value below, memcached's own port on this machine.
+# The memcached server the web application caches in, as "host:port", or as "unix:"
+# and an absolute path for a memcached listening on a Unix socket, such as
+# "unix:/var/run/memcached/memcached.socket". Optional; the default is the value
+# below, memcached's own port on this machine.
 cache_location = "127.0.0.1:11211"
 
 # How many seconds each web worker thread keeps its database connection open across
@@ -190,10 +192,10 @@ workers = 1
 index_workers = 1
 
 # No request takes every core, since the database server or another user may share
-# the computer: workers and index_workers are each refused above
-# max(1, floor(cores * cpu_fraction)), where cores is the number the import counts as
-# available to it. cpu_fraction must be greater than 0 and at most 1. Optional; the
-# default is the value below.
+# the computer: workers and index_workers above max(1, floor(cores * cpu_fraction))
+# are each lowered to it, where cores is the number the import counts as available to
+# it. cpu_fraction must be greater than 0 and at most 1. Optional; the default is the
+# value below.
 cpu_fraction = 0.75
 
 # The index rows one worker task covers. Smaller tasks keep every worker busy closer to

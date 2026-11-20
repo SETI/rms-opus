@@ -5,7 +5,7 @@
 # switches it in. run_incremental_opus_update.sh runs this detached; it is not what an
 # operator types.
 #
-# Usage: _run_incremental_opus_update.sh [<version_spec>]
+# Usage: _run_incremental_opus_update.sh [<version_spec>] [--continue]
 #            [--drop <bundle>[,<bundle>...]] [<bundle> ...]
 #
 # The update runs under an installation of its own, built beside the one being served
@@ -19,6 +19,11 @@
 # finalization also builds, a promotion switches the generation the update is writing,
 # and either would spoil the dump that ends the update when deploy.env names a peer.
 set -e
+
+# The status opus_import exits with when it refuses a generation command, or when
+# --check says an action would be refused, having changed nothing
+# (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+GENERATION_REFUSED_STATUS=3
 
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -85,6 +90,10 @@ echo "Hostname:" ${HOSTNAME}
 echo
 echo "Version spec:" "${OPUS_VERSION_SPEC}"
 echo
+if ${UPDATE_CONTINUE}; then
+    echo "Continuing the pending generation an earlier update began"
+    echo
+fi
 echo "Bundles to import:" "${UPDATE_BUNDLES[*]:-(none)}"
 echo "Bundles to drop:" "${UPDATE_DROPS[*]:-(none)}"
 echo
@@ -107,6 +116,24 @@ echo
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh
 echo
 echo
+
+# Asked of the schema before anything writes it: an import with no pending generation
+# takes the append path and writes the rows the site serves. The check logs its answer,
+# which says why when the update cannot continue.
+if ${UPDATE_CONTINUE}; then
+    STATUS=0
+    opus_import --check continue || STATUS=$?
+    if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
+        echo "ERROR: the update cannot continue; the check above says why."
+        echo "*** ABORTING: the database was not changed ***"
+        exit 1
+    fi
+    if [[ ${STATUS} -ne 0 ]]; then
+        echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
+        echo "*** ABORTING: the database was not changed ***"
+        exit 1
+    fi
+fi
 
 echo "======================================="
 echo "=== WRITE THE NEW IMPORT GENERATION ==="

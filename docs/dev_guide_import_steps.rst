@@ -591,6 +591,10 @@ schema's generation lock (``GET_LOCK`` on a name :func:`~opus_import.importdb.lo
 gives, without waiting) for its whole run, and is refused while any invocation that
 registered itself in ``import_process`` to write the pending generation is alive
 (:func:`~opus_import.steps.do_generation.register_writer`).
+:func:`~opus_import.steps.do_generation.generation_problem` asks what a switch or a revert
+checks before it changes anything, without the lock and without writing, and whether an
+update could continue the pending generation; ``opus_import --check`` answers with it
+(:ref:`dev_guide_import_running`).
 
 **The retire.** With a pending generation P, the per-bundle delete
 (:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables`) retires the

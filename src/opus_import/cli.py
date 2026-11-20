@@ -27,8 +27,8 @@ from typing import TYPE_CHECKING
 import pdslogger
 from pdsfile import Pds3File, Pds4File
 
-from opus_config import MAX_WORKERS, ConfigError, get_config, resolve_parallelism
-from opus_import import bundle_registry, import_util, importdb
+from opus_config import MAX_WORKERS, get_config, resolve_parallelism
+from opus_import import bundle_registry, import_util, importdb, schema_version
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
 from opus_import.generations import PENDING_FINALIZED, PENDING_VALIDATED, PENDING_WRITING
@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 
     from opus_config import OpusConfig
     from opus_import.generations import GenerationState
-    from opus_import.importdb.super import WarningHandler
+    from opus_import.importdb.super import ImportDBSuper, WarningHandler
 
 LOGNAME = 'opus_import.main'
 
@@ -503,6 +503,32 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        '--require-pending-generation',
+        action='store_true',
+        default=False,
+        help='Refuse, writing nothing, unless this invocation registers as a writer of the '
+        'schema and the schema has a pending generation when it does, which no generation '
+        'command can change after; '
+        'exits with status '
+        f'{do_generation.GENERATION_REFUSED_EXIT_STATUS}. An update gives it to every '
+        'invocation after --begin-generation, so none writes the served rows',
+    )
+    parser.add_argument(
+        '--check',
+        choices=CHECK_ACTIONS,
+        default=None,
+        help='Say whether an action would be refused, reading the schema without writing it: '
+        f'{CHECK_SERVE} (this release would serve it), {do_generation.CHECK_SWITCH} '
+        f'(--switch-generation), {do_generation.CHECK_REVERT} (--revert-generation), or '
+        f'{do_generation.CHECK_CONTINUE} (an import into the pending generation without '
+        f'--begin-generation, which requires one), or {do_generation.CHECK_REBUILD} (a '
+        'rebuild of the served auxiliary tables in place, refused while a generation is '
+        'pending). Exits 0 when it would run, and '
+        f'{do_generation.GENERATION_REFUSED_EXIT_STATUS} after logging why when it would be '
+        'refused; runs alone',
+    )
+
+    parser.add_argument(
         '--import-dictionary',
         action='store_true',
         default=False,
@@ -618,6 +644,18 @@ _JOIN_CONFLICTS = (
     ('read_only', '--read-only'),
 )
 
+
+#: The action ``--check serve`` asks about: whether this release would serve the schema.
+CHECK_SERVE = 'serve'
+
+#: What ``--check`` answers for.
+CHECK_ACTIONS = (
+    CHECK_SERVE,
+    do_generation.CHECK_SWITCH,
+    do_generation.CHECK_REVERT,
+    do_generation.CHECK_CONTINUE,
+    do_generation.CHECK_REBUILD,
+)
 
 #: The generation commands, each run alone under the schema's generation lock.
 GENERATION_COMMANDS = (
@@ -810,6 +848,80 @@ def _run_generation_command(ctx: ImportContext, option: str) -> bool:
         else:
             do_generation.revert_generation(ctx)
     return True
+
+
+def _check_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with ``--check`` that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas: every step, generation command and carry-over,
+        which `_GENERATION_CONFLICTS` names; empty without ``--check`` or with none.
+    """
+    if args.check is None:
+        return ''
+    return ', '.join(option for name, option in _GENERATION_CONFLICTS if getattr(args, name))
+
+
+def _check_problem(db: ImportDBSuper, action: str) -> str | None:
+    """Return why the action ``--check`` names would be refused, or None.
+
+    Parameters:
+        db: The read-only connection to the schema.
+        action: One of `CHECK_ACTIONS`.
+
+    Raises:
+        opus_import.importdb.ImportDBError: If the database cannot be read.
+    """
+    if action == CHECK_SERVE:
+        return schema_version.served_schema_version_problem(db)
+    return do_generation.generation_problem(db, action)
+
+
+def _run_check(config: OpusConfig, schema: str, action: str, logger: pdslogger.PdsLogger) -> int:
+    """Answer ``--check``, reading the schema on a read-only connection.
+
+    The answer is logged at the info level: it is what was asked for, and a refusal is
+    the caller's to act on, so it writes nothing into the error log.
+
+    Parameters:
+        config: The configuration, for the database.
+        schema: The schema to read.
+        action: One of `CHECK_ACTIONS`.
+        logger: The run's logger.
+
+    Returns:
+        The exit status: 0 when the action would run,
+        `opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS` when it would be
+        refused, and -1 when the database cannot be read.
+    """
+    try:
+        db = importdb.get_db(
+            config.database.brand,
+            config.database.host,
+            config.database.database,
+            schema,
+            config.database.user,
+            config.database.password,
+            logger=logger,
+            read_only=True,
+        )
+    except importdb.ImportDBError:
+        return -1
+    try:
+        problem = _check_problem(db, action)
+    except importdb.ImportDBError as e:
+        logger.log('error', f'--check {action}: "{schema}" cannot be read: {e}')
+        return -1
+    finally:
+        db.close()
+    if problem is not None:
+        logger.log('info', f'--check {action}: refused: {problem}')
+        return do_generation.GENERATION_REFUSED_EXIT_STATUS
+    logger.log('info', f'--check {action}: would run')
+    return 0
 
 
 def _carry_over_conflicts(args: argparse.Namespace) -> str:
@@ -1010,11 +1122,7 @@ def main() -> None:
 
     # First, so the log says how much of the computer the run may use before anything
     # uses it.
-    try:
-        parallelism = resolve_parallelism(config.import_, args.workers)
-    except ConfigError as e:
-        logger.log('fatal', str(e))
-        sys.exit(-1)
+    parallelism = resolve_parallelism(config.import_, args.workers)
     logger.log('info', parallelism.describe())
     ctx.workers = parallelism.workers
     ctx.index_workers = parallelism.index_workers
@@ -1051,6 +1159,13 @@ def main() -> None:
         if conflict:
             logger.log('fatal', f'{generation_command} runs alone; it is refused with {conflict}')
             sys.exit(-1)
+
+    if args.check is not None:
+        conflict = _check_conflicts(args)
+        if conflict:
+            logger.log('fatal', f'--check runs alone; it is refused with {conflict}')
+            sys.exit(-1)
+        sys.exit(_run_check(config, our_schema_name, args.check, logger))
 
     carry_over_from = args.carry_over_sessions_from
     if carry_over_from is not None:
@@ -1133,6 +1248,25 @@ def main() -> None:
             # Registered rather than run in a finally block, since the run leaves through
             # sys.exit from several places.
             atexit.register(writer.exit)
+        # After the registration, which read the version row again under the generation
+        # lock and holds off every generation command from then on, so an abandon cannot
+        # come between this answer and the writes. An invocation that does not register
+        # has only the row it read as it started, which an abandon may have changed.
+        if args.require_pending_generation and ctx.writer is None:
+            logger.log(
+                'fatal',
+                '--require-pending-generation: this invocation does not register as a '
+                'writer of the schema, so nothing holds a generation command off while it '
+                'writes; it writes nothing',
+            )
+            sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
+        if args.require_pending_generation and ctx.pending_generation is None:
+            logger.log(
+                'fatal',
+                f'--require-pending-generation: "{our_schema_name}" has no pending '
+                'generation, so this invocation writes nothing',
+            )
+            sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
         state = ctx.generation_state
         if pending is None and state is not None and _rebuilds_served(args):
             unfinished = do_generation.unfinished_switch_problem(

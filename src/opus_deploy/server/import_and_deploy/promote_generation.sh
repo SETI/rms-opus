@@ -75,23 +75,28 @@ source "${INSTALL_DIR}/opus_venv/bin/activate"
 
 if ${REVERT}; then
     STEP=--revert-generation
+    CHECK=revert
     echo "*** Reverting the last generation switch of ${OPUS_DB_NAME} ***"
 else
     STEP=--switch-generation
+    CHECK=switch
     echo "*** Switching in the pending generation of ${OPUS_DB_NAME} ***"
 fi
 echo
 echo "Installation: ${INSTALL_DIR}"
 echo
 
-# Asked before the stop, so a command opus_import would refuse leaves the site up.
-if ! REFUSAL=$(python -c "import sys; from opus_import.steps.do_generation import generation_command_problem as p; print(p(sys.argv[1]) or '')" "${STEP}"); then
-    echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
+# Asked before the stop, so a command opus_import would refuse leaves the site up. The
+# check logs its answer, which says why when it would be refused.
+STATUS=0
+opus_import --check "${CHECK}" || STATUS=$?
+if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
+    echo "ERROR: opus_import ${STEP} would be refused; the check above says why."
     echo "*** ABORTING: nothing was changed ***"
     exit 1
 fi
-if [[ -n ${REFUSAL} ]]; then
-    echo "ERROR: opus_import ${STEP} would be refused: ${REFUSAL}."
+if [[ ${STATUS} -ne 0 ]]; then
+    echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
     echo "*** ABORTING: nothing was changed ***"
     exit 1
 fi

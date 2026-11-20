@@ -30,7 +30,7 @@ _FULL_IMPORT = 'import_and_deploy/_run_full_opus_import.sh'
 
 #: The usage line the operator's command prints.
 _USAGE = (
-    'Usage: run_incremental_opus_update.sh [<version_spec>] '
+    'Usage: run_incremental_opus_update.sh [<version_spec>] [--continue] '
     '[--drop <bundle>[,<bundle>...]] [<bundle> ...]'
 )
 
@@ -146,11 +146,11 @@ def test_the_update_writes_the_served_schema_then_copies_it_to_the_peer(
     assert status == 0, output
     assert ran[:-2] == [
         'opus_import --begin-generation',
-        'opus_import --delete-bundles COISS_2002',
-        'opus_import --import COISS_2001',
-        'opus_import --finalize',
-        'opus_import --validate',
-        'opus_import --write-schema-version',
+        'opus_import --require-pending-generation --delete-bundles COISS_2002',
+        'opus_import --require-pending-generation --import COISS_2001',
+        'opus_import --require-pending-generation --finalize',
+        'opus_import --require-pending-generation --validate',
+        'opus_import --require-pending-generation --write-schema-version',
     ]
     match = re.fullmatch(rf'dump_db\.sh served ({_NEW_SCHEMA.pattern})', ran[-2])
     assert match is not None
@@ -203,10 +203,14 @@ def test_the_update_installs_the_commit_a_git_installation_was_built_from(
 def test_a_failed_update_copies_nothing(tmp_path: Path) -> None:
     """The update stops at the invocation that failed, and the peer gets nothing."""
     status, _output, ran = run_deploy(
-        tmp_path, _UPDATE, 'COISS_2001', failing_import='--finalize', deploy_env=_WITH_PEER
+        tmp_path,
+        _UPDATE,
+        'COISS_2001',
+        failing_import='--require-pending-generation --finalize',
+        deploy_env=_WITH_PEER,
     )
     assert status != 0
-    assert ran[-1] == 'opus_import --finalize'
+    assert ran[-1] == 'opus_import --require-pending-generation --finalize'
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
@@ -219,6 +223,39 @@ def test_a_refused_begin_advises_no_abandon(tmp_path: Path) -> None:
     assert ran == ['opus_import --begin-generation']
     assert 'No generation was begun' in output
     assert '--abandon-generation' not in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_continued_update_writes_the_pending_generation_without_beginning_one(
+    tmp_path: Path,
+) -> None:
+    """Every invocation but --begin-generation, in order."""
+    status, output, ran = run_deploy(tmp_path, _UPDATE, '--continue', 'COISS_2001')
+    assert status == 0, output
+    assert ran == [
+        'opus_import --check continue',
+        'opus_import --require-pending-generation --import COISS_2001',
+        'opus_import --require-pending-generation --finalize',
+        'opus_import --require-pending-generation --validate',
+        'opus_import --require-pending-generation --write-schema-version',
+    ]
+    assert 'Continuing the pending generation an earlier update began' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_continued_update_without_a_pending_generation_writes_nothing(
+    tmp_path: Path,
+) -> None:
+    """Its imports would append to the served rows, so it stops before the first."""
+    refusal = '"served" has no pending generation to continue (generation 1 served)'
+    status, output, ran = run_deploy(
+        tmp_path, _UPDATE, '--continue', 'COISS_2001', check_refusal=refusal
+    )
+    assert status == 1
+    assert ran == ['opus_import --check continue']
+    assert f'--check continue: refused: {refusal}' in output
+    assert 'ERROR: the update cannot continue; the check above says why.' in output
+    assert 'the database was not changed' in output
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')

@@ -13,22 +13,27 @@
 # Defines one function and runs nothing, so a test can source it.
 #
 # check_schema_version
-#     Asks the staged installation's python what would keep the database that
-#     OPUS_CONFIG names from being served (served_schema_version_problem, the web
-#     application's own rule). Returns 0 when nothing would. Otherwise prints what is
-#     wrong and the remedy, and returns 1; likewise when the database cannot be read.
+#     Asks the staged installation's opus_import whether it would serve the database
+#     that OPUS_CONFIG names (opus_import --check serve, the web application's own
+#     rule), which logs what is wrong when it would not. Returns 0 when it would.
+#     Otherwise prints the remedy, and returns 1; likewise, saying so, when the database
+#     cannot be read.
 #
 # Inputs: OPUS_CONFIG (exported by _opus_setup_environment.sh), and the staged
-# installation's virtualenv active, so that python is that installation's.
+# installation's virtualenv active, so that opus_import is that installation's.
 
 check_schema_version() {
-    local found
-    if ! found=$(python -c 'from opus_import.schema_version import served_schema_version_problem as p; print(p() or "")'); then
+    # The status opus_import --check exits with when the action would be refused
+    # (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+    local refused=3
+    local status=0
+    opus_import --check serve || status=$?
+    if [[ ${status} -ne 0 && ${status} -ne ${refused} ]]; then
         echo "ERROR: cannot read the schema_version row of the database ${OPUS_CONFIG} names."
         return 1
     fi
-    if [[ -n ${found} ]]; then
-        echo "ERROR: this release would not serve the database: ${found}."
+    if [[ ${status} -eq ${refused} ]]; then
+        echo "ERROR: this release would not serve the database; the check above says why."
         echo "       Re-import it under this release (run_full_opus_import.sh) and deploy"
         echo "       that database (deploy_new_code_and_database.sh), unless this release"
         echo "       imported it and only the last step is missing."

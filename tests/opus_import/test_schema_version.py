@@ -19,6 +19,7 @@ from opus_import.schema_version import (
     SCHEMA_VERSION_REMEDY,
     SCHEMA_VERSION_TABLE,
     schema_version_problem,
+    served_schema_version_problem,
 )
 from opus_import.steps import do_import_tables, do_schema_version
 from tests.opus_import.conftest import RecordingLogger, make_context
@@ -143,6 +144,45 @@ def test_problem_names_what_keeps_a_schema_from_being_served(
         assert found.startswith(expected)
         assert found.endswith(SCHEMA_VERSION_REMEDY)
         assert '--write-schema-version' in found
+
+
+class _VersionRows:
+    """A read-only connection holding a version table or none."""
+
+    def __init__(self, rows: list[tuple[Any, ...]] | None) -> None:
+        self.rows = rows
+
+    def table_exists(self, table: str) -> bool:
+        """Hold the version table when there are rows to read."""
+        assert table == SCHEMA_VERSION_TABLE
+        return self.rows is not None
+
+    def read_rows(self, table: str, columns: Sequence[str]) -> list[tuple[Any, ...]]:
+        """Return the version and state of every row."""
+        assert (table, list(columns)) == (SCHEMA_VERSION_TABLE, ['version', 'state'])
+        assert self.rows is not None
+        return self.rows
+
+
+@pytest.mark.parametrize(
+    ('rows', 'expected'),
+    [
+        ([(SCHEMA_VERSION, SCHEMA_STATE_READY)], None),
+        (None, f'the schema has no {SCHEMA_VERSION_TABLE} row'),
+        ([(SCHEMA_VERSION, SCHEMA_STATE_APPENDING)], "the schema's state is 'appending'"),
+    ],
+    ids=['servable', 'no-table', 'appending'],
+)
+def test_the_deploy_check_judges_the_rows_the_connection_reads(
+    rows: list[tuple[Any, ...]] | None, expected: str | None
+) -> None:
+    """A schema with no version table is judged as one with no row."""
+    found = served_schema_version_problem(_VersionRows(rows))  # type: ignore[arg-type]
+    if expected is None:
+        assert found is None
+    else:
+        assert found is not None
+        assert found.startswith(expected)
 
 
 def test_with_no_table_the_step_creates_it_and_writes_this_version_ready() -> None:

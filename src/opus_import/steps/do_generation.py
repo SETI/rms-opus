@@ -60,7 +60,6 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
-from opus_config import get_config
 from opus_import import import_processes, import_util, importdb, table_swap
 from opus_import.generations import (
     FIRST_GENERATION,
@@ -868,49 +867,68 @@ def revert_generation(ctx: ImportContext) -> None:
     load_generation_state(ctx)
 
 
-def generation_command_problem(option: str) -> str | None:
-    """Say why a switch or a revert of the schema ``OPUS_CONFIG`` names would be refused.
+#: What `generation_problem` answers for: a switch, a revert, an update that writes into
+#: the pending generation without beginning one, and a rebuild of the served auxiliary
+#: tables in place, as a code-only deploy runs.
+CHECK_SWITCH = 'switch'
+CHECK_REVERT = 'revert'
+CHECK_CONTINUE = 'continue'
+CHECK_REBUILD = 'rebuild'
 
-    The deploy chain asks before it stops the web service, so a command that would change
-    nothing leaves the site up. It asks what the command itself checks before it changes
-    anything: the version row, the generation lock, the invocations writing the pending
-    generation, and whether a purge has started. The connection is the import's own,
-    opened read-only.
+
+def generation_problem(db: ImportDBSuper, action: str) -> str | None:
+    """Say why a generation action on the schema would be refused, reading without writing.
+
+    The deploy chain asks, through ``opus_import --check``, before it acts: before it
+    stops the web service for a switch or a revert, so a command that would change nothing
+    leaves the site up; before an update that skips ``--begin-generation`` writes
+    anything, since without a pending generation its imports would take the append path
+    and write the served rows; and before a code-only deploy rebuilds the served
+    auxiliary tables, since with a generation pending the rebuild would leave the new
+    tables for its switch while the dictionary and the mult labels changed in place. It
+    asks what the action itself checks before it changes anything: the version row, the
+    generation lock, the invocations writing the pending generation (except for a rebuild,
+    which an append may run beside), and whether a switch, a revert or a purge stopped
+    part way: for a continuation a switch, which refuses every write to the generation.
 
     Parameters:
-        option: ``--switch-generation`` or ``--revert-generation``.
+        db: A connection to the schema, which may be read-only.
+        action: `CHECK_SWITCH`, `CHECK_REVERT`, `CHECK_CONTINUE` or `CHECK_REBUILD`.
 
     Returns:
-        None when the command would run; otherwise the reason it would be refused.
+        None when the action would run; otherwise the reason it would be refused.
 
     Raises:
         ImportDBError: If the database cannot be read.
     """
-    database = get_config().database
-    db = importdb.get_db(
-        database.brand,
-        database.host,
-        database.database,
-        database.schema,
-        database.user,
-        database.password,
-        read_only=True,
-    )
-    try:
-        state = read_generation_state(db)
-        if state is None:
-            return f'"{database.schema}" has no single {SCHEMA_VERSION_TABLE} row'
-        if db.named_lock_holder(_generation_lock(db)) is not None:
-            return _lock_held_message(db)
-        writers = _writers_message(db)
-        if writers is not None:
-            return writers
-        if option == '--revert-generation':
-            return _revert_refusal(state) or unfinished_purge_problem(db, state)
+    state = read_generation_state(db)
+    if state is None:
+        return f'"{db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row'
+    if action == CHECK_CONTINUE and state.pending is None:
         return (
-            _switch_refusal(state)
-            or unfinished_purge_problem(db, state)
-            or unfinished_rebuild_problem(db, state)
+            f'"{db.db_schema}" has no pending generation to continue (generation '
+            f'{state.generation} served); an update without --continue begins one'
         )
-    finally:
-        db.close()
+    if action == CHECK_REBUILD and state.pending is not None:
+        return (
+            f'generation {state.pending} of "{db.db_schema}" is pending, and a rebuild would '
+            'leave the auxiliary tables it builds for its switch; promote or abandon it first'
+        )
+    if db.named_lock_holder(_generation_lock(db)) is not None:
+        return _lock_held_message(db)
+    if action == CHECK_REBUILD:
+        return unfinished_switch_problem(db, state) or unfinished_purge_problem(db, state)
+    writers = _writers_message(db)
+    if action == CHECK_CONTINUE:
+        # A switch that stopped part way refuses every write to the generation it was
+        # switching until it is completed or reverted.
+        return writers or unfinished_switch_problem(db, state)
+    if writers is not None:
+        return writers
+    if action == CHECK_REVERT:
+        return _revert_refusal(state) or unfinished_purge_problem(db, state)
+    return (
+        _switch_refusal(state)
+        or unfinished_purge_problem(db, state)
+        or unfinished_rebuild_problem(db, state)
+    )
