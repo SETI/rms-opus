@@ -733,23 +733,39 @@ class _Writer:
 
 
 @pytest.mark.parametrize(
-    ('started', 'registered', 'code'),
+    ('step', 'started', 'registered', 'refusal'),
     [
-        (None, None, do_generation.GENERATION_REFUSED_EXIT_STATUS),
-        (2, 2, None),
+        (
+            ['--import', 'COISS_2002'],
+            None,
+            None,
+            '--require-pending-generation: "opus_ci_db" has no pending generation, so this '
+            'invocation writes nothing',
+        ),
+        (['--import', 'COISS_2002'], 2, 2, None),
+        (
+            ['--reset-search-tables'],
+            2,
+            2,
+            '--require-pending-generation: this invocation does not register as a writer of '
+            'the schema, so nothing holds a generation command off while it writes; it '
+            'writes nothing',
+        ),
     ],
-    ids=['none-pending', 'pending'],
+    ids=['none-pending', 'pending', 'not-a-registered-writer'],
 )
 def test_an_invocation_requiring_a_pending_generation_writes_only_into_one(
     monkeypatch: pytest.MonkeyPatch,
+    step: list[str],
     started: int | None,
     registered: int | None,
-    code: int | None,
+    refusal: str | None,
 ) -> None:
     """The answer is the version row the registration read under the generation lock
     (a generation changed since the invocation started is refused there): with none
     pending the invocation stops before its steps, with the refused status, as it does
-    when an abandon ran before it started."""
+    when an abandon ran before it started. An invocation that registers no writer has
+    only the row it read as it started, so it is refused even with a generation pending."""
     monkeypatch.setattr(warnings, 'showwarning', warnings.showwarning)
     logger = _HandlerlessLogger()
     monkeypatch.setattr(pdslogger, 'PdsLogger', lambda *args, **kwargs: logger)
@@ -784,21 +800,16 @@ def test_an_invocation_requiring_a_pending_generation_writes_only_into_one(
         return True
 
     monkeypatch.setattr(do_import, 'do_import_steps', steps)
-    monkeypatch.setattr(
-        sys, 'argv', ['opus_import', '--require-pending-generation', '--import', 'COISS_2002']
-    )
-    if code is None:
+    monkeypatch.setattr(sys, 'argv', ['opus_import', '--require-pending-generation', *step])
+    if refusal is None:
         cli.main()
         assert ran == ['steps']
         return
     with pytest.raises(SystemExit) as excinfo:
         cli.main()
-    assert excinfo.value.code == code
+    assert excinfo.value.code == do_generation.GENERATION_REFUSED_EXIT_STATUS
     assert ran == []
-    assert logger.messages_at('fatal') == [
-        '--require-pending-generation: "opus_ci_db" has no pending generation, so this '
-        'invocation writes nothing'
-    ]
+    assert logger.messages_at('fatal') == [refusal]
 
 
 @pytest.mark.parametrize(

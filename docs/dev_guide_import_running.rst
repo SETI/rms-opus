@@ -479,10 +479,12 @@ Auxiliary tables and other steps
        holdings. A refused command changes nothing and exits with status 3, which
        ``promote_generation.sh`` tells from a command that stopped part way.
    * - ``--require-pending-generation``
-     - Refuses, writing nothing, unless the schema has a pending generation when the
-       invocation registers as its writer, and exits with status 3. The registration
-       reads the version row again under the generation lock and holds off every
-       generation command from then on, so the answer cannot change before the writes.
+     - Refuses, writing nothing, unless the invocation registers as a writer of the schema
+       and the schema has a pending generation when it does, and exits with status 3. The
+       registration reads the version row again under the generation lock and holds off
+       every generation command from then on, so the answer cannot change before the
+       writes; an invocation that registers no writer is refused, since it has only the
+       row it read as it started.
        ``run_incremental_opus_update.sh`` gives it to every invocation after
        ``--begin-generation``, so an ``--abandon-generation`` run between two of them
        leaves the next writing nothing rather than the served rows.
