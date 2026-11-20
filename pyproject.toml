@@ -322,9 +322,12 @@ exclude_lines = [
 # `pytest import_tests --cov`, which imports two dozen sampled volumes end to end
 # through every step of the pipeline. It is the run's own figure rounded down to a whole
 # percent, not an aspiration -- raising it means raising what that run reaches. The
-# figure is statements and branches together, the TOTAL line's last column, and
-# pytest-cov compares it with this floor without rounding. Regenerate rather than trust
-# it: run that command and read the TOTAL line.
+# figure is statements and branches together. The TOTAL line rounds it to `precision`
+# places (0 here), so read it unrounded from pytest-cov's closing line, "Total coverage:
+# NN.NN%", or from `coverage report --precision=2`. The gate rounds the total to
+# `precision` places before comparing it with this floor, so a total half a point under
+# the floor still passes. Regenerate rather than trust it: run that command and read the
+# closing line.
 #
 # The holdings-free suite, `tests/`, is not measured here. A failure close to the floor is
 # a real drop in what the import run reaches, most likely a pdsfile release changing
