@@ -1103,10 +1103,9 @@ def main() -> None:
             fails when it reports failure or logs an error while it runs
             (`_run_finishing_step`), and a failed one also keeps the invocation from
             marking the schema ready.
-            **A non-zero status means the run stopped, not that a zero status means it
-            was clean:** the import of bundles reports a bundle's problems through the
-            log and leaves the status zero. Read ``ERRORS.log`` to judge whether a run
-            was clean.
+            An error logged while a bundle is imported fails the invocation the same
+            way, unless ``--ignore-errors``, under which the errors are in the log alone.
+            Read ``ERRORS.log`` to judge whether a run was clean.
     """
     command_list = sys.argv[1:]
 
