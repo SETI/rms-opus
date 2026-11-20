@@ -24,7 +24,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from opus_import import bundle_registry, import_processes, import_util
-from opus_import.steps import do_import_tables
+from opus_import.steps import do_generation, do_import_tables
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -165,19 +165,43 @@ def _recover_bundle(
 ) -> str | None:
     """Return one lost importer's bundle to the queue, or record it ``failed``.
 
+    The schema's version row is read into the context before the delete
+    (`opus_import.steps.do_generation.load_generation_state`), so that with a generation
+    pending only the rows it added are deleted, whichever context the recovery runs in.
+    On a schema with a version row the recovery is a registered writer
+    (`opus_import.steps.do_generation.register_writer`) until it is done, so no generation
+    command runs meanwhile; while one does, the bundle is left for a later pass.
+
     Parameters:
-        ctx: The context whose connection runs the deletes.
+        ctx: The context whose connection runs the deletes, and whose generation state
+            is read again here.
         bundle_id: The bundle.
         bundle_number: Its number.
         process_id: The lost importer.
         lock: The importer's lock name.
 
     Returns:
-        What was done, for the log; None when another session held the row, so a later
-        pass tries again.
+        What was done, for the log; None when another session held the row or a
+        generation command was running, so a later pass tries again.
     """
     db = ctx.db
     assert db is not None
+    # Read here, not taken from the context: a coordinator's or a status command's
+    # context never read the version row, and a generation may have begun since one did.
+    # With a generation pending, the delete retires the bundle's served rows and deletes
+    # only the rows the generation added; read as none pending, it would delete the
+    # served rows too. A schema with a version row is written as a registered writer
+    # does, which reads the row again under the generation lock and holds every
+    # generation command off -- an abandon would restore the rows the delete retires --
+    # until the recovery is done.
+    do_generation.load_generation_state(ctx)
+    writer: import_processes.ImporterLock | None = None
+    if ctx.generation_state is not None:
+        try:
+            writer = do_generation.register_writer(ctx)
+        except do_generation.GenerationRefusedError as e:
+            import_util.log_info(ctx, f'{bundle_id} is left for a later pass: {e}')
+            return None
     holder = _open_holder(db)
     try:
         with holder.transaction():
@@ -204,6 +228,8 @@ def _recover_bundle(
         return done
     finally:
         holder.close()
+        if writer is not None:
+            writer.exit()
 
 
 def recover_lost_importers(ctx: ImportContext) -> list[str]:

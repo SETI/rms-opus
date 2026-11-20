@@ -508,8 +508,9 @@ Two rules are worth stating explicitly, because both are easy to get wrong:
   *is* the id of a ``mult`` row, so its method returns a
   :class:`~opus_import.obs.field_types.MultField`. So does the one ``varchar3`` column that
   carries a ``GROUP`` form type. Returning a bare value from a group column makes
-  :func:`~opus_import.steps.do_import_obs.import_observation_table` log ``bad data type
-  returned for mult`` and **discard the whole observation**.
+  :func:`~opus_import.steps.do_import_obs.import_observation_table` log an error naming
+  the column, which fails the bundle, and **store the field's absent value** in its
+  place.
 * **A PDS index does not hand out builtin integers.** ``pdstable`` parses an integer
   column with NumPy, so what reaches a field method is a ``numpy.int64``, which is not
   an :class:`int`. :func:`~opus_import.obs.field_types.as_int` is what converts one, and

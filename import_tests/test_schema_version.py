@@ -399,6 +399,36 @@ def test_the_deploy_check_refuses_what_the_web_application_refuses(
     assert body.strip() == f'OPUS is unavailable: {found}.'
 
 
+def test_validation_names_both_rows_of_a_slug_two_share(
+    unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials
+) -> None:
+    """A slug shared by exactly two param_info rows is a duplicate; each row is named."""
+    schema = unfinished_run.schema
+    assert _step(unfinished_run, *build_run.AUX_ARGS).returncode == 0
+    try:
+        (first, second) = _query(
+            db_credentials,
+            schema,
+            'SELECT category_name, name, slug FROM param_info WHERE slug IS NOT NULL '
+            "AND slug <> '' ORDER BY id LIMIT 2",
+        )
+        _query(
+            db_credentials,
+            schema,
+            'UPDATE param_info SET slug = %s WHERE category_name = %s AND name = %s',
+            first[2],
+            second[0],
+            second[1],
+        )
+        logged = len(_errors(unfinished_run))
+        assert _step(unfinished_run, *build_run.VALIDATE_ARGS).returncode != 0
+        errors = _errors(unfinished_run)[logged:]
+        for category, name, _slug in (first, second):
+            assert f'PARAM_INFO field "{category}.{name}" has duplicate slug' in errors
+    finally:
+        assert _step(unfinished_run, *build_run.AUX_ARGS).returncode == 0
+
+
 def test_the_deploy_check_passes_a_finished_schema(
     unfinished_run: build_run.ImportRun, db_credentials: DatabaseCredentials, tmp_path: Path
 ) -> None:

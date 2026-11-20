@@ -21,10 +21,10 @@ carries a ``GROUP`` form type. Reading the storage type instead would annotate t
 methods as scalars and be wrong about every one of them.
 
 Returning a bare value from a group column is not merely untidy: it makes
-`opus_import.steps.do_import_obs.import_observation_table` log
-``bad data type returned for mult`` and discard the whole observation, because the
-presentation lists it reads off the returned dictionary are never populated. That is why
-the group aliases admit no bare values.
+`opus_import.steps.do_import_obs.import_observation_table` log an error naming the
+column, which fails the bundle, and store the field's absent value in its place, because
+the presentation lists it reads off the returned dictionary are never populated. That is
+why the group aliases admit no bare values.
 
 This module is named ``field_types`` rather than ``typing`` because ruff's ``A005``
 forbids shadowing a standard-library module name.

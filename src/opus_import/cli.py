@@ -243,6 +243,7 @@ def _create_argument_parser() -> argparse.ArgumentParser:
                 --create-indexes,
                 the deletion of every copy of a duplicated OPUS ID but the one from the
                 bundle registered last,
+                the deletion of the mult values no observation holds,
                 --create-param-info
                 --create-partables
                 --create-table-names
@@ -924,6 +925,42 @@ def _run_check(config: OpusConfig, schema: str, action: str, logger: pdslogger.P
     return 0
 
 
+def _errors_logged(logger: pdslogger.PdsLogger) -> int:
+    """Return the error and fatal messages logged in the logger's open section so far,
+    counting the sections it has closed inside it."""
+    return int(logger.message_count('error')) + int(logger.message_count('fatal'))
+
+
+def _run_finishing_step(
+    logger: pdslogger.PdsLogger,
+    failed_steps: list[str],
+    name: str,
+    step: Callable[[], object],
+) -> None:
+    """Run one finishing step, recording it failed if it says so or logs an error.
+
+    A step fails when it returns False, raises `opus_import.steps.do_django.CacheFlushError`
+    (logged here), or logs a message at the error or fatal level while it runs, from
+    itself or from the database layer beneath it. So no step can report a problem only
+    in the log while ``--write-schema-version`` marks the schema ready.
+
+    Parameters:
+        logger: The run's logger.
+        failed_steps: The finishing steps that failed in this invocation, which the step
+            joins when it fails.
+        name: What the failure list calls it.
+        step: The step.
+    """
+    before = _errors_logged(logger)
+    try:
+        succeeded = step() is not False
+    except do_django.CacheFlushError as e:
+        logger.log('error', f'{name}: {e}')
+        succeeded = False
+    if not succeeded or _errors_logged(logger) > before:
+        failed_steps.append(name)
+
+
 def _carry_over_conflicts(args: argparse.Namespace) -> str:
     """Name the options given with ``--carry-over-sessions-from`` that it is refused with.
 
@@ -1059,13 +1096,16 @@ def main() -> None:
             the observation import fails or is refused, the carry-over fails or names
             the schema it would write into, ``--finalize`` or
             ``--write-schema-version`` refuses, an exception reaches the top-level
-            handler, or -- unless ``--ignore-errors`` -- ``--create-indexes``, the
-            duplicate step, ``--create-param-info``, ``--update-mult-info``,
-            ``--import-dictionary`` or ``--validate`` failed, after the invocation's
-            other steps have run.
-            **A non-zero status means the run stopped, not that a zero status means it
-            was clean:** other steps report failure through the log and leave the
-            status zero. Read ``ERRORS.log`` to judge whether a run was clean.
+            handler, or -- unless ``--ignore-errors`` -- a finishing step failed, after
+            the invocation's other steps have run. The finishing steps are every step
+            of the finalization group (the duplicate and mult steps among them),
+            ``--update-mult-info``, ``--validate`` and ``--import-dictionary``; one
+            fails when it reports failure or logs an error while it runs
+            (`_run_finishing_step`), and a failed one also keeps the invocation from
+            marking the schema ready.
+            An error logged while a bundle is imported fails the invocation the same
+            way, unless ``--ignore-errors``, under which the errors are in the log alone.
+            Read ``ERRORS.log`` to judge whether a run was clean.
     """
     command_list = sys.argv[1:]
 
@@ -1303,7 +1343,8 @@ def main() -> None:
         if pending is not None and _rebuilds_pending(args):
             do_generation.set_pending_state(ctx, PENDING_WRITING)
 
-        # The finishing steps that failed in this invocation. Any failure keeps it from
+        # The finishing steps that failed in this invocation: each returned False, or
+        # logged an error while it ran (_run_finishing_step). Any failure keeps it from
         # marking the schema ready, and makes it exit with failure once its other steps
         # have run, so opus_import_all, which runs each finishing step as its own
         # invocation, stops before its --write-schema-version. --ignore-errors overrides
@@ -1323,8 +1364,9 @@ def main() -> None:
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
             with ctx.timed('create_indexes'):
-                if not do_indexes.create_indexes(ctx):
-                    failed_steps.append('--create-indexes')
+                _run_finishing_step(
+                    logger, failed_steps, '--create-indexes', lambda: do_indexes.create_indexes(ctx)
+                )
             logger.close()
 
         # The duplicate step finds the copies through obs_general's opus_id key and
@@ -1336,8 +1378,12 @@ def main() -> None:
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
             with ctx.timed('duplicate_step'):
-                if not do_duplicate_ids.delete_duplicate_opus_ids(ctx):
-                    failed_steps.append('the duplicate step of --finalize')
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    'the duplicate step of --finalize',
+                    lambda: do_duplicate_ids.delete_duplicate_opus_ids(ctx),
+                )
             logger.close()
 
         # After the duplicate step, whose deletions can leave a value unreferenced, and
@@ -1349,8 +1395,12 @@ def main() -> None:
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
             with ctx.timed('finalize_mult'):
-                if not do_finalize_mult.finalize_mult(ctx):
-                    failed_steps.append('the mult step of --finalize')
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    'the mult step of --finalize',
+                    lambda: do_finalize_mult.finalize_mult(ctx),
+                )
             logger.close()
 
         # After the import, since the imported tables are what determine what goes into
@@ -1363,14 +1413,28 @@ def main() -> None:
 
             if args.create_param_info:
                 with ctx.timed('create_param_info'):
-                    if not do_param_info.do_param_info(ctx):
-                        failed_steps.append('--create-param-info')
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--create-param-info',
+                        lambda: do_param_info.do_param_info(ctx),
+                    )
             if args.create_partables:
                 with ctx.timed('create_partables'):
-                    do_partables.do_partables(ctx)
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--create-partables',
+                        lambda: do_partables.do_partables(ctx),
+                    )
             if args.create_table_names:
                 with ctx.timed('create_table_names'):
-                    do_table_names.do_table_names(ctx)
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--create-table-names',
+                        lambda: do_table_names.do_table_names(ctx),
+                    )
 
             logger.close()
 
@@ -1396,17 +1460,29 @@ def main() -> None:
             )
             if args.create_cart:
                 with ctx.timed('create_cart'):
-                    do_cart.create_cart(ctx)
+                    _run_finishing_step(
+                        logger, failed_steps, '--create-cart', lambda: do_cart.create_cart(ctx)
+                    )
             if args.reset_search_tables:
                 with ctx.timed('reset_search_tables'):
-                    do_django.reset_search_tables(ctx)
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--reset-search-tables',
+                        lambda: do_django.reset_search_tables(ctx),
+                    )
             logger.close()
 
         # After the auxiliary tables, so that the statistics count every table's rows.
         if args.analyze_tables:
             import_util.log_info(ctx, 'Analyzing all tables')
             with ctx.timed('analyze_tables'):
-                do_import_tables.analyze_all_tables(ctx)
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    '--analyze-tables',
+                    lambda: do_import_tables.analyze_all_tables(ctx),
+                )
 
         if args.update_mult_info:
             logger.open(
@@ -1415,8 +1491,12 @@ def main() -> None:
             )
 
             with ctx.timed('update_mult_info'):
-                if not do_update_mult_info.update_mult_info(ctx):
-                    failed_steps.append('--update-mult-info')
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    '--update-mult-info',
+                    lambda: do_update_mult_info.update_mult_info(ctx),
+                )
 
             logger.close()
 
@@ -1426,8 +1506,7 @@ def main() -> None:
 
         if args.validate:
             with ctx.timed('validate'):
-                if not _validate(ctx):
-                    failed_steps.append('--validate')
+                _run_finishing_step(logger, failed_steps, '--validate', lambda: _validate(ctx))
 
         if args.import_dictionary:
             logger.open(
@@ -1435,8 +1514,12 @@ def main() -> None:
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
             with ctx.timed('import_dictionary'):
-                if not do_dictionary.do_dictionary(ctx):
-                    failed_steps.append('--import-dictionary')
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    '--import-dictionary',
+                    lambda: do_dictionary.do_dictionary(ctx),
+                )
             logger.close()
 
         failure_refuses = len(failed_steps) > 0 and not args.ignore_errors

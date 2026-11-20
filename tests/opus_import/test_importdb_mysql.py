@@ -1565,6 +1565,118 @@ def test_the_lock_queries_ask_who_holds_a_lock() -> None:
     assert _ConnectedDB(_ScriptedConnection({'SELECT': [(None,)]})).named_lock_holder('x') is None
 
 
+class _CommitFailingConnection(_ScriptedConnection):
+    """A connection whose first commits fail with the server's error codes given."""
+
+    def __init__(self, codes: list[int]) -> None:
+        super().__init__()
+        self.codes = list(codes)
+
+    def commit(self) -> None:
+        if self.codes:
+            raise MySQLdb.OperationalError(self.codes.pop(0), 'the commit failed')
+        super().commit()
+
+
+def test_a_commit_that_meets_a_deadlock_is_run_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The commit's failure is an ImportDBError raised from the driver's, so the retry reads
+    its code; the second attempt commits."""
+    monkeypatch.setattr('opus_import.importdb.super.time.sleep', lambda seconds: None)
+    conn = _CommitFailingConnection([1213])
+    db = _ConnectedDB(conn)
+    runs: list[int] = []
+
+    def body() -> str:
+        runs.append(1)
+        return 'claimed'
+
+    assert db.retrying('Claiming', body) == 'claimed'
+    assert (len(runs), conn.commits) == (2, 1)
+
+
+def test_a_commit_that_fails_otherwise_is_an_import_error() -> None:
+    """Not the driver's own error, which the coordinator's outage handling would miss."""
+    db = _ConnectedDB(_CommitFailingConnection([2013]))
+    db.logger = _Logger()
+
+    with pytest.raises(ImportDBError) as excinfo, db.transaction():
+        db.read_rows('t', ['a'])
+
+    assert isinstance(excinfo.value.__cause__, MySQLdb.OperationalError)
+    assert ('fatal', "Failed committing a transaction: (2013, 'the commit failed')") in (
+        db.logger.messages
+    )
+
+
+class _SettingFailingConnection(_ScriptedConnection):
+    """A connection whose statements setting a session variable to a value fail."""
+
+    def __init__(self, failing: str) -> None:
+        super().__init__({'SELECT @@SESSION.lock_wait_timeout': [(31536000,)]})
+        self.failing = failing
+
+    def cursor(self) -> _ScriptedCursor:
+        conn = self
+
+        class _Cursor(_ScriptedCursor):
+            def execute(self, cmd: str, param_list: Any = None) -> None:
+                super().execute(cmd, param_list)
+                if cmd.startswith(conn.failing) and (param_list or [None])[0] != 7:
+                    raise MySQLdb.OperationalError(2013, 'Lost connection to MySQL server')
+
+        return _Cursor(self)
+
+
+def test_a_failed_foreign_key_restore_keeps_the_bodys_failure() -> None:
+    """The body's failure is raised, with the restore's noted on it, not replaced by it."""
+    db = _ConnectedDB(_SettingFailingConnection('SET SESSION foreign_key_checks = 1'))
+
+    def body() -> None:
+        with db.foreign_keys_unchecked():
+            raise ImportDBError('the body failed')
+
+    with pytest.raises(ImportDBError, match='the body failed') as excinfo:
+        body()
+    (note,) = excinfo.value.__notes__
+    assert note.startswith('Putting the session back afterwards failed:')
+
+
+def test_a_failed_foreign_key_restore_after_a_clean_body_is_an_import_error() -> None:
+    """The connection is left unchecked, so the failure is raised, as the import's own."""
+    db = _ConnectedDB(_SettingFailingConnection('SET SESSION foreign_key_checks = 1'))
+
+    with pytest.raises(ImportDBError) as excinfo, db.foreign_keys_unchecked():
+        pass
+
+    assert isinstance(excinfo.value.__cause__, MySQLdb.OperationalError)
+
+
+def test_a_failed_lock_wait_restore_keeps_the_statements_failure() -> None:
+    """A rename that timed out is the failure raised, though putting the session's
+    lock_wait_timeout back failed too; the lowered value itself was set (7 s)."""
+
+    class _TimingOutConnection(_SettingFailingConnection):
+        def cursor(self) -> _ScriptedCursor:
+            cursor = super().cursor()
+            plain = cursor.execute
+
+            def execute(cmd: str, param_list: Any = None) -> None:
+                plain(cmd, param_list)
+                if cmd.startswith('RENAME'):
+                    raise MySQLdb.OperationalError(1205, 'Lock wait timeout exceeded')
+
+            cursor.execute = execute  # type: ignore[method-assign]
+            return cursor
+
+    db = _ConnectedDB(_TimingOutConnection('SET SESSION lock_wait_timeout'))
+    with pytest.raises(ImportDBError, match='Lock wait timeout exceeded') as excinfo:
+        db._execute_waiting_for_locks(
+            'RENAME TABLE a TO b', 'RENAME TABLE', lock_wait_timeout_s=7, attempts=1
+        )
+    (note,) = excinfo.value.__notes__
+    assert 'Lost connection to MySQL server' in note
+
+
 class _RollbackFailingConnection(_ScriptedConnection):
     """A connection whose rollback fails, as a broken one's does."""
 

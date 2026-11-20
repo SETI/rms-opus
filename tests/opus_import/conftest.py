@@ -60,6 +60,18 @@ class RecordingLogger:
         """
         self.messages.append(('close', ''))
 
+    def message_count(self, level: str) -> int:
+        """Return how many messages have been logged at `level`.
+
+        A real logger counts since its section opened, adding the sections it closed
+        inside it; the finishing steps compare two counts taken in one section, which
+        a count over the whole run gives alike.
+
+        Parameters:
+            level: The level name.
+        """
+        return len(self.messages_at(level))
+
     def messages_at(self, level: str) -> list[str]:
         """Return every message logged at `level`, in the order they were logged.
 
