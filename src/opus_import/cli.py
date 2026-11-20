@@ -1058,7 +1058,10 @@ def _prepare_holdings(
         # PDS4 asks the shelves first and falls back to the file system when no
         # shelf covers a path, so a tree with PDS4 shelves -- one a test builds --
         # gets the shelf-answered existence PDS3 has, and a bundle without them is
-        # answered from the file system.
+        # answered from the file system. Requiring shelves turns a bundle without one
+        # into an exception, so the line below stays commented out until every PDS4
+        # bundle in the holdings has a shelf.
+        # Pds4File.require_shelves(True)
     if args.override_pds3_data_dir:
         Pds3File.preload(args.override_pds3_data_dir)
     else:
