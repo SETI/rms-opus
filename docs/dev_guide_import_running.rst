@@ -814,7 +814,11 @@ import on one computer; its tracking, recovery and table are
    failed; rows done of the estimated total; time elapsed; and the remaining time,
    estimated from the row rate it has observed), then one line per running importer on
    any computer (host and process id, bundle, rows done of the bundle's estimate, time
-   in the bundle, time since its last progress). Without a terminal it writes a line per
+   in the bundle, time since its last progress). A bundle's estimate is the rows its
+   primary index labels declare, which its import can exceed (a COVIMS index row can be
+   both a visible and an infrared observation) or fall short of; so the estimated total
+   counts the rows a done or failed bundle wrote, and the larger of its estimate and its
+   rows so far for any other. Without a terminal it writes a line per
    finished bundle and the totals line every ``[import] status_interval_minutes``. An
    importer alive but with no progress for ``[import] stall_warning_minutes`` is reported
    as stalled, and never stopped.

@@ -167,10 +167,51 @@ def test_the_totals_line_labels_the_remaining_time_an_estimate() -> None:
         (),
     )
     assert opus_coordinator.totals_line(snapshot, 3725, 60) == (
-        'Bundles: 1 done, 1 importing, 1 pending, 1 failed; rows 150 of an estimated 400; '
+        'Bundles: 1 done, 1 importing, 1 pending, 1 failed; rows 150 of an estimated 300; '
         'elapsed 1:02:05; remaining about 0:01:00 (an estimate from the observed row rate)'
     )
     assert 'remaining not yet estimated' in opus_coordinator.totals_line(snapshot, 1, None)
+
+
+def test_the_estimated_total_counts_finished_bundles_rows_and_never_less_than_done() -> None:
+    """A finished bundle counts the rows it wrote, above or below its estimate; one still to
+    finish counts the larger of its estimate and its rows so far."""
+    snapshot = Snapshot(
+        (
+            _bundle('A', 'done', rows_done=250, size=100),
+            _bundle('B', 'done', rows_done=10, size=100),
+            _bundle('C', 'importing', 1, rows_done=180, size=100),
+            _bundle('D', 'importing', 2, rows_done=30, size=100),
+            _bundle('E', 'pending', size=100),
+            _bundle('F', 'failed', 3, rows_done=5, size=100),
+        ),
+        (),
+    )
+    assert [opus_coordinator.expected_rows(bundle) for bundle in snapshot.bundles] == [
+        250,
+        10,
+        180,
+        100,
+        100,
+        5,
+    ]
+    assert 'rows 475 of an estimated 645;' in opus_coordinator.totals_line(snapshot, 1, None)
+
+
+def test_the_remaining_time_counts_the_rows_left_in_unfinished_bundles(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Rows done past their bundles' estimates leave the pending bundles' rows to do."""
+    clock = iter([110.0, 120.0])
+    monkeypatch.setattr(time, 'monotonic', lambda: next(clock))
+    estimate = opus_coordinator.RateEstimate(started=100.0)
+    first = Snapshot((_bundle('A', 'importing', 1, size=100), _bundle('B', 'pending')), ())
+    assert estimate.remaining(first) is None
+    # 300 rows in 20 seconds is 15 a second; B's 100 rows are left.
+    later = Snapshot((_bundle('A', 'done', rows_done=300, size=100), _bundle('B', 'pending')), ())
+    remaining = estimate.remaining(later)
+    assert remaining is not None
+    assert remaining == pytest.approx(100 / 15)
 
 
 class _Process:
