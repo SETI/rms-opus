@@ -18,15 +18,17 @@ import pdslogger
 import pytest
 
 from import_tests.tools import fixture_layout, golden_io
-from opus_import import config_targets, import_util, importdb
+from opus_import import bundle_registry, config_targets, import_util, importdb
 from opus_import.cli import _create_argument_parser
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
-from opus_import.schema_version import SCHEMA_VERSION
-from opus_import.steps import do_generation, do_import_tables
+from opus_import.importdb import mysql
+from opus_import.schema_version import SCHEMA_VERSION, SCHEMA_VERSION_TABLE
+from opus_import.steps import do_generation, do_import, do_import_tables
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
     from import_tests.tools.golden_io import DatabaseCredentials
     from opus_import.importdb.super import ImportDBSuper
@@ -270,3 +272,117 @@ def test_a_child_row_of_a_pending_only_observation_is_found_by_its_bundle(
         db_credentials, schema, ['obs_general', 'obs_pds'], 'B_1'
     )
     assert holding == {'obs_general', 'obs_pds'}
+
+
+def _context(db: ImportDBSuper) -> ImportContext:
+    """Return a context of the pipeline's default arguments, opened on `db`."""
+    ctx = ImportContext(
+        args=_create_argument_parser().parse_args([]), logger=_import_context().logger
+    )
+    ctx.db = db
+    return ctx
+
+
+def test_a_requeue_returns_a_failed_bundle_to_the_queue(import_db: ImportDBSuper) -> None:
+    """``--requeue``'s statements against the server: the hold it takes on a ``failed``
+    bundle, the delete beneath it (a schema with no observation tables has nothing to
+    delete), and the move to ``pending``."""
+    ctx = _context(import_db)
+    bundle_registry.create_registry(ctx)
+    (row,) = bundle_registry.plan_ranges(0, [('COISS_2002', 10)], 1)
+    import_db.insert_rows(bundle_registry.BUNDLE_REGISTRY_TABLE, [row])
+    quoted = import_db.quote_identifier
+    import_db.update_row(
+        bundle_registry.BUNDLE_REGISTRY_TABLE,
+        {'state': bundle_registry.BUNDLE_FAILED},
+        f'{quoted("bundle_id")}=%s',
+        ['COISS_2002'],
+    )
+    assert do_import.requeue_bundles(ctx, ['COISS_2002'])
+    assert dict(bundle_registry.registered_bundles(ctx)) == {
+        'COISS_2002': bundle_registry.BUNDLE_PENDING
+    }
+
+
+def test_the_next_id_of_a_table_that_holds_rows_is_set(import_db: ImportDBSuper) -> None:
+    """The reset the search tables' re-creation issues when ``user_searches`` held rows,
+    which the fixture's never does: the next row takes the id given."""
+    ctx = _context(import_db)
+    schema = import_util.read_schema_for_table(ctx, 'user_searches')
+    assert schema is not None
+    import_db.create_table('user_searches', schema)
+    row = {'search_hash': b'\x00' * 32, 'last_used_at': '2026-11-20 00:00:00'}
+    import_db.insert_row('user_searches', row)
+    import_db.set_next_id('user_searches', 500)
+    import_db.insert_row('user_searches', {**row, 'search_hash': b'\x01' * 32})
+    quoted = import_db.quote_identifier
+    ids = import_db.general_select(f'{quoted("id")} FROM {quoted("user_searches")} ORDER BY 1')
+    assert [found[0] for found in ids] == [1, 500]
+
+
+def test_the_index_space_budget_reads_the_servers_directories(
+    import_db: ImportDBSuper, tmp_path: Path
+) -> None:
+    """On a server sharing this computer the budget is a free space the query and the
+    directories give; on another, there is none."""
+    budget = import_db.index_space_budget(str(tmp_path))
+    if import_db.db_hostname in mysql.LOCAL_HOSTS:
+        assert budget is not None
+        assert budget > 0
+    else:
+        assert budget is None
+
+
+@pytest.mark.parametrize(
+    ('pending', 'action', 'problem'),
+    [
+        (None, do_generation.CHECK_REBUILD, None),
+        (None, do_generation.CHECK_CONTINUE, 'has no pending generation to continue'),
+        (2, do_generation.CHECK_REBUILD, 'generation 2 of'),
+        (2, do_generation.CHECK_CONTINUE, None),
+        (None, do_generation.CHECK_SWITCH, 'no pending generation is ready'),
+    ],
+)
+def test_the_deploy_chains_checks_read_a_real_schema(
+    import_db: ImportDBSuper, pending: int | None, action: str, problem: str | None
+) -> None:
+    """What ``opus_import --check`` asks -- the version row, the generation lock, the
+    live writers and the auxiliary tables -- against the server, on a schema with no
+    ``import_process`` table."""
+    ctx = _context(import_db)
+    schema = import_util.read_schema_for_table(ctx, SCHEMA_VERSION_TABLE)
+    assert schema is not None
+    import_db.create_table(SCHEMA_VERSION_TABLE, schema)
+    import_db.insert_row(
+        SCHEMA_VERSION_TABLE,
+        {
+            'version': SCHEMA_VERSION,
+            'state': 'ready',
+            'generation': 1,
+            'pending_generation': pending,
+            'pending_state': None if pending is None else 'writing',
+            'revertible': 0,
+        },
+    )
+    found = do_generation.generation_problem(import_db, action)
+    if problem is None:
+        assert found is None
+    else:
+        assert found is not None
+        assert problem in found
+
+
+def test_a_bounded_wait_rename_restores_the_sessions_lock_wait(import_db: ImportDBSuper) -> None:
+    """The rename runs under the lowered ``lock_wait_timeout``, and the session's own value
+    is put back after it."""
+    ctx = _context(import_db)
+    schema = import_util.read_schema_for_table(ctx, _UPSERT_TABLE)
+    assert schema is not None
+    import_db.create_table(_UPSERT_TABLE, schema)
+    before = import_db.general_select('@@SESSION.lock_wait_timeout')
+    renamed = f'{_UPSERT_TABLE}_renamed'
+    import_db.rename_tables_atomically(
+        [(_UPSERT_TABLE, renamed)], lock_wait_timeout_s=5, attempts=1
+    )
+    assert import_db.table_exists(renamed)
+    assert import_db.general_select('@@SESSION.lock_wait_timeout') == before

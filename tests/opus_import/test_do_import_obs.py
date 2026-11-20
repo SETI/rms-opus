@@ -172,3 +172,139 @@ def test_an_empty_value_or_list_of_a_group_column_raises_nothing(
     )
     assert calls == [('planet', '', '')]
     assert row == {'planet': 1, 'targets': None}
+
+
+def _one_column(
+    monkeypatch: pytest.MonkeyPatch,
+    column: dict[str, Any],
+    value: Any,
+    *,
+    ok: bool = True,
+) -> tuple[Any, ImportContext]:
+    """Build a row of one ``COMPUTE`` column named ``v`` whose field function gives `value`,
+    succeeding unless `ok` is False.
+
+    Returns:
+        The value stored, and the context whose logger recorded the run.
+    """
+
+    def field_function(
+        _ctx: ImportContext, _obj: Any, _table: str, _schema: Any, _meta: Any, _field: str
+    ) -> tuple[bool, Any]:
+        return ok, value
+
+    monkeypatch.setattr(do_import_obs, 'import_run_field_function', field_function)
+    ctx = make_context()
+    schema = [{'field_name': 'v', 'data_source': 'COMPUTE', **column}]
+    row = do_import_obs.import_observation_table(ctx, object(), 'obs_test', schema, {})  # type: ignore[arg-type]
+    return row['v'], ctx
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'given', 'stored'),
+    [
+        ('flag_yesno', 1, 'Yes'),
+        ('flag_yesno', 'n', 'No'),
+        ('flag_onoff', 'ON', 'On'),
+        ('flag_onoff', 0, 'Off'),
+        ('flag_yesno', 'N/A', None),
+        ('flag_yesno', 'UNK', None),
+    ],
+)
+def test_a_flag_value_is_spelled_as_its_type_spells_it(
+    monkeypatch: pytest.MonkeyPatch, field_type: str, given: Any, stored: Any
+) -> None:
+    """Each spelling of yes, no, on and off is stored in the type's one spelling, and an
+    unknown is NULL, with nothing logged."""
+    value, ctx = _one_column(monkeypatch, {'field_type': field_type}, given)
+    assert value == stored
+    assert ctx.logger.messages_at('error') == []
+
+
+@pytest.mark.parametrize(
+    ('column', 'given', 'stored', 'logged'),
+    [
+        ({'field_type': 'flag_yesno'}, 'maybe', None, 'has FLAG type but value "maybe"'),
+        ({'field_type': 'varchar5'}, 12, '', 'has VARCHAR type but value "12"'),
+        ({'field_type': 'varchar5'}, 'COISS2', 'COISS', 'has VARCHAR size 5 but value'),
+        ({'field_type': 'real8'}, 'wide', None, 'has REAL type but "wide" is not a float'),
+        ({'field_type': 'int4'}, '4.5', None, 'has INT type but "4.5" is not an int'),
+        (
+            {'field_type': 'real8', 'val_sentinel': [-1e32]},
+            -1e32,
+            None,
+            'Caught sentinel value -1e+32 for column "v"',
+        ),
+        ({'field_type': 'real8', 'val_min': 0}, -3, None, 'has minimum value 0 but -3'),
+        ({'field_type': 'real8', 'val_max': 360}, 400, None, 'has maximum value 360 but 400'),
+        (
+            {'field_type': 'real8', 'field_notnull': True},
+            None,
+            None,
+            'has NULL value but NOT NULL is set',
+        ),
+    ],
+    ids=[
+        'flag',
+        'varchar-type',
+        'varchar-length',
+        'real',
+        'int',
+        'sentinel',
+        'minimum',
+        'maximum',
+        'not-null',
+    ],
+)
+def test_a_value_its_column_cannot_hold_is_an_error_and_is_stored_as_the_column_can(
+    monkeypatch: pytest.MonkeyPatch,
+    column: dict[str, Any],
+    given: Any,
+    stored: Any,
+    logged: str,
+) -> None:
+    """The error names the column and table, marks the import's data bad, and the value
+    stored is the one the column can hold: NULL, empty, or cut to its size."""
+    value, ctx = _one_column(monkeypatch, column, given)
+    assert value == stored
+    (error,) = ctx.logger.messages_at('error')
+    assert 'Column "v"' in error or 'column "v"' in error
+    assert logged in error
+    assert ctx.import_has_bad_data
+
+
+@pytest.mark.parametrize(
+    ('column', 'given'),
+    [
+        ({'field_type': 'real8', 'val_min': 0, 'val_set_invalid_to_null': True}, -3),
+        ({'field_type': 'real8', 'val_max': 360, 'val_set_invalid_to_null': True}, 400),
+    ],
+    ids=['minimum', 'maximum'],
+)
+def test_an_out_of_range_value_a_column_nulls_is_logged_at_debug_only(
+    monkeypatch: pytest.MonkeyPatch, column: dict[str, Any], given: Any
+) -> None:
+    """``val_set_invalid_to_null`` stores NULL and logs no error."""
+    value, ctx = _one_column(monkeypatch, column, given)
+    assert value is None
+    assert ctx.logger.messages_at('error') == []
+    (debug,) = [msg for msg in ctx.logger.messages_at('debug') if 'substituting NULL' in msg]
+    assert 'Column "v" in table "obs_test"' in debug
+    assert not ctx.import_has_bad_data
+
+
+def test_a_value_within_range_is_stored_as_given(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The bounds and the sentinel leave an ordinary value alone."""
+    column = {'field_type': 'real8', 'val_min': 0, 'val_max': 360, 'val_sentinel': -1e32}
+    value, ctx = _one_column(monkeypatch, column, 12.5)
+    assert value == 12.5
+    assert ctx.logger.messages_at('error') == []
+
+
+def test_a_column_whose_field_method_failed_is_stored_null(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The failure was logged where it happened; the column is NULL."""
+    value, ctx = _one_column(monkeypatch, {'field_type': 'real8'}, 'unused', ok=False)
+    assert value is None
+    assert ctx.logger.messages_at('error') == []
