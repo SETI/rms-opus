@@ -237,10 +237,10 @@ The scripts
     ``--continue`` writes into the pending generation an earlier update began instead of
     beginning one: it runs every command below but ``--begin-generation``. It is how an
     update that stopped part way goes on once its cause is fixed, named again with the
-    bundles it named. Before writing anything it asks whether the served database has a
-    pending generation that no ``opus_import`` is still writing, and aborts, having
-    changed nothing, when it has not: an import with no pending generation would write
-    the rows the site serves.
+    bundles it named. Before writing anything it asks, with ``opus_import --check
+    continue``, whether the served database has a pending generation that no
+    ``opus_import`` is still writing, and aborts, having changed nothing, when it has
+    not: an import with no pending generation would write the rows the site serves.
 
     It builds an installation of the release under ``staged/`` naming the served
     database, with a log directory of its own, and runs these against it, each as its
@@ -263,15 +263,17 @@ The scripts
     commit, which neither PyPI nor the repository can give again.
 
 ``promote_generation.sh [--revert]``
-    **Switches the pending generation in.** It stops the web service, runs
+    **Switches the pending generation in.** It first asks, with ``opus_import --check
+    switch``, whether the switch would be refused, and stops nothing when it would. It
+    then stops the web service, runs
     ``opus_import --switch-generation`` from the deployed installation, restarts the cache
     service, starts the web service, and warms the common searches
     (:ref:`user_guide_deployment_warm_search`). **If the switch fails, the web service
     stays stopped**, since starting it on a half-switched database would serve one
     generation's description tables, carts and caches against the other's rows. Running
     ``promote_generation.sh`` again completes the switch, and ``promote_generation.sh
-    --revert`` goes back. With ``--revert`` it runs ``opus_import --revert-generation`` the
-    same way, which serves the previous generation again, and starts the web service only
+    --revert`` goes back. With ``--revert`` it asks ``opus_import --check revert`` and runs
+    ``opus_import --revert-generation`` the same way, which serves the previous generation again, and starts the web service only
     when that succeeds. It holds the deploy lock throughout.
 
 The optional ``<version spec>`` of each is a **PEP 440 version specifier** appended to the
@@ -328,6 +330,46 @@ while the site goes on writing carts and searches to it.
 ``scripts/import/clone_database.sh`` in the repository copies one database to another on
 the same server.
 
+.. _user_guide_deployment_checks:
+
+Asking before acting
+~~~~~~~~~~~~~~~~~~~~
+
+``opus_import --check <action>`` says whether an action would be refused, reading the
+database ``OPUS_CONFIG`` names on a read-only connection and writing nothing. The deploy
+scripts ask it before they act, and an operator can ask it the same way, from the
+installation that would act:
+
+.. code-block:: bash
+
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import --check switch
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Action
+     - What it asks
+   * - ``serve``
+     - Whether this release would serve the database: the schema version check below.
+   * - ``switch``
+     - Whether ``opus_import --switch-generation`` would be refused: no generation ready
+       to switch, another generation command running, an ``opus_import`` still writing
+       the generation, or a purge or a rebuild that stopped part way.
+   * - ``revert``
+     - Whether ``opus_import --revert-generation`` would be refused, for the same reasons
+       and when no switch can be reverted.
+   * - ``continue``
+     - Whether an update could write into the pending generation without beginning one:
+       refused when no generation is pending, another generation command is running, or
+       an ``opus_import`` is still writing it.
+
+It exits 0 when the action would run, and 3 when it would be refused, having logged why
+on a line beginning ``--check <action>: refused:``. Any other status means the database
+could not be read. The answer is logged as information, so a refusal leaves nothing in
+``ERRORS.log``. ``--check`` runs alone: it is refused with any other step.
+
 .. _user_guide_deployment_schema_version:
 
 The schema version check
@@ -343,7 +385,8 @@ version in the ``ready`` state. For any other database it answers every request 
 503 whose text names the remedy.
 
 Both deploy scripts make the same check right after building the new installation,
-before ``opus_manage`` or ``opus_import`` touches the database, and stop there when it
+with the new installation's ``opus_import --check serve``, which only reads, before
+``opus_manage`` or any other ``opus_import`` touches the database, and stop there when it
 fails. Nothing has been written to the database at that point, and the installation
 being served is untouched:
 
@@ -658,8 +701,8 @@ only when you switch it in. The steps, from the deploy directory::
    to switch, and its log names the commands left to run. Once the cause is fixed, run
    the update again with ``--continue`` and the same bundles, or run those commands from
    the installation the update built, or throw the generation away (below).
-3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run, and
-   stops nothing when it would be refused: no generation ready to switch, another
+3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run
+   (``opus_import --check switch``), and stops nothing when it would be refused: no generation ready to switch, another
    generation command running, an ``opus_import`` still writing the update, or a purge
    that stopped part way, which ``opus_import --purge-generations`` finishes. It then
    stops the web service, switches the generation in, restarts the cache service, starts

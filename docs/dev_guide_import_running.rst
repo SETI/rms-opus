@@ -478,6 +478,18 @@ Auxiliary tables and other steps
        (`Updating a served schema by generation`_). Each runs alone and reads no
        holdings. A refused command changes nothing and exits with status 3, which
        ``promote_generation.sh`` tells from a command that stopped part way.
+   * - ``--check <action>``
+     - Says whether an action would be refused, on a read-only connection, writing
+       nothing: ``serve``, whether this release would serve the schema
+       (:func:`~opus_import.schema_version.served_schema_version_problem`, the web
+       application's rule); ``switch`` and ``revert``, whether ``--switch-generation`` or
+       ``--revert-generation`` would be refused; and ``continue``, whether an import could
+       write into the pending generation without ``--begin-generation``, which requires
+       one (:func:`~opus_import.steps.do_generation.generation_problem`). It exits 0 when
+       the action would run, and status 3 when it would be refused, logging the reason at
+       the info level, so a refusal writes nothing into ``ERRORS.log``; an unreadable
+       schema exits otherwise. It runs alone. The deploy chain asks it before it acts
+       (:ref:`user_guide_deployment_checks`).
 
 .. _dev_guide_import_running_generations:
 

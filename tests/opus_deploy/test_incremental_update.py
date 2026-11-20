@@ -229,6 +229,7 @@ def test_a_continued_update_writes_the_pending_generation_without_beginning_one(
     status, output, ran = run_deploy(tmp_path, _UPDATE, '--continue', 'COISS_2001')
     assert status == 0, output
     assert ran == [
+        'opus_import --check continue',
         'opus_import --import COISS_2001',
         'opus_import --finalize',
         'opus_import --validate',
@@ -244,11 +245,12 @@ def test_a_continued_update_without_a_pending_generation_writes_nothing(
     """Its imports would append to the served rows, so it stops before the first."""
     refusal = '"served" has no pending generation to continue (generation 1 served)'
     status, output, ran = run_deploy(
-        tmp_path, _UPDATE, '--continue', 'COISS_2001', generation_refusal=refusal
+        tmp_path, _UPDATE, '--continue', 'COISS_2001', check_refusal=refusal
     )
     assert status == 1
-    assert ran == []
-    assert f'ERROR: the update cannot continue: {refusal}.' in output
+    assert ran == ['opus_import --check continue']
+    assert f'--check continue: refused: {refusal}' in output
+    assert 'ERROR: the update cannot continue; the check above says why.' in output
     assert 'nothing was changed' in output
 
 

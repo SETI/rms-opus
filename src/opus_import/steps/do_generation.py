@@ -60,7 +60,6 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
-from opus_config import get_config
 from opus_import import import_processes, import_util, importdb, table_swap
 from opus_import.generations import (
     FIRST_GENERATION,
@@ -868,83 +867,51 @@ def revert_generation(ctx: ImportContext) -> None:
     load_generation_state(ctx)
 
 
-def _open_configured_read_only() -> ImportDBSuper:
-    """Open the schema ``OPUS_CONFIG`` names on the import's own connection, read-only."""
-    database = get_config().database
-    return importdb.get_db(
-        database.brand,
-        database.host,
-        database.database,
-        database.schema,
-        database.user,
-        database.password,
-        read_only=True,
-    )
+#: What `generation_problem` answers for: a switch, a revert, and an update that writes
+#: into the pending generation without beginning one.
+CHECK_SWITCH = 'switch'
+CHECK_REVERT = 'revert'
+CHECK_CONTINUE = 'continue'
 
 
-def update_continue_problem() -> str | None:
-    """Say why an incremental update cannot continue in the schema ``OPUS_CONFIG`` names.
+def generation_problem(db: ImportDBSuper, action: str) -> str | None:
+    """Say why a generation action on the schema would be refused, reading without writing.
 
-    The deploy chain asks before an update that skips ``--begin-generation`` runs
-    anything: without a pending generation its imports would take the append path and
-    write the served rows. The connection is the import's own, opened read-only.
-
-    Returns:
-        None when the schema has a pending generation and no invocation is writing it;
-        otherwise the reason the update cannot continue.
-
-    Raises:
-        ImportDBError: If the database cannot be read.
-    """
-    db = _open_configured_read_only()
-    try:
-        state = read_generation_state(db)
-        if state is None:
-            return f'"{db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row'
-        if state.pending is None:
-            return (
-                f'"{db.db_schema}" has no pending generation to continue (generation '
-                f'{state.generation} served); an update without --continue begins one'
-            )
-        return _writers_message(db)
-    finally:
-        db.close()
-
-
-def generation_command_problem(option: str) -> str | None:
-    """Say why a switch or a revert of the schema ``OPUS_CONFIG`` names would be refused.
-
-    The deploy chain asks before it stops the web service, so a command that would change
-    nothing leaves the site up. It asks what the command itself checks before it changes
+    The deploy chain asks, through ``opus_import --check``, before it acts: before it
+    stops the web service for a switch or a revert, so a command that would change nothing
+    leaves the site up; and before an update that skips ``--begin-generation`` writes
+    anything, since without a pending generation its imports would take the append path
+    and write the served rows. It asks what the action itself checks before it changes
     anything: the version row, the generation lock, the invocations writing the pending
-    generation, and whether a purge has started. The connection is the import's own,
-    opened read-only.
+    generation, and for a switch or a revert whether a purge has started.
 
     Parameters:
-        option: ``--switch-generation`` or ``--revert-generation``.
+        db: A connection to the schema, which may be read-only.
+        action: `CHECK_SWITCH`, `CHECK_REVERT` or `CHECK_CONTINUE`.
 
     Returns:
-        None when the command would run; otherwise the reason it would be refused.
+        None when the action would run; otherwise the reason it would be refused.
 
     Raises:
         ImportDBError: If the database cannot be read.
     """
-    db = _open_configured_read_only()
-    try:
-        state = read_generation_state(db)
-        if state is None:
-            return f'"{db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row'
-        if db.named_lock_holder(_generation_lock(db)) is not None:
-            return _lock_held_message(db)
-        writers = _writers_message(db)
-        if writers is not None:
-            return writers
-        if option == '--revert-generation':
-            return _revert_refusal(state) or unfinished_purge_problem(db, state)
+    state = read_generation_state(db)
+    if state is None:
+        return f'"{db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row'
+    if action == CHECK_CONTINUE and state.pending is None:
         return (
-            _switch_refusal(state)
-            or unfinished_purge_problem(db, state)
-            or unfinished_rebuild_problem(db, state)
+            f'"{db.db_schema}" has no pending generation to continue (generation '
+            f'{state.generation} served); an update without --continue begins one'
         )
-    finally:
-        db.close()
+    if db.named_lock_holder(_generation_lock(db)) is not None:
+        return _lock_held_message(db)
+    writers = _writers_message(db)
+    if writers is not None or action == CHECK_CONTINUE:
+        return writers
+    if action == CHECK_REVERT:
+        return _revert_refusal(state) or unfinished_purge_problem(db, state)
+    return (
+        _switch_refusal(state)
+        or unfinished_purge_problem(db, state)
+        or unfinished_rebuild_problem(db, state)
+    )

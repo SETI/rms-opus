@@ -20,6 +20,11 @@
 # and either would spoil the dump that ends the update when deploy.env names a peer.
 set -e
 
+# The status opus_import exits with when it refuses a generation command, or when
+# --check says an action would be refused, having changed nothing
+# (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+GENERATION_REFUSED_STATUS=3
+
 export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
@@ -113,15 +118,18 @@ echo
 echo
 
 # Asked of the schema before anything writes it: an import with no pending generation
-# takes the append path and writes the rows the site serves.
+# takes the append path and writes the rows the site serves. The check logs its answer,
+# which says why when the update cannot continue.
 if ${UPDATE_CONTINUE}; then
-    if ! PROBLEM=$(python -c "from opus_import.steps.do_generation import update_continue_problem as p; print(p() or '')"); then
-        echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
+    STATUS=0
+    opus_import --check continue || STATUS=$?
+    if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
+        echo "ERROR: the update cannot continue; the check above says why."
         echo "*** ABORTING: nothing was changed ***"
         exit 1
     fi
-    if [[ -n ${PROBLEM} ]]; then
-        echo "ERROR: the update cannot continue: ${PROBLEM}."
+    if [[ ${STATUS} -ne 0 ]]; then
+        echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
         echo "*** ABORTING: nothing was changed ***"
         exit 1
     fi

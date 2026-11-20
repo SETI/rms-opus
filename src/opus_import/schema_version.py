@@ -20,6 +20,10 @@ until a function here is called.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from opus_import.importdb.super import ImportDBSuper
 
 #: The generation of the table schemas this release imports and serves.
 SCHEMA_VERSION: int = 13
@@ -64,33 +68,23 @@ def schema_version_problem(rows: Sequence[Sequence[object]]) -> str | None:
     return f'{found}: {SCHEMA_VERSION_REMEDY}'
 
 
-def served_schema_version_problem() -> str | None:
-    """Say what keeps the schema ``OPUS_CONFIG`` names from being served, for the deploy check.
+def served_schema_version_problem(db: ImportDBSuper) -> str | None:
+    """Say what keeps a schema from being served, for the deploy check.
 
     The rows are judged by `schema_version_problem`, as the web application judges them, so
-    a deploy refuses a schema for exactly the reasons the application would. The connection
-    is the import's own, opened read-only, so the check needs nothing the import does not.
+    a deploy refuses a schema for exactly the reasons the application would. The deploy
+    chain asks through ``opus_import --check serve``, on the import's own connection opened
+    read-only, so the check needs nothing the import does not.
+
+    Parameters:
+        db: A connection to the schema, which may be read-only.
 
     Returns:
         None when the schema may be served; otherwise what `schema_version_problem` says.
 
     Raises:
-        ImportDBError: If the database cannot be read, including when the schema does
-            not exist, which the read-only connection does not create.
+        ImportDBError: If the database cannot be read.
     """
-    from opus_config import get_config
-    from opus_import import importdb
-
-    database = get_config().database
-    db = importdb.get_db(
-        database.brand,
-        database.host,
-        database.database,
-        database.schema,
-        database.user,
-        database.password,
-        read_only=True,
-    )
     rows: Sequence[Sequence[object]] = []
     if db.table_exists(SCHEMA_VERSION_TABLE):
         rows = db.read_rows(SCHEMA_VERSION_TABLE, ['version', 'state'])

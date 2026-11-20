@@ -1297,7 +1297,7 @@ def test_the_rows_in_id_ranges_are_deleted_from_every_child_table() -> None:
 
 
 class _ReadOnlyStateDB(_StateDB):
-    """A read-only stand-in the deploy chain's pre-check opens, naming who holds a lock;
+    """A read-only stand-in the deploy chain's check reads, naming who holds a lock;
     its tables are a switch's __prev tables unless given."""
 
     def __init__(
@@ -1374,61 +1374,56 @@ def test_the_deploy_chains_pre_check_names_what_the_command_would_refuse(
 ) -> None:
     """The version row, the generation lock and the live writers, read without writing."""
     db = _ReadOnlyStateDB(row, lock_holder=lock_holder)
-    opened: list[dict[str, Any]] = []
-
-    def get_db(*args: Any, **kwargs: Any) -> _ReadOnlyStateDB:
-        opened.append(kwargs)
-        return db
-
-    monkeypatch.setattr(importdb, 'get_db', get_db)
     monkeypatch.setattr(do_generation, '_alive_writers', lambda db: alive)
-    found = do_generation.generation_command_problem(f'{option}-generation')
+    found = do_generation.generation_problem(db, option.removeprefix('--'))  # type: ignore[arg-type]
     if problem is None:
         assert found is None
     else:
         assert found is not None
         assert problem in found
-    assert opened == [{'read_only': True}]
-    assert db.closed
     assert db.events == []
 
 
 @pytest.mark.parametrize(
-    ('row', 'alive', 'problem'),
+    ('row', 'lock_holder', 'alive', 'problem'),
     [
-        (_ready(pending_generation=2, pending_state=PENDING_WRITING), [], None),
-        (_ready(pending_generation=2, pending_state=PENDING_READY), [], None),
-        (_ready(), [], 'has no pending generation to continue (generation 1 served)'),
-        (_ready(pending_generation=2, pending_state=PENDING_WRITING), [7], 'import_process 7'),
-        (None, [], 'has no single schema_version row'),
+        (_ready(pending_generation=2, pending_state=PENDING_WRITING), None, [], None),
+        (_ready(pending_generation=2, pending_state=PENDING_READY), None, [], None),
+        (_ready(), None, [], 'has no pending generation to continue (generation 1 served)'),
+        (
+            _ready(pending_generation=2, pending_state=PENDING_WRITING),
+            41,
+            [],
+            'another generation command holds',
+        ),
+        (
+            _ready(pending_generation=2, pending_state=PENDING_WRITING),
+            None,
+            [7],
+            'import_process 7',
+        ),
+        (None, None, [], 'has no single schema_version row'),
     ],
-    ids=['writing', 'ready', 'none-pending', 'writer', 'no-row'],
+    ids=['writing', 'ready', 'none-pending', 'locked', 'writer', 'no-row'],
 )
 def test_an_update_continues_only_a_pending_generation_no_invocation_is_writing(
     monkeypatch: pytest.MonkeyPatch,
     row: tuple[Any, ...] | None,
+    lock_holder: int | None,
     alive: list[int],
     problem: str | None,
 ) -> None:
-    """The version row and the live writers, read without writing: an update that skips
-    --begin-generation with nothing pending would append to the served rows."""
-    db = _ReadOnlyStateDB(row, lock_holder=None)
-    opened: list[dict[str, Any]] = []
-
-    def get_db(*args: Any, **kwargs: Any) -> _ReadOnlyStateDB:
-        opened.append(kwargs)
-        return db
-
-    monkeypatch.setattr(importdb, 'get_db', get_db)
+    """The version row, the generation lock and the live writers, read without writing:
+    an update that skips --begin-generation with nothing pending would append to the
+    served rows."""
+    db = _ReadOnlyStateDB(row, lock_holder=lock_holder)
     monkeypatch.setattr(do_generation, '_alive_writers', lambda db: alive)
-    found = do_generation.update_continue_problem()
+    found = do_generation.generation_problem(db, do_generation.CHECK_CONTINUE)  # type: ignore[arg-type]
     if problem is None:
         assert found is None
     else:
         assert found is not None
         assert problem in found
-    assert opened == [{'read_only': True}]
-    assert db.closed
     assert db.events == []
 
 
@@ -1439,15 +1434,13 @@ def test_the_deploy_chains_pre_check_refuses_a_switch_or_revert_once_the_purge_h
     and the switch would be refused, and the purge finishes the work while the site
     serves."""
     db = _ReadOnlyStateDB(_ready(generation=2, revertible=1), lock_holder=None, tables=())
-    monkeypatch.setattr(importdb, 'get_db', lambda *args, **kwargs: db)
     monkeypatch.setattr(do_generation, '_alive_writers', lambda db: [])
-    found = do_generation.generation_command_problem('--revert-generation')
+    found = do_generation.generation_problem(db, do_generation.CHECK_REVERT)  # type: ignore[arg-type]
     assert found is not None
     assert 'the purge of the rows generation 2 retired has started' in found
-    found = do_generation.generation_command_problem('--switch-generation')
+    found = do_generation.generation_problem(db, do_generation.CHECK_SWITCH)  # type: ignore[arg-type]
     assert found is not None
     assert 'the purge of the rows generation 2 retired has started' in found
-    assert db.closed
     assert db.events == []
 
 

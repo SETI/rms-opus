@@ -30,6 +30,10 @@ _RESTART_CACHE = f'sudo systemctl restart {CACHE_SERVICE}'
 _START = f'sudo systemctl start {WEB_SERVICE}'
 _WARM = 'opus_manage warm_search'
 
+#: The checks asked before the stop.
+_CHECK_SWITCH = 'opus_import --check switch'
+_CHECK_REVERT = 'opus_import --check revert'
+
 #: The two remedies a failed switch names.
 _AGAIN = 'run promote_generation.sh again, which completes the'
 _REVERT = 'run promote_generation.sh --revert.'
@@ -47,21 +51,31 @@ def test_the_step_runs_while_the_web_service_is_stopped(
     """Stop, the switch or the revert, the cache restart, the start, then the warm-up."""
     status, output, ran = run_deploy(tmp_path, _SCRIPT, *arguments)
     assert status == 0, output
-    assert ran == [_STOP, f'opus_import {step}', _RESTART_CACHE, _START, _WARM]
+    assert ran == [
+        f'opus_import --check {step[2:].removesuffix("-generation")}',
+        _STOP,
+        f'opus_import {step}',
+        _RESTART_CACHE,
+        _START,
+        _WARM,
+    ]
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
-@pytest.mark.parametrize('arguments', [(), ('--revert',)], ids=['switch', 'revert'])
+@pytest.mark.parametrize(
+    ('arguments', 'check'), [((), 'switch'), (('--revert',), 'revert')], ids=['switch', 'revert']
+)
 def test_a_step_opus_import_would_refuse_leaves_the_web_service_up(
-    tmp_path: Path, arguments: tuple[str, ...]
+    tmp_path: Path, arguments: tuple[str, ...], check: str
 ) -> None:
     """Asked first, a refusal stops nothing and runs nothing, and says why."""
     status, output, ran = run_deploy(
-        tmp_path, _SCRIPT, *arguments, generation_refusal='no pending generation is ready'
+        tmp_path, _SCRIPT, *arguments, check_refusal='no pending generation is ready'
     )
     assert status == 1
-    assert ran == []
-    assert 'would be refused: no pending generation is ready' in output
+    assert ran == [f'opus_import --check {check}']
+    assert f'--check {check}: refused: no pending generation is ready' in output
+    assert 'would be refused; the check above says why' in output
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
@@ -71,7 +85,7 @@ def test_a_failed_switch_leaves_the_web_service_stopped_and_names_both_ways_on(
     """No start, a non-zero exit, and the two remedies: run it again, or revert."""
     status, output, ran = run_deploy(tmp_path, _SCRIPT, failing_import='--switch-generation')
     assert status == 1
-    assert ran == [_STOP, 'opus_import --switch-generation']
+    assert ran == [_CHECK_SWITCH, _STOP, 'opus_import --switch-generation']
     assert _AGAIN in output
     assert _REVERT in output
 
@@ -89,7 +103,12 @@ def test_a_step_refused_after_the_stop_starts_the_web_service_it_stopped(
     is named, and the exit is non-zero."""
     status, output, ran = run_deploy(tmp_path, _SCRIPT, *arguments, refused_import=step)
     assert status == 1
-    assert ran == [_STOP, f'opus_import {step}', _START]
+    assert ran == [
+        f'opus_import --check {step[2:].removesuffix("-generation")}',
+        _STOP,
+        f'opus_import {step}',
+        _START,
+    ]
     assert 'was refused, and changed nothing' in output
     assert 'half-switched' not in output
 
@@ -103,7 +122,7 @@ def test_a_refused_step_leaves_a_service_that_was_already_stopped_stopped(
         tmp_path, _SCRIPT, refused_import='--switch-generation', web_service_active=False
     )
     assert status == 1
-    assert ran == [_STOP, 'opus_import --switch-generation']
+    assert ran == [_CHECK_SWITCH, _STOP, 'opus_import --switch-generation']
     assert 'was refused, and changed nothing' in output
     assert 'stays stopped' in output
 
@@ -123,7 +142,7 @@ def test_a_failed_revert_leaves_the_web_service_stopped(tmp_path: Path) -> None:
         tmp_path, _SCRIPT, '--revert', failing_import='--revert-generation'
     )
     assert status == 1
-    assert ran == [_STOP, 'opus_import --revert-generation']
+    assert ran == [_CHECK_REVERT, _STOP, 'opus_import --revert-generation']
     assert 'Run promote_generation.sh --revert again' in output
 
 
@@ -170,7 +189,7 @@ def test_a_stop_sudo_refuses_changes_nothing(tmp_path: Path) -> None:
         tmp_path, _SCRIPT, failing_sudo=f'systemctl stop {WEB_SERVICE}'
     )
     assert status == 1
-    assert ran == [_STOP]
+    assert ran == [_CHECK_SWITCH, _STOP]
     assert f'sudo systemctl stop {WEB_SERVICE} failed with status 1' in output
     assert 'nothing was changed' in output
 
@@ -183,7 +202,7 @@ def test_a_start_sudo_refuses_after_the_switch_says_the_site_is_down(tmp_path: P
         tmp_path, _SCRIPT, failing_sudo=f'systemctl start {WEB_SERVICE}'
     )
     assert status == 1
-    assert ran == [_STOP, 'opus_import --switch-generation', _RESTART_CACHE, _START]
+    assert ran == [_CHECK_SWITCH, _STOP, 'opus_import --switch-generation', _RESTART_CACHE, _START]
     assert 'opus_import --switch-generation succeeded, and the site is down' in output
     assert f'Start it with: sudo systemctl start {WEB_SERVICE}' in output
 
@@ -195,7 +214,14 @@ def test_a_cache_restart_sudo_refuses_is_a_warning(tmp_path: Path) -> None:
         tmp_path, _SCRIPT, failing_sudo=f'systemctl restart {CACHE_SERVICE}'
     )
     assert status == 0, output
-    assert ran == [_STOP, 'opus_import --switch-generation', _RESTART_CACHE, _START, _WARM]
+    assert ran == [
+        _CHECK_SWITCH,
+        _STOP,
+        'opus_import --switch-generation',
+        _RESTART_CACHE,
+        _START,
+        _WARM,
+    ]
     assert f'WARNING: {CACHE_SERVICE} did not restart' in output
 
 
@@ -211,5 +237,5 @@ def test_a_start_sudo_refuses_after_a_refused_step_says_the_site_is_down(
         failing_sudo=f'systemctl start {WEB_SERVICE}',
     )
     assert status == 1
-    assert ran == [_STOP, 'opus_import --switch-generation', _START]
+    assert ran == [_CHECK_SWITCH, _STOP, 'opus_import --switch-generation', _START]
     assert f'The site is down. Start it with: sudo systemctl start {WEB_SERVICE}' in output

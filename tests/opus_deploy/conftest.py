@@ -102,7 +102,7 @@ def run_deploy(
     deploy_env: dict[str, str] | None = None,
     deployed_schema: str | None = 'served',
     deployed_release: str = '3.25.0',
-    generation_refusal: str = '',
+    check_refusal: str = '',
     failing_sudo: str | None = None,
 ) -> tuple[int, str, list[str]]:
     """Run a deploy script with its helpers stubbed and its commands faked.
@@ -126,9 +126,9 @@ def run_deploy(
             None for an ``opus.toml`` that names none.
         deployed_release: The rms-opus release the deployed installation's own
             interpreter reports; empty for one that cannot report it.
-        generation_refusal: What the fake ``python`` prints when asked why a switch or a
-            revert would be refused, or why an update cannot continue; empty when it
-            would run. It is not recorded.
+        check_refusal: Why the fake ``opus_import --check`` says the action would be
+            refused, logging it and exiting with the refused status; empty when it would
+            run.
         failing_sudo: The arguments, joined by spaces, for which the fake ``sudo`` exits
             1, as sudo does when its password is mistyped; every other call exits 0.
 
@@ -195,14 +195,15 @@ def run_deploy(
                 f'exit {GENERATION_REFUSED_EXIT_STATUS}'
                 if refused_import is not None
                 else '',
+                f'[[ $1 == --check ]] && {{ echo "INFO | --check $2: refused: "'
+                f'{shlex.quote(check_refusal)}; exit {GENERATION_REFUSED_EXIT_STATUS}; }}'
+                if check_refusal
+                else '',
             ]
         ),
     }
     for command in FAKE_COMMANDS:
         write_recorder(fake_bin / command, calls, statuses.get(command, ''))
-    fake_python = fake_bin / 'python'
-    fake_python.write_text(f'#!/bin/sh\necho {shlex.quote(generation_refusal)}\n', encoding='utf-8')
-    fake_python.chmod(0o755)
     fake_systemctl = fake_bin / 'systemctl'
     fake_systemctl.write_text(
         f'#!/bin/sh\nexit {0 if web_service_active else 3}\n', encoding='utf-8'
