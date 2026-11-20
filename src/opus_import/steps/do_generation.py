@@ -868,6 +868,49 @@ def revert_generation(ctx: ImportContext) -> None:
     load_generation_state(ctx)
 
 
+def _open_configured_read_only() -> ImportDBSuper:
+    """Open the schema ``OPUS_CONFIG`` names on the import's own connection, read-only."""
+    database = get_config().database
+    return importdb.get_db(
+        database.brand,
+        database.host,
+        database.database,
+        database.schema,
+        database.user,
+        database.password,
+        read_only=True,
+    )
+
+
+def update_continue_problem() -> str | None:
+    """Say why an incremental update cannot continue in the schema ``OPUS_CONFIG`` names.
+
+    The deploy chain asks before an update that skips ``--begin-generation`` runs
+    anything: without a pending generation its imports would take the append path and
+    write the served rows. The connection is the import's own, opened read-only.
+
+    Returns:
+        None when the schema has a pending generation and no invocation is writing it;
+        otherwise the reason the update cannot continue.
+
+    Raises:
+        ImportDBError: If the database cannot be read.
+    """
+    db = _open_configured_read_only()
+    try:
+        state = read_generation_state(db)
+        if state is None:
+            return f'"{db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row'
+        if state.pending is None:
+            return (
+                f'"{db.db_schema}" has no pending generation to continue (generation '
+                f'{state.generation} served); an update without --continue begins one'
+            )
+        return _writers_message(db)
+    finally:
+        db.close()
+
+
 def generation_command_problem(option: str) -> str | None:
     """Say why a switch or a revert of the schema ``OPUS_CONFIG`` names would be refused.
 
@@ -886,20 +929,11 @@ def generation_command_problem(option: str) -> str | None:
     Raises:
         ImportDBError: If the database cannot be read.
     """
-    database = get_config().database
-    db = importdb.get_db(
-        database.brand,
-        database.host,
-        database.database,
-        database.schema,
-        database.user,
-        database.password,
-        read_only=True,
-    )
+    db = _open_configured_read_only()
     try:
         state = read_generation_state(db)
         if state is None:
-            return f'"{database.schema}" has no single {SCHEMA_VERSION_TABLE} row'
+            return f'"{db.db_schema}" has no single {SCHEMA_VERSION_TABLE} row'
         if db.named_lock_holder(_generation_lock(db)) is not None:
             return _lock_held_message(db)
         writers = _writers_message(db)

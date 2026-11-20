@@ -224,7 +224,7 @@ The scripts
     ``rms-opus`` separately, so leaving it off the second is how a release ends up
     serving a database another release built.
 
-``run_incremental_opus_update.sh [<version_spec>] [--drop <bundle>[,<bundle>...]] [<bundle> ...]``
+``run_incremental_opus_update.sh [<version_spec>] [--continue] [--drop <bundle>[,<bundle>...]] [<bundle> ...]``
     **Updates bundles of the database being served**, without a full import: each
     ``<bundle>`` is imported, replacing the copy the database holds or adding one it
     lacks, and each bundle ``--drop`` names is removed. A bundle named both ways is
@@ -234,11 +234,19 @@ The scripts
     ``promote_generation.sh`` switches it in
     (:ref:`user_guide_deployment_incremental_update`).
 
+    ``--continue`` writes into the pending generation an earlier update began instead of
+    beginning one: it runs every command below but ``--begin-generation``. It is how an
+    update that stopped part way goes on once its cause is fixed, named again with the
+    bundles it named. Before writing anything it asks whether the served database has a
+    pending generation that no ``opus_import`` is still writing, and aborts, having
+    changed nothing, when it has not: an import with no pending generation would write
+    the rows the site serves.
+
     It builds an installation of the release under ``staged/`` naming the served
     database, with a log directory of its own, and runs these against it, each as its
     own process, stopping at the first that fails or writes to ``ERRORS.log``::
 
-        opus_import --begin-generation
+        opus_import --begin-generation              # unless --continue is given
         opus_import --delete-bundles <bundle> ...   # when --drop names any
         opus_import --import <bundle> ...           # when bundles are named
         opus_import --finalize
@@ -642,11 +650,14 @@ only when you switch it in. The steps, from the deploy directory::
 1. **Update.** ``run_incremental_opus_update.sh`` imports the bundles it names and drops
    the ones ``--drop`` names, in a pending generation the site does not show, under the
    release being served unless given a version specifier. It refuses to start while a
-   pending generation exists, or while the last switch has not been purged.
+   pending generation exists, or while the last switch has not been purged; with
+   ``--continue`` it writes into the pending generation instead, and refuses to start
+   without one.
 2. **Check.** Read its log, and ``ERRORS.log`` in the log directory it names. It stops at
    the first command that fails or logs an error, before the generation is marked ready
-   to switch, and its log names the commands left to run. Run them from the installation
-   the update built, or throw the generation away (below).
+   to switch, and its log names the commands left to run. Once the cause is fixed, run
+   the update again with ``--continue`` and the same bundles, or run those commands from
+   the installation the update built, or throw the generation away (below).
 3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run, and
    stops nothing when it would be refused: no generation ready to switch, another
    generation command running, an ``opus_import`` still writing the update, or a purge

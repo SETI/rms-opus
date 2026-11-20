@@ -5,7 +5,7 @@
 # switches it in. run_incremental_opus_update.sh runs this detached; it is not what an
 # operator types.
 #
-# Usage: _run_incremental_opus_update.sh [<version_spec>]
+# Usage: _run_incremental_opus_update.sh [<version_spec>] [--continue]
 #            [--drop <bundle>[,<bundle>...]] [<bundle> ...]
 #
 # The update runs under an installation of its own, built beside the one being served
@@ -85,6 +85,10 @@ echo "Hostname:" ${HOSTNAME}
 echo
 echo "Version spec:" "${OPUS_VERSION_SPEC}"
 echo
+if ${UPDATE_CONTINUE}; then
+    echo "Continuing the pending generation an earlier update began"
+    echo
+fi
 echo "Bundles to import:" "${UPDATE_BUNDLES[*]:-(none)}"
 echo "Bundles to drop:" "${UPDATE_DROPS[*]:-(none)}"
 echo
@@ -107,6 +111,21 @@ echo
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh
 echo
 echo
+
+# Asked of the schema before anything writes it: an import with no pending generation
+# takes the append path and writes the rows the site serves.
+if ${UPDATE_CONTINUE}; then
+    if ! PROBLEM=$(python -c "from opus_import.steps.do_generation import update_continue_problem as p; print(p() or '')"); then
+        echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
+        echo "*** ABORTING: nothing was changed ***"
+        exit 1
+    fi
+    if [[ -n ${PROBLEM} ]]; then
+        echo "ERROR: the update cannot continue: ${PROBLEM}."
+        echo "*** ABORTING: nothing was changed ***"
+        exit 1
+    fi
+fi
 
 echo "======================================="
 echo "=== WRITE THE NEW IMPORT GENERATION ==="

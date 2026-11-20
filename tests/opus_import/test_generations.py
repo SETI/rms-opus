@@ -1393,6 +1393,45 @@ def test_the_deploy_chains_pre_check_names_what_the_command_would_refuse(
     assert db.events == []
 
 
+@pytest.mark.parametrize(
+    ('row', 'alive', 'problem'),
+    [
+        (_ready(pending_generation=2, pending_state=PENDING_WRITING), [], None),
+        (_ready(pending_generation=2, pending_state=PENDING_READY), [], None),
+        (_ready(), [], 'has no pending generation to continue (generation 1 served)'),
+        (_ready(pending_generation=2, pending_state=PENDING_WRITING), [7], 'import_process 7'),
+        (None, [], 'has no single schema_version row'),
+    ],
+    ids=['writing', 'ready', 'none-pending', 'writer', 'no-row'],
+)
+def test_an_update_continues_only_a_pending_generation_no_invocation_is_writing(
+    monkeypatch: pytest.MonkeyPatch,
+    row: tuple[Any, ...] | None,
+    alive: list[int],
+    problem: str | None,
+) -> None:
+    """The version row and the live writers, read without writing: an update that skips
+    --begin-generation with nothing pending would append to the served rows."""
+    db = _ReadOnlyStateDB(row, lock_holder=None)
+    opened: list[dict[str, Any]] = []
+
+    def get_db(*args: Any, **kwargs: Any) -> _ReadOnlyStateDB:
+        opened.append(kwargs)
+        return db
+
+    monkeypatch.setattr(importdb, 'get_db', get_db)
+    monkeypatch.setattr(do_generation, '_alive_writers', lambda db: alive)
+    found = do_generation.update_continue_problem()
+    if problem is None:
+        assert found is None
+    else:
+        assert found is not None
+        assert problem in found
+    assert opened == [{'read_only': True}]
+    assert db.closed
+    assert db.events == []
+
+
 def test_the_deploy_chains_pre_check_refuses_a_switch_or_revert_once_the_purge_has_started(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

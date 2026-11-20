@@ -127,7 +127,8 @@ def run_deploy(
         deployed_release: The rms-opus release the deployed installation's own
             interpreter reports; empty for one that cannot report it.
         generation_refusal: What the fake ``python`` prints when asked why a switch or a
-            revert would be refused; empty when it would run. It is not recorded.
+            revert would be refused, or why an update cannot continue; empty when it
+            would run. It is not recorded.
         failing_sudo: The arguments, joined by spaces, for which the fake ``sudo`` exits
             1, as sudo does when its password is mistyped; every other call exits 0.
 

@@ -30,7 +30,7 @@ _VERSION_SPEC = 'import_and_deploy/_version_spec.sh'
 
 #: The usage line the update's scripts print.
 _USAGE = (
-    'Usage: run_incremental_opus_update.sh [<version_spec>] '
+    'Usage: run_incremental_opus_update.sh [<version_spec>] [--continue] '
     '[--drop <bundle>[,<bundle>...]] [<bundle> ...]'
 )
 
@@ -137,6 +137,46 @@ def test_the_update_runs_its_invocations_in_order(
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
 @pytest.mark.parametrize(
+    ('arguments', 'middle'),
+    [
+        ('--continue COISS_2001', ['--import COISS_2001']),
+        ('COISS_2001 --continue', ['--import COISS_2001']),
+        (
+            '==3.25.0 --continue --drop COISS_2009 COISS_2001',
+            ['--delete-bundles COISS_2009', '--import COISS_2001'],
+        ),
+    ],
+    ids=['first', 'after-a-bundle', 'with-version-and-drop'],
+)
+def test_a_continued_update_begins_no_generation(
+    tmp_path: Path, arguments: str, middle: list[str]
+) -> None:
+    """--continue leaves out --begin-generation and nothing else."""
+    status, output, ran = _run_steps(tmp_path, _update(arguments))
+    assert status == 0, output
+    assert ran == [*[f'opus_import {step}' for step in middle], *_CLOSING]
+    assert 'DONE' in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+@pytest.mark.parametrize(
+    ('arguments', 'continuing'),
+    [('COISS_2001', 'false'), ('--continue COISS_2001', 'true')],
+    ids=['without', 'with'],
+)
+def test_the_parse_says_whether_the_update_continues(
+    tmp_path: Path, arguments: str, continuing: str
+) -> None:
+    """UPDATE_CONTINUE is set either way, since the runner reads it."""
+    status, output, _ran = _run_steps(
+        tmp_path, f'parse_update_arguments {arguments}; echo "[$UPDATE_CONTINUE]"'
+    )
+    assert status == 0, output
+    assert output.strip() == f'[{continuing}]'
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+@pytest.mark.parametrize(
     ('arguments', 'version_spec'),
     [
         ('==3.25.0 COISS_2001', '==3.25.0'),
@@ -173,6 +213,8 @@ def test_a_leading_version_specifier_is_not_a_bundle(
         '@a..b COISS_2001',
         'COISS_2001,--scorched-earth,--yes',
         '--drop COISS_2001,--scorched-earth,--yes',
+        '--continue',
+        '--continue ==3.25.0 COISS_2001',
     ],
     ids=[
         'nothing',
@@ -187,6 +229,8 @@ def test_a_leading_version_specifier_is_not_a_bundle(
         'not-a-git-ref',
         'option-in-a-bundle-list',
         'option-in-a-drop-list',
+        'continue-without-a-bundle',
+        'version-after-continue',
     ],
 )
 def test_arguments_that_name_nothing_to_do_print_the_usage_line(
@@ -219,6 +263,22 @@ def test_a_failed_invocation_stops_the_update_and_names_what_is_left(tmp_path: P
     assert '    opus_import --write-schema-version\n' in output
     assert '    opus_import --abandon-generation\n' in output
     assert 'DONE' not in output
+
+
+@pytest.mark.skipif(BASH is None, reason='needs bash')
+def test_a_continued_update_that_fails_first_names_the_generation_it_left(
+    tmp_path: Path,
+) -> None:
+    """Its first invocation writes the pending generation, so the message offers the
+    continue and the abandon, not that nothing was begun."""
+    status, output, ran = _run_steps(
+        tmp_path, _update('--continue COISS_2001'), failing='--import COISS_2001'
+    )
+    assert status != 0
+    assert ran == ['opus_import --import COISS_2001']
+    assert 'No generation was begun' not in output
+    assert 'the update again with --continue' in output
+    assert '    opus_import --abandon-generation\n' in output
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')

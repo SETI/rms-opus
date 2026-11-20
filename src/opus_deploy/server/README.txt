@@ -220,6 +220,11 @@ update runs detached, mails its log, and holds the deploy lock until it
 ends. Without a version spec it installs what is being served: its release,
 or the git commit it was built from.
 
+An update that stopped part way goes on, once its cause is fixed, when run
+again with --continue and the same bundles: it writes into the pending
+generation instead of beginning one, and aborts, having changed nothing,
+when the served database has no pending generation.
+
 promote_generation.sh takes the deploy lock, asks whether the switch would
 run (and stops nothing when it would be refused), stops the web server,
 switches the generation in, restarts the cache service and the web server,
