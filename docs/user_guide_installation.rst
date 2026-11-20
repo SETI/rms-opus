@@ -469,8 +469,10 @@ done. ``opus_import_all --dry-run`` prints what the given arguments would run wi
 running it. :ref:`dev_guide_import_full_run` describes each step and is the reference
 for every ``opus_import_all`` option, and ``opus_import_all --help`` lists them. An
 option ``opus_import_all`` does not define is passed on to the ``opus_import``
-invocations that read the holdings -- the erase, the registration and every importer --
-and not to the ones that finish the database or return bundles to the queue.
+invocations that import -- the erase, the registration and every importer -- and not to
+the ones that finish the database or return bundles to the queue. Those read the
+holdings too, at the roots the configuration names, so a holdings option given to the
+importers does not reach them.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
 ``==<release>`` for a particular release, omitted for the newest. ``@`` and a git branch,

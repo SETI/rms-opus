@@ -1018,7 +1018,7 @@ Every invocation that registers or imports bundles creates the table when the sc
 The ``import_process`` Table
 ----------------------------
 
-The ``import_process`` table records two kinds of process. An **importer** is an ``opus_import --join`` process drawing bundles from the queue (:ref:`dev_guide_import_full_run`). A **writer** is any other invocation that writes a schema with a version row -- an import, a registration, a requeue, a delete, the finalization or one of its steps, validation or the stamp -- which records itself so that no generation command runs beside it (:ref:`dev_guide_import_running_generations`). Only the import reads the table; the web application never does, and ``SCHEMA_VERSION`` does not cover it, since the import creates it when the schema lacks it.
+The ``import_process`` table records two kinds of process. An **importer** is an ``opus_import --join`` process drawing bundles from the queue (:ref:`dev_guide_import_full_run`). A **writer** is an invocation, or a recovery, that writes a schema with a version row and records itself so that no generation command runs beside it: an import, a registration, a requeue, a delete, ``--finalize``, ``--create-indexes``, ``--create-param-info``, ``--create-partables``, ``--create-table-names``, validation, the stamp, and the recovery of a lost importer's bundle (:ref:`dev_guide_import_running_generations`). Only the import reads the table; the web application never does, and ``SCHEMA_VERSION`` does not cover it, since the import creates it when the schema lacks it.
 
 ::
 

@@ -498,9 +498,9 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         help='with --status, first return the bundles of lost importers to the queue',
     )
     # Named exactly as the pipeline names it, and not passed through: an option this
-    # parser did not recognize would reach only the steps that read the holdings and not
-    # the ones that finish the database, which would finish a different database from
-    # the one just imported.
+    # parser did not recognize would reach only the steps that import and not the ones
+    # that finish the database, which would finish a different database from the one
+    # just imported.
     parser.add_argument(
         '--override-db-schema',
         metavar='SCHEMA',

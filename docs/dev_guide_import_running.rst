@@ -583,7 +583,9 @@ process, in order:
 Each generation command holds a server-wide named lock on the schema while it runs, and
 is refused while another holds it. Every invocation that writes a schema with a version
 row -- the pending generation or the served rows: an import, a registration, a requeue, a
-delete, the finalization or one of its steps, validation or the stamp -- records itself in
+delete, ``--finalize``, ``--create-indexes``, ``--create-param-info``,
+``--create-partables``, ``--create-table-names``, validation or the stamp, and the
+recovery of a lost importer's bundle -- records itself in
 ``import_process`` with a lock of its own, while briefly holding the generation lock, and
 a generation command is refused while any of them runs, so no generation is begun under a
 plain append. It reads the version row again under that lock, and is refused when the
@@ -942,8 +944,12 @@ Without it, running ``opus_import_all`` again after an interruption registers no
 new and imports only what is not ``done``.
 
 **Other options are passed on.** An option ``opus_import_all`` does not define is added
-to the ``opus_import`` invocations that read the holdings -- the erase, the registration
-and every importer -- and to no other: ``--finish`` and ``--requeue`` run without it.
+to the ``opus_import`` invocations that import -- the erase, the registration and every
+importer -- and to no other: ``--finish`` and ``--requeue`` run without it. Those read the
+holdings too (every invocation does but the carry-over and the generation commands), at
+the roots the configuration names, so a holdings option such as
+``--override-pds3-data-dir`` reaches the importers and not them, and the configured roots
+have to be readable for the database to be finished.
 ``opus_import --exclude-bundles`` and ``--dont-use-shelves-only`` reach a run this way.
 ``--override-db-schema`` is ``opus_import_all``'s own option, and every invocation it
 runs carries it, the closing ones included.
