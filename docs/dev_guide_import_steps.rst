@@ -1032,9 +1032,7 @@ The checks, in this order:
     category, which describes them as every body's does; with no body there is none,
     and those columns are not checked. It then looks for a duplicated
     ``(category_name, disp_order)`` among displayed parameters and for a duplicated
-    ``slug``. Both duplicate scans use a subquery that skips its first match, so they
-    report a value shared by three or more rows and stay silent about one shared by
-    exactly two.
+    ``slug``, naming every row that shares its value with another.
 
 :func:`~opus_import.steps.do_validate.validate_nulls`
     Reports a column declared to allow NULLs in which no NULL was found, at **info**
