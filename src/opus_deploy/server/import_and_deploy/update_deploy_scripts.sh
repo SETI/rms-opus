@@ -8,14 +8,14 @@
 # a step that a release added goes missing. **This is therefore the first command of
 # every upgrade**, before the deploy itself:
 #
-#     ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
-#     ./import_and_deploy/deploy_new_code_only.sh  ==3.24.1
+#     ./import_and_deploy/update_deploy_scripts.sh ==<release>
+#     ./import_and_deploy/deploy_new_code_only.sh  ==<release>
 #
 # The version spec may name a git revision instead, "@" and a branch, tag or commit
 # (_version_spec.sh), for deploying one with no release:
 #
-#     ./import_and_deploy/update_deploy_scripts.sh @db-perf-pr-23
-#     ./import_and_deploy/deploy_new_code_only.sh  @db-perf-pr-23
+#     ./import_and_deploy/update_deploy_scripts.sh @<branch, tag or commit>
+#     ./import_and_deploy/deploy_new_code_only.sh  @<branch, tag or commit>
 #
 # It upgrades rms-opus in the environment named by OPUS_DEPLOY_VENV -- the one these
 # commands come from, not any installation that serves anything -- and then rewrites

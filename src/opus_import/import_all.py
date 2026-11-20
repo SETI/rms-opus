@@ -3,7 +3,7 @@
 A full-holdings import is not one command. ``opus_import_all`` runs it from the package,
 so that it is available wherever the distribution is installed::
 
-    OPUS_CONFIG=/opt/opus/opus.toml opus_import_all --override-db-schema opus3_new
+    OPUS_CONFIG=<installation>/opus.toml opus_import_all --override-db-schema opus3_new
 
 With no step named it is the **coordinator**:
 
@@ -14,13 +14,13 @@ With no step named it is the **coordinator**:
    leaves registered bundles alone, so a rerun after an interruption resumes.
 2. **Divide.** ``--workers`` is the total of worker processes on this computer
    (``[import] workers`` when not given), lowered to the ceiling every import obeys
-   when it is above it. It starts ``--importers`` importers (``[import] importers`` when not given),
-   capped at that total, and divides the total among them as evenly as whole numbers
-   allow (`divide`). Each importer is an ``opus_import --join`` process drawing bundles
-   from the registry's queue, the largest pending first.
+   when it is above it. It starts ``--importers`` importers (``[import] importers`` when
+   not given), capped at that total, and divides the total among them as evenly as whole
+   numbers allow (`divide`). Each importer is an ``opus_import --join`` process drawing
+   bundles from the registry's queue, the largest pending first.
 3. **Track.** Every few seconds it reads the registry and the importers' table
-   (`opus_import.coordinator`): on a terminal it redraws a table of the running importers under a totals line; otherwise
-   it logs a line per finished bundle and the totals every
+   (`opus_import.coordinator`): on a terminal it redraws a table of the running importers
+   under a totals line; otherwise it logs a line per finished bundle and the totals every
    ``[import] status_interval_minutes``.
 4. **Recover.** An importer whose lock is free while its row says it is running is
    lost; its bundle's rows are deleted and the bundle returns to the queue, or fails at
@@ -498,9 +498,9 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         help='with --status, first return the bundles of lost importers to the queue',
     )
     # Named exactly as the pipeline names it, and not passed through: an option this
-    # parser did not recognize would reach only the steps that read the holdings and not
-    # the ones that finish the database, which would finish a different database from
-    # the one just imported.
+    # parser did not recognize would reach only the steps that import and not the ones
+    # that finish the database, which would finish a different database from the one
+    # just imported.
     parser.add_argument(
         '--override-db-schema',
         metavar='SCHEMA',

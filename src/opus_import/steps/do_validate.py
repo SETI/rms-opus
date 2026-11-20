@@ -738,8 +738,11 @@ def _log_scope(ctx: ImportContext) -> None:
 def do_validate(ctx: ImportContext) -> bool:
     """Run every validation check, driven by ``--validate``.
 
-    Every check runs, so one run reports every failure; each is logged at error level. While
-    a generation is pending the checks read what the update wrote
+    Every check runs, so one run reports every failure. A failure is logged at error
+    level, except two findings that are not faults in the data: a filter whose wavelengths
+    disagree is logged as a warning (`validate_filter_wavelength_consistency`), and a
+    nullable column that holds no NULL at info level (`validate_nulls`). Neither fails the
+    step. While a generation is pending the checks read what the update wrote
     (`opus_import.validation_queries.GenerationScope`); while the rows the last switch
     retired await the purge, the served generation
     (`opus_import.validation_queries.served_generation_only`). Either is logged first.

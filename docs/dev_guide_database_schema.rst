@@ -107,9 +107,9 @@ While a generation is pending, or a switch's retired rows wait for the purge, it
       ... FROM obs_general_rows
       WHERE added_generation <= 4 AND (removed_generation IS NULL OR removed_generation > 4)
 
-The commands that change which rows the view shows re-create it: ``--begin-generation``, before the pending generation is recorded; ``--switch-generation`` and ``--revert-generation``, while the web service is stopped; ``--purge-generations`` and ``--abandon-generation``, once no other generation's rows remain (:ref:`dev_guide_import_steps_do_generation`). MySQL merges the view into each statement that names it, so the web application reads ``obs_general`` as a table, through ``obs_general_rows``'s keys; with no condition, a statement reads the table exactly as it would read the table itself. The child tables', ``cart``'s and the junction tables' foreign keys reference ``obs_general_rows``. The import reads and writes the base table under the name ``obs_general`` (:ref:`dev_guide_import_generations`), and creates the view whenever it creates the table. The child tables carry no generation, so while ``obs_general_rows`` holds rows outside the served generation, a statement that reads a child table outside a search's results joins the view on ``obs_general_id``. Neither generation column has a key: nearly every row passes the test, and the import finds a bundle's rows through ``bundle_id``.
+The commands that change which rows the view shows re-create it: ``--begin-generation``, before the pending generation is recorded; ``--switch-generation`` and ``--revert-generation``, while the web service is stopped; ``--purge-generations`` and ``--abandon-generation``, once no other generation's rows remain (:ref:`dev_guide_import_steps_do_generation`). MySQL merges the view into each statement that names it, so the web application reads ``obs_general`` as a table, through ``obs_general_rows``'s keys; with no condition, a statement reads the table exactly as it would read the table itself. The child tables', ``cart``'s and the junction tables' foreign keys reference ``obs_general_rows``. The import reads and writes the base table under the name ``obs_general`` (:ref:`dev_guide_import_generations`), and creates the view whenever it creates the table. The child tables carry no generation, so while ``obs_general_rows`` holds rows outside the served generation, a statement that reads a child table outside a search's results joins the view on ``obs_general_id``. Neither generation column has a key: nearly every row passes the test, and the import finds a bundle's rows through ``bundle_id``. :mod:`opus_import.generations` names the view, the table and the generation columns.
 
-Here is an example of the schema for the ``obs_general_rows`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
+Here is the schema of the ``obs_general_rows`` table:
 
 ::
 
@@ -1000,7 +1000,7 @@ The fields are:
 * ``first_id``: The ``obs_general.id`` of the bundle's first observation. A bundle's range starts where the range of the bundle registered before it ends, so the ranges ascend in ``bundle_number`` order and the copy of a shared OPUS ID that finalization keeps, the one with the highest ``id``, is the one from the bundle registered later.
 * ``id_capacity``: How many ids, from ``first_id``, the bundle's observations may take: a hundred for each row of ``size_estimate``. A bundle that needs more fails its import, naming its capacity.
 * ``state``: ``pending`` once the bundle is registered and before an import takes it; ``importing`` while the bundle is deleted and loaded; ``done`` once it is imported without logging an error, or under ``--ignore-errors``; ``failed`` when its import failed or logged an error.
-* ``started_at`` and ``finished_at``: When the bundle's latest import began and ended, in UTC; ``NULL`` before the first, and ``finished_at`` while one is running.
+* ``started_at`` and ``finished_at``: When the bundle's latest import began and ended, in UTC. Both are ``NULL`` while the bundle is ``pending``, and ``finished_at`` is ``NULL`` while an import of it is running.
 * ``process_id``: The ``import_process`` row of the importer that claimed the bundle, set with ``importing``, and kept on a ``failed`` bundle so its importer's log can be found; ``NULL`` for a bundle imported by a plain ``opus_import``, and once the bundle returns to ``pending``.
 * ``rows_done``: The ``obs_general`` rows the bundle's latest import has committed, advanced in each chunk's transaction.
 * ``losses``: How many importers died holding the bundle. Its second loss marks it ``failed``.
@@ -1018,7 +1018,7 @@ Every invocation that registers or imports bundles creates the table when the sc
 The ``import_process`` Table
 ----------------------------
 
-The ``import_process`` table records every importer, an ``opus_import --join`` process drawing bundles from the queue (:ref:`dev_guide_import_full_run`). Only the import reads it; the web application never does, and ``SCHEMA_VERSION`` does not cover it, since an importer creates it when the schema lacks it.
+The ``import_process`` table records two kinds of process. An **importer** is an ``opus_import --join`` process drawing bundles from the queue (:ref:`dev_guide_import_full_run`). A **writer** is an invocation, or a recovery, that writes a schema with a version row and records itself so that no generation command runs beside it: an import, a registration, a requeue, a delete, ``--finalize``, ``--create-indexes``, ``--create-param-info``, ``--create-partables``, ``--create-table-names``, validation, the stamp, and the recovery of a lost importer's bundle (:ref:`dev_guide_import_running_generations`). Only the import reads the table; the web application never does, and ``SCHEMA_VERSION`` does not cover it, since the import creates it when the schema lacks it.
 
 ::
 
@@ -1037,10 +1037,10 @@ The ``import_process`` table records every importer, an ``opus_import --join`` p
 
 The fields are:
 
-* ``process_id``: The importer, as ``import_bundle.process_id`` names it.
-* ``host`` and ``pid``: The computer the importer runs on, and its process id there.
-* ``log_path``: The importer's information log, on its computer.
-* ``started_at`` and ``progress_at``: When the importer started, and when it last committed a chunk of rows, in UTC.
-* ``state``: ``running`` from its start; ``exited`` once it has exited; ``lost`` once a coordinator found its lock free while the row was ``running``.
+* ``process_id``: The process. An importer's is what ``import_bundle.process_id`` names.
+* ``host`` and ``pid``: The computer the process runs on, and its process id there.
+* ``log_path``: The process's information log, on its computer.
+* ``started_at`` and ``progress_at``: When the process started, and, for an importer, when it last committed a chunk of rows, in UTC. A writer's ``progress_at`` stays at its start.
+* ``state``: ``running`` from its start; ``exited`` once it has exited; ``lost`` once a recovery of lost importers found its lock free while the row was ``running``, for a writer as for an importer.
 
-Whether an importer is alive is not in the table: it is whether the server-wide named lock :func:`opus_import.import_processes.importer_lock_name` names is held, which the server frees when the importer's lock connection closes. ``--scorched-earth`` drops the table.
+Whether a process is alive is not in the table: it is whether the server-wide named lock :func:`opus_import.import_processes.importer_lock_name` names is held, which the server frees when the process's lock connection closes. ``--scorched-earth`` drops the table.

@@ -35,7 +35,10 @@ decide whether to route a value through
 ``TABLES_TO_POPULATE``
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The tables OPUS fills for each observation, **in the order it fills them**:
+The tables OPUS fills for each observation, **in the order the import creates them** and
+loads the rows still waiting at the end of each index file. A table whose rows fill a
+transaction loads them sooner, and :ref:`dev_guide_import_per_bundle` gives the order the
+rows are computed in:
 
 .. code-block:: text
 

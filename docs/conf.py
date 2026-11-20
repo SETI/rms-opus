@@ -256,7 +256,9 @@ nitpick_ignore = [
     # object of its own to point the parameter at.
     ('py:class', 'opus_log_analyzer.opus.html_generator.T'),
     # The type parameter of `ImportDBSuper.retrying`, declared in its own signature, which
-    # Sphinx renders as the bare name.
+    # Sphinx renders as the bare name. The entry silences a bare T wherever it appears, so
+    # it is meant for that one function: `grep -rnE "def \w+\[T\b" src` lists every
+    # function declaring a type parameter named T, and should list only it.
     ('py:class', 'T'),
 ]
 

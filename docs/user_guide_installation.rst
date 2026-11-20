@@ -441,9 +441,10 @@ That one command builds an installation of that release under ``staged/``, point
 for the moment it started. It runs **detached**, and prints the log file it is writing
 to; with ``OPUS_IMPORT_MAIL_TO`` filled in, it mails that log when it ends.
 
-A full-holdings import takes **about an hour** when six importers share two dozen
-workers, and longer with fewer, so set the parallelism in ``deploy.env`` before this
-step (below). What it runs is ``opus_import_all``, the
+A full-holdings import measured 3,032 seconds, **about 51 minutes**, with six importers
+sharing 24 workers at a ``cpu_fraction`` of 0.8, on the Ring-Moon Systems Node's
+development workstation. It takes longer with fewer, so set the parallelism in
+``deploy.env`` before this step (below). What it runs is ``opus_import_all``, the
 installed command. It registers every bundle set in order -- Galileo and New Horizons
 first, then the rest roughly from the quickest to the slowest -- which fixes each
 bundle's number and the ids its observations take. It then starts importers, each
@@ -464,8 +465,14 @@ one process (:ref:`user_guide_deployment_several_importers`).
 The database is new, so nothing is erased. ``opus_import_all`` erases the OPUS tables of
 the database it is pointed at only when given ``--scorched-earth``, and asks first;
 without it, running it again after an interruption imports only the bundles that are not
-done. :ref:`dev_guide_import_full_run` describes each step, and ``opus_import_all
---dry-run`` prints what the given arguments would run without running it.
+done. ``opus_import_all --dry-run`` prints what the given arguments would run without
+running it. :ref:`dev_guide_import_full_run` describes each step and is the reference
+for every ``opus_import_all`` option, and ``opus_import_all --help`` lists them. An
+option ``opus_import_all`` does not define is passed on to the ``opus_import``
+invocations that import -- the erase, the registration and every importer -- and not to
+the ones that finish the database or return bundles to the queue. Those read the
+holdings too, at the roots the configuration names, so a holdings option given to the
+importers does not reach them.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
 ``==<release>`` for a particular release, omitted for the newest. ``@`` and a git branch,
@@ -486,8 +493,8 @@ the run built is named by the installation ``import`` now points at::
 
     basename "$(readlink /opt/opus/import)"
 
-**These scripts import the whole archive.** There is no partial-import option in them:
-what they run is ``opus_import_all``, which imports every bundle set. A site that wants
+**These scripts import the whole archive:** what they run is ``opus_import_all``, which
+imports every bundle set. A site that wants
 only part of it -- Cassini and nothing else -- runs the pipeline directly instead, and
 then deploys the database that produced::
 

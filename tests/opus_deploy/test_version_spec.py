@@ -32,14 +32,14 @@ _ACCEPTED = [
     ('>=3.25', 'rms-opus>=3.25'),
     ('~=3.25.0', 'rms-opus~=3.25.0'),
     ('@main', f'rms-opus @ git+{_REPOSITORY}@main'),
-    ('@db-perf-pr-23', f'rms-opus @ git+{_REPOSITORY}@db-perf-pr-23'),
+    ('@review-branch', f'rms-opus @ git+{_REPOSITORY}@review-branch'),
     ('@v3.25.0', f'rms-opus @ git+{_REPOSITORY}@v3.25.0'),
     ('@feature/x_1', f'rms-opus @ git+{_REPOSITORY}@feature/x_1'),
     ('@208b19c0', f'rms-opus @ git+{_REPOSITORY}@208b19c0'),
 ]
 
 #: Arguments the helper refuses.
-_REFUSED = ['3.25.0', 'db-perf-pr-23', '@', '@-x', '@a..b', '@a b', '@a;rm', 'main@x']
+_REFUSED = ['3.25.0', 'review-branch', '@', '@-x', '@a..b', '@a b', '@a;rm', 'main@x']
 
 
 def _source(tmp_path: Path, call: str) -> tuple[int, str]:
@@ -103,10 +103,10 @@ def test_no_spec_is_the_newest_release(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ('script', 'arguments'),
     [
-        ('import_and_deploy/deploy_new_code_and_database.sh', ('opus_new', 'db-perf-pr-23')),
-        ('import_and_deploy/deploy_new_code_only.sh', ('db-perf-pr-23',)),
-        ('import_and_deploy/run_full_opus_import.sh', ('db-perf-pr-23',)),
-        ('import_and_deploy/update_deploy_scripts.sh', ('db-perf-pr-23',)),
+        ('import_and_deploy/deploy_new_code_and_database.sh', ('opus_new', 'review-branch')),
+        ('import_and_deploy/deploy_new_code_only.sh', ('review-branch',)),
+        ('import_and_deploy/run_full_opus_import.sh', ('review-branch',)),
+        ('import_and_deploy/update_deploy_scripts.sh', ('review-branch',)),
     ],
     ids=['code-and-database', 'code-only', 'full-import', 'update-scripts'],
 )
@@ -117,15 +117,15 @@ def test_a_deploy_refuses_a_mistyped_spec_before_anything_runs(
     status, output, ran = run_deploy(tmp_path, script, *arguments)
     assert status == 1
     assert ran == []
-    assert "'db-perf-pr-23' is not a version spec" in output
+    assert "'review-branch' is not a version spec" in output
 
 
 @pytest.mark.skipif(BASH is None, reason='needs bash')
 def test_a_deploy_takes_a_git_ref(tmp_path: Path) -> None:
     """The deploy goes on to the promotion, and says which revision it deploys."""
     status, output, ran = run_deploy(
-        tmp_path, 'import_and_deploy/deploy_new_code_only.sh', '@db-perf-pr-23'
+        tmp_path, 'import_and_deploy/deploy_new_code_only.sh', '@review-branch'
     )
     assert status == 0, output
     assert ran[-1].startswith('promote ')
-    assert 'Version spec: @db-perf-pr-23' in output
+    assert 'Version spec: @review-branch' in output

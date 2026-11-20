@@ -27,7 +27,7 @@
 #   --pymarkdown           Run PyMarkdown scan only
 #   --import-tests         ALSO run the import suite. Opt-in and never part of a
 #                          default run: it needs a reachable MySQL server, which no
-#                          other check does, and takes five or six minutes. Combined
+#                          other check does, and is the slowest check. Combined
 #                          with a --* flag it is added to that selection; on its own
 #                          it is added to the full run.
 #   -h, --help             Show this help message
@@ -468,7 +468,7 @@ run_code_checks() {
     fi
 
     # The import suite, opt-in because it is the one check needing a server. The bare
-    # form, no coverage: that is the everyday one and five or six minutes, and the coverage
+    # form, no coverage: that is the everyday one, and the coverage
     # form is two commands belonging to the Import Tests job. It finds its server itself,
     # from OPUS_TEST_DB_HOST/_USER/_PASSWORD or, with none of those set, from the
     # OPUS_CONFIG file -- which is the CI dummy above unless the caller exported one,

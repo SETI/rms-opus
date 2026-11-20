@@ -78,7 +78,7 @@ collects the keys the schemas actually use and prints the ones no Python file me
 
 It greps for the key as a literal in either quote style, so it has one blind spot worth
 knowing before you read its output: a key assembled at the point of use does not appear
-as a literal anywhere. ``definition_results`` is the only one today --
+as a literal anywhere. ``definition_results`` is such a key --
 :mod:`opus_import.steps.do_dictionary` reads it as ``column['definition'+suffix]`` --
 so the recipe reports it and it is nonetheless read. Everything else the recipe reports
 really is unread; see `Keys nothing reads`_ below.
@@ -409,8 +409,7 @@ code-only deploy runs it, which is how a value is renamed without a re-import
 Keys nothing reads
 ------------------
 
-The recipe above is the authority; this is what it reports today, with what each one
-is.
+The recipe above is the authority; this is what it reports, with what each one is.
 
 ``comment``, ``comments``
     Notes to whoever reads the schema. Nothing consumes them, and that is what they

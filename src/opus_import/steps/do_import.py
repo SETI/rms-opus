@@ -39,10 +39,11 @@ again, so a rerun is clean. A bundle that logs an error is
 recorded ``failed``, and finalization and the version step refuse to run until it is
 imported again or deleted; ``--ignore-errors`` records it ``done`` instead.
 
-The per-bundle work is split across four modules that are not steps of their own:
+The per-bundle work is split across modules that are not steps of their own:
 `opus_import.steps.do_import_tables` prepares the tables,
 `opus_import.steps.do_import_index` walks one index file,
-`opus_import.steps.do_import_obs` computes one row, and
+`opus_import.steps.do_import_pool` computes an index's rows in a pool of workers and
+replays them, `opus_import.steps.do_import_obs` computes one row, and
 `opus_import.steps.do_import_mult` maintains the enumerated-value tables.
 """
 

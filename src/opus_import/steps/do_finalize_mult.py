@@ -11,11 +11,15 @@ or added can stop or start referencing any value. It has three parts:
    rather than once a column. A ``mult_list`` column's ids are read from its junction
    table (`opus_import.list_junctions`), whose primary key leads with the id, so the
    distinct ids are read from the key without a scan of the observation table. A pinned
-   field keeps every row its list gives, since the list is the intended set of choices; the one row it may hold beyond them, the absent value
-   the import adds under `opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted
-   like any other once no observation holds it. A deleted id is free again: the next
-   value the import adds to the field takes the field's highest id plus one, which can
-   be an id deleted here.
+   field keeps every row its list gives, since the list is the intended set of choices;
+   the one row it may hold beyond them, the absent value the import adds under
+   `opus_import.steps.do_import_mult.PINNED_ABSENT_ID`, is deleted like any other once
+   no observation holds it. An unpinned field's deleted id stays used: a value the import
+   adds takes the next id of the field's counter, ``mult_field.last_id``, which never
+   goes down for it. A pinned field's ids are the ones its ``mult_options`` list gives,
+   and registration sets its counter to the highest id its rows hold
+   (`opus_import.steps.do_import_mult.register_pinned_fields`), so whether a deleted
+   choice's id is given again is the list's to decide.
 2. Each column's ``mult_overrides`` are applied over the stored rows
    (`apply_mult_overrides`), so an override wins over a stored or computed label, and
    then every group left with no value is deleted.
