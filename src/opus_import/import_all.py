@@ -433,8 +433,8 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         prog='opus_import_all',
         description='Import every bundle set OPUS holds: register the bundles, import them '
         'with several importers drawing from one queue, and finish the database',
-        epilog='Any other option is passed to every opus_import invocation that reads the '
-        'holdings.',
+        epilog='Any other option is passed to every opus_import invocation that imports: the '
+        'erase, the registration and the importers; not to the finishing steps or a requeue.',
     )
     steps = parser.add_mutually_exclusive_group()
     steps.add_argument(

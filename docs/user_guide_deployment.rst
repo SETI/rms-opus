@@ -608,11 +608,11 @@ replaces what users see, so it is done deliberately.
    database named for the moment it started, and ``import`` pointed at the installation
    doing the work. Neither the database being served nor the installation serving it is
    touched, which is what makes every step after this one reversible.
-2. **Read the error log.** The import's own exit status is not the whole story: several
-   steps report a failure through the log rather than through the status, so an
-   automated run gates on ``ERRORS.log`` being empty. A failed ``param_info`` build,
-   dictionary import or validation does stop the run, before the schema is marked ready.
-   :ref:`dev_guide_import_verifying` is the full check.
+2. **Read the error log.** The import exits with failure, before the schema is marked
+   ready, when a bundle fails or a finishing step -- the finalization, the dictionary,
+   the validation -- reports a failure or logs an error, and ``ERRORS.log`` says why. An
+   automated run gates on ``ERRORS.log`` being empty all the same, which catches an
+   error logged anywhere. :ref:`dev_guide_import_verifying` is the full check.
 3. **Compare the new database against the one being served.** The new one is named by
    the installation ``import`` points at (``basename "$(readlink /opt/opus/import)"``),
    and the one being served is the ``schema`` line of ``deployed/opus.toml``. Neither prints row

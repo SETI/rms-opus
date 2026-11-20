@@ -319,8 +319,8 @@ exclude_lines = [
   "@overload",
 ]
 # The floor one command measures and one command gates: the Import Tests job's own
-# `pytest import_tests --cov`, which imports two dozen sampled volumes end to end
-# through every step of the pipeline. It is the run's own figure rounded down to a whole
+# `pytest import_tests --cov`, which imports the checked-in mini-holdings fixture's
+# bundles end to end through every step of the pipeline. It is the run's own figure rounded down to a whole
 # percent, not an aspiration -- raising it means raising what that run reaches. The
 # figure is statements and branches together. The TOTAL line rounds it to `precision`
 # places (0 here), so read it unrounded from pytest-cov's closing line, "Total coverage:

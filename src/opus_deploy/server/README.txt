@@ -114,9 +114,10 @@ everything else the chain needs underneath it, it creates.
     ./import_and_deploy/run_full_opus_import.sh ==<release>
 
 4. Read that log, and ERRORS.log in the run's log directory,
-   /opt/opus/import_logs/<run>/. An import can exit 0 having logged errors, so
-   the log is the gate rather than the status. The database it built is named by
-   the installation that the import symlink now points at:
+   /opt/opus/import_logs/<run>/. The import exits with failure, leaving the
+   database unfinished, when a bundle fails or a finishing step logs an error,
+   and ERRORS.log says why; it is the check either way. The database it built
+   is named by the installation that the import symlink now points at:
 
     basename "$(readlink /opt/opus/import)"
 
