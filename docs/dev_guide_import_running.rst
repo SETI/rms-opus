@@ -946,7 +946,8 @@ new and imports only what is not ``done``.
 **Other options are passed on.** An option ``opus_import_all`` does not define is added
 to the ``opus_import`` invocations that import -- the erase, the registration and every
 importer -- and to no other: ``--finish`` and ``--requeue`` run without it. Those read the
-holdings too (every invocation does but the carry-over and the generation commands), at
+holdings too (every invocation does but ``--check``, the carry-over and the generation
+commands), at
 the roots the configuration names, so a holdings option such as
 ``--override-pds3-data-dir`` reaches the importers and not them, and the configured roots
 have to be readable for the database to be finished.
