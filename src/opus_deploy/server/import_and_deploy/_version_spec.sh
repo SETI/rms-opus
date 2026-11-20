@@ -5,12 +5,12 @@
 # A version spec is one of:
 #
 #   a PEP 440 specifier, appended to the distribution name and installed from PyPI:
-#   "==3.25.0" for a release, ">=3.25" and the like for the newest that matches;
+#   "==<release>" for a release, ">=<release>" and the like for the newest that matches;
 #
 #   "@" and a git ref -- a branch, a tag or a commit -- installed from the rms-opus
-#   repository (OPUS_GIT_REPOSITORY): "@db-perf-pr-23". This is how a branch with no
-#   release is deployed. pip builds it from a clone, so the server needs git and access
-#   to the repository, and the installation reports a development version;
+#   repository (OPUS_GIT_REPOSITORY): "@<branch, tag or commit>". This is how a branch
+#   with no release is deployed. pip builds it from a clone, so the server needs git and
+#   access to the repository, and the installation reports a development version;
 #
 #   empty, for the newest release on PyPI.
 #

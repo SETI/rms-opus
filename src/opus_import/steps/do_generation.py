@@ -814,8 +814,8 @@ def revert_generation(ctx: ImportContext) -> None:
     The ``__prev`` auxiliary tables are swapped back in and the reverted-from ones kept as
     ``__new``; the cart is pointed at the previous generation, though a cart row the
     switch deleted, its OPUS ID absent from the switched-in generation, is not restored;
-    the search tables are reset; the view is re-created to show the previous generation; and last, the
-    previous generation is served again with the reverted-from one pending and
+    the search tables are reset; the view is re-created to show the previous generation;
+    and last, the previous generation is served again with the reverted-from one pending and
     ``ready``, and the switch is not revertible any more, so the reverted-from generation
     can be abandoned or switched again. Each step finds out whether it has run, as the
     switch's do. A switch that stopped before its last statement left its generation

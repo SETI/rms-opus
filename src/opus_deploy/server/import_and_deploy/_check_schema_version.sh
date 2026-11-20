@@ -35,8 +35,10 @@ check_schema_version() {
     if [[ ${status} -eq ${refused} ]]; then
         echo "ERROR: this release would not serve the database; the check above says why."
         echo "       Re-import it under this release (run_full_opus_import.sh) and deploy"
-        echo "       that database (deploy_new_code_and_database.sh), unless this release"
-        echo "       imported it and only the last step is missing."
+        echo "       that database (deploy_new_code_and_database.sh). A database this"
+        echo "       release imported and did not finish needs its finishing steps instead:"
+        echo "       opus_import --finalize, --import-dictionary and --validate, then"
+        echo "       opus_import --write-schema-version."
         return 1
     fi
     echo "Schema version: the database is this release's, and ready."

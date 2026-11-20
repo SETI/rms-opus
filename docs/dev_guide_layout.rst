@@ -59,6 +59,19 @@ directory has a chapter of its own, it is named beside it.
     │   │   ├── import_util.py            # helpers shared by the steps and the obs classes
     │   │   ├── mult_fields.py            # which columns hold mult ids, and field ids
     │   │   ├── mult_rank.py              # the order a mult field's values are listed in
+    │   │   ├── list_junctions.py         # the junction tables of the mult_list columns
+    │   │   ├── import_all.py             # opus_import_all, the full-holdings sequence
+    │   │   ├── coordinator.py            # starts, tracks and recovers the importers
+    │   │   ├── bundle_registry.py        # the bundle registry: id ranges and states
+    │   │   ├── import_processes.py       # the importers' table, locks and status
+    │   │   ├── primary_index.py          # a bundle's primary index files and sizes
+    │   │   ├── schema_version.py         # the schema version this release serves
+    │   │   ├── generations.py            # import generations: rows served and hidden
+    │   │   ├── table_keys.py             # the keys a table schema declares
+    │   │   ├── table_swap.py             # rebuilding tables beside the live ones
+    │   │   ├── surface_geometry.py       # obs_surface_geometry_target's categories
+    │   │   ├── validation_queries.py     # the rows validation reads, and how
+    │   │   ├── import_fault.py           # named failure points for the recovery tests
     │   │   ├── importdb/                 # the SQL backend: super.py (the abstract base
     │   │   │                             #   both brands inherit), mysql.py, and the
     │   │   │                             #   unimplemented postgresql.py stub

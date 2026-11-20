@@ -68,11 +68,11 @@ everything else the chain needs underneath it, it creates.
     sudo -u opus -i
     python3.12 -m venv /opt/opus/deploy_venv
     source /opt/opus/deploy_venv/bin/activate
-    python -m pip install "rms-opus==3.24.0"
+    python -m pip install "rms-opus==<release>"
 
    A revision with no release -- a branch, a tag or a commit -- is installed
    from the repository instead, and every step below then takes "@<branch>"
-   where it shows "==3.24.0". pip builds it from a clone, so the server needs
+   where it shows "==<release>". pip builds it from a clone, so the server needs
    git and access to GitHub:
 
     python -m pip install \
@@ -107,13 +107,14 @@ everything else the chain needs underneath it, it creates.
 --------------------------------------------------------------------------------
 
 3. Import the holdings, under an installation of the release being deployed.
-   About an hour with OPUS_IMPORT_IMPORTERS=6 sharing OPUS_IMPORT_WORKERS=24;
-   left empty, those two run one importer of one worker. It runs detached and
-   mails the log when it finishes.
+   Set OPUS_IMPORT_IMPORTERS and OPUS_IMPORT_WORKERS first: left empty, those
+   two run one importer of one worker, and the import is far slower. It runs
+   detached and mails the log when it finishes.
 
-    ./import_and_deploy/run_full_opus_import.sh ==3.24.0
+    ./import_and_deploy/run_full_opus_import.sh ==<release>
 
-4. Read that log, and ERRORS.log. An import can exit 0 having logged errors, so
+4. Read that log, and ERRORS.log in the run's log directory,
+   /opt/opus/import_logs/<run>/. An import can exit 0 having logged errors, so
    the log is the gate rather than the status. The database it built is named by
    the installation that the import symlink now points at:
 
@@ -136,7 +137,7 @@ everything else the chain needs underneath it, it creates.
 5. Build the installation that will serve, and switch to it.
 
     ./import_and_deploy/deploy_new_code_and_database.sh \
-        opus3_20260902T031500_1 ==3.24.0
+        opus3_20260902T031500_1 ==<release>
 
 6. Point the web server at /opt/opus/deployed/wsgi.py. Once, and never again:
    every later deploy moves that symlink rather than the web server's
@@ -156,7 +157,7 @@ change with it, so deploying a new release with an old chain runs one release's
 deploy against another release's application.
 
     cd /opt/opus/deploy
-    ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
+    ./import_and_deploy/update_deploy_scripts.sh ==<release>
 
 Wherever a release is named, "@" and a git branch, tag or commit names a
 revision with no release instead, which pip builds from a clone of the
@@ -164,13 +165,14 @@ repository (the server needs git): update_deploy_scripts.sh @main, then
 deploy_new_code_only.sh @main, and so on.
 
 Then the deploy itself, and which one it is depends on the release. One deploy
-runs at a time: each takes a lock on deploy.lock in OPUS_DIR before it reads
-anything, and a second deploy started meanwhile stops at once, changing nothing.
+runs at a time: each takes a lock on deploy.lock in OPUS_DIR right after
+reading deploy.env, and a second deploy started meanwhile stops at once,
+changing nothing.
 
   * The release does NOT change the database schema -- a bug-fix release. The
     database already being served is still the right one:
 
-    ./import_and_deploy/deploy_new_code_only.sh ==3.24.1
+    ./import_and_deploy/deploy_new_code_only.sh ==<release>
 
     It rebuilds param_info, partables, table_names and the dictionary from the
     release, and writes the release's mult_options and mult_overrides over the
@@ -178,10 +180,10 @@ anything, and a second deploy started meanwhile stops at once, changing nothing.
     renames a checkbox value shows the renamed label once the workers restart.
 
   * The release changes neither the import nor the table schemas -- only the
-    web application, its templates and static files, or the docs. Nothing need
-    be written to the database:
+    web application, its templates and static files, or the docs. The database
+    is served as it stands:
 
-    ./import_and_deploy/deploy_new_code_only.sh --no-database ==3.24.1
+    ./import_and_deploy/deploy_new_code_only.sh --no-database ==<release>
 
     It skips Django's migrations, the rebuild of param_info, partables,
     table_names and the dictionary, and --update-mult-info, and refuses if
@@ -190,23 +192,26 @@ anything, and a second deploy started meanwhile stops at once, changing nothing.
   * The release DOES change it. The database has to be rebuilt under the new
     release first, which is steps 3 to 5 again:
 
-    ./import_and_deploy/run_full_opus_import.sh ==3.25.0
+    ./import_and_deploy/run_full_opus_import.sh ==<release>
     (read the log; compare row counts against the served database)
     ./import_and_deploy/deploy_new_code_and_database.sh \
-        <that database> ==3.25.0
+        <that database> ==<release>
 
-The database records its schema version, and both deploy scripts refuse,
-before writing anything, a release whose version differs from it. A refusal
-names the remedy: an import under the new release, or, for a database this
-release imported but did not finish, its finishing steps -- `opus_import
---finalize`, `--import-dictionary` and `--validate` -- then
-`opus_import --write-schema-version`.
+The database records its schema version and a state, and both deploy scripts
+refuse, before writing anything, a database that does not hold the release's
+version in the "ready" state. The refusal names what is wrong and the
+remedy: an import under the release, deployed with
+deploy_new_code_and_database.sh, or, for a database this release imported
+and did not finish, its finishing steps -- `opus_import --finalize`,
+`--import-dictionary` and `--validate` -- then
+`opus_import --write-schema-version`. A database stamped without --finalize
+lacks its indexes and keeps both copies of an observation two bundles share.
 
 Bundles of the served database can be imported again, added or dropped
 without a full import. The update goes into the served database as a new
 generation, which the site does not show until it is switched in:
 
-    ./import_and_deploy/run_incremental_opus_update.sh ==3.24.1 \
+    ./import_and_deploy/run_incremental_opus_update.sh ==<release> \
         COISS_2115 --drop COISS_2001
     (read the log, and ERRORS.log, once the mail says it has finished)
     ./import_and_deploy/promote_generation.sh
@@ -273,7 +278,7 @@ once, since the way back there is the database it was serving:
     /opt/opus/deployed/opus_venv/bin/opus_import \
         --override-db-schema <that database> --purge-generations
     ./import_and_deploy/deploy_new_code_and_database.sh \
-        <that database> ==3.24.1
+        <that database> ==<release>
 
 
 --------------------------------------------------------------------------------

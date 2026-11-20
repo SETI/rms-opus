@@ -33,8 +33,10 @@ The environment
      - Everything but ``--help``. It names the installation's TOML file, and there is
        **no default location**. See :ref:`user_guide_installation` for how to write one.
 
-The pipeline reads nothing else from the environment. The database, the holdings roots
-and the log locations all come from the configuration file, and the keys it uses are:
+The pipeline reads one other variable, ``OPUS_IMPORT_FAULT``, which the import suite
+sets to make a run fail on purpose at a named point; it is for tests alone
+(:ref:`the import's fault sites <dev_guide_testing_faults>`). The database, the holdings roots and the log locations
+all come from the configuration file, and the keys it uses are:
 
 .. list-table::
    :header-rows: 1
@@ -634,8 +636,8 @@ Logging and diagnostics
        auxiliary, analyze, validation, cart and dictionary steps under their option's
        name with underscores for dashes (``create_param_info``, ``analyze_tables``,
        ``validate``); ``grep -n "ctx.timed("
-       src/opus_import`` lists every name. The benchmark harness
-       (:ref:`dev_guide_benchmarks`) reads it; nothing else does.
+       src/opus_import`` lists every name. It is written for the benchmark harness
+       (:ref:`dev_guide_benchmarks`), which reads it.
 
 .. _dev_guide_import_what_a_run_does:
 
@@ -659,8 +661,9 @@ whole shape. It:
    ``--carry-over-sessions-from`` with any other step or naming the target schema, each
    with a fatal message and a non-zero exit.
 7. Configures ``rms-pdsfile`` -- shelves-only unless ``--dont-use-shelves-only`` -- and
-   preloads both holdings roots, unless the invocation carries sessions over, which reads
-   no holdings. The ``rms-pdsfile`` logger is attached *after* the
+   preloads both holdings roots, unless the invocation carries sessions over or runs a
+   generation command, neither of which reads holdings. The ``rms-pdsfile`` logger is
+   attached *after* the
    preload, so the preload's own debug output stays out of the run's log.
 8. Opens the database through :func:`opus_import.importdb.get_db`, exiting non-zero if
    the connection fails.
@@ -754,7 +757,7 @@ whitelist of the warnings a good run produces; see :ref:`dev_guide_import_fixtur
 Two more checks are worth making after a production import:
 
 * **Row counts.** Compare ``obs_general`` in the new schema against the one being
-  served. Nothing in the pipeline does this for you.
+  served, by hand.
 * **The auxiliary tables.** A column with no ``param_info`` row is invisible in the
   user interface however much data was written into it, and a table with no
   ``table_names`` row has no "Constraints" section at all.
@@ -812,9 +815,10 @@ checked-in mini-holdings fixture, which needs a MySQL server and nothing else::
 A full-holdings run
 -------------------
 
-A complete import takes about an hour with six importers sharing two dozen workers, and
-it replaces everything a user sees, so it is done into a new schema and switched over
-afterwards rather than in place.
+A complete import is long -- one measured 3,032 seconds, about 51 minutes, with six
+importers sharing 24 workers at an ``[import] cpu_fraction`` of 0.8, on the Ring-Moon
+Systems Node's development workstation -- and it replaces everything a user sees, so it
+is done into a new schema and switched over afterwards rather than in place.
 
 The sequence itself is an installed command, :mod:`opus_import.import_all`, run as
 ``opus_import_all``. With no step named it is the **coordinator**, which runs the whole
@@ -933,6 +937,13 @@ confirmation naming the schema, so the import starts from a schema holding no OP
 table; ``--yes`` answers that confirmation and is refused without ``--scorched-earth``.
 Without it, running ``opus_import_all`` again after an interruption registers nothing
 new and imports only what is not ``done``.
+
+**Other options are passed on.** An option ``opus_import_all`` does not define is added
+to the ``opus_import`` invocations that read the holdings -- the erase, the registration
+and every importer -- and to no other: ``--finish`` and ``--requeue`` run without it.
+``opus_import --exclude-bundles`` and ``--dont-use-shelves-only`` reach a run this way.
+``--override-db-schema`` is ``opus_import_all``'s own option, and every invocation it
+runs carries it, the closing ones included.
 
 ``opus_import_all --dry-run`` prints, without connecting to the database or reading the
 holdings, what the same arguments would run: the division, whether it erases, the bundle

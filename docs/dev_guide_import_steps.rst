@@ -176,7 +176,8 @@ path it takes, the schema and its version
 
 * **no** ``schema_version`` **row, and none of the secondary keys finalization adds** on
   any observation table -- an empty schema, or one a fresh import is part way through,
-  since a full import runs one invocation per bundle group: the **fresh import**. Each
+  since a full import runs several invocations, which may run at once: the **fresh
+  import**. Each
   observation table is created with only the keys a load needs
   (:ref:`dev_guide_import_db_keys`);
 * **one row, holding this release's version, in the** ``ready`` **state, with a pending
@@ -771,8 +772,8 @@ set of tables, parents first, and a fill function, and:
 4. analyzes each ``__new`` table. The server's persistent statistics for a table
    created empty say it has no rows, the rename carries them across, and nothing
    recomputes them soon after a bulk fill, so a table swapped in unanalyzed goes live
-   with statistics that mislead the optimizer -- at fixture scale, validation against
-   such a ``param_info`` took over a third longer;
+   with statistics that mislead the optimizer, and the queries that read it, validation
+   among them, are planned from those statistics;
 5. swaps the whole set in with one rename
    (:meth:`~opus_import.importdb.mysql.ImportDBMySQL.rename_tables_atomically`), then
    drops the ``__old`` tables.
@@ -1163,9 +1164,13 @@ by what the row holds:
   ``ready`` state;
 * **this version,** ``appending``: changes the state to ``ready``, logged at info level;
 * **this version,** ``ready``: nothing, logged at debug level;
-* **another version, or more than one row**: refuses. It logs an error, leaves the
-  table as it is, and the run **exits non-zero**. A schema another release imported is
-  re-imported under this one, never restamped.
+* **this version, with a pending generation**
+  (:ref:`dev_guide_import_steps_do_generation`): neither the version nor the state
+  changes. The step marks the pending generation ``ready`` to switch when its state is
+  ``validated``, logged at info level, and otherwise refuses as below;
+* **another version, another state, or more than one row**: refuses. It logs an error,
+  leaves the table as it is, and the run **exits non-zero**. A schema another release
+  imported is re-imported under this one, never restamped.
 
 Before any of that, :mod:`opus_import.cli` refuses the step, with a fatal message and a
 non-zero exit, while any bundle in the bundle registry is not ``done``
@@ -1198,7 +1203,9 @@ The teardown and build orders are forced by foreign keys, and both are stated he
 so no caller has to work them out:
 
 * **Teardown** -- every ``obs_`` table except ``obs_general``, then ``cart``, then
-  ``obs_general``, then the mult tables.
+  ``obs_general``, then the mult tables. The full order, with every other table the
+  import creates, is
+  :ref:`the one scorched earth drops them in <dev_guide_import_steps_scorched_earth>`.
 * **Build** -- the other way round.
 
 The mult tables come last on teardown and first on build by the pipeline's own
@@ -1236,11 +1243,13 @@ Its functions:
     catches every observation table however many there are, and ``mult_``, which
     catches ``mult_field`` and ``mult_group``) and
     :data:`~opus_import.steps.do_import_tables.OPUS_TABLE_NAMES`, the other tables by
-    exact name -- ``schema_version``, ``mult``, ``cart``, ``import_bundle``, the auxiliary
-    tables, the dictionary's, ``user_searches``, ``search_results``, and the ``__new``
-    and ``__old`` tables
-    an interrupted swap can leave (:ref:`dev_guide_import_steps_table_swap`). A step that
-    creates a table outside the prefixes adds its name there. The drop order is the one
+    exact name -- ``schema_version``, ``mult``, ``cart``, ``import_bundle``,
+    ``import_process``, the auxiliary tables, the dictionary's, ``user_searches``,
+    ``search_results``, the ``__new`` and ``__old`` tables an interrupted swap can leave
+    (:ref:`dev_guide_import_steps_table_swap`), and the auxiliary tables' ``__prev``
+    copies a generation's switch keeps until the purge. A step that
+    creates a table outside the prefixes adds its name there. The ``obs_general`` view
+    goes first, with ``DROP VIEW``. The tables then go in the order
     the foreign keys allow: ``schema_version`` first, so an erase that stops part way
     leaves a schema nothing serves or promotes; every ``obs_`` table but
     ``obs_general``; ``cart``; ``obs_general``; ``definitions`` and its swap tables,

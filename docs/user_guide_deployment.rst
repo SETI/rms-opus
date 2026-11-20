@@ -158,8 +158,7 @@ The scripts
     so there is nothing to warm (:ref:`user_guide_deployment_warm_search`). It refuses,
     before writing anything, while an incremental update's generation is pending
     (``opus_import --check rebuild``). The database does not change, so there is nothing
-    to carry over. It does not upgrade anything in
-    place. It leaves the
+    to carry over. It leaves the
     search tables alone, so the searches users have made are still stored after the
     release; a release that changes either search table's columns changes the schema
     version, and is deployed with ``deploy_new_code_and_database.sh``.
@@ -595,9 +594,10 @@ restarting the application is the only thing that clears them. See
 The import runbook
 ------------------
 
-A production import of the full holdings takes about an hour when six importers share two
-dozen workers (``OPUS_IMPORT_WORKERS`` and ``OPUS_IMPORT_IMPORTERS`` in ``deploy.env``),
-and it replaces what users see, so it is done deliberately.
+A production import of the full holdings is long, and longer the fewer importers and
+workers it is given (``OPUS_IMPORT_IMPORTERS`` and ``OPUS_IMPORT_WORKERS`` in
+``deploy.env``; :ref:`user_guide_installation_full_import` gives a measured run). It
+replaces what users see, so it is done deliberately.
 
 1. **Import into a new database, under an installation of the release being deployed.**
    ``run_full_opus_import.sh`` does both: a new installation under ``staged/``, a
@@ -710,10 +710,12 @@ only when you switch it in. The steps, from the deploy directory::
 
 1. **Update.** ``run_incremental_opus_update.sh`` imports the bundles it names and drops
    the ones ``--drop`` names, in a pending generation the site does not show, under the
-   release being served unless given a version specifier. It refuses to start while a
-   pending generation exists, or while the last switch has not been purged; with
-   ``--continue`` it writes into the pending generation instead, and refuses to start
-   without one.
+   release being served unless given a version specifier. It builds and installs its own
+   installation first. Its first command, ``opus_import --begin-generation``, then
+   refuses, writing nothing, while a pending generation exists or while the last switch
+   has not been purged. With ``--continue`` it writes into the pending generation
+   instead, and stops before writing the database when there is none
+   (``opus_import --check continue``).
 2. **Check.** Read its log, and ``ERRORS.log`` in the log directory it names. It stops at
    the first command that fails or logs an error, before the generation is marked ready
    to switch, and its log names the commands left to run. Once the cause is fixed, run
@@ -724,8 +726,10 @@ only when you switch it in. The steps, from the deploy directory::
    <bundle>``, run from the installation the update built, returns it to the queue.
 3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run
    (``opus_import --check switch``), and stops nothing when it would be refused: no generation ready to switch, another
-   generation command running, an ``opus_import`` still writing the update, or a purge
-   that stopped part way, which ``opus_import --purge-generations`` finishes. It then
+   generation command running, an ``opus_import`` still writing the update, a purge
+   that stopped part way, which ``opus_import --purge-generations`` finishes, or a rebuild
+   of the served auxiliary tables, such as a code deploy's, that stopped part way, which
+   running the rebuild again finishes. It then
    stops the web service, switches the generation in, restarts the cache service, starts
    the web service and warms the common searches. The site is down only for the switch.
    If the switch fails the web service stays stopped: run ``promote_generation.sh``
@@ -1000,14 +1004,14 @@ Deploying a revision with no release
 A branch under review, or any commit, is deployed with the same commands as a release,
 giving ``@<branch, tag or commit>`` where a release's ``==<release>`` would go. pip builds
 the distribution from a clone of the repository, so the server needs ``git`` and access to
-GitHub, and the installation reports a development version. For this branch, on a test
-server, an import and a deploy of its database and then an incremental update::
+GitHub, and the installation reports a development version. On a test server, an import
+of a revision and a deploy of its database, and then an incremental update::
 
     cd /opt/opus/deploy
-    ./import_and_deploy/update_deploy_scripts.sh @db-perf-pr-23
-    ./import_and_deploy/run_full_opus_import.sh @db-perf-pr-23
+    ./import_and_deploy/update_deploy_scripts.sh @<branch, tag or commit>
+    ./import_and_deploy/run_full_opus_import.sh @<branch, tag or commit>
     #    ... read the log, check ERRORS.log ...
-    ./import_and_deploy/deploy_new_code_and_database.sh <database> @db-perf-pr-23
+    ./import_and_deploy/deploy_new_code_and_database.sh <database> @<branch, tag or commit>
     ./import_and_deploy/run_incremental_opus_update.sh COISS_2001
     ./import_and_deploy/promote_generation.sh
 

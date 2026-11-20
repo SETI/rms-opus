@@ -156,6 +156,8 @@ as it would the table itself; while other generations' rows are there, it names 
 served generation (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). The child
 tables carry no generation; while other generations' rows are there, a request reaches a
 child row only through an observation the view returned, or a search built from the view.
+:mod:`opus_import.generations` defines the view's name, the generation columns and the
+states of a pending generation.
 
 An update (:ref:`dev_guide_import_running_generations`) begins a **pending generation**,
 one above the served one, and writes only the bundles it changes into it: a re-imported
@@ -229,10 +231,9 @@ collected since they were last reported, and
 :attr:`~opus_import.context.ImportContext.bundle_has_errors`, which says whether the
 bundle being imported has logged an error, beside
 :attr:`~opus_import.context.ImportContext.import_has_bad_data`, which says it for the
-whole run. The warnings are reported only when a PDS3 table is read, so one a bundle
-raises elsewhere -- ``rms-pdsfile`` opening an oversized preview image, for instance --
-is dropped at the next bundle's start rather than charged to that bundle; a bundle
-imported by an invocation of its own reports the same.
+whole run. The collected warnings are reported, as errors charged to the bundle, each
+time a PDS3 table is read, and the list is emptied at the start of each bundle, whether
+the bundles share an invocation or each has its own.
 
 Logging goes through :attr:`~opus_import.context.ImportContext.log`, an
 :class:`~opus_import.context.ImportLog` bound to the context. Its methods are the four
@@ -278,8 +279,9 @@ forced by something:
    and ``partables`` reads the ``mult`` rows, so it comes between them.
 5. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
    :mod:`~opus_import.steps.do_partables`,
-   :mod:`~opus_import.steps.do_table_names`), **recreate the cart and drop the cache
-   tables** (:mod:`~opus_import.steps.do_cart`, :mod:`~opus_import.steps.do_django`),
+   :mod:`~opus_import.steps.do_table_names`), **recreate the cart, recreate the search
+   tables empty and flush the web application's cache** (:mod:`~opus_import.steps.do_cart`,
+   :mod:`~opus_import.steps.do_django`),
    then analyze the tables. Each auxiliary table is derived from the imported tables --
    from which of them exist, and from their schemas -- and ``cart`` carries a foreign
    key onto ``obs_general``, so all of them must follow the import.
@@ -290,8 +292,8 @@ forced by something:
 8. **Mark the schema ready** (:mod:`~opus_import.steps.do_schema_version`), last,
    because its row is what makes the schema servable.
 
-:mod:`opus_import.steps` states the whole order and what forces each part of it, and is
-the authority if this summary and it ever disagree.
+:ref:`dev_guide_import_steps` gives what forces each part of the order, and
+:mod:`opus_import.steps` lists every step module and where each runs.
 
 .. _dev_guide_import_per_bundle:
 
@@ -312,9 +314,8 @@ bundle id it:
 3. **Finds the primary index files.** ``BUNDLE_INFO`` gives one or more file-name
    patterns with ``<BUNDLE>`` standing for the bundle id. The search looks through the
    bundle's ``metadata`` directories and, for PDS3, the volume's own ``INDEX`` and
-   ``index`` directories. **Every index in the first directory that has one is
-   imported, and no later directory is searched**, so a bundle whose indexes are split
-   across directories imports only the first group.
+   ``index`` directories, and **stops at the first directory that holds one, importing
+   every index there**: a bundle's primary indexes live in one directory.
 4. **Imports each index** through
    :func:`~opus_import.steps.do_import_index.import_one_index`.
 
@@ -626,8 +627,10 @@ an import exit with failure, unless ``--ignore-errors``, and
 the start of each bundle, is what records the bundle ``failed`` in the bundle registry.
 Every ``log`` error sets both, through
 :meth:`~opus_import.context.ImportContext.mark_bad_data`, and a few sites set them
-through it directly; they are **not** a complete record of the run's errors, because
-several steps log failures straight to the underlying logger and leave them alone.
+through it directly. Several steps log their failures straight to the underlying
+logger instead, so the record of every error a run logged is ``ERRORS.log``, and that
+file, rather than these flags or the exit status, is what a run is checked by
+(:ref:`dev_guide_import_verifying`).
 
 Where to go next
 ----------------

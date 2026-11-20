@@ -192,7 +192,7 @@ def test_the_parse_says_whether_the_update_continues(
     ('arguments', 'version_spec'),
     [
         ('==3.25.0 COISS_2001', '==3.25.0'),
-        ('@db-perf-pr-23 COISS_2001', '@db-perf-pr-23'),
+        ('@review-branch COISS_2001', '@review-branch'),
         ('COISS_2001', ''),
     ],
     ids=['given', 'git-ref', 'omitted'],

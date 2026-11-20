@@ -49,6 +49,10 @@ caller.
             +build_indexes()
             +foreign_keys_unchecked()
             +quote_identifier()*
+            +create_obs_general_view()*
+            +drop_obs_general_view()*
+            +repoint_cart()*
+            +carry_over_sessions()*
             +table_names()*
             +forget_table_names()*
             +table_info()*
@@ -67,6 +71,7 @@ caller.
             +delete_joined_rows()*
             +general_select()*
             +stream_select()*
+            +list_junction_mismatches()*
             +find_column_max()*
             +read_table_keys()*
             +add_keys_statement()*
@@ -78,8 +83,16 @@ caller.
             +close()*
             +socket_descriptor()*
             +named_lock()*
+            +try_named_lock()*
+            +release_named_lock()*
+            +holds_named_lock()*
+            +named_lock_holder()*
+            +set_idle_timeout()*
             +increment_counter()*
             +lock_first_row()*
+            +lock_row()*
+            +last_insert_id()*
+            +set_next_id()*
             +insert_rows_keeping_existing()*
             +is_retryable_error()*
             +is_duplicate_key_error()*
@@ -172,11 +185,10 @@ Every table ``create_table`` creates samples
 :data:`~opus_import.importdb.mysql.STATS_SAMPLE_PAGES` leaf pages for its persistent
 statistics (``STATS_SAMPLE_PAGES``), in place of the server's default of 20. The
 optimizer chooses plans from those statistics, and 20 pages misjudge the row count of a
-table whose pages hold very different numbers of rows -- ``obs_ring_geometry``'s, at
-complete scale, by up to a factor of three from one ``ANALYZE`` to the next, enough to
-switch the ring-radius search between a plan and one twice as slow. A table with fewer
-leaf pages is read whole, and at complete scale the larger sample makes the
-finalization's ``ANALYZE`` of the large tables seconds longer in all.
+table whose pages hold very different numbers of rows, such as ``obs_ring_geometry``,
+differently from one ``ANALYZE`` to the next, enough to switch the ring-radius search
+between a fast plan and a slow one. A table with fewer leaf pages is read whole; the
+larger sample lengthens the finalization's ``ANALYZE`` of the large tables.
 
 :func:`~opus_import.table_keys.add_secondary_indexes` is the complement over those
 tables: the declared keys the keep set leaves out, plain keys first and foreign keys
@@ -220,7 +232,12 @@ The abstract contract
 :class:`~opus_import.importdb.super.ImportDBSuper` declares the whole database interface.
 Some members are implemented in the base class because they are the same for any brand;
 the rest raise :exc:`NotImplementedError` and are what a brand supplies. Like the obs
-hierarchy, this is an abstract class by convention rather than through :mod:`abc`.
+hierarchy, this is an abstract class by convention rather than through :mod:`abc`. The
+table gives each abstract member's contract, and the docstrings in
+``src/opus_import/importdb/super.py`` give the full one. Every abstract member raises
+with a message naming it, so this lists them from the code::
+
+    grep -o "ImportDBSuper::[a-z_]* must be overridden" src/opus_import/importdb/super.py
 
 .. list-table::
    :header-rows: 1
@@ -241,6 +258,11 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Point every ``cart`` row at a generation's observation with the same OPUS ID, or
        delete it when the generation has none, in one transaction; a generation's switch
        and revert.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.carry_over_sessions`\ ``(source_schema)``
+     - Replace the schema's ``django_session`` and ``cart`` rows with another schema's
+       on the same server, in one transaction: the source's unexpired sessions that own
+       a cart row, and each cart row whose observation (by OPUS ID) and session are both
+       in this schema. Return what was copied; ``--carry-over-sessions-from``.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.table_names`\ ``(prefix=None)``
      - The tables in the schema, optionally filtered by one prefix or several. **An
        implementation must sort them**, because a caller handing out row ids while
@@ -289,8 +311,31 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
      - Lock the first row a WHERE clause selects in descending ``order_by`` order,
        passing over rows another session has locked, and return one column of it, or
        None; the bundle claim.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.lock_row`\ ``(table_name, columns, where, where_params)``
+     - Lock the one row a WHERE clause selects until the caller's transaction ends,
+       passing over it when another session holds it, and return the named columns, or
+       None; recovery's hold on a bundle's registry row.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.set_idle_timeout`\ ``(seconds)``
+     - Set how long the server keeps the connection open while it sends nothing; the
+       connections that hold an ``import_process`` row's lock, or a bundle's registry
+       row, while they wait idle.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.last_insert_id`\ ``()``
+     - The automatic key the connection's last insert generated; an ``import_process``
+       row's id.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.set_next_id`\ ``(table_name, next_id)``
+     - Make the next row a table's auto-increment key hands out take a given id; the
+       re-created ``user_searches``.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.try_named_lock`\ ``(name)``
+     - Take a server-wide named lock for the connection's life, without waiting, and
+       return whether it was granted. The server frees it when the connection closes,
+       however the process holding it ends; the importers' and the writers' locks, and
+       the generation commands' lock.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.release_named_lock`\ ``(name)``
-     - Free a lock ``try_named_lock`` took; the generation commands' lock.
+     - Free a lock ``try_named_lock`` took on this connection.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.holds_named_lock`\ ``(name)`` / :meth:`~opus_import.importdb.super.ImportDBSuper.named_lock_holder`\ ``(name)``
+     - Whether this connection holds a named lock; the server's id of the connection
+       that holds one, or None when it is free, which is how a stopped process's lock is
+       told from a live one's.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.named_lock`\ ``(name)``
      - A context manager holding a server-wide named lock while its body runs, waiting
        for it first. The lock belongs to the connection, so it survives the body's
@@ -321,6 +366,10 @@ hierarchy, this is an abstract class by convention rather than through :mod:`abc
        result in memory. The caller reads every row before it issues another statement
        on the connection. Finalization's mult step reads the observation tables this
        way.
+   * - :meth:`~opus_import.importdb.super.ImportDBSuper.list_junction_mismatches`\ ``(table_name, column, junction, observation_column, first_id=None)``
+     - How many observations' ``mult_list`` lists disagree with the column's junction
+       table, and the least ``obs_general`` id among them, from ``first_id`` on when it
+       is given; ``--validate``.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.find_column_max`\ ``(table_name, column_name)``
      - The largest value in a column.
    * - :meth:`~opus_import.importdb.super.ImportDBSuper.read_table_keys`\ ``()``
@@ -359,8 +408,10 @@ The concrete members are the constructor,
 :meth:`~opus_import.importdb.super.ImportDBSuper.transaction`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.retrying`,
 :meth:`~opus_import.importdb.super.ImportDBSuper.failures_expected`, ``_execute``,
-``_simulated_count``, the warning collector ``_make_warning_handler``, and
-``_operation`` with the ``_enter``/``_exit`` pair it runs.
+``_simulated_count``, the warning collector ``_make_warning_handler``, the failure logger
+``_log_failure``, ``_commit`` and ``_rollback``, ``_restoring``, which puts back what its
+body changed however the body ends, and ``_operation`` with the ``_enter``/``_exit`` pair
+it runs.
 
 .. _dev_guide_import_db_transactions:
 
