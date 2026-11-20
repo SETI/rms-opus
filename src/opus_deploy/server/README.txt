@@ -225,11 +225,14 @@ update runs detached, mails its log, and holds the deploy lock until it
 ends. Without a version spec it installs what is being served: its release,
 or the git commit it was built from.
 
-An update that stopped part way goes on, once its cause is fixed, when run
-again with --continue and the same bundles: it writes into the pending
-generation instead of beginning one, and aborts before writing the
-database when it has no pending generation (opus_import --check
-continue); the installation it built and its log directory remain. A
+--continue writes into the pending generation an earlier update began
+instead of beginning one. It breaks an update into several commands on
+purpose -- the first begins the generation with some bundles, and each later
+one adds bundles or drops to it, which the site does not show until it is
+switched in -- and it goes on with an update that stopped part way, once
+its cause is fixed, run again with the same bundles. It aborts before
+writing the database when it has no pending generation (opus_import
+--check continue); the installation it built and its log directory remain. A
 bundle an import left importing when it was stopped is refused until it
 is returned to the queue, from the installation the update built:
 
