@@ -24,7 +24,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from opus_import import bundle_registry, import_processes, import_util
-from opus_import.steps import do_import_tables
+from opus_import.steps import do_generation, do_import_tables
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -165,8 +165,13 @@ def _recover_bundle(
 ) -> str | None:
     """Return one lost importer's bundle to the queue, or record it ``failed``.
 
+    The schema's version row is read into the context before the delete
+    (`opus_import.steps.do_generation.load_generation_state`), so that with a generation
+    pending only the rows it added are deleted, whichever context the recovery runs in.
+
     Parameters:
-        ctx: The context whose connection runs the deletes.
+        ctx: The context whose connection runs the deletes, and whose generation state
+            is read again here.
         bundle_id: The bundle.
         bundle_number: Its number.
         process_id: The lost importer.
@@ -188,6 +193,12 @@ def _recover_bundle(
                 return f'{bundle_id} had already left importer {process_id}'
             if holder.named_lock_holder(lock) is not None:
                 return f'{bundle_id}: importer {process_id} holds its lock again'
+            # Read here, not taken from the context: a coordinator's or a status
+            # command's context never read the version row, and a generation may have
+            # begun since one did. With a generation pending, the delete retires the
+            # bundle's served rows and deletes only the rows the generation added; read
+            # as none pending, it would delete the served rows too.
+            do_generation.load_generation_state(ctx)
             do_import_tables.delete_bundle_from_obs_tables(ctx, bundle_id)
             losses = int(str(row[2])) + 1
             if losses >= LOSSES_BEFORE_FAILED:

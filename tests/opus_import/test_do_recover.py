@@ -14,7 +14,9 @@ from typing import Any
 import pytest
 
 from opus_import import import_processes
-from opus_import.steps import do_import_tables, do_recover
+from opus_import.generations import PENDING_WRITING, GenerationState
+from opus_import.schema_version import SCHEMA_VERSION
+from opus_import.steps import do_generation, do_import_tables, do_recover
 
 from .conftest import make_context, row_selected
 
@@ -161,6 +163,28 @@ def test_a_dead_importers_bundle_is_deleted_under_its_row_lock_and_requeued(
         'B_1 returned to the queue: importer 1 died holding it',
         'importer 1 is lost: its lock is free',
     ]
+
+
+def test_a_recovery_deletes_by_the_version_row_it_reads_itself(
+    monkeypatch: pytest.MonkeyPatch, queue: _QueueDB
+) -> None:
+    """A coordinator's context never read the version row; the recovery reads it under
+    the bundle's row lock, so with a generation pending the delete retires the served
+    rows rather than deleting them."""
+    pending = GenerationState(SCHEMA_VERSION, 'ready', 1, 2, PENDING_WRITING, False)
+    monkeypatch.setattr(do_generation, 'read_generation_state', lambda db: pending)
+    seen: list[tuple[str, int | None, set[int]]] = []
+    monkeypatch.setattr(
+        do_import_tables,
+        'delete_bundle_from_obs_tables',
+        lambda ctx, bundle: seen.append((bundle, ctx.pending_generation, set(queue.held))),
+    )
+    ctx = make_context(db=queue)
+    assert ctx.generation_state is None
+
+    do_recover.recover_lost_importers(ctx)
+
+    assert seen == [('B_1', 2, {1})]
 
 
 def test_a_bundle_lost_twice_fails_keeping_its_importer(queue: _QueueDB) -> None:

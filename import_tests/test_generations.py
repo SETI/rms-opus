@@ -383,18 +383,31 @@ def _orphan_last_added_observation(credentials: DatabaseCredentials, schema: str
 
 
 def _start_holding_import(
-    copy: build_run.SchemaCopy, bundle: str, credentials: DatabaseCredentials
+    copy: build_run.SchemaCopy,
+    bundle: str,
+    credentials: DatabaseCredentials,
+    *,
+    join: bool = False,
 ) -> subprocess.Popen[str]:
-    """Start a plain ``--import`` of a bundle that waits after its first chunk commits,
-    on a file nothing removes, and return once it is that far; if it never gets there,
-    stop it before failing. The caller kills it."""
+    """Start an import of a bundle that waits after its first chunk commits, on a file
+    nothing removes, and return once it is that far; if it never gets there, stop it
+    before failing. The caller kills it.
+
+    Parameters:
+        copy: The schema.
+        bundle: The bundle.
+        credentials: How to reach the server.
+        join: Start a queue importer (``--join``), which claims the bundle from the
+            registry, rather than a plain ``--import`` of it.
+    """
     hold_file = copy.paths.log_dir / 'hold_after_chunk'
     hold_file.parent.mkdir(parents=True, exist_ok=True)
     hold_file.touch()
     environment = build_run.run_environment(copy.paths.config_file)
     environment[IMPORT_FAULT_ENV_VAR] = f'{HOLD_AFTER_CHUNK_FAULT_SITE}:{hold_file}'
+    arguments = ['--join', '--workers', '1'] if join else [*build_run.IMPORT_ARGS, bundle]
     process = subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's module
-        [str(build_run.THIS_PYTHON), '-m', 'opus_import', *build_run.IMPORT_ARGS, bundle],
+        [str(build_run.THIS_PYTHON), '-m', 'opus_import', *arguments],
         cwd=fixture_layout.REPO_ROOT,
         env=environment,
         stdout=subprocess.DEVNULL,
@@ -416,6 +429,63 @@ def _start_holding_import(
         process.wait()
         raise
     return process
+
+
+def _recover_until_returned(
+    copy: build_run.SchemaCopy, bundle: str, credentials: DatabaseCredentials
+) -> str:
+    """Run ``opus_import_all --status --recover`` until the bundle has left ``importing``,
+    since the server frees a killed importer's lock once it sees the connection close.
+
+    Returns:
+        What the last run printed.
+    """
+    statement = "SELECT COUNT(*) FROM import_bundle WHERE bundle_id = %s AND state = 'importing'"
+    deadline = time.monotonic() + 120
+    while True:
+        finished = subprocess.run(  # nosec B603 - this interpreter and the pipeline's module
+            [str(build_run.THIS_PYTHON), '-m', 'opus_import.import_all', '--status', '--recover'],
+            cwd=fixture_layout.REPO_ROOT,
+            env=build_run.run_environment(copy.paths.config_file),
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=300,
+        )
+        assert finished.returncode == 0, (finished.stdout[-3000:], finished.stderr[-3000:])
+        if golden_io.query(credentials, copy.schema, statement, [bundle])[0][0] == 0:
+            return finished.stdout
+        assert time.monotonic() < deadline, 'the killed importer was never recovered'
+        time.sleep(1)
+
+
+def test_a_lost_queue_importer_in_a_pending_generation_keeps_the_served_rows(
+    main_run: build_run.ImportRun,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    bundles: tuple[str, str],
+) -> None:
+    """A queue importer killed while it imports a bundle into the pending generation is
+    recovered from any computer, which deletes only the rows the pending generation
+    added: the served generation still shows every row it showed, and the bundle is
+    back in the queue."""
+    reimported, _dropped = bundles
+    copy = build_run.copy_run_schema(main_run, db_credentials, created_schemas, 'lost')
+    before = _served(db_credentials, copy.schema)
+    _ok(copy.step('--begin-generation'))
+    _ok(copy.step(*build_run.REGISTER_ARGS, reimported))
+    process = _start_holding_import(copy, reimported, db_credentials, join=True)
+    process.kill()
+    process.wait()
+    printed = _recover_until_returned(copy, reimported, db_credentials)
+    assert f'{reimported} returned to the queue' in printed
+    assert _served(db_credentials, copy.schema) == before
+    added = golden_io.query(
+        db_credentials,
+        copy.schema,
+        'SELECT COUNT(*) FROM obs_general_rows WHERE added_generation = 2',
+    )[0][0]
+    assert added == 0
 
 
 def test_an_abandoned_generation_leaves_the_base_tables_as_they_were(
