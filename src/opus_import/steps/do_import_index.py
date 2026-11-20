@@ -656,10 +656,6 @@ def import_index_row(
             obs_row = do_import_obs.import_observation_table(
                 ctx, instrument_obj, table_name, table_schemas[table_name], metadata
             )
-            # A missing row means a mult column returned something that is not a
-            # mult specification, which has already been reported. No table can be
-            # filled from one, so every call site below narrows it the same way.
-            assert obs_row is not None
             if table_name == 'obs_pds':
                 obs_pds_row = obs_row
             if table_name == 'obs_general':
@@ -708,7 +704,6 @@ def import_index_row(
             obs_row = do_import_obs.import_observation_table(
                 ctx, instrument_obj, table_name, table_schemas[table_name], metadata
             )
-            assert obs_row is not None
             emit(table_name, obs_row)
 
         # Handle obs_files
@@ -783,7 +778,6 @@ def _emit_surface_geometry_rows(
         obs_row = do_import_obs.import_observation_table(
             ctx, instrument_obj, category, schema, metadata
         )
-        assert obs_row is not None
         emit(category, obs_row)
 
 

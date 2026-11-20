@@ -45,7 +45,7 @@ def import_observation_table(
     table_name: str,
     table_schema: TableSchema,
     metadata: dict[str, Any],
-) -> dict[str, Any] | None:
+) -> dict[str, Any]:
     """Compute one observation's row of one table.
 
     Two kinds of entry are skipped: a column marked ``put_mults_here``, which holds
@@ -54,7 +54,10 @@ def import_observation_table(
     or a table-level key.
 
     A column whose form type is a GROUP type stores the id of a ``mult`` row rather than
-    the value, and the value is added to its mult field if it is new. A ``mult_list`` column
+    the value, and the value is added to its mult field if it is new. When its field
+    method failed, which has been logged, or returned plain values rather than mult
+    specifications, which is logged here, the column takes its field's absent value, so
+    one bad value fails the bundle rather than the index. A ``mult_list`` column
     holds several values and is written as a JSON array, with a missing value omitted
     rather than stored as null; every other column holds exactly one value.
 
@@ -76,8 +79,7 @@ def import_observation_table(
             here.
 
     Returns:
-        The row, keyed by column name, or None if a mult column's field function
-        returned something that is not a mult specification, which is not recoverable.
+        The row, keyed by column name.
     """
     new_row: dict[str, Any] = {}
 
@@ -115,6 +117,8 @@ def import_observation_table(
             pin_list: list[Any] | None = None
             grouping_list: list[Any] | None = None
             group_pin_list: list[Any] | None = None
+            # Whether the field method failed, which it has already logged.
+            field_failed = False
 
             if data_source == 'OBS_GENERAL_ID':
                 obs_general_row = metadata['obs_general_row']
@@ -132,7 +136,8 @@ def import_observation_table(
                     # they all have to be.
                     if not isinstance(ret, (list, tuple)):
                         ret = [ret]
-                    if isinstance(ret[0], dict):
+                    # An empty list is a mult_list field with no value.
+                    if len(ret) > 0 and isinstance(ret[0], dict):
                         column_val_list = [x['col_val'] for x in ret]
                         mult_label_list = [x['disp_name'] for x in ret]
                         disp_list = [x['disp'] for x in ret]
@@ -144,6 +149,7 @@ def import_observation_table(
                 else:
                     # Error will already be logged by import_run_field_function
                     column_val_list = [None]
+                    field_failed = True
 
             elif data_source == 'LONGITUDE_FIELD':
                 column_val_list = [instrument_obj.compute_longitude_field()]
@@ -338,12 +344,24 @@ def import_observation_table(
                 # (ex: flag)
                 mult_label = None
                 if mult_label_list is None:
-                    import_util.log_nonrepeating_error(
+                    if not field_failed:
+                        import_util.log_nonrepeating_error(
+                            ctx,
+                            f'Column "{field_name}" in table "{table_name}" holds mult ids, '
+                            'but its field method returned values rather than mult '
+                            'specifications; the observation is given the absent value',
+                        )
+                    column_val = do_import_mult.update_mult_table(
                         ctx,
-                        f'Fatal error processing column "{field_name}" in '
-                        f'table "{table_name}" - bad data type returned for mult',
+                        table_name,
+                        field_name,
+                        table_column,
+                        None,
+                        do_import_mult.ABSENT_LABEL,
                     )
-                    return None
+                    if field_type != 'mult_list':
+                        row_val.append(column_val)
+                    continue
                 # The lists are assigned together in the full-spec mult branch above,
                 # so the check just made establishes the others as well.
                 assert disp_list is not None
@@ -356,7 +374,9 @@ def import_observation_table(
                         mult_label = 'N/A'
                     else:
                         mult_label = str(column_val)
-                        if not mult_label[0].isdigit() or not mult_label[-1].isdigit():
+                        if mult_label != '' and (
+                            not mult_label[0].isdigit() or not mult_label[-1].isdigit()
+                        ):
                             # This catches things like 2014 MU69 and leaves them
                             # in all caps
                             mult_label = mult_label.title()
