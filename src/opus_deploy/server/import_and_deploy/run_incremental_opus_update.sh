@@ -8,9 +8,11 @@
 #                   example '@main' (_version_spec.sh). Omit it to install what is
 #                   being served: its release, or the commit it was built from.
 #   --continue      write into the pending generation an earlier update began, rather
-#                   than beginning one: for an update that stopped part way, run again
-#                   with the bundles it named once its cause is fixed. Refused when the
-#                   served database has no pending generation.
+#                   than beginning one: to break an update into several commands, each
+#                   after the first adding bundles or drops to the same generation, or
+#                   to go on with an update that stopped part way, run again with the
+#                   bundles it named once its cause is fixed. Refused when the served
+#                   database has no pending generation.
 #   --drop          bundles to drop from the served database without importing them
 #                   again. A bundle named here and as a <bundle> is imported again.
 #   <bundle>        bundles to import into the served database: a bundle it holds is
