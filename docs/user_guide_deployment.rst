@@ -238,9 +238,13 @@ The scripts
     (:ref:`user_guide_deployment_incremental_update`).
 
     ``--continue`` writes into the pending generation an earlier update began instead of
-    beginning one: it runs every command below but ``--begin-generation``. It is how an
-    update that stopped part way goes on once its cause is fixed, named again with the
-    bundles it named. Before writing anything it asks, with ``opus_import --check
+    beginning one: it runs every command below but ``--begin-generation``. It serves two
+    purposes. One is to **break an update into several commands** on purpose: the first
+    names some of the bundles and begins the generation, and each later one, given
+    ``--continue``, adds more bundles or drops to the same generation, which none of them
+    shows until ``promote_generation.sh`` switches it in. The other is to **go on with an
+    update that stopped part way**, once its cause is fixed, naming again the bundles it
+    named. Before writing anything it asks, with ``opus_import --check
     continue``, whether the served database has a pending generation that no
     ``opus_import`` is still writing, and aborts before writing the database when it has
     not: an import with no pending generation would write the rows the site serves. The
@@ -713,7 +717,9 @@ only when you switch it in. The steps, from the deploy directory::
    release being served unless given a version specifier. It refuses to start while a
    pending generation exists, or while the last switch has not been purged; with
    ``--continue`` it writes into the pending generation instead, and refuses to start
-   without one.
+   without one. An update can be broken into several runs this way: the first begins the
+   generation, each later one, given ``--continue``, adds bundles or drops to it, and the
+   generation is checked and promoted once, after the last.
 2. **Check.** Read its log, and ``ERRORS.log`` in the log directory it names. It stops at
    the first command that fails or logs an error, before the generation is marked ready
    to switch, and its log names the commands left to run. Once the cause is fixed, run
