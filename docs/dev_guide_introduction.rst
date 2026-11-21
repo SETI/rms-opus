@@ -134,8 +134,8 @@ primary index on the primary file specification:
      - Sky (right ascension and declination) geometry, at most one row per observation.
    * - ``<bundle>_<body>_summary.lbl``
      - Surface geometry, **one row per target per observation**, so these are collected
-       into a per-observation dictionary keyed by target name. Fills the
-       ``obs_surface_geometry__<TARGET>`` tables.
+       into a per-observation dictionary keyed by target name. Fills
+       ``obs_surface_geometry_target``.
    * - ``<bundle>_inventory.lbl``
      - The list of targets each observation covers. It is CSV rather than a fixed-width
        PDS table, so it is parsed with :mod:`csv` rather than with ``pdstable``.
@@ -211,26 +211,37 @@ Table schema
     table's rows hang off it. An ``obs_`` table corresponds one-for-one to a
     "Constraints" category in the user interface.
 
-``mult_`` table
-    The table of permitted values for one enumerated column. An ``obs_`` column whose
-    value comes from a fixed set stores an integer row id into its ``mult_`` table
-    rather than the value itself, which is what makes the checkbox searches fast.
-    "Mult" is short for *multiple choice*.
+Mult table
+    ``mult``, the table of permitted values for every enumerated column, beside
+    ``mult_field``, which names each column's **mult field**, and ``mult_group``, which
+    holds each field's groups. An ``obs_`` column whose value comes from a fixed set
+    stores the integer id of one of its field's ``mult`` rows rather than the value
+    itself, which is what makes the checkbox searches fast. "Mult" is short for
+    *multiple choice*.
 
 Slug
     The short field id an API call names a field by -- ``time1``, ``RINGGEOringradius1``
     -- as distinct from the SQL column name. The mapping lives in ``param_info``.
 
-Import namespace, permanent namespace
-    Every table OPUS imports exists twice: once under a configured prefix (the *import*
-    namespace) and once without it (the *permanent* namespace, which the web application
-    reads). A run writes the import tables and copies them over the permanent ones only
-    once the whole run has succeeded.
+Fresh import, append
+    The two ways an import writes, chosen by the state of the schema it writes into.
+    A *fresh import*, into a schema not yet served, creates the observation tables with
+    only the keys a load needs and leaves the rest for finalization; an *append*, into a
+    finished schema, loads into the tables with their keys in place and marks the schema
+    ``appending`` until it is finalized and marked ready again. Either way there is one
+    set of tables, the one the web application reads.
 
-Cache table
-    A table named ``cache_NNN`` holding the ids of the observations one search matched,
-    in sort order. The web application builds it once per distinct search and joins
-    every later query against it.
+Bundle registry
+    The ``import_bundle`` table, which records each bundle an import takes on and whether
+    it finished. Finalization and the step that marks a schema ready both refuse while any
+    bundle in it is not ``done``.
+
+Search results
+    The rows of the ``search_results`` table holding the ids of the observations one
+    search matched, in sort order, under the search's ``user_searches`` id. The web
+    application stores them the first time anyone makes the search, and every later
+    query for the search reads them; ``opus_manage prune`` removes the searches unused
+    the longest.
 
 Trigger
     A value a user can search for that makes a further table of search parameters

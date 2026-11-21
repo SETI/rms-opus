@@ -14,13 +14,16 @@ for by name::
 
     pytest import_tests
 
-That is the everyday form and the one to use: about two minutes, no coverage. The three
+That is the everyday form and the one to use: it runs without coverage. The three
 executed-functions tests **skip** in it, saying what to run instead, because the report
 they read is not there.
 
-Coverage is the other form, and it costs about two and a half times the runtime. It is two invocations,
-because the executed-functions check reads the report the rest of the suite writes and
-that report does not exist until the session producing it has ended::
+Coverage is the other form. Coverage follows every ``opus_import`` process the suite
+starts, and under Python 3.12 its tracer costs several seconds in each, so the suite takes
+several times as long there; under Python 3.13 and later it costs a fraction of a second
+in each. It is two invocations, because the executed-functions check reads the report the
+rest of the suite writes and that report does not exist until the session producing it
+has ended::
 
     pytest import_tests --ignore=import_tests/test_obs_execution.py \
         --cov --cov-report=json:coverage.json
@@ -110,15 +113,13 @@ The goldens
     file per table, rows ordered by primary key. Which tables are covered is a rule:
     everything the schema holds, minus the tables ``manage.py migrate`` creates -- captured
     as the before/after difference around the migration step rather than listed -- minus
-    any table excused by name, of which there are none today. A table the import newly
-    writes therefore shows up as a golden that does not exist rather than escaping
-    comparison.
+    any table excused by name. A table the import starts to write therefore shows up as
+    a golden that does not exist rather than escaping comparison.
 
-    No table is excused today, and the list is empty on purpose rather than by omission.
-    ``definitions`` was excused while it restated a checked-in data file; with that file
-    gone it holds rows computed from the table schemas and the UI reads it for every
-    tooltip, so it is covered like any other table. The mechanism stays, because the
-    rules it carries are what make an exclusion safe to add: an excused table has to exist
+    The excusal list is empty, on purpose rather than by omission. ``definitions``, for
+    one, holds rows computed from the table schemas and the UI reads it for every
+    tooltip, so it is covered like any other table. The rules the list carries are what
+    make an exclusion safe to add: an excused table has to exist
     in the run *and hold rows*, so an entry can neither outlive the table it excuses nor
     cover for one that quietly emptied; it must not also have a golden; and it has to carry
     a written reason. Those checks pass trivially over an empty list and start doing work
@@ -137,20 +138,18 @@ The goldens
     the only thing watching that line.
 
     Nothing else in the table is a mechanical transform of the path. The four columns
-    whose names invite the suspicion were measured rather than assumed: between 62 and 83
-    logical paths carry two or more different values of ``sort_order``, ``short_name``,
-    ``full_name`` and ``product_order``, because one file serves several observations
-    under different product classifications. The rest are the values the shelves feed --
+    whose names invite the suspicion were measured rather than assumed: for each of
+    ``sort_order``, ``short_name``, ``full_name`` and ``product_order``, the fixture has
+    logical paths that carry two or more different values, because one file serves
+    several observations under different product classifications. The rest are the values the shelves feed --
     ``checksum``, ``size``, ``width``, ``height`` -- which happen to have one value per
     path here but are not computed from it, and which are what the golden is for in this
     table, together with their linkage to an OPUS id.
 
-    Two further things are normalized. Every column MySQL declares as a
-    ``timestamp`` is dropped: the import never writes one and the server fills them from
-    the wall clock. And ``obs_general.preview_images`` has its JSON list sorted, because
-    it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile`` documents that its
-    members come out in the iteration order of a Python set, which is not stable across
-    processes. A third measure sits outside the goldens: the suite pins
+    One further thing is normalized: ``obs_preview.preview_images`` has its JSON list
+    sorted, because it is a ``PdsViewSet`` rendered to a dictionary and ``pdsfile``
+    documents that its members come out in the iteration order of a Python set, which is
+    not stable across processes. Another measure sits outside the goldens: the suite pins
     ``PYTHONHASHSEED`` in the pipeline's subprocesses, because several steps iterate sets
     of strings. A hash-seed pin is not sufficient on its own: ``do_param_info``'s table
     set is filled from a query with no ``ORDER BY``, so its order depends on insertion
@@ -160,26 +159,29 @@ The goldens
     on.
 
 The re-import path
-    One volume is imported a second time into the finished database, and every table is
-    compared with the goldens again. This is not a determinism check -- the import is
-    deterministic by design. It is the only thing in the suite that runs the *update*
-    half of every upsert, which is the documented re-import operational mode.
+    One volume is imported a second time into the finished database -- an append, since
+    the database has its version row, followed by ``--finalize``, ``--validate`` and
+    ``--write-schema-version`` -- and every table is compared with the goldens again. This
+    is not a determinism check -- the import is deterministic by design. It is what checks
+    the delete-then-reload of a bundle on the main run's schema, which is the documented
+    re-import operational mode.
 
-    A re-import does not leave the database bit-for-bit as it was, and the comparison
-    splits in two because of it. The pipeline hands out row ids from the largest already
-    present in either namespace and deletes the bundle's old rows only afterwards, so
-    re-importing a bundle renumbers it above everything else in the table. Every table
+    The comparison splits in two. The pipeline deletes the bundle's rows and loads them
+    again, under ids from the bundle's registered range. Every table
     that holds none of that bundle's rows -- every mult table, and everything the
     dictionary and finalization steps write -- is therefore required to be byte-identical
-    to its golden, ids included, which is what says the upsert updated the row it found
-    rather than adding another. Every table that does hold them is required to hold the
-    same rows with the same values once the two server-numbered columns, ``id`` and
-    ``obs_general_id``, are dropped. A third assertion checks that neither half is empty,
+    to its golden, ids included, which is what says the reload kept every row it did not
+    replace, and found the mult values it needed rather than adding them again. Every table
+    that does hold them -- one whose
+    ``bundle_id`` names the bundle, or whose ``obs_general_id`` names one of its
+    ``obs_general`` rows -- is required to hold the same rows with the same values once
+    the numbered columns, ``id``, ``obs_general_id`` and the registry's
+    ``bundle_number``, are dropped. A third assertion checks that neither half is empty,
     so a bundle id matching nothing cannot make both pass.
 
 Every obs function
-    The ``obs`` layer is about twelve thousand lines of field methods, and importing it
-    lights up almost all of it without calling anything. The check reads the per-function
+    The ``obs`` layer is made mostly of field methods, and importing it lights up almost
+    all of it without calling anything. The check reads the per-function
     regions of the coverage report and requires each function to have executed at least
     one line, or to be named in ``import_tests/fixtures/unexecuted_methods.txt`` with a
     comment saying why the fixture cannot reach it. An unexecuted method is exactly a
@@ -188,11 +190,98 @@ Every obs function
 
 The negative cases
     Each is its own run into its own schema with its own log directory, and each is
-    exempt from the clean-log rules: a volume imported twice in one invocation under
-    ``--import-check-duplicate-id``, and a volume whose index names a target the pipeline
-    does not describe under ``--import-ignore-errors``. The volumes that have no metadata
+    exempt from the clean-log rules: a volume imported twice in one invocation, with no
+    flag, which proves that the second import replaces the first and leaves one copy of
+    each observation, and a volume whose index names a target the pipeline does not
+    describe under ``--ignore-errors``. A recipe in ``import_tests/fixtures/negative``
+    either overwrites one column of one row of a volume's primary index or renames one
+    body's rows in one of its surface geometry summaries.
+
+A surface geometry body the fixture has no geometry for
+    A run of its own renames one observation's rows for one body of a volume's moon
+    summary to a body the fixture has no geometry for, then imports and finalizes that
+    volume. The body's ``table_names`` and ``partables`` rows must be there, and the web
+    application, driven through Django's test client by ``opus_manage shell`` under the
+    run's own configuration, must list the body's category for the observation and
+    search the body's fields, with no code regenerated.
+
+The append
+    Each case starts from a copy of the main run's finished schema and runs real
+    ``opus_import`` invocations against it, a failure being made with the test-only fault
+    ``OPUS_IMPORT_FAULT=log_error:<bundle>``
+    (:ref:`the import's fault sites <dev_guide_testing_faults>`). An append that
+    replaces one volume and adds another must end with every table as the full fresh
+    import's goldens hold it, ids aside. An append that fails in its second volume must
+    leave the schema ``appending``, have ``--finalize`` and ``--write-schema-version``
+    each refuse naming the volume and its state, and have the web application refuse the
+    schema, until a rerun resumes it and the schema ends ``ready``; ``--delete-bundles``
+    of the failed volume instead must let the schema end ``ready`` without it; and under
+    ``--ignore-errors`` the volume must be recorded ``done`` and neither step refused. A
+    fresh import with a failed volume must have ``--write-schema-version`` refuse and
+    write no version row.
+
+The fresh import's states
+    A schema of its own, two volumes imported fresh by two invocations, checks that the
+    second keeps the first's rows. Two observations are then copied under higher ids,
+    one under another volume and one under the same, and ``--finalize`` must keep each
+    copy, delete each original from every table, and log the first at info level and
+    the second as a warning; finalization's duplicate step has no fixture volume pair
+    that shares an OPUS ID to test it otherwise. An import into the result, finalized
+    but with no version row, must be refused and change nothing, and ``--finalize`` must
+    restore two keys dropped from it. The main run's schema is checked to carry exactly
+    the keys its schema files declare, read back from ``information_schema``, since the
+    goldens record tables, columns and primary keys only. The volumes that have no metadata
     directory at all cover the missing-summary branches, and the volume set reaches them
     naturally rather than by a special case.
+
+The pool of workers
+    The main run, which the goldens are compared against, computes its observations in a
+    pool at the ceiling of the host size every session states
+    (:ref:`dev_guide_testing`), with tasks small enough to split each of the fixture's
+    indexes across several workers. One case imports the same volumes in one invocation
+    into two schemas of its own, with a single worker and with a pool, and every table,
+    ids included, and every log, timestamps and the ``Parallelism`` line aside, must be
+    the same in both. Another makes one task fail at the ``fail_worker`` fault site, which
+    the import's process meets only after loading the rows of the tasks before it, and
+    requires that no ``obs_`` table keep a row of the failed index. Another starts an import whose workers stall at the ``stall_worker``
+    fault site (:ref:`the import's fault sites <dev_guide_testing_faults>`), kills the
+    import's process, and requires that no worker and no database session of the run
+    outlive it; it reads ``/proc``, and runs on Linux only.
+
+Several importers
+    A schema of its own has the fixture's volumes registered in the main run's order,
+    and three ``opus_import --join`` processes, each with a configuration and a log
+    directory of its own, then import them at once, each held after its first claim at
+    the ``hold_after_claim`` fault site (:ref:`the import's fault sites
+    <dev_guide_testing_faults>`) until all three hold a volume; the schema is then
+    finished as the main run's is. Every registry row must be a volume OPUS imports, in
+    the order given, and ``done``. All three importers must have held a volume at once,
+    and their logs must show every volume claimed once and no importer exiting before
+    the last claim. Every goldened table must equal the main run's in the
+    mult-value mode of ``import_tests.tools.golden_io.serialize_table``, which
+    writes each mult column as the value its id names, since several importers number a
+    field's new values in the order they meet them; it writes each value as the server's
+    collation compares it and sorts every table's rows. Registering the volumes in
+    reverse must number them, and lay out their ranges, in that order. A last case
+    plants a primary index label with no row count and requires registration to refuse
+    it, naming the volume and the label, and to register nothing.
+
+The coordinator
+    Each case imports into a schema of its own with ``opus_import_all`` or
+    ``opus_import --join``, and acts on the importers from outside. One kills one of
+    three importers with ``SIGKILL`` while its pool runs, mid-bundle, held there at the
+    ``hold_after_chunk`` fault site, and requires its lock to be free within five seconds,
+    the coordinator to return its bundle to the queue, and the finished schema to equal
+    the main run's in the mult-value mode, which also leaves out the columns that depend
+    on how the importers shared the work. One kills the importer holding the same volume
+    twice and requires that volume ``failed``, named with its importer's log, and no
+    schema version row. One interrupts the coordinator twice and requires no volume left
+    ``importing`` and none counted lost, then runs it again and requires the main run's
+    result. One kills an importer's lock connection mid-volume and requires the importer
+    to exit with failure naming its lock, with the volume ``pending`` and none of its rows
+    left. One holds an importer between its row and its lock, at the
+    ``hold_before_lock`` fault site, and requires neither ``opus_import_all --status``
+    nor a ``READ COMMITTED`` read to see the row until the lock is held.
 
 What it cannot test
 -------------------
@@ -204,10 +293,11 @@ tree, by decision, and no product whose file ``pdsfile`` cannot address an info 
 bundle name from. A tree with no data files in it can say nothing about a file whose size
 and checksum have to come off the filesystem. It cannot reach a class of value that
 occurs only in volumes it does not carry, or beyond the row cap in the ones it does. It
-says nothing about scale -- thousand-row upsert packets, cache behavior at real volume
+says nothing about scale -- write packets and cache behavior at real volume
 counts -- and every bundle in it is one that worked, so real-archive messiness is not
 represented. PDS4 runs with shelves-only and a filesystem fallback rather than with
-shelves required, because production has no PDS4 shelves yet. The self-hosted integration
+shelves required, as every import does, so a bundle with no PDS4 shelves still imports.
+The self-hosted integration
 run against the real archive remains the only test of the archive itself.
 
 Updating the fixture
@@ -240,7 +330,7 @@ describing the archive. An empty scratch directory costs a few minutes and remov
 question.
 
 ``--compare-schemas`` is the other thing to run by hand, and it is off by default
-because it parses every volume of every volume set rather than the two dozen the fixture
+because it parses every volume of every volume set rather than the ones the fixture
 keeps. It reports the sibling volumes whose primary index carries a column, or a value
 class in a shared column, that the chosen representative's does not -- which is the
 evidence for giving a type a second representative.

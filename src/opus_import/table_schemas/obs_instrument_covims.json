@@ -2,34 +2,21 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
+        "field_key": "primary",
         "field_notnull": true,
         "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "opus_id",
-        "field_type": "char50",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "opus_id"
-        ],
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "This is the secondary key linking the record to obs_general."
-    },
-    {
-        "field_name": "bundle_id",
-        "field_type": "char75",
-        "field_notnull": true,
-        "field_key": true,
-        "data_source": "COMPUTE",
-        "comments": "The bundle_id is included here for ease of database manipulation only."
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
     },
     {
         "field_name": "instrument_mode_id",
@@ -53,13 +40,13 @@
         "pi_tooltip": "",
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0,          "IMAGE",          "IMAGE", "010", "Y", null, null],
-              [   1,           "LINE",           "LINE", "020", "Y", null, null],
-              [   2,    "OCCULTATION",    "OCCULTATION", "030", "Y", null, null],
-              [   3,          "POINT",          "POINT", "040", "Y", null, null],
-              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND", "050", "Y", null, null],
-              [   5,      "CAL_SOLAR",      "CAL_SOLAR", "060", "Y", null, null],
-              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL", "070", "Y", null, null]
+              [   0,          "IMAGE",          "IMAGE",    10, "Y", null, null],
+              [   1,           "LINE",           "LINE",    20, "Y", null, null],
+              [   2,    "OCCULTATION",    "OCCULTATION",    30, "Y", null, null],
+              [   3,          "POINT",          "POINT",    40, "Y", null, null],
+              [   4, "CAL_BACKGROUND", "CAL_BACKGROUND",    50, "Y", null, null],
+              [   5,      "CAL_SOLAR",      "CAL_SOLAR",    60, "Y", null, null],
+              [   6,   "CAL_SPECTRAL",   "CAL_SPECTRAL",    70, "Y", null, null]
           ]
     },
     {
@@ -131,7 +118,7 @@
         "field_name": "swath_width",
         "field_type": "uint2",
         "field_notnull": true,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
@@ -153,7 +140,7 @@
         "field_name": "swath_length",
         "field_type": "uint2",
         "field_notnull": true,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_instrument_covims",
         "pi_dict_context": "COVIMS",
@@ -175,7 +162,7 @@
         "field_name": "ir_exposure",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e5,
@@ -219,16 +206,16 @@
         "pi_tooltip": "",
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0, "HI-RES", "Hi-Res", "010", "Y", null, null],
-              [   1, "NORMAL", "Normal", "020", "Y", null, null],
-              [   2,  "UNDER",  "Under", "030", "Y", null, null]
+              [   0, "HI-RES", "Hi-Res",    10, "Y", null, null],
+              [   1, "NORMAL", "Normal",    20, "Y", null, null],
+              [   2,  "UNDER",  "Under",    30, "Y", null, null]
           ]
     },
     {
         "field_name": "vis_exposure",
         "field_type": "real8",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 1e5,
@@ -272,10 +259,10 @@
         "pi_tooltip": "",
         "comments": "Definition from COVIMS label",
         "mult_options": [
-              [   0, "HI-RES",  "Hi-Res", "010", "Y", null, null],
-              [   1, "NORMAL",  "Normal", "020", "Y", null, null],
-              [   2,    "UNK", "Unknown", "030", "Y", null, null],
-              [   3,    "N/A",     "N/A", "040", "Y", null, null]
+              [   0, "HI-RES",  "Hi-Res",    10, "Y", null, null],
+              [   1, "NORMAL",  "Normal",    20, "Y", null, null],
+              [   2,    "UNK", "Unknown",    30, "Y", null, null],
+              [   3,    "N/A",     "N/A",    40, "Y", null, null]
           ]
     },
     {
@@ -300,20 +287,8 @@
         "pi_tooltip": null,
         "comments": null,
         "mult_options": [
-              [   0,  "IR",  "IR", "010", "Y", null, null],
-              [   1, "VIS", "VIS", "020", "Y", null, null]
+              [   0,  "IR",  "IR",    10, "Y", null, null],
+              [   1, "VIS", "VIS",    20, "Y", null, null]
           ]
-    },
-    {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": "MAX_ID"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

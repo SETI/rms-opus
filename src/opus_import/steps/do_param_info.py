@@ -5,8 +5,14 @@ belongs in the search form, and what the data dictionary calls it. The web appli
 reads nothing else to decide what the search form contains, so a column that has no
 ``param_info`` row is invisible to users no matter what the import wrote into it.
 
-The rows are derived from the packaged table schemas of the permanent ``obs_`` tables,
-which is why this step has to run after the import rather than alongside it.
+The rows are derived from the packaged table schemas of the ``obs_`` tables and from the
+surface geometry bodies the import wrote, which is why this step has to run after the
+import rather than alongside it. Each surface geometry body's category,
+``obs_surface_geometry__<target>``, gets the ``obs_surface_geometry_target`` template's
+rows with the body's name in their labels and slugs, and the selector category,
+``obs_surface_geometry_name``, the template's ``target_name`` row. The table is
+built beside the live one and swapped in (`opus_import.table_swap`), so the step can run
+on a schema that is being served.
 """
 
 from __future__ import annotations
@@ -15,27 +21,31 @@ import json
 from typing import TYPE_CHECKING, Any
 
 import opus_support
-from opus_import import import_util
+from opus_import import import_util, surface_geometry, table_swap
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
 
 
-def create_import_param_info_table(ctx: ImportContext) -> bool:
-    """Fill the import ``param_info`` table from the permanent tables' schemas.
+def fill_param_info(ctx: ImportContext, new_table: str) -> bool:
+    """Fill an empty ``param_info`` table from the categories' schemas.
 
-    Every column of every permanent ``obs_`` table that carries a ``pi_category_name``
-    contributes one row. A column's ``pi_ranges`` names an entry in the packaged
+    The categories are the ``obs_`` tables and the surface geometry categories
+    (`opus_import.surface_geometry.category_names`), taken in order of name. Every entry
+    of a category's schema whose ``pi_category_name`` is the category contributes one
+    row. An entry's ``pi_ranges`` names an entry in the packaged
     ``param_info_ranges.json``, which is stored as JSON text in the row.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+        new_table: The table to fill, already created from ``param_info``'s
+            schema.
 
     Returns:
         True on success. False if a table's schema could not be read, a form type names
         a unit `opus_support` does not know, or a ``pi_ranges`` entry is missing -- each
         of which is logged as an error. The rows are written in one call at the end, so
-        a failure leaves the import table empty rather than partly built.
+        a failure leaves the table empty rather than partly built.
 
     Raises:
         json.JSONDecodeError: If ``param_info_ranges.json`` is not valid JSON.
@@ -44,16 +54,13 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
     assert db is not None
     logger = ctx.logger
 
-    logger.log('info', 'Creating new import param_info table')
-    pi_schema = import_util.read_schema_for_table(ctx, 'param_info')
-    # param_info.json is packaged with opus_import, so the schema is always found.
-    assert pi_schema is not None
-    # Start from scratch
-    db.drop_table('import', 'param_info')
-    db.create_table('import', 'param_info', pi_schema, ignore_if_exists=False)
+    logger.log('info', f'Filling {new_table}')
 
-    # We use the permanent tables to determine what goes into param_info
-    table_names = db.table_names('perm', prefix='obs_')
+    # The obs_ tables that exist, and the bodies obs_surface_geometry_target holds,
+    # determine what goes into param_info
+    categories = surface_geometry.category_names(
+        list(db.table_names(prefix='obs_')), surface_geometry.stored_targets(ctx)
+    )
 
     # read json file for ranges info
     ranges_file = import_util.TABLE_SCHEMA_DIR / 'param_info_ranges.json'
@@ -66,15 +73,12 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
         raise
 
     rows: list[dict[str, Any]] = []
-    for table_name in table_names:
-        table_schema = import_util.read_schema_for_table(ctx, table_name)
+    for category_name in categories:
+        table_schema = surface_geometry.read_category_schema(ctx, category_name)
         if table_schema is None:
-            logger.log('error', f'Unable to read table schema for "{table_name}"')
+            logger.log('error', f'Unable to read table schema for "{category_name}"')
             return False
-        for column in table_schema:
-            category_name = column.get('pi_category_name', None)
-            if category_name is None:
-                continue
+        for column in surface_geometry.category_columns(table_schema, category_name):
             field_name = column.get('field_name', None)
             form_type_str = column.get('pi_form_type', None)
             (_form_type, _form_type_format, form_type_unit_id) = opus_support.parse_form_type(
@@ -123,42 +127,29 @@ def create_import_param_info_table(ctx: ImportContext) -> bool:
                 'field_hints2': column.get('pi_field_hints2', None),
             }
             rows.append(new_row)
-    db.insert_rows('import', 'param_info', rows)
+    db.insert_rows(new_table, rows)
 
     return True
 
 
-def copy_param_info_from_import_to_permanent(ctx: ImportContext) -> None:
-    """Replace the permanent ``param_info`` table with the import one.
+def do_param_info(ctx: ImportContext) -> bool:
+    """Rebuild the ``param_info`` table, driven by ``--create-param-info``.
+
+    With a pending generation (`opus_import.generations`) the table is built from it and
+    left as ``param_info__new``, which the switch swaps in.
+
+    A failed build leaves the live table as the previous run wrote it.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+
+    Returns:
+        True if the table was rebuilt, False if the build failed, having logged why.
     """
-    db = ctx.db
-    assert db is not None
-    logger = ctx.logger
-
-    logger.log('info', 'Copying param_info table from import to permanent')
-    # Start from scratch
-    pi_schema = import_util.read_schema_for_table(ctx, 'param_info')
-    # param_info.json is packaged with opus_import, so the schema is always found.
-    assert pi_schema is not None
-    db.drop_table('perm', 'param_info')
-    db.create_table('perm', 'param_info', pi_schema, ignore_if_exists=False)
-
-    db.copy_rows_between_namespaces('import', 'perm', 'param_info')
-
-
-def do_param_info(ctx: ImportContext) -> None:
-    """Rebuild the permanent ``param_info`` table, driven by ``--create-param-info``.
-
-    The import table is dropped either way, so a failed build leaves nothing behind; a
-    failure also leaves the permanent table as the previous run wrote it.
-
-    Parameters:
-        ctx: The import run's context, for the open database and the logger.
-    """
-    if create_import_param_info_table(ctx):
-        copy_param_info_from_import_to_permanent(ctx)
-    assert ctx.db is not None
-    ctx.db.drop_table('import', 'param_info')
+    new_name = table_swap.swap_new_name('param_info')
+    return table_swap.rebuild_tables_by_swap(
+        ctx,
+        ['param_info'],
+        lambda: fill_param_info(ctx, new_name),
+        swap=ctx.pending_generation is None,
+    )

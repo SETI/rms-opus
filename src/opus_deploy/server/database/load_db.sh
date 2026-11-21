@@ -2,18 +2,23 @@
 #
 # Load a dumped database onto the second server.
 #
-# Usage: load_db.sh <database name>
+# Usage: load_db.sh <dumped database name> [<target database name>]
 #
-# Where it reads and which server it loads onto come from deploy.env:
-# OPUS_DB_DUMP_DIR and OPUS_PEER_DB_HOST. Nothing here knows the name of any machine,
-# and with no peer configured there is nothing for this to do, which it says.
+# It reads the dump dump_db.sh wrote of the first database and creates the second on the
+# peer from it; without a second name, the database keeps the dump's name. Where it reads
+# and which server it loads onto come from deploy.env: OPUS_DB_DUMP_DIR and
+# OPUS_PEER_DB_HOST. Nothing here knows the name of any machine, and with no peer
+# configured there is nothing for this to do, which it says.
 #
-# It is the other half of dump_db.sh, and run_full_opus_import.sh runs the pair at the
-# end of an import.
+# It is the other half of dump_db.sh. Both run scripts, run_full_opus_import.sh and
+# run_incremental_opus_update.sh, call the pair through copy_database_to_peer
+# (import_and_deploy/_copy_database_to_peer.sh) at their end. A full import loads its new
+# database under its own name; an incremental update loads the served database under a
+# new one, since the peer's own served database cannot be loaded over.
 set -e
 
-if [[ $# -ne 1 ]]; then
-    echo "Usage: $(basename "$0") <database_name>" >&2
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+    echo "Usage: $(basename "$0") <dumped_database_name> [<target_database_name>]" >&2
     exit 2
 fi
 
@@ -28,11 +33,12 @@ if [[ -z ${OPUS_PEER_DB_HOST} ]]; then
     exit 1
 fi
 
-DATABASE=$1
-SQLDUMP="${OPUS_DB_DUMP_DIR}/${DATABASE}.sql"
+DUMPED=$1
+DATABASE=${2:-$1}
+SQLDUMP="${OPUS_DB_DUMP_DIR}/${DUMPED}.sql"
 
 if [[ ! -f ${SQLDUMP} ]]; then
-    echo "${SQLDUMP} does not exist. Run dump_db.sh ${DATABASE} first."
+    echo "${SQLDUMP} does not exist. Run dump_db.sh ${DUMPED} first."
     exit 1
 fi
 
@@ -43,5 +49,12 @@ echo "Loading ${DATABASE} onto ${OPUS_PEER_DB_HOST} from ${SQLDUMP}"
 # row while they read it.
 echo "CREATE DATABASE ${DATABASE};" \
     | mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}"
-mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}" \
-    "${DATABASE}" < "${SQLDUMP}"
+# A view's definer names an account of the first server, which the second may not have
+# and which only an account with SET_USER_ID may name. The obs_general view runs with its
+# reader's rights (SQL SECURITY INVOKER), so the clause is dropped from the dump as it is
+# read: only from the line mysqldump writes it on, which starts with the clause, so a
+# row's text that happens to hold the same words is loaded as it was dumped.
+set -o pipefail
+sed -e '/^\/\*!50013 DEFINER=/s/ DEFINER=`[^`]*`@`[^`]*`//' "${SQLDUMP}" \
+    | mysql -u"${OPUS_DB_USER}" -p"${OPUS_DB_PASSWORD}" -h "${OPUS_PEER_DB_HOST}" \
+        "${DATABASE}"

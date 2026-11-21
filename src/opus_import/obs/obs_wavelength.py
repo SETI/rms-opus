@@ -7,7 +7,7 @@ is why most of the methods here can be overridden and a few raise `NotImplemente
 outright.
 """
 
-from opus_import.obs.field_types import FloatField, IntField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, IntField, MultFieldRet
 from opus_import.obs.obs_base import ObsBase
 
 # Wavelengths are stored in microns and wavenumbers in cm^-1, so converting between
@@ -83,17 +83,6 @@ class ObsWavelength(ObsBase):
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
-
-    ### Don't override these ###
-
-    def field_obs_wavelength_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_wavelength_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_wavelength_instrument_id(self) -> StrField:
-        return self.instrument_id
 
     ################################
     ### ! Might override these ! ###

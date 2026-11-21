@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -48,6 +49,9 @@ secret_key = "django-secret-key"
 debug = true
 allowed_hosts = ["django-allowed-host-1", "django-allowed-host-2"]
 cache_server_prefix = "django-cache-server-prefix"
+cache_location = "127.0.0.1:2"
+conn_max_age = 45
+conn_health_checks = false
 public_url = "https://django-public-url.example.org/"
 product_http_path = "https://django-product-http-path.example.org/"
 viewmaster_url = "https://django-viewmaster-url.example.org/"
@@ -61,7 +65,6 @@ fake_error404_probability = 0.25
 fake_error500_probability = 0.75
 
 [import]
-table_temp_prefix = "import-table-temp-prefix"
 log_file = "/import/log-file.log"
 debug_log_file = "/import/debug-log-file.log"
 """
@@ -81,6 +84,7 @@ EXPECTED_SETTINGS = {
     'PDS4_DATA_DIR': '/paths/pds4-holdings',
     'OPUS_STATIC_ROOT': '/paths/opus-static-root',
     'CACHE_SERVER_PREFIX': 'django-cache-server-prefix',
+    'CACHE_LOCATION': '127.0.0.1:2',
     'PUBLIC_OPUS_URL': 'https://django-public-url.example.org/',
     'PRODUCT_HTTP_PATH': 'https://django-product-http-path.example.org/',
     'VIEWMASTER_ROOT_PATH': 'https://django-viewmaster-url.example.org/',
@@ -208,6 +212,116 @@ def test_settings_omit_static_root_when_the_file_does(tmp_path: Path) -> None:
     result = _import_settings(path, tmp_path, 'STATIC_ROOT')
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout) == {'STATIC_ROOT': None}
+
+
+#: A stand-in for the ``pymemcache`` package: a client that records the address it was
+#: built with and accepts every write, so the settings take their memcached branch
+#: without a memcached running.
+_STUB_PYMEMCACHE = {
+    'pymemcache/__init__.py': 'from pymemcache import client, exceptions\n',
+    'pymemcache/exceptions.py': 'class MemcacheError(Exception):\n    pass\n',
+    'pymemcache/client/__init__.py': 'from pymemcache.client import base\n',
+    'pymemcache/client/base.py': (
+        'class Client:\n'
+        '    def __init__(self, server, **options):\n'
+        '        self.server = server\n'
+        '        self.options = options\n'
+        '    def set(self, key, value, noreply=None):\n'
+        '        self.noreply = noreply\n'
+        '        return True\n'
+        '    def close(self):\n'
+        '        pass\n'
+    ),
+}
+
+_DUMP_CACHE = (
+    'import json; import opus_app.settings as settings; '
+    'print(json.dumps({"caches": settings.CACHES, '
+    '"probed": settings._memcache_client.server, '
+    '"noreply": settings._memcache_client.noreply}))'
+)
+
+
+def _dump_cache_with_stub(distinct_config: Path, tmp_path: Path) -> dict[str, Any]:
+    """Import the settings with the stub ``pymemcache`` and return `_DUMP_CACHE`'s output."""
+    stub_root = tmp_path / 'stub'
+    for relative, text in _STUB_PYMEMCACHE.items():
+        path = stub_root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+    env = dict(os.environ)
+    env[OPUS_CONFIG_ENV_VAR] = str(distinct_config)
+    env['PYTHONPATH'] = os.pathsep.join([str(stub_root), env.get('PYTHONPATH', '')])
+    result = subprocess.run(
+        [sys.executable, '-c', _DUMP_CACHE],
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+        env=env,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    dumped: dict[str, Any] = json.loads(result.stdout)
+    return dumped
+
+
+def test_cache_location_reaches_the_probe_and_caches(distinct_config: Path, tmp_path: Path) -> None:
+    """The configured memcached is the one probed and the one Django's cache uses.
+
+    A stub client stands in for ``pymemcache``, so the memcached branch is taken
+    whether or not the real package or a memcached is present.
+    """
+    dumped = _dump_cache_with_stub(distinct_config, tmp_path)
+    assert dumped['probed'] == ['127.0.0.1', 2]
+    assert dumped['caches']['default']['LOCATION'] == '127.0.0.1:2'
+
+
+def test_the_probe_waits_for_memcached_to_answer(distinct_config: Path, tmp_path: Path) -> None:
+    """The probe's write asks for a reply, so a server that never answers is not used.
+
+    pymemcache's clients default to not reading one, which proves only that the
+    connection took the bytes.
+    """
+    assert _dump_cache_with_stub(distinct_config, tmp_path)['noreply'] is False
+
+
+def test_a_socket_location_reaches_the_probe_and_caches(tmp_path: Path) -> None:
+    """A memcached on a Unix socket is probed at the socket's path.
+
+    pymemcache's client takes the bare path, and Django's backend the ``unix:`` form,
+    which it hands to pymemcache's own parser.
+    """
+    path = tmp_path / 'opus.toml'
+    path.write_text(
+        DISTINCT_CONFIG.replace(
+            'cache_location = "127.0.0.1:2"',
+            'cache_location = "unix:/run/memcached/memcached.socket"',
+        )
+    )
+    dumped = _dump_cache_with_stub(path, tmp_path)
+    assert dumped['probed'] == '/run/memcached/memcached.socket'
+    assert dumped['caches']['default']['LOCATION'] == 'unix:/run/memcached/memcached.socket'
+
+
+def test_a_failed_memcached_is_a_cache_miss_not_an_error(
+    distinct_config: Path, tmp_path: Path
+) -> None:
+    """The cache is told to swallow a failed memcached, and to give up on it quickly."""
+    options = _dump_cache_with_stub(distinct_config, tmp_path)['caches']['default']['OPTIONS']
+    assert options['ignore_exc'] is True
+    assert 0 < options['connect_timeout'] <= 1
+    assert 0 < options['timeout'] <= 1
+
+
+def test_the_connection_lifetime_reaches_the_database_settings(
+    distinct_config: Path, tmp_path: Path
+) -> None:
+    """The configured lifetime and health check are what Django's connection uses."""
+    result = _import_settings(distinct_config, tmp_path, 'DATABASES')
+    assert result.returncode == 0, result.stderr
+    default = json.loads(result.stdout)['DATABASES']['default']
+    assert default['CONN_MAX_AGE'] == 45
+    assert default['CONN_HEALTH_CHECKS'] is False
 
 
 def test_settings_require_the_configuration_variable(tmp_path: Path) -> None:

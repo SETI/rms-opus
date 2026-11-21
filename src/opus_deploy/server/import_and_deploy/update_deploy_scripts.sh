@@ -8,8 +8,14 @@
 # a step that a release added goes missing. **This is therefore the first command of
 # every upgrade**, before the deploy itself:
 #
-#     ./import_and_deploy/update_deploy_scripts.sh ==3.24.1
-#     ./import_and_deploy/deploy_new_code_only.sh  ==3.24.1
+#     ./import_and_deploy/update_deploy_scripts.sh ==<release>
+#     ./import_and_deploy/deploy_new_code_only.sh  ==<release>
+#
+# The version spec may name a git revision instead, "@" and a branch, tag or commit
+# (_version_spec.sh), for deploying one with no release:
+#
+#     ./import_and_deploy/update_deploy_scripts.sh @<branch, tag or commit>
+#     ./import_and_deploy/deploy_new_code_only.sh  @<branch, tag or commit>
 #
 # It upgrades rms-opus in the environment named by OPUS_DEPLOY_VENV -- the one these
 # commands come from, not any installation that serves anything -- and then rewrites
@@ -36,13 +42,18 @@ main() {
         echo "Usage: update_deploy_scripts.sh [<version_spec>]"
         echo
         echo "  <version_spec>  a PEP 440 specifier appended to the distribution name,"
-        echo "                  for example '==3.24.1'. Omit it for the newest release."
+        echo "                  for example '==3.24.1', or '@' and a git branch, tag or"
+        echo "                  commit, for example '@main'. Omit it for the newest release."
         exit 1
     fi
 
     local version_spec=${1:-}
 
     export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    source "${IMPORT_SCRIPT_DIR}/_version_spec.sh"
+    if ! check_version_spec update_deploy_scripts.sh "${version_spec}"; then
+        exit 1
+    fi
     export SCRIPT_DIR=$(dirname "${IMPORT_SCRIPT_DIR}")
     export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
@@ -59,7 +70,7 @@ main() {
     echo
 
     python -m pip install --upgrade pip
-    python -m pip install --upgrade "rms-opus${version_spec}"
+    python -m pip install --upgrade "$(opus_requirement "${version_spec}")"
 
     opus_deploy_scripts --directory "${SCRIPT_DIR}" --force
 

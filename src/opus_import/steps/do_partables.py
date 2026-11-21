@@ -6,17 +6,19 @@ mission table. The web application reads this to decide which sections of the se
 form to offer, so a mission or instrument with no row here has no searchable columns of
 its own.
 
-Most triggers name a ``mult_`` table row id, because that is what the corresponding
-``obs_general`` column holds. Surface geometry targets are the exception: their trigger
-value is the target name itself, since the web side compares the user's search text to
-it directly.
+Every trigger names the id of a ``mult`` row, because that is what the column it
+triggers on holds: an ``obs_general`` column for a mission, an instrument or an
+instrument host, and the surface geometry selector for a body.
+
+The table is built beside the live one and swapped in (`opus_import.table_swap`), so the
+step can run on a schema that is being served.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, import_util
+from opus_import import config_data, import_util, surface_geometry, table_swap
 from opus_import.steps.do_import_mult import mult_table_lookup_id
 
 if TYPE_CHECKING:
@@ -43,29 +45,30 @@ def _lookup_table_column(
     return None
 
 
-def create_import_partables_table(ctx: ImportContext) -> None:
-    """Fill the import ``partables`` table with every trigger OPUS knows.
+def fill_partables(ctx: ImportContext, new_table: str) -> bool:
+    """Fill an empty ``partables`` table with every trigger OPUS knows.
 
     One row per mission, per instrument and per instrument host, each keyed by the
-    ``mult_`` id of the corresponding ``obs_general`` value, plus one per surface
-    geometry target keyed by the target name. An HST instrument points at the Hubble
+    mult id of the corresponding ``obs_general`` value, plus one per surface
+    geometry body ``obs_surface_geometry_target`` holds
+    (`opus_import.surface_geometry.stored_targets`), keyed by the body's id in the
+    selector's mult field and revealing the body's category. An HST instrument points at the Hubble
     mission table, because HST keeps its columns there rather than in an instrument
     table of its own.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
+        new_table: The table to fill, already created from ``partables``'s
+            schema.
+
+    Returns:
+        True; every row is built from what the imported tables hold.
     """
     db = ctx.db
     assert db is not None
     logger = ctx.logger
 
-    logger.log('info', 'Creating new import partables table')
-    partables_schema = import_util.read_schema_for_table(ctx, 'partables')
-    # partables.json is packaged with opus_import, so the schema is always found.
-    assert partables_schema is not None
-    # Start from scratch
-    db.drop_table('import', 'partables')
-    db.create_table('import', 'partables', partables_schema, ignore_if_exists=False)
+    logger.log('info', f'Filling {new_table}')
 
     # We use the entries in data_config to determine the first part of what
     # goes into partables.
@@ -141,54 +144,32 @@ def create_import_partables_table(ctx: ImportContext) -> None:
     # }
     # rows.append(entry)
 
-    surface_geo_table_names = db.table_names('perm', prefix='obs_surface_geometry__')
-    for table_name in sorted(surface_geo_table_names):
-        target_name = table_name.replace('obs_surface_geometry__', '')
-        target_name = import_util.decode_target_name(target_name).upper()
-        # For surface_geometry targets, we don't find the mult id for the target name
-        # but instead put the target name string directly in the partable. This is
-        # because get_triggered_tables compares the user search string against the
-        # partable trigger_val directly instead of doing a database search like it does
-        # for other types of triggered tables.
+    for target in surface_geometry.stored_targets(ctx):
         entry = {
-            'trigger_tab': 'obs_surface_geometry_name',
-            'trigger_col': 'target_name',
-            'trigger_val': target_name,
-            'partable': table_name,
+            'trigger_tab': surface_geometry.SELECTOR_CATEGORY,
+            'trigger_col': surface_geometry.TARGET_COLUMN,
+            'trigger_val': str(target.target_id),
+            'partable': surface_geometry.target_category(target.encoded_name),
         }
         rows.append(entry)
 
-    db.insert_rows('import', 'partables', rows)
-
-
-def copy_partables_from_import_to_permanent(ctx: ImportContext) -> None:
-    """Replace the permanent ``partables`` table with the import one.
-
-    Parameters:
-        ctx: The import run's context, for the open database and the logger.
-    """
-    db = ctx.db
-    assert db is not None
-    logger = ctx.logger
-
-    logger.log('info', 'Copying partables table from import to permanent')
-    # Start from scratch
-    partables_schema = import_util.read_schema_for_table(ctx, 'partables')
-    # partables.json is packaged with opus_import, so the schema is always found.
-    assert partables_schema is not None
-    db.drop_table('perm', 'partables')
-    db.create_table('perm', 'partables', partables_schema, ignore_if_exists=False)
-
-    db.copy_rows_between_namespaces('import', 'perm', 'partables')
+    db.insert_rows(new_table, rows)
+    return True
 
 
 def do_partables(ctx: ImportContext) -> None:
-    """Rebuild the permanent ``partables`` table, driven by ``--create-partables``.
+    """Rebuild the ``partables`` table, driven by ``--create-partables``.
+
+    With a pending generation (`opus_import.generations`) the table is built from it and
+    left as ``partables__new``, which the switch swaps in.
 
     Parameters:
         ctx: The import run's context, for the open database and the logger.
     """
-    create_import_partables_table(ctx)
-    copy_partables_from_import_to_permanent(ctx)
-    assert ctx.db is not None
-    ctx.db.drop_table('import', 'partables')
+    new_name = table_swap.swap_new_name('partables')
+    table_swap.rebuild_tables_by_swap(
+        ctx,
+        ['partables'],
+        lambda: fill_partables(ctx, new_name),
+        swap=ctx.pending_generation is None,
+    )

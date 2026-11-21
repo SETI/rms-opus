@@ -1,0 +1,33 @@
+[
+    {
+        "field_name": "field_id",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "comment": "The mult_field row of the field the group belongs to."
+    },
+    {
+        "field_name": "grouping",
+        "field_type": "varchar100",
+        "field_notnull": true,
+        "comment": "The group's name, which the field's mult rows name in their grouping."
+    },
+    {
+        "field_name": "group_pin",
+        "field_type": "uint2",
+        "field_default": null,
+        "comment": "The group's configured position, or NULL to place it by name."
+    },
+    {
+        "field_name": "group_rank",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "field_default": "0",
+        "comment": "The group's position among the field's groups, from 1; finalization computes it."
+    },
+    {
+        "primary_key": [
+            "field_id",
+            "grouping"
+        ]
+    }
+]

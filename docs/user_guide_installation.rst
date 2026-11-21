@@ -3,7 +3,7 @@
 Installing OPUS on a Server
 ===========================
 
-This chapter brings a complete OPUS server up from nothing.
+This chapter describes bringing a complete OPUS server up from nothing.
 
 **Almost none of it is done by hand.** The distribution ships the scripts that install
 OPUS, import the holdings and deploy the result, and ``opus_deploy_scripts`` writes them
@@ -88,6 +88,11 @@ The import pipeline creates every OPUS table itself -- and creates the schema, i
 not exist -- and it writes its multi-row upserts with the ``AS new`` row alias that
 8.0.19 added. See :ref:`dev_guide_import_db_importdb` for why that is the floor.
 
+The server an import writes to does its work faster with a few settings, none of which
+the import needs in order to run, and the server that answers searches needs its buffer
+pool sized from the imported database. :ref:`user_guide_database_server` gives both, with
+what each setting does for OPUS.
+
 **The MySQL client development headers**, because the ``mysqlclient`` driver ships no
 Linux wheel and is compiled during every install. On Debian or Ubuntu::
 
@@ -127,14 +132,21 @@ computed against the old one. Install the **daemon** here; the scripts install i
 
 Without memcached running, OPUS falls back to Django's per-process local-memory cache: it
 works, more slowly, and the cache-emptying step of a deploy has nothing shared to empty.
-:ref:`dev_guide_webapp_running` describes the fallback and its one sharp edge.
+:ref:`dev_guide_webapp_running` describes the fallback.
+
+OPUS reaches memcached at ``127.0.0.1:11211``, the port the distribution's package
+listens on, unless ``OPUS_CACHE_LOCATION`` in ``deploy.env`` names another. **A memcached
+started with** ``-s`` **listens on that Unix socket alone**, with no TCP port at all, so a
+server set up that way names the socket there, as ``unix:`` and its path. ``systemctl
+status memcached`` shows the command line memcached was started with.
 
 Nothing else is needed to install it. **Later**, once the site is serving, this is how to
 watch the cache being used -- the counters once a second, with what changed highlighted,
 which is how you see requests being answered from it and a deploy emptying it::
 
-    watch -n1 -d 'memcstat --servers localhost'
+    watch -n1 -d 'memcstat --servers 127.0.0.1'
 
+For a memcached on a socket, ``--servers`` takes the socket's path instead.
 ``memcstat`` comes from ``libmemcached-tools`` rather than from ``memcached``, which is
 why the install line above takes both packages.
 
@@ -170,8 +182,16 @@ application needs them to serve product files. Both a PDS3 and a PDS4 root are
 configured, and the scripts check that ``volumes/`` exists under the first and
 ``bundles/`` under the second before doing anything.
 
+**Each root has to be a directory of a particular name**: ``holdings`` for PDS3 and
+``pds4-holdings`` for PDS4. ``pdsfile``, which reads the holdings for the import, finds a
+file's place in them by that name, and the scripts refuse a root named otherwise. It does
+not resolve symbolic links, so a root mounted under another name is given a link of the
+right name::
+
+    sudo ln -s /volumes/pdsdata-production/pds3-holdings /opt/opus/holdings
+
 **A mail transport**, only if you want the import to mail its log when it finishes. An
-import runs for hours or days detached, so that mail is how anyone finds out it ended.
+import runs detached, so that mail is how anyone finds out it ended.
 Without one, leave ``OPUS_IMPORT_MAIL_TO`` empty and read the log where it was written.
 
 .. _user_guide_installation_bootstrap:
@@ -197,6 +217,15 @@ distribution once, by hand, into an environment of its own::
 ``opus`` there is the account from the prerequisites, and ``<release>`` the release you
 are deploying.
 
+**To install a revision with no release** -- a branch under review, a tag or a commit --
+name it in place of the release, as pip's direct reference to the repository::
+
+    python -m pip install "rms-opus @ git+https://github.com/SETI/rms-opus.git@<branch>"
+
+pip builds it from a clone, so the server needs ``git`` and access to GitHub. Every step
+below then takes ``@<branch>`` wherever it shows ``==<release>``, and each script installs
+that revision the same way (:ref:`user_guide_deployment_revision`).
+
 **This environment does not serve anything.** It exists so that the scripts have commands
 to run; the installations that serve and import are built by the scripts under
 ``staged/``. Its path is what ``OPUS_DEPLOY_VENV`` names in ``deploy.env`` below, and
@@ -218,11 +247,15 @@ partial import or a one-off report is run directly:
    * - ``opus_import``
      - The import pipeline: reads the PDS holdings and builds the OPUS database.
    * - ``opus_import_all``
-     - Runs a whole full-holdings import: every bundle set, in order, and the steps
-       that finish the database. This is what an import deploy runs.
+     - Runs a whole full-holdings import: registers every bundle set, in order, imports
+       them with one or more importers it starts, tracks and restarts, and runs the
+       steps that finish the database. Its steps also run one at a time, so that another
+       computer can join an import; it erases a database only with ``--scorched-earth``.
+       This is what an import deploy runs.
    * - ``opus_manage``
      - Administers the web application -- creating its tables, gathering its static
-       files, and checking that its configuration works. A deploy runs it too.
+       files, checking that its configuration works, and pruning its stored searches
+       (:ref:`user_guide_deployment_prune`). A deploy runs it too.
    * - ``opus_config_template``
      - Writes out the annotated template of the file OPUS itself reads. On a server the
        deploy generates that file, so this is for reading rather than for filling in;
@@ -313,12 +346,15 @@ containing a space.
      - The MySQL server this installation connects to, usually ``localhost``.
    * - ``OPUS_DB_USER``, ``OPUS_DB_PASSWORD``
      - The MySQL account the import pipeline and the web application connect as. It
-       needs most privileges, including creating and dropping tables.
+       needs most privileges, including creating and dropping tables and views
+       (``CREATE VIEW``, since ``obs_general`` is a view), and ``SHOW VIEW``, without
+       which ``dump_db.sh`` cannot dump that view for a second server.
    * - ``OPUS_SECRET_KEY``
      - Django's signing key: unique to this server, and secret.
    * - ``PDS3_HOLDINGS_DIR``, ``PDS4_HOLDINGS_DIR``
-     - The two holdings roots. The scripts check that ``volumes/`` and ``bundles/``
-       exist under them.
+     - The two holdings roots, which have to end in directories named ``holdings`` and
+       ``pds4-holdings`` -- a symbolic link of that name serves. The scripts check the
+       names, and that ``volumes/`` and ``bundles/`` exist under them.
    * - ``LAST_BLOG_UPDATE_FILE``, ``NOTIFICATION_FILE``
      - The two files of site content the interface displays. Neither has to exist -- an
        absent one means there is nothing to show.
@@ -335,6 +371,18 @@ containing a space.
    * - ``OPUS_CACHE_PREFIX``
      - The prefix on this installation's keys in the shared cache. Two installations
        sharing one memcached need different prefixes, or each reads the other's answers.
+   * - ``OPUS_CACHE_LOCATION``
+     - *Optional.* Where the application reaches memcached, written into ``opus.toml``
+       as ``cache_location``: ``host:port``, or ``unix:`` and the socket's absolute
+       path for a memcached started with ``-s``. Empty means ``127.0.0.1:11211``. A
+       socket has to be one the web server's account can write to.
+   * - ``OPUS_IMPORT_WORKERS``, ``OPUS_IMPORT_IMPORTERS``, ``OPUS_IMPORT_CPU_FRACTION``
+     - *Optional.* The import's parallelism, written into ``opus.toml``'s ``[import]``
+       table as ``workers``, ``importers`` and ``cpu_fraction``: the total of worker
+       processes on this computer (``max`` for the ceiling), how many importers share
+       them, and the share of the cores the ceiling allows. Empty leaves a key out, and
+       its default applies -- for the first two together, **one importer of one worker**,
+       the slowest way to import (:ref:`user_guide_deployment_several_importers`).
    * - ``OPUS_PUBLIC_URL``, ``OPUS_PRODUCT_HTTP_PATH``, ``OPUS_VIEWMASTER_URL``,
        ``OPUS_TAR_FILE_URL``
      - What the site calls itself and where it serves things from. They appear in what
@@ -343,10 +391,10 @@ containing a space.
        and needs a trailing slash.
    * - ``OPUS_DB_DUMP_DIR``
      - *Optional.* Where ``mysqldump`` writes a finished database, and where the load
-       reads it back. **Empty means an import does not dump at all** -- a dump of the
-       full holdings is tens of gigabytes and hours of writing, so it happens because
-       this names a directory. On two servers that copy databases to each other, a
-       directory both can see.
+       reads it back. Both a full import and an incremental update dump into it.
+       **Empty means neither dumps at all** -- a dump of the full holdings is tens of
+       gigabytes and hours of writing, so it happens because this names a directory. On
+       two servers that copy databases to each other, a directory both can see.
    * - ``OPUS_PYTHON``
      - *Has a default.* The Python each installation's virtualenv is built with,
        ``python3.12`` unless this names another. ``python3`` is whatever the machine
@@ -363,10 +411,11 @@ containing a space.
        is no shared cache, which skips the restart.
    * - ``OPUS_PEER_DB_HOST``
      - *Optional.* The MySQL server a finished database is copied to. With a host here,
-       an import ends by dumping what it built and loading it there; empty, the dump
-       stays where it was written. It needs ``OPUS_DB_DUMP_DIR``, because the load
-       reads what the dump wrote, and a peer with nowhere to dump to is refused before
-       the import rather than after it.
+       an import ends by dumping what it built and loading it there, and an incremental
+       update is copied too: it ends by dumping the updated database and loading it there
+       under a new name. Empty, the dump stays where it was written. It needs
+       ``OPUS_DB_DUMP_DIR``, because the load reads what the dump wrote, and a peer with
+       nowhere to dump to is refused before the import rather than after it.
    * - ``OPUS_IMPORT_MAIL_TO``
      - *Optional.* Where to mail the log when an import finishes. Empty sends nothing
        and leaves the log where it was written.
@@ -392,16 +441,42 @@ That one command builds an installation of that release under ``staged/``, point
 for the moment it started. It runs **detached**, and prints the log file it is writing
 to; with ``OPUS_IMPORT_MAIL_TO`` filled in, it mails that log when it ends.
 
-A full-holdings import is **hours to days**. What it runs is ``opus_import_all``, the
-installed command: every bundle set in order -- Galileo and New Horizons first, while the
-tables are small, because their bundles carry observations that appear in more than one
--- then the rest in roughly decreasing order of how long each takes, and finally the
-three steps that finish the database, the auxiliary tables, the dictionary and the
-validation. The order lives in the release being installed rather than in the scripts, so
-it cannot disagree with the code importing.
+A full-holdings import measured 3,032 seconds, **about 51 minutes**, with six importers
+sharing 24 workers at a ``cpu_fraction`` of 0.8, on the Ring-Moon Systems Node's
+development workstation. It takes longer with fewer, so set the parallelism in
+``deploy.env`` before this step (below). What it runs is ``opus_import_all``, the
+installed command. It registers every bundle set in order -- Galileo and New Horizons
+first, then the rest roughly from the quickest to the slowest -- which fixes each
+bundle's number and the ids its observations take. It then starts importers, each
+importing the registered bundles, the largest first, until none is left; it tracks
+them, and returns the bundle of an importer that dies to the queue and starts another.
+Last it runs the four steps that finish the database, the auxiliary tables, the
+dictionary, the validation and the schema version row the web application checks for
+(:ref:`user_guide_deployment_schema_version`), unless a bundle failed. The order lives in
+the release being installed rather than in the scripts, so it cannot disagree with the
+code importing.
+
+How much of the computer it uses is ``[import] workers``, the total of worker processes,
+divided among ``[import] importers`` importers, which the generated ``opus.toml`` takes
+from ``OPUS_IMPORT_WORKERS`` and ``OPUS_IMPORT_IMPORTERS`` in ``deploy.env``. ``workers``
+defaults to 1 and the importers are capped at it, so with neither set the import uses
+one process (:ref:`user_guide_deployment_several_importers`).
+
+The database is new, so nothing is erased. ``opus_import_all`` erases the OPUS tables of
+the database it is pointed at only when given ``--scorched-earth``, and asks first;
+without it, running it again after an interruption imports only the bundles that are not
+done. ``opus_import_all --dry-run`` prints what the given arguments would run without
+running it. :ref:`dev_guide_import_full_run` describes each step and is the reference
+for every ``opus_import_all`` option, and ``opus_import_all --help`` lists them. An
+option ``opus_import_all`` does not define is passed on to the ``opus_import``
+invocations that import -- the erase, the registration and every importer -- and not to
+the ones that finish the database or return bundles to the queue. Those read the
+holdings too, at the roots the configuration names, so a holdings option given to the
+importers does not reach them.
 
 The argument is a **PEP 440 version specifier** appended to the distribution name:
-``==<release>`` for a particular release, omitted for the newest. Give this step and
+``==<release>`` for a particular release, omitted for the newest. ``@`` and a git branch,
+tag or commit installs that revision instead (:ref:`user_guide_deployment_revision`). Give this step and
 step 5 the same one -- they install ``rms-opus`` separately, so leaving it off both
 means "the newest release" twice, which is two different releases if one is published
 in between.
@@ -418,8 +493,8 @@ the run built is named by the installation ``import`` now points at::
 
     basename "$(readlink /opt/opus/import)"
 
-**These scripts import the whole archive.** There is no partial-import option in them:
-what they run is ``opus_import_all``, which imports every bundle set. A site that wants
+**These scripts import the whole archive:** what they run is ``opus_import_all``, which
+imports every bundle set. A site that wants
 only part of it -- Cassini and nothing else -- runs the pipeline directly instead, and
 then deploys the database that produced::
 
@@ -431,19 +506,24 @@ then deploys the database that produced::
     # ... fill it in: schema = "<database>", a name of your own, and the same paths
     #     deploy.env names.
 
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --cleanup-aux-tables
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary
-    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate-perm
-
-    # Then step 5 as usual, naming that database.
+    # Each command runs only if the one before it succeeded, so a failed step stops
+    # here rather than leaving a database marked ready and deployed. The last line is
+    # step 5 as usual, naming that database.
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --do-it-all CASSINI &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --import-dictionary &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --validate &&
+    OPUS_CONFIG=/opt/opus/partial.toml opus_import --write-schema-version &&
     ./import_and_deploy/deploy_new_code_and_database.sh <database> ==<release>
 
 What ``--do-it-all`` takes is a *descriptor*, and several can be given, comma- or
 space-separated: a bundle id (``COISS_2002``), a whole bundleset (``COISS_2xxx``), one of
 the shorthands for a mission or an instrument (``CASSINI``, ``GALILEO``, ``HST``,
 ``VOYAGER``, ``NH``, ``COISS``, ``COUVIS`` and their relatives, matched without regard to
-case), or ``ALL``. The three steps after it are what finishes a database, and a direct
+case), or ``ALL``. ``--do-it-all`` imports them and then runs ``--finalize``, which
+adds the database's indexes, keeps one copy of each observation two bundles share,
+deletes the checkbox values no observation holds, and builds the tables that describe the
+search form. The three steps after it finish the
+database, the last of them what lets the web application serve it, and a direct
 invocation is the one path that does not run them for you. ``opus_import --help`` lists
 every option and works without a configuration file; :ref:`dev_guide_import_running` is
 the complete reference.
@@ -629,6 +709,37 @@ entirely.
      - yes
      - Prepended to every cache key, which is what lets several OPUS installations share
        one memcached without colliding.
+   * - ``cache_location``
+     - optional
+     - The memcached the web application caches in, as ``"host:port"``, or as
+       ``"unix:"`` and an absolute path for a memcached listening on a Unix socket.
+       Default ``"127.0.0.1:11211"``, memcached's own port on the same machine. A
+       generated file contains it only when ``OPUS_CACHE_LOCATION`` names one.
+   * - ``conn_max_age``
+     - optional
+     - How many seconds each web worker thread keeps its database connection open across
+       requests. Default ``300``; ``0`` opens and closes a connection for every request.
+       A database on another host is where this matters most, since every new connection
+       there costs network round trips and, under TLS, a handshake.
+   * - ``conn_health_checks``
+     - optional
+     - Whether a kept database connection is checked before a request reuses it, and
+       replaced if the server has dropped it. Default ``true``.
+   * - ``search_build_timeout``
+     - optional
+     - How many seconds a request waits while another web worker stores the results of
+       the same search, before it gives up and answers with a 500. Default ``270``.
+       **Keep it at least 30 seconds below the web server's worker timeout** --
+       gunicorn's ``--timeout``, uWSGI's ``harakiri``, Apache's ``Timeout``
+       (:ref:`user_guide_web_server`): if the web server kills a worker partway through
+       storing a search's results, nothing is stored, and the next request has to start
+       over. A generated file never contains it.
+   * - ``search_results_max_rows``
+     - optional
+     - The rows ``opus_manage prune`` cuts the ``search_results`` table down to unless
+       its ``--max-rows`` says otherwise, removing the least recently used searches
+       first. Default ``50000000``. :ref:`user_guide_deployment_prune` says how to size
+       it. A generated file never contains it.
    * - ``public_url``
      - yes
      - This installation's public URL, used by the citation page.
@@ -670,16 +781,80 @@ entirely.
    * - Key
      - Required
      - Meaning
-   * - ``table_temp_prefix``
-     - optional
-     - The prefix of the import namespace's tables. Default ``"imp_"``. See
-       :ref:`dev_guide_import_two_namespaces`.
    * - ``log_file``, ``debug_log_file``
      - yes
      - The import pipeline's own logs. Their directory must already exist.
+   * - ``bulk_load``
+     - optional
+     - Whether observation rows are written with ``LOAD DATA LOCAL INFILE`` from a
+       scratch file rather than with ``INSERT`` statements. Default ``true``; the import
+       falls back to ``INSERT`` statements on its own when the server refuses local
+       files. See :ref:`dev_guide_import_db_bulk_load`.
+   * - ``scratch_dir``
+     - optional
+     - Where the bulk load writes its scratch files. Default: the system temporary
+       directory. A large table's load writes gigabytes, so point it at disk where the
+       system temporary directory is memory-backed.
+   * - ``transaction_rows``
+     - optional
+     - The most rows one bulk load writes in one transaction, a whole number of at
+       least 1. Default ``100000``. Lowering it shortens each transaction, so a killed
+       import rolls back faster and the server holds less undo at once; raising it means
+       fewer statements and commits.
+   * - ``workers``
+     - optional
+     - How many processes compute an index's observations: a whole number of at least
+       1, or ``"max"`` for the ceiling below. Default ``1``, the import's own process;
+       more forks a pool of that many for each index. The tables and the log come out the
+       same whatever the count. ``opus_import --workers`` replaces it for one run. See
+       :ref:`dev_guide_import_running_parallelism`.
+   * - ``worker_rows``
+     - optional
+     - The index rows one worker task covers, a whole number of at least 1. Default
+       ``500``. An index with fewer rows is computed in the import's own process. Smaller
+       tasks keep every worker busy closer to the end of an index; larger ones spend less
+       on handing tasks out.
+   * - ``index_workers``
+     - optional
+     - How many tables the import's finalization builds indexes on at once, each over a
+       connection of its own: a whole number of at least 1, or ``"max"`` for the ceiling
+       below. Default ``1``. The database server does the work, so raise it only when the
+       server has cores to spare beyond whatever else shares its computer. See
+       :ref:`dev_guide_import_steps_create_indexes`.
+   * - ``cpu_fraction``
+     - optional
+     - The share of the cores the ceiling allows, greater than 0 and at most 1. Default
+       ``0.75``. The ceiling is ``max(1, floor(cores * cpu_fraction))``, where cores is
+       the number the import may run on, counted when it starts, and a ``workers`` or
+       ``index_workers`` above it is lowered to it.
+   * - ``server_tmpdir``
+     - optional
+     - A directory on the database server's host, writable by ``mysqld``, where the
+       server sorts the indexes finalization builds. It names a path on the server, not
+       on the computer running the import, and setting it needs an account that may set
+       restricted session variables. Default: the server's own setting.
+   * - ``importers``
+     - optional
+     - How many importers ``opus_import_all`` starts on this computer, a whole number of
+       at least 1. Default ``4``. It is capped at the total of workers (``workers``, or
+       ``opus_import_all --workers``), which is divided among them; ``opus_import_all
+       --importers`` replaces it for one run. See
+       :ref:`user_guide_deployment_several_importers`.
+   * - ``stall_warning_minutes``
+     - optional
+     - How long an importer that is alive may go without committing any rows before
+       ``opus_import_all`` reports it as stalled, a whole number of at least 1. Default
+       ``30``. A stalled importer is reported, never stopped.
+   * - ``status_interval_minutes``
+     - optional
+     - How often ``opus_import_all`` writes its totals line when its output is not a
+       terminal, as under ``nohup``, a whole number of at least 1. Default ``5``.
 
 Where to go next
 ----------------
+
+:ref:`user_guide_database_server`
+    The MySQL settings that matter to OPUS, and sizing the server's memory.
 
 :ref:`user_guide_web_server`
     Putting Apache or nginx in front of it.

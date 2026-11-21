@@ -42,8 +42,9 @@ Adding a metadata column
    ``pi_dict_name`` name the data-dictionary term whose text becomes the tooltip, and
    ``definition`` carries the text itself. See :ref:`dev_guide_dictionary`.
 5. **Import a bundle and look at the error log.** A column with no ``param_info`` row is
-   invisible; a column whose field method returns the wrong shape is reported by
-   ``--validate-perm`` through the error log rather than through an exit status.
+   invisible, which ``--validate`` reports. A value of the wrong type is reported
+   as the bundle is imported (:mod:`~opus_import.steps.do_import_obs`), not by
+   validation, which reads only what was stored.
 
 .. code-block:: python
 
@@ -171,7 +172,10 @@ This is the bundle recipe plus the configuration data that says the instrument e
    ``TABLES_TO_POPULATE`` does not already cover, add them there too -- but an ordinary
    new mission or instrument needs no change to that list, because its mission,
    instrument and surface-geometry entries carry placeholders that are substituted per
-   bundle.
+   bundle. ``obs_general.json`` lists the values of ``mission_id``, ``inst_host_id`` and
+   ``instrument_id`` in their ``mult_options``, so add an entry there for each value
+   added, with an id the list does not use and an integer pin
+   (:ref:`dev_guide_table_schemas`); a value missing from the list is an import error.
 2. **Add the table schemas** the new mission and instrument tables need -- one JSON file
    per table, named after the table. A table with no schema file is silently skipped, so
    a missing file looks like a table nobody fills rather than an error.
@@ -199,23 +203,16 @@ This is the bundle recipe plus the configuration data that says the instrument e
    for its bundles as above.
 7. **Regenerate the Django models**: ``scripts/models/create_opus_models.sh`` rewrites
    ``src/opus_app/apps/search/models.py`` from a populated database. New tables do not
-   exist to the web application until it has been run, and the script refuses to run
-   while any ``cache_*`` table is present. See :ref:`dev_guide_webapp_search`.
+   exist to the web application until it has been run. See
+   :ref:`dev_guide_webapp_search`.
 
 .. _dev_guide_extending_target:
 
 Adding a surface geometry target
 --------------------------------
 
-There is nothing to do. The ``obs_surface_geometry__<TARGET>`` tables are created from
-one template as the targets are discovered, their ``table_names`` rows and their
-``partables`` triggers are generated from the tables that exist, and their search
-parameters are named by the slug form of the target name.
-:ref:`dev_guide_import_obs_target_template` describes the mechanism.
-
-The one thing that is **not** automatic: adding the target to ``TARGET_NAME_INFO`` if it
-is not already there, since an unknown name never reaches the surface geometry code at
-all.
+Add the target to ``TARGET_NAME_INFO`` if it is not already there: a name missing from
+it never reaches the surface geometry code.
 
 .. _dev_guide_extending_unit:
 

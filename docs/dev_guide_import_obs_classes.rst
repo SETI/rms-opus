@@ -397,9 +397,9 @@ Shared: ObsVolumeGalileoCommon
 
 :class:`opus_import.obs.obs_volume_galileo_common.ObsVolumeGalileoCommon`
 
-The smallest mission class: the Galileo spacecraft clock parser and the two
-``obs_mission_galileo`` id columns. Everything else -- the orbit number and the two clock
-counts -- raises.
+The smallest mission class: the Galileo spacecraft clock parser, and the
+``obs_mission_galileo`` field methods -- the orbit number and the two clock counts --
+each of which raises.
 
 Leaf: ObsVolumeGO0xxx
 ~~~~~~~~~~~~~~~~~~~~~

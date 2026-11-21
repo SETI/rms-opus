@@ -17,21 +17,21 @@ In addition to metadata, OPUS stores other information that helps it operate in 
 OPUS Metadata
 -------------
 
-It's important to understand that OPUS has its own concept of metadata types independent of the SQL data types. For example, an integer in the database could represent a numeric value (like the pixel size of an image) or an index into a "mult table" (like the selection of a particular mission from the available options) or a reference to an entry in another table or just a unique ID in the current table. As such, there needs to be a place to store "metadata about the metadata", and this is the separate ``param_info`` table, which will be discussed later. We will use the term "field type" when discussing OPUS's concept of metadata types, and "SQL data type" when discussing the attributes of a SQL column.
+It's important to understand that OPUS has its own concept of metadata types independent of the SQL data types. For example, an integer in the database could represent a numeric value (like the pixel size of an image) or the id of a row of the ``mult`` table (like the selection of a particular mission from the available options) or a reference to an entry in another table or just a unique ID in the current table. As such, there needs to be a place to store "metadata about the metadata", and this is the separate ``param_info`` table, which will be discussed later. We will use the term "field type" when discussing OPUS's concept of metadata types, and "SQL data type" when discussing the attributes of a SQL column.
 
 OPUS understands the following high-level field types:
 
-* ``STRING``: A single arbitrary string. It is represented in the database with a SQL ``charNNN`` data type (a string with a maximum length). When searching, the string can be matched exactly or by various types of pattern matching (e.g. ``begins``, ``ends``, ``contains``, ``excludes``, or ``regex``). When displaying metadata, the string is simply shown as-is. Examples:
+* ``STRING``: A single arbitrary string. It is represented in the database with a SQL ``varcharNNN`` data type (a string with a maximum length), in the ASCII character set when every value in the holdings is ASCII (`String Columns and Character Sets`_). When searching, the string can be matched exactly or by various types of pattern matching (e.g. ``begins``, ``ends``, ``contains``, ``excludes``, or ``regex``). When displaying metadata, the string is simply shown as-is. Examples:
 
   * ``Volume ID`` = ``"HSTU0_5392"``
   * ``Primary File Spec`` = ``"HSTU0_5392/DATA/VISIT_03/U2930301T.LBL"``
   * ``PI Name`` = ``"Spencer, John R."``
-* ``GROUP``: A selection in a list of possible options. ``GROUP`` is also referred to as a "mult", meaning multiple choice. In the database, a ``GROUP`` is stored as a single integer (using the SQL ``int unsigned`` data type), which is an index into another special "mult table", which will be described below. When searching, the user can select one or more checkboxes from the group. Any observation that matches one of the selected checkboxes will be given as a result. When displaying metadata, the integer is converted to a string by referencing the "mult table" and the string is shown. Examples:
+* ``GROUP``: A selection in a list of possible options. ``GROUP`` is also referred to as a "mult", meaning multiple choice. In the database, a ``GROUP`` is stored as a single integer (using the SQL ``smallint unsigned`` data type), which is the id of a row of the special ``mult`` table, which will be described below. When searching, the user can select one or more checkboxes from the group. Any observation that matches one of the selected checkboxes will be given as a result. When displaying metadata, the integer is converted to a string by looking up its ``mult`` row and the row's label is shown. Examples:
 
   * ``Mission`` = ``Galileo`` (stored in the database as the value ``1``)
   * ``Saturn Orbit Number (By Checkbox)`` = ``044`` (stored in the database as the value ``23``)
   * ``Body Occultation Flag`` = ``N/A`` (stored in the database as the value ``0``)
-* ``MULTIGROUP``: Multiple selections in a list of possible options. This is similar to a ``GROUP``, except that instead of having a single option selected represented as an integer, the database contains a JSON list (using the SQL ``JSON`` data type) containing, potentially, multiple integers. This type is used when a single observation can apply to more than one entry in the group, such as ``Intended Target Name`` (where one observation can be intended for multiple targets in PDS4) or ``Nominal Target Class`` (where multiple intended targets results in multiple target classes). Searching by the user is performed the same way as with a ``GROUP``, except that the matching is done against any of the entries in the list, not just a single integer. If any of the entries match, the observation is returned as a search result. When displaying metadata, each entry in the list is converted to a string by referencing the "mult table" and then they are joined together by commas. The functionality provided by ``MULTIGROUP`` is a strict superset of ``GROUP`` and technically we could remove the ``GROUP`` type entirely. However, the performance of searching and retrieving the values from a ``MULTIGROUP`` is roughly 30% slower than a ``GROUP`` due to the need to handle the arbitrary length list of values, and thus we keep both types around for performance. Examples:
+* ``MULTIGROUP``: Multiple selections in a list of possible options. This is similar to a ``GROUP``, except that instead of having a single option selected represented as an integer, the database contains a JSON list (using the SQL ``JSON`` data type) containing, potentially, multiple integers. This type is used when a single observation can apply to more than one entry in the group, such as ``Intended Target Name`` (where one observation can be intended for multiple targets in PDS4) or ``Nominal Target Class`` (where multiple intended targets results in multiple target classes). Searching by the user is performed the same way as with a ``GROUP``, except that the matching is done against any of the entries in the list, not just a single integer. If any of the entries match, the observation is returned as a search result. Each ``MULTIGROUP`` column has a junction table holding one row per entry of each observation's list, which the search and the counts of the field's values read (:ref:`dev_guide_database_schema_junction_tables`). When displaying metadata, each entry in the list is converted to a string by looking up its ``mult`` row and then they are joined together by commas. The functionality provided by ``MULTIGROUP`` is a strict superset of ``GROUP``. A ``GROUP`` stores its value in the observation's own row, where a ``MULTIGROUP`` needs its junction table beside the list, so the two types are kept apart. Examples:
 
   * ``Intended Target Name`` = ``Jupiter,Amalthea``
   * ``Nominal Target Class`` = ``Planet,Regular Satellite``
@@ -74,111 +74,126 @@ General Overview
 
 Each "Constraints" section corresponds to one ``obs_*`` table. Each ``obs_*`` table has columns representing a series of metadata fields. Each row of a table represents a single observation identified by a unique OPUS ID.
 
-A row for an OPUS ID does not need to be present in each table, and in fact never is. For example, a Cassini ISS observation will not have a row in the New Horizons LORRI table. However, the ``obs_general`` table, representing the "General Constraints", is guaranteed to have a row for every OPUS ID and as a result is considered the master table. The "PDS Constraints" table ``obs_pds``, "Image Constraints" table ``obs_type_image``, and "Wavelength Constraints" table ``obs_wavelength`` also have a row for every observation. Other tables have rows only for the observations that are relevant:
+A row for an OPUS ID does not need to be present in each table, and in fact never is. For example, a Cassini ISS observation will not have a row in the New Horizons LORRI table. However, the ``obs_general`` table, representing the "General Constraints", is guaranteed to have a row for every OPUS ID and as a result is considered the master table. The "PDS Constraints" table ``obs_pds``, "Image Constraints" table ``obs_type_image``, and "Wavelength Constraints" table ``obs_wavelength`` also have a row for every observation, as does ``obs_preview``, which holds each observation's preview images and is no "Constraints" section (:ref:`dev_guide_database_schema_obs_preview`). Other tables have rows only for the observations that are relevant:
 
 * "Occultation/Reflectance Profiles Constraints" (``obs_profile``) has rows only for observations that are occultations or reflectance profiles.
 * The various Mission Constraints (e.g. "Cassini Mission Constraints", ``obs_mission_cassini``) have rows only for observations that were part of that mission.
 * The various Instrument Constraints (e.g. "Cassini ISS Constraints", ``obs_instrument_coiss``) have rows only for observations that were taken by that instrument.
 * "Ring Geometry Constraints" (``obs_ring_geometry``) has rows only for observations for which some amount of ring geometry metadata exists.
-* The top-level "Surface Geometry Constraints" (``obs_surface_geometry``) and body-specific Surface Geometry Constraints (e.g. "Saturn Surface Geometry Constraints", ``obs_surface_geometry__saturn``) have rows only for observations for which some amount of surface geometry metadata exists for the observation (top-level) or specific body (body-specific).
+* The top-level "Surface Geometry Constraints" (``obs_surface_geometry``) and body-specific Surface Geometry Constraints (e.g. "Saturn Surface Geometry Constraints", ``obs_surface_geometry__saturn``) have rows only for observations for which some amount of surface geometry metadata exists for the observation (top-level) or specific body (body-specific). The body-specific categories are not tables of their own: each is one body's rows of ``obs_surface_geometry_target`` (`The Surface Geometry Tables`_).
 
-In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has several columns for internal use:
+In addition to the fields corresponding to the metadata available in the UI, each ``obs_*`` table also has columns for internal use:
 
-* ``obs_general_id``: An integer corresponding to the ``id`` field in the ``obs_general`` table. This field is used to join multiple tables together so that a single joined row has all of the metadata from all of the relevant tables. This field does not exist in the ``obs_general`` table itself.
-* ``opus_id``: The OPUS ID of the row
-* ``bundle_id``: The PDS3 Volume ID of the row
-* ``instrument_id``: The PDS3 Instrument ID of the row. Unlike the others in this list, this one is not in every ``obs_*`` table: the per-instrument tables do not carry it (the table's own name already says which instrument it is), and neither do the Galileo and Voyager mission tables. Read the table's schema in ``table_schemas/`` rather than assuming it is there.
-* ``id``: An integer that can be used to quickly index a row in the table
-* ``timestamp``: A date/time field that records when the row was last updated
+* ``obs_general_id``: The ``id`` of the observation's row in ``obs_general``, and a foreign key onto it. Joining tables on it puts all of an observation's metadata into one row. Most ``obs_*`` tables have at most one row per observation, so ``obs_general_id`` is their primary key. The exceptions are ``obs_files`` (`The Special obs_files Table`_) and ``obs_surface_geometry_target`` (`The Surface Geometry Tables`_), which can have several rows per observation. ``obs_general`` itself has no ``obs_general_id``.
 
-With the exception of the ``id`` field in the ``obs_general`` table and the ``obs_general_id`` field in all other ``obs_*`` tables, these extra fields are not used during OPUS's execution. In fact, the fields ``opus_id``, ``bundle_id``, and ``instrument_id`` can easily be retrieved simply by joining a table with ``obs_general``, which under the concept of "database normalization" is the correct and safest thing to do. Nevertheless, we have this redundant data in each table because it makes the import process easier (e.g., one can readily delete all metadata from a particular instrument without needing to join tables together), and because it helps in manual debugging and/or maintenance.
+The columns that identify an observation are stored once, in ``obs_general``: its ``id``, its ``opus_id``, its ``bundle_id`` (the PDS3 volume or PDS4 bundle it came from) and its ``instrument_id``. Another table that needs one of them joins ``obs_general`` on ``obs_general_id``. Storing each value in one place means the copies can never disagree.
 
-Here is an example of the schema for the ``obs_general`` table (note this may change slightly over time without this document being updated, so always refer to the actual database for the current schema):
+``obs_pds`` is the exception: it also has ``opus_id`` and ``bundle_id``, because they are search fields of their own, "OPUS ID" and "Bundle/Volume ID" in the "PDS Constraints" category. Each has a plain key and no foreign key. The import writes the same values into ``obs_pds`` as into ``obs_general``, and its validation step reports any ``obs_pds`` row whose ``bundle_id`` differs from its ``obs_general`` row's.
+
+.. _dev_guide_database_schema_obs_general_rows:
+
+``obs_general`` is a view, and ``obs_general_rows`` its table. The observation rows live in the base table ``obs_general_rows``, each with the import generation that added it, ``added_generation``, and the one that retired it, ``removed_generation``, ``NULL`` while none has. ``obs_general`` is a view of the rows in the generation the database serves, ``schema_version.generation``: a row added at or before it and not retired at or before it. The view lists every column of the table but those two. While every row is in the served generation -- after a fresh import, and after a purge -- it selects them all, with no condition:
 
 ::
 
-    mysql> DESC obs_general;
-    +----------------------+--------------+------+-----+-------------------+
-    | Field                | Type         | Null | Key | Default           |
-    +----------------------+--------------+------+-----+-------------------+
-    | id                   | int unsigned | NO   | PRI | NULL              |
-    | opus_id              | char(50)     | NO   | UNI | NULL              |
-    | bundle_id            | char(11)     | NO   | MUL | NULL              |
-    | instrument_id        | int unsigned | NO   | MUL | NULL              |
-    | mission_id           | int unsigned | NO   | MUL | NULL              |
-    | inst_host_id         | int unsigned | NO   | MUL | NULL              |
-    | planet_id            | int unsigned | NO   | MUL | NULL              |
-    | target_name          | json         | NO   |     | NULL              |
-    | target_class         | json         | NO   |     | NULL              |
-    | time1                | double       | YES  | MUL | NULL              |
-    | time2                | double       | YES  | MUL | NULL              |
-    | observation_duration | double       | YES  | MUL | NULL              |
-    | quantity             | int unsigned | NO   | MUL | NULL              |
-    | right_asc1           | double       | YES  | MUL | NULL              |
-    | right_asc2           | double       | YES  | MUL | NULL              |
-    | right_asc            | double       | YES  | MUL | NULL              |
-    | d_right_asc          | double       | YES  | MUL | NULL              |
-    | declination1         | double       | YES  | MUL | NULL              |
-    | declination2         | double       | YES  | MUL | NULL              |
-    | observation_type     | int unsigned | NO   |     | NULL              |
-    | ring_obs_id          | char(40)     | YES  | MUL | NULL              |
-    | primary_filespec     | char(240)    | NO   | MUL | NULL              |
-    | preview_images       | json         | NO   |     | NULL              |
-    | timestamp            | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +----------------------+--------------+------+-----+-------------------+
+    CREATE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW obs_general AS
+      SELECT <every column but added_generation and removed_generation>
+      FROM obs_general_rows
 
-Most of these fields should be self-evident. Some numeric fields have ``1`` and ``2`` versions. These are the minimum and maximum values of the metadata for a "dual column range". ``right_asc`` has two extra fields (``right_asc`` and ``d_right_asc``). These are internal fields that are used to help speed up searching on wrap-around longitudes. Also, ``obs_general`` has a hidden field ``preview_images`` which stores information (in the form of a JSON encoded PdsViewSet) about all of the preview images for each observation so that they can be rapidly retrieved when displaying the Gallery View without needing to join tables together.
+While a generation is pending, or a switch's retired rows wait for the purge, it selects the served generation's rows, the generation written as a number, here 4:
+
+::
+
+      ... FROM obs_general_rows
+      WHERE added_generation <= 4 AND (removed_generation IS NULL OR removed_generation > 4)
+
+The commands that change which rows the view shows re-create it: ``--begin-generation``, before the pending generation is recorded; ``--switch-generation`` and ``--revert-generation``, while the web service is stopped; ``--purge-generations`` and ``--abandon-generation``, once no other generation's rows remain (:ref:`dev_guide_import_steps_do_generation`). MySQL merges the view into each statement that names it, so the web application reads ``obs_general`` as a table, through ``obs_general_rows``'s keys; with no condition, a statement reads the table exactly as it would read the table itself. The child tables', ``cart``'s and the junction tables' foreign keys reference ``obs_general_rows``. The import reads and writes the base table under the name ``obs_general`` (:ref:`dev_guide_import_generations`), and creates the view whenever it creates the table. The child tables carry no generation, so while ``obs_general_rows`` holds rows outside the served generation, a statement that reads a child table outside a search's results joins the view on ``obs_general_id``. Neither generation column has a key: nearly every row passes the test, and the import finds a bundle's rows through ``bundle_id``. :mod:`opus_import.generations` names the view, the table and the generation columns.
+
+Here is the schema of the ``obs_general_rows`` table:
+
+::
+
+    mysql> DESC obs_general_rows;
+    +----------------------+-------------------+------+-----+---------+
+    | Field                | Type              | Null | Key | Default |
+    +----------------------+-------------------+------+-----+---------+
+    | id                   | int unsigned      | NO   | PRI | NULL    |
+    | opus_id              | varchar(50)       | NO   | MUL | NULL    |
+    | bundle_id            | varchar(75)       | NO   | MUL | NULL    |
+    | instrument_id        | smallint unsigned | NO   | MUL | NULL    |
+    | mission_id           | smallint unsigned | NO   | MUL | NULL    |
+    | inst_host_id         | smallint unsigned | NO   | MUL | NULL    |
+    | planet_id            | smallint unsigned | NO   | MUL | NULL    |
+    | target_name          | json              | NO   |     | NULL    |
+    | target_class         | json              | NO   |     | NULL    |
+    | time1                | double            | YES  | MUL | NULL    |
+    | time2                | double            | YES  | MUL | NULL    |
+    | observation_duration | double            | YES  | MUL | NULL    |
+    | quantity             | smallint unsigned | NO   | MUL | NULL    |
+    | right_asc1           | double            | YES  | MUL | NULL    |
+    | right_asc2           | double            | YES  | MUL | NULL    |
+    | right_asc            | double            | YES  | MUL | NULL    |
+    | d_right_asc          | double            | YES  |     | NULL    |
+    | declination1         | double            | YES  | MUL | NULL    |
+    | declination2         | double            | YES  | MUL | NULL    |
+    | observation_type     | smallint unsigned | NO   |     | NULL    |
+    | added_generation     | int unsigned      | NO   |     | NULL    |
+    | removed_generation   | int unsigned      | YES  |     | NULL    |
+    +----------------------+-------------------+------+-----+---------+
+
+Besides the keys shown, ``obs_general`` has three keys over two columns each:
+``(time1, opus_id)``, which serves the default sort, ``(right_asc, d_right_asc)`` and
+``(declination1, declination2)``. ``DESC`` marks only a key's first column, which is why
+``d_right_asc`` shows no key. Most columns of the other observation tables have no key of
+their own; :ref:`dev_guide_table_schemas` says which columns get one.
+
+``opus_id`` carries a plain key rather than a unique one. Two bundles can produce the same OPUS ID, and an import loads both copies side by side; the import's finalization then keeps the copy with the highest ``id``, which is the copy from the bundle registered later (:ref:`dev_guide_database_schema_import_bundle`), and deletes the others, so a finished database has one row per OPUS ID.
+
+Most of these fields should be self-evident. Some numeric fields have ``1`` and ``2`` versions. These are the minimum and maximum values of the metadata for a "dual column range". ``right_asc`` has two extra fields (``right_asc`` and ``d_right_asc``). These are internal fields that are used to help speed up searching on wrap-around longitudes.
 
 ``obs_pds`` is a simple example of a secondary table that depends on ``obs_general``:
 
 ::
 
     mysql> DESC obs_pds;
-    +-----------------------+--------------+------+-----+-------------------+
-    | Field                 | Type         | Null | Key | Default           |
-    +-----------------------+--------------+------+-----+-------------------+
-    | obs_general_id        | int unsigned | NO   | MUL | NULL              |
-    | opus_id               | char(50)     | NO   | MUL | NULL              |
-    | bundle_id             | char(11)     | NO   | MUL | NULL              |
-    | instrument_id         | char(12)     | NO   | MUL | NULL              |
-    | data_set_id           | char(40)     | NO   | MUL | NULL              |
-    | product_id            | char(50)     | NO   | MUL | NULL              |
-    | product_creation_time | double       | YES  | MUL | NULL              |
-    | primary_filespec      | char(240)    | NO   | MUL | NULL              |
-    | note                  | char(255)    | YES  | MUL | NULL              |
-    | id                    | int unsigned | NO   | PRI | NULL              |
-    | timestamp             | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +-----------------------+--------------+------+-----+-------------------+
+    +-----------------------+--------------+------+-----+---------+
+    | Field                 | Type         | Null | Key | Default |
+    +-----------------------+--------------+------+-----+---------+
+    | obs_general_id        | int unsigned | NO   | PRI | NULL    |
+    | opus_id               | varchar(50)  | NO   | MUL | NULL    |
+    | bundle_id             | varchar(75)  | NO   | MUL | NULL    |
+    | data_set_id           | varchar(40)  | YES  | MUL | NULL    |
+    | product_id            | varchar(50)  | YES  | MUL | NULL    |
+    | primary_lid           | varchar(240) | YES  | MUL | NULL    |
+    | product_creation_time | double       | YES  | MUL | NULL    |
+    | primary_filespec      | varchar(240) | NO   | MUL | NULL    |
+    | note                  | varchar(255) | YES  | MUL | NULL    |
+    +-----------------------+--------------+------+-----+---------+
 
 Here is an example of a mission table:
 
 ::
 
     mysql> DESC obs_mission_cassini;
-    +-------------------------+--------------+------+-----+-------------------+
-    | Field                   | Type         | Null | Key | Default           |
-    +-------------------------+--------------+------+-----+-------------------+
-    | obs_general_id          | int unsigned | NO   | MUL | NULL              |
-    | opus_id                 | char(50)     | NO   | MUL | NULL              |
-    | bundle_id               | char(11)     | NO   | MUL | NULL              |
-    | instrument_id           | char(12)     | NO   | MUL | NULL              |
-    | obs_name                | char(30)     | NO   | MUL | NULL              |
-    | rev_no                  | char(3)      | YES  | MUL | NULL              |
-    | rev_no_int              | int          | YES  | MUL | NULL              |
-    | is_prime                | int unsigned | NO   |     | NULL              |
-    | prime_inst_id           | int unsigned | NO   | MUL | NULL              |
-    | spacecraft_clock_count1 | double       | YES  | MUL | NULL              |
-    | spacecraft_clock_count2 | double       | YES  | MUL | NULL              |
-    | ert1                    | double       | YES  | MUL | NULL              |
-    | ert2                    | double       | YES  | MUL | NULL              |
-    | cassini_target_code     | int unsigned | YES  | MUL | NULL              |
-    | cassini_target_name     | int unsigned | YES  | MUL | NULL              |
-    | activity_name           | char(9)      | YES  | MUL | NULL              |
-    | mission_phase_name      | int unsigned | YES  | MUL | NULL              |
-    | sequence_id             | char(4)      | YES  |     | NULL              |
-    | id                      | int unsigned | NO   | PRI | NULL              |
-    | timestamp               | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +-------------------------+--------------+------+-----+-------------------+
+    +-------------------------+-------------------+------+-----+---------+
+    | Field                   | Type              | Null | Key | Default |
+    +-------------------------+-------------------+------+-----+---------+
+    | obs_general_id          | int unsigned      | NO   | PRI | NULL    |
+    | obs_name                | varchar(30)       | NO   | MUL | NULL    |
+    | rev_no                  | varchar(3)        | YES  |     | NULL    |
+    | rev_no_int              | int               | YES  |     | NULL    |
+    | is_prime                | smallint unsigned | NO   |     | NULL    |
+    | prime_inst_id           | smallint unsigned | NO   |     | NULL    |
+    | spacecraft_clock_count1 | double            | YES  | MUL | NULL    |
+    | spacecraft_clock_count2 | double            | YES  | MUL | NULL    |
+    | ert1                    | double            | YES  | MUL | NULL    |
+    | ert2                    | double            | YES  | MUL | NULL    |
+    | cassini_target_code     | smallint unsigned | YES  |     | NULL    |
+    | cassini_target_name     | smallint unsigned | YES  | MUL | NULL    |
+    | activity_name           | varchar(9)        | YES  | MUL | NULL    |
+    | mission_phase_name      | smallint unsigned | YES  |     | NULL    |
+    | sequence_id             | varchar(4)        | YES  |     | NULL    |
+    +-------------------------+-------------------+------+-----+---------+
 
 Note that there will be a different number of rows in the ``obs_general`` table and many of the other tables:
 
@@ -212,97 +227,169 @@ Tables can be joined together to retrieve all of the metadata for one or more ob
 
 Generally speaking, you can think of the OPUS schema as having only one ``obs`` table and one row per OPUS ID with a huge number of columns encoding all of the possible metadata that could be needed. However, this would be inefficient to store (e.g. why store New Horizons metadata for a Cassini mission? You would just have to fill the columns wth NULLs), so instead we break the information across multiple tables and only populate the rows in the tables as necessary, allowing MySQL's efficient JOIN functionality to combine everything together when needed.
 
-The Encoding of Checkbox IDs and the ``mult_obs_*`` Tables
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _dev_guide_database_schema_mult:
 
-"Mult" (aka ``GROUP``) fields are multiple choice options selected from a defined set. The list of available options may be hardcoded in the import pipeline or generated dynamically during the import process. Either way, the option associated with a particular observation is stored as an integer in the database. This integer is then used as an index into an associated "mult table" to look up the details of that option. The name of the "mult table" is a combination of the parent ``obs_*`` table and the field name. For example, for the "Planet Name" (``planet_id``) field in the "General Constraints" category (``obs_general``) the table is called ``mult_obs_general_planet_id``, and it has the following schema:
+The Encoding of Checkbox IDs and the ``mult`` Tables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"Mult" (aka ``GROUP``) fields are multiple choice options selected from a defined set.
+The set of options may be listed in the column's table schema (its ``mult_options``) or
+found during the import. Either way, an observation's column stores an integer, the
+option's id. Three tables describe the options:
+
+* ``mult_field`` names each **mult field**: the set of values one column can hold.
+* ``mult`` holds the values of every field, one row per value.
+* ``mult_group`` holds the groups of every field.
+
+Every column whose form type is ``GROUP`` or ``MULTIGROUP`` has a mult field. The
+field's qualified name is ``<table>.<column>``, such as ``obs_general.planet_id``. A
+``mult_field`` key in the column's schema names the field instead, so that several
+columns can share one (:ref:`dev_guide_table_schemas`).
+
+The ``mult_field`` table names the fields:
 
 ::
 
-    mysql> DESC mult_obs_general_planet_id;
-    +------------------+---------------+------+-----+-------------------+
-    | Field            | Type          | Null | Key | Default           |
-    +------------------+---------------+------+-----+-------------------+
-    | id               | int unsigned  | NO   | PRI | NULL              |
-    | value            | char(100)     | YES  |     | NULL              |
-    | label            | char(100)     | NO   |     | NULL              |
-    | disp_order       | char(100)     | NO   |     | NULL              |
-    | display          | enum('Y','N') | NO   |     | Y                 |
-    | grouping         | char(100)     | YES  |     | NULL              |
-    | group_disp_order | char(100)     | YES  |     | NULL              |
-    | aliases          | json          | YES  |     | NULL              |
-    | timestamp        | timestamp     | YES  |     | CURRENT_TIMESTAMP |
-    +------------------+---------------+------+-----+-------------------+
+    mysql> DESC mult_field;
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | field_id       | smallint unsigned | NO   | PRI | NULL    |
+    | qualified_name | varchar(100)      | NO   | UNI | NULL    |
+    | pinned         | tinyint           | NO   |     | NULL    |
+    | last_id        | int               | NO   |     | -1      |
+    +----------------+-------------------+------+-----+---------+
 
 The fields are:
 
-* ``id``: A unique integer which is used to reference a row in this table. This is the same value that is stored in the ``obs_*`` table.
-* ``value``: The actual metadata value which was the source of this option.
+* ``field_id``: The field's number, the primary key. Every
+  ``mult`` and ``mult_group`` row of the field carries it.
+* ``qualified_name``: The field's qualified name, a unique key.
+* ``pinned``: 1 when the column's schema lists the field's values in
+  ``mult_options``, 0 otherwise.
+* ``last_id``: The highest id the field's counter has handed out, or -1
+  before the first. A value new to the field takes the next one, so a field's first
+  value is 0. It only goes up: an id the counter handed out is never handed out again,
+  even once finalization deletes its row. A pinned field's ids are not the counter's
+  but the ones its list gives, and 65535 for an absent value the list lacks (``mult``,
+  below). With several processes importing at once, an id taken for a value another
+  process stored first is left unused, so a field's ids may have gaps; the id-width
+  check counts ``last_id``, not the rows.
+
+Bundle registration numbers the fields once in each database. The first registration
+gives every mult field of the packaged ``obs_*.json`` schemas an id, 1, 2, 3, ..., in
+order of qualified name. A field that a later release adds takes the next id after the highest one in
+``mult_field``. A field's id never changes.
+
+The ``mult`` table holds the values:
+
+::
+
+    mysql> DESC mult;
+    +-----------+-------------------+------+-----+---------+
+    | Field     | Type              | Null | Key | Default |
+    +-----------+-------------------+------+-----+---------+
+    | field_id  | smallint unsigned | NO   | PRI | NULL    |
+    | id        | smallint unsigned | NO   | PRI | NULL    |
+    | value     | varchar(100)      | NO   |     | NULL    |
+    | label     | varchar(100)      | NO   |     | NULL    |
+    | pin       | smallint unsigned | YES  |     | NULL    |
+    | disp_rank | smallint unsigned | NO   |     | 0       |
+    | display   | enum('Y','N')     | NO   |     | Y       |
+    | grouping  | varchar(100)      | YES  |     | NULL    |
+    +-----------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``field_id``: The field the value belongs to.
+* ``id``: What an observation's column holds for this value. Ids
+  are numbered within a field: a field's ids start at 0, and a value the import finds
+  takes the next id of the field's ``last_id`` counter. A pinned field's ids are the ones
+  its ``mult_options`` gives, written by bundle registration; if its list has no absent
+  value and an observation needs one, the import adds it under 65535, an id no list may
+  give. A stored row keeps its id and its value, so no observation row has to be
+  rewritten when a value is renamed. Finalization deletes the values no observation
+  holds. An id the counter handed out is not handed out again; a pinned field's absent
+  value, deleted once no observation holds it, is added under 65535 again when an
+  import needs it.
+* ``value``: The value as the import read it. The absent value is
+  stored as the empty string, never ``NULL``.
 * ``label``: The string to display in the UI.
-* ``disp_order``: A string that is used to sort the entries in the mult table so that they are displayed in a meaningful order. These strings do not have to have any intrinsic meaning, just be sortable.
-* ``display``: An indication of whether the value should be displayed or hidden in the UI. At this time all entries have a value of 'Y'.
-* ``grouping``: The name of the group this option belongs to. In the UI items in the same group will be collected together under a common, collapsible header.
-* ``group_disp_order``: A string that is used to sort the names of the groups.
-* ``aliases``: A JSON-encoded list of strings representing alias names for this value, for example historical names for a target.
-* ``timestamp``: The date and time the entry was last modified.
+* ``pin``: The value's configured position, or
+  ``NULL`` to place the value by what it holds.
+* ``disp_rank``: The value's position among its field's values,
+  counting from 1. Finalization computes it.
+* ``display``: ``Y`` to offer the value in the search form, ``N``
+  to hide it.
+* ``grouping``: The name of the group the value
+  belongs to, or ``NULL`` for none. In the UI, values in the same group are collected
+  together under a common, collapsible header.
 
-For example, here are the entries for the ``planet_id`` field (timestamp removed for brevity):
+The primary key is ``(field_id, id)``, and ``(field_id, value)`` is a unique key. The
+unique key compares values with the server's collation, which ignores case and accents,
+so two values that differ only in case are one value. The largest id a column can hold is
+65535; an import that would need a larger id stops with an error naming the field.
 
-::
-
-    mysql> SELECT * FROM mult_obs_general_planet_id;
-    +----+-------+---------+------------+---------+----------+------------------+
-    | id | value | label   | disp_order | display | grouping | group_disp_order |
-    +----+-------+---------+------------+---------+----------+------------------+
-    |  0 | VEN   | Venus   | 010        | Y       | NULL     | NULL             |
-    |  1 | EAR   | Earth   | 020        | Y       | NULL     | NULL             |
-    |  2 | MAR   | Mars    | 030        | Y       | NULL     | NULL             |
-    |  3 | JUP   | Jupiter | 040        | Y       | NULL     | NULL             |
-    |  4 | SAT   | Saturn  | 050        | Y       | NULL     | NULL             |
-    |  5 | URA   | Uranus  | 060        | Y       | NULL     | NULL             |
-    |  6 | NEP   | Neptune | 070        | Y       | NULL     | NULL             |
-    |  7 | PLU   | Pluto   | 080        | Y       | NULL     | NULL             |
-    |  8 | OTH   | Other   | 090        | Y       | NULL     | NULL             |
-    +----+-------+---------+------------+---------+----------+------------------+
-
-Notice in this case that the ``disp_order`` field is simply a three-digit string that specifies the planets from inner to outer in the solar system, and there is no grouping.
-
-Here are the first 10 entries for the ``target_name`` field (timestamp removed for brevity):
+The ``mult_group`` table holds the groups:
 
 ::
 
-    mysql> SELECT * FROM mult_obs_general_target_name LIMIT 10;
-    +----+-----------+--------------+--------------+---------+----------+------------------+
-    | id | value     | label        | disp_order   | display | grouping | group_disp_order |
-    +----+-----------+--------------+--------------+---------+----------+------------------+
-    |  0 | S RINGS   | Saturn Rings | Saturn Rings | Y       | Saturn   | 060              |
-    |  1 | SATURN    | Saturn       | Saturn       | Y       | Saturn   | 060              |
-    |  2 | TITAN     | Titan        | Titan        | Y       | Saturn   | 060              |
-    |  3 | ENCELADUS | Enceladus    | Enceladus    | Y       | Saturn   | 060              |
-    |  4 | PHOEBE    | Phoebe       | Phoebe       | Y       | Saturn   | 060              |
-    |  5 | HYPERION  | Hyperion     | Hyperion     | Y       | Saturn   | 060              |
-    |  6 | PANDORA   | Pandora      | Pandora      | Y       | Saturn   | 060              |
-    |  7 | DIONE     | Dione        | Dione        | Y       | Saturn   | 060              |
-    |  8 | ATLAS     | Atlas        | Atlas        | Y       | Saturn   | 060              |
-    |  9 | RHEA      | Rhea         | Rhea         | Y       | Saturn   | 060              |
-    +----+-----------+--------------+--------------+---------+----------+------------------+
+    mysql> DESC mult_group;
+    +------------+-------------------+------+-----+---------+
+    | Field      | Type              | Null | Key | Default |
+    +------------+-------------------+------+-----+---------+
+    | field_id   | smallint unsigned | NO   | PRI | NULL    |
+    | grouping   | varchar(100)      | NO   | PRI | NULL    |
+    | group_pin  | smallint unsigned | YES  |     | NULL    |
+    | group_rank | smallint unsigned | NO   |     | 0       |
+    +------------+-------------------+------+-----+---------+
 
-Notice in this case that the ``disp_order`` field is simply the name of the target, resulting in the targets being listed in alphabetical order. The grouping is done by planet, and the groups are sorted from inner to outer.
+The fields are:
 
-As discussed earlier, the value stored in the main ``obs_*`` table corresponds to the ``id`` index:
+* ``field_id``: The field the group belongs to.
+* ``grouping``: The group's name, which the field's ``mult`` rows name in their
+  ``grouping``.
+* ``group_pin``: The group's configured position, or ``NULL`` to place the group by name.
+* ``group_rank``: The group's position among its field's groups, counting from 1.
+  Finalization computes it.
+
+The primary key is ``(field_id, grouping)``.
+
+The order of a field's values and groups never depends on the order the import met them.
+Finalization ranks every field (:ref:`dev_guide_import_steps_do_finalize_mult`): the
+pinned values come first, in order of their pin; then the ordinary values, by number
+when every one of them is a number and by label otherwise; then ``Yes`` and ``On``; then
+``No`` and ``Off``; and last the absent-value labels ``None``, ``N/A`` and ``NULL``.
+:mod:`opus_import.mult_rank` gives the full rules. The pinned groups come first, in order
+of their pin, and the others follow by name.
+
+This statement lists the values of the "Planet Name" (``planet_id``) field in the
+"General Constraints" category (``obs_general``) in the order the UI shows them:
 
 ::
 
-    mysql> SELECT obs_general.planet_id, mult_obs_general_planet_id.label FROM obs_general
-               JOIN mult_obs_general_planet_id ON obs_general.planet_id=mult_obs_general_planet_id.id
+    mysql> SELECT mult.id, mult.value, mult.label FROM mult
+               JOIN mult_field ON mult_field.field_id=mult.field_id
+               WHERE mult_field.qualified_name='obs_general.planet_id'
+               ORDER BY mult.disp_rank;
+
+The value stored in the main ``obs_*`` table is the ``id`` of a ``mult`` row of the
+column's field, so reading an observation's label joins ``mult`` on both ``field_id``
+and ``id``:
+
+::
+
+    mysql> SELECT obs_general.planet_id, mult.label FROM obs_general
+               JOIN mult_field ON mult_field.qualified_name='obs_general.planet_id'
+               JOIN mult ON mult.field_id=mult_field.field_id
+                         AND mult.id=obs_general.planet_id
                WHERE obs_general.opus_id='co-iss-n1460960653';
-    +-----------+--------+
-    | planet_id | label  |
-    +-----------+--------+
-    |         4 | Saturn |
-    +-----------+--------+
 
-Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists, and more complicated SQL queries are required to extract the contents of those lists and match them with the mult tables:
+The web application joins ``mult`` the same way, once for each mult column a statement
+reads, each time under an alias of its own and with the field's id as a parameter
+(:func:`opus_app.apps.tools.sql_builder.mult_join`).
+
+Fields like ``Intended Target Name`` that support multiple simultaneous options are stored as JSON lists of ``mult`` ids:
 
 ::
 
@@ -313,12 +400,37 @@ Fields like ``Intended Target Name`` that support multiple simultaneous options 
     | [0]         | [3]          |
     +-------------+--------------+
 
-To better understand how this is used, search for SQL commands containing ``JSON_`` in the ``views.py`` files under ``apps``.
+Each such column also has a junction table with one row per id of each observation's
+list, and the search and the counts of the field's values read that table rather than
+the list (:ref:`dev_guide_database_schema_junction_tables`). A sort on the field joins
+``mult`` on the list's first entry
+(:func:`opus_app.apps.tools.sql_builder.json_extract_first`).
 
 NULL and NOT NULL Columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some columns (like ``OPUS ID``) must always contain a valid value, while others (like ``Right Ascension``) may have values missing for some observations. For safety and database integrity, we prevent columns that must always be valid from having ``NULL`` values by setting the ``NOT NULL`` column property. Other columns do not have this property set and allow ``NULL`` values. The validate step of the import process identifies columns that permit NULLs and yet have no NULL values and issues the suggestion that those columns be modified to be ``NOT NULL``.
+
+String Columns and Character Sets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every string column is a ``varchar(NNN)``, which stores as many characters as a value has, up to ``NNN``, or a ``text``. No column is a fixed-width ``char``.
+
+A string column takes the schema's character set, ``utf8mb4``, whose collation ``utf8mb4_0900_ai_ci`` compares without case or accents. A column whose schema entry carries ``"field_charset": "ascii"`` is ``CHARACTER SET ascii COLLATE ascii_general_ci`` instead: it compares without case, as the default does, and it costs one byte a character where ``utf8mb4`` may cost four, in the row, in every index entry and in every sort. The ASCII columns are these:
+
+* every ``opus_id`` and ``bundle_id`` column, and ``obs_files.instrument_id``;
+* ``cart.session_id``, which holds Django's session key;
+* every column whose ``pi_form_type`` is ``STRING``, whose values are all ASCII in the complete holdings, and which is an identifier rather than free text.
+
+``grep -l '"field_charset": "ascii"' src/opus_import/table_schemas/*.json`` lists the schemas that have one. Free text stays ``utf8mb4``, because a PDS4 label is UTF-8 and a name or a note may hold any character: the ``mult`` table's ``value`` and ``label``, the dictionary, ``param_info``, ``obs_pds.note`` and ``obs_mission_hubble.hst_pi_name``.
+
+A value with a character outside ASCII cannot be stored in an ASCII column: the import's load of its row fails, naming the column and the row. Nor can the ASCII character DEL: the import logs an error for a value holding it, which fails its bundle, and stores the value without it, so even a run that ignores errors stores none.
+
+MySQL refuses to compare an ASCII column with text holding any other character, so the web application folds a caller's text before it compares it with one (:func:`~opus_app.apps.tools.sql_builder.ascii_comparable`), as the accent-blind ``utf8mb4_0900_ai_ci`` would: it decomposes the text and drops the accents, so ``VGÍSS_6210`` finds ``VGISS_6210``. A ``regex`` search keeps a compatibility character, such as the full-width ``．``, from becoming the ASCII operator it resembles: its text is decomposed canonically, which drops the accents alone. A character with no ASCII form, such as ``ß`` or ``°``, or a compatibility character in a ``regex`` search, becomes DEL, which no stored value holds: a search for it with ``matches``, ``contains``, ``begins``, ``ends`` or ``regex`` finds nothing, one with ``excludes`` finds every row, and an OPUS ID holding it is unknown. The folding applies where the column's generated model names the ASCII collation (:func:`~opus_app.apps.tools.db_utils.is_ascii_column`).
+
+An ASCII column pads with spaces when it compares, as ``utf8mb4_0900_ai_ci`` does not, so a value with trailing spaces equals the value without them.
+
+The two collations sort punctuation differently. ``ascii_general_ci`` compares the characters' codes with the letters folded to upper case, so ``_`` sorts after every letter and digit, and ``-`` and ``/`` before them; ``utf8mb4_0900_ai_ci`` sorts every punctuation mark before the letters and digits. ``VGISS_6210`` therefore sorts before ``VG_2810``.
 
 The Use of SQL Indexes
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -333,71 +445,97 @@ There are two types of surface geometry tables. The first, called simply ``obs_s
 ::
 
     mysql> DESC obs_surface_geometry;
-    +----------------+--------------+------+-----+-------------------+
-    | Field          | Type         | Null | Key | Default           |
-    +----------------+--------------+------+-----+-------------------+
-    | obs_general_id | int unsigned | NO   | MUL | NULL              |
-    | opus_id        | char(50)     | NO   | MUL | NULL              |
-    | bundle_id      | char(11)     | NO   | MUL | NULL              |
-    | instrument_id  | char(12)     | NO   | MUL | NULL              |
-    | target_list    | text         | YES  |     | NULL              |
-    | id             | int unsigned | NO   | PRI | NULL              |
-    | timestamp      | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +----------------+--------------+------+-----+-------------------+
+    +----------------+--------------+------+-----+---------+
+    | Field          | Type         | Null | Key | Default |
+    +----------------+--------------+------+-----+---------+
+    | obs_general_id | int unsigned | NO   | PRI | NULL    |
+    | target_list    | text         | YES  |     | NULL    |
+    +----------------+--------------+------+-----+---------+
 
-There is also a series of tables, one per body, containing the surface geometry information for that body for each OPUS ID for which geometry information is available. These tables are named ``obs_surface_geometry__<body>``. Normally at most only a few such tables will contain rows for a given OPUS ID, since only a small number bodies are in the field of view:
+The second, ``obs_surface_geometry_target``, holds every body's surface geometry: one row per observation and body for which geometry information is available. Normally only a few bodies have a row for a given OPUS ID, since only a small number of bodies are in the field of view. Its schema starts:
 
 ::
 
-    mysql> SELECT COUNT(*) FROM obs_surface_geometry__enceladus WHERE opus_id='co-iss-n1460961193';
+    mysql> DESC obs_surface_geometry_target;
+    +---------------------------------------+-------------------+------+-----+---------+
+    | Field                                 | Type              | Null | Key | Default |
+    +---------------------------------------+-------------------+------+-----+---------+
+    | target_name                           | smallint unsigned | NO   | PRI | NULL    |
+    | obs_general_id                        | int unsigned      | NO   | PRI | NULL    |
+    | planetographic_latitude1              | double            | YES  |     | NULL    |
+    | planetographic_latitude2              | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude1    | double            | YES  |     | NULL    |
+    | sub_solar_planetographic_latitude2    | double            | YES  |     | NULL    |
+    | ...                                   |                   |      |     |         |
+    +---------------------------------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``target_name``: The body, as the id of its value in the mult field of the ``Surface Geometry Target Selector`` (``obs_surface_geometry_name.target_name``, `The Encoding of Checkbox IDs and the mult Tables`_). The column's schema entry names that field with its ``mult_field`` key, since the column's own qualified name would name another one.
+* ``obs_general_id``: The observation, a foreign key onto ``obs_general.id``.
+* The geometry columns, one set for every body.
+
+The primary key is ``(target_name, obs_general_id)``, so one body's rows are next to each other in the table. A plain key on ``obs_general_id`` serves the foreign key, the lookups of one observation's bodies, and the deletion of a bundle's rows. Every other key starts with ``target_name``: a pair of displayed range columns that both carry a key in the template is one key over the body and both columns, and every other keyed column has a key over the body and the column. The keys are listed in the schema file, ``obs_surface_geometry_target.json``.
+
+Every other constraint category is one ``obs_*`` table, named after it: a category's search menu, its Details section and its API category are the table's, and ``table_names``, ``param_info`` and ``partables`` key their rows by the table's name. So that each body's surface geometry follows the same convention, the web application presents ``obs_surface_geometry_target`` as one category per body, under the name of a table that does not exist, ``obs_surface_geometry__<body>``, and one more category, ``obs_surface_geometry_name``, whose one field is the ``Surface Geometry Target Selector``. Every part of OPUS that works one table per category treats these names as tables, and nothing outside the database layer needs to know that the rows are in one table. ``table_names`` names the table and the body each category reads (`The table_names Table`_), and ``param_info`` and ``partables`` carry the category's rows. A statement reads a body's category as the table under the category's name, keeping to the body's rows:
+
+::
+
+    mysql> SELECT COUNT(*) FROM obs_general
+               JOIN obs_surface_geometry_target AS obs_surface_geometry__enceladus
+               ON obs_surface_geometry__enceladus.obs_general_id = obs_general.id
+               AND obs_surface_geometry__enceladus.target_name =
+                   (SELECT target_name FROM table_names
+                    WHERE table_name = 'obs_surface_geometry__enceladus')
+               WHERE obs_general.opus_id = 'co-iss-n1460961193';
     +----------+
     | COUNT(*) |
     +----------+
     |        1 |
     +----------+
 
-    mysql> SELECT COUNT(*) FROM obs_surface_geometry__titan WHERE opus_id='co-iss-n1460961193';
-    +----------+
-    | COUNT(*) |
-    +----------+
-    |        0 |
-    +----------+
+A body's category exists exactly when some observation has geometry for it: finalization writes its ``table_names``, ``param_info`` and ``partables`` rows from the bodies the table holds.
 
-Other than the odd naming, these surface geometry tables behave exactly the same as any other ``obs_*`` table.
+To remove a bundle, the import deletes the table's rows by joining ``obs_general`` on ``obs_general_id``, as for every other ``obs_*`` table.
 
 The Special ``obs_files`` Table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. ``obs_files`` holds one row per downloadable file product, so a single OPUS ID has as many rows as it has products. ``obs_general.opus_id`` is unique and ``obs_files.opus_id`` is a foreign key onto it, which is the one-to-many relationship a single ``obs_general`` row cannot represent and why this is its own table. Its structure otherwise resembles the other ``obs_*`` tables. It is only joined with ``obs_general`` when computing details of the Cart or displaying the list of available products on the Detail tab. Its schema is:
+The list of product files for any OPUS ID can be exceedingly long, and each file also needs to have associated metadata such as file size, version number, URL, and whether it is marked as checked in the Cart by default. ``obs_files`` holds one row per downloadable file, so an observation has as many rows as it has files. That is why it is a table of its own, rather than columns of ``obs_general``.
+
+* ``obs_general_id`` is a foreign key onto ``obs_general.id``.
+* ``file_number`` numbers an observation's files 1, 2, 3, ..., in the order the import writes them. The web application's file list sorts by it last, so the files of one product type and version keep that order.
+* The primary key is ``(obs_general_id, file_number)``.
+* ``opus_id`` is copied from ``obs_general``, because the web application looks files up by OPUS ID. The one other key, over ``(opus_id, short_name, version_name)``, serves those lookups.
+
+``obs_files`` is joined with ``obs_general`` only to compute details of the Cart and to list the available products on the Detail tab. Its schema is:
 
 ::
 
     mysql> DESC obs_files;
-    +-----------------+--------------+------+-----+-------------------+
-    | Field           | Type         | Null | Key | Default           |
-    +-----------------+--------------+------+-----+-------------------+
-    | obs_general_id  | int unsigned | NO   | MUL | NULL              |
-    | opus_id         | char(50)     | NO   | MUL | NULL              |
-    | bundle_id       | char(11)     | NO   | MUL | NULL              |
-    | instrument_id   | char(12)     | NO   | MUL | NULL              |
-    | version_number  | int unsigned | NO   | MUL | NULL              |
-    | version_name    | char(16)     | NO   | MUL | NULL              |
-    | category        | char(32)     | NO   | MUL | NULL              |
-    | sort_order      | char(9)      | NO   | MUL | NULL              |
-    | short_name      | char(32)     | NO   | MUL | NULL              |
-    | full_name       | char(64)     | NO   | MUL | NULL              |
-    | default_checked | int unsigned | NO   |     | NULL              |
-    | product_order   | int unsigned | NO   |     | NULL              |
-    | logical_path    | text         | NO   |     | NULL              |
-    | url             | text         | NO   |     | NULL              |
-    | checksum        | char(32)     | NO   |     | NULL              |
-    | size            | int unsigned | NO   |     | NULL              |
-    | width           | int unsigned | YES  |     | NULL              |
-    | height          | int unsigned | YES  |     | NULL              |
-    | pds_version     | int unsigned | NO   |     | NULL              |
-    | id              | int unsigned | NO   | PRI | NULL              |
-    | timestamp       | timestamp    | NO   |     | CURRENT_TIMESTAMP |
-    +-----------------+--------------+------+-----+-------------------+
+    +-----------------+-------------------+------+-----+---------+
+    | Field           | Type              | Null | Key | Default |
+    +-----------------+-------------------+------+-----+---------+
+    | obs_general_id  | int unsigned      | NO   | PRI | NULL    |
+    | file_number     | smallint unsigned | NO   | PRI | NULL    |
+    | opus_id         | varchar(50)       | NO   | MUL | NULL    |
+    | instrument_id   | varchar(60)       | NO   |     | NULL    |
+    | version_number  | int unsigned      | NO   |     | NULL    |
+    | version_name    | varchar(16)       | NO   |     | NULL    |
+    | category        | varchar(64)       | NO   |     | NULL    |
+    | sort_order      | varchar(9)        | NO   |     | NULL    |
+    | short_name      | varchar(64)       | NO   |     | NULL    |
+    | full_name       | varchar(64)       | NO   |     | NULL    |
+    | default_checked | int unsigned      | NO   |     | NULL    |
+    | product_order   | int unsigned      | NO   |     | NULL    |
+    | logical_path    | text              | NO   |     | NULL    |
+    | url             | text              | NO   |     | NULL    |
+    | checksum        | varchar(32)       | NO   |     | NULL    |
+    | size            | int unsigned      | NO   |     | NULL    |
+    | width           | int unsigned      | YES  |     | NULL    |
+    | height          | int unsigned      | YES  |     | NULL    |
+    | pds_version     | int unsigned      | NO   |     | NULL    |
+    +-----------------+-------------------+------+-----+---------+
 
 And as predicted a single OPUS ID is likely to appear more than once:
 
@@ -427,6 +565,72 @@ And as predicted a single OPUS ID is likely to appear more than once:
     | coiss_calib  | calibrated/CO.../data/146096065...3_1_CALIB.IMG            | 4202496 |  NULL |   NULL |
     +--------------+--------------...---------------...-------------------------+---------+-------+--------+
 
+.. _dev_guide_database_schema_junction_tables:
+
+The Junction Tables of the ``MULTIGROUP`` Columns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A ``MULTIGROUP`` column holds a JSON list of ``mult`` ids. Each such column has a junction
+table named ``<table>_<column>``: ``obs_general.target_name`` has
+``obs_general_target_name``, and ``obs_general.target_class`` has
+``obs_general_target_class``. A junction table holds one row for each distinct id in each
+observation's list:
+
+::
+
+    mysql> DESC obs_general_target_name;
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | mult_id        | smallint unsigned | NO   | PRI | NULL    |
+    | obs_general_id | int unsigned      | NO   | PRI | NULL    |
+    +----------------+-------------------+------+-----+---------+
+
+The fields are:
+
+* ``mult_id``: One id of the observation's list, in the column's mult field.
+* ``obs_general_id``: The observation, a foreign key onto ``obs_general.id``.
+
+The primary key is ``(mult_id, obs_general_id)``, so the observations holding one value
+are one range of it. A second key on ``obs_general_id`` lets the import's per-bundle
+steps reach a bundle's rows by joining ``obs_general``. A list that repeats an id has one
+row for it, and an empty list has none.
+
+The import writes a junction table's rows beside the observation's ``obs_general`` row,
+from the same ids as the JSON list. A search for any of some values is a semi-join on the
+junction table, an ``EXISTS`` that reads its primary key. The counts of a field's values
+group the junction table's rows by ``mult_id``, joined to the search's rows of
+``search_results`` when the search has selections. The JSON list stays in
+``obs_general`` for the pages that show it, and a sort on the field orders by the label
+of the list's first entry. Finalization reads the ids in use from the junction table
+when it deletes the ``mult`` values no observation holds. The import's validation step
+compares each observation's list with its junction rows, both ways, and reports any
+observation on which they disagree.
+
+.. _dev_guide_database_schema_obs_preview:
+
+The ``obs_preview`` Table
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``obs_preview`` holds one row for every observation:
+
+::
+
+    mysql> DESC obs_preview;
+    +----------------+--------------+------+-----+---------+
+    | Field          | Type         | Null | Key | Default |
+    +----------------+--------------+------+-----+---------+
+    | obs_general_id | int unsigned | NO   | PRI | NULL    |
+    | preview_images | json         | NO   |     | NULL    |
+    +----------------+--------------+------+-----+---------+
+
+The fields are:
+
+* ``obs_general_id``: The observation, the primary key and a foreign key onto ``obs_general.id``.
+* ``preview_images``: A JSON encoded PdsViewSet describing every preview image the observation has.
+
+The results gallery, the image API calls and the Detail page read an observation's preview images from it. A page of results, which is also what each image API call reads, joins it to ``obs_general`` by primary key; the Detail page looks up the observation's row by its OPUS ID. An observation without a row shows the not-found placeholder in each of them, and the import's validation step reports it. ``preview_images`` is described in ``param_info`` under the category ``obs_preview``, with the slug ``**previewimages``, which is neither searchable nor shown. ``obs_preview`` has no ``table_names`` row, so it is no section of the Details tab and appears in no category list.
+
 The ``param_info`` Table
 ------------------------
 
@@ -435,38 +639,37 @@ In order for OPUS to properly handle search and metadata display, it needs detai
 ::
 
     mysql> DESC param_info;
-    +----------------------+---------------+------+-----+-------------------+
-    | Field                | Type          | Null | Key | Default           |
-    +----------------------+---------------+------+-----+-------------------+
-    | category_name        | varchar(150)  | YES  | MUL | NULL              |
-    | name                 | varchar(87)   | YES  | MUL | NULL              |
-    | form_type            | varchar(100)  | YES  |     | NULL              |
-    | display              | tinyint       | NO   |     | NULL              |
-    | display_results      | tinyint       | NO   |     | NULL              |
-    | disp_order           | int           | NO   |     | NULL              |
-    | label                | varchar(240)  | YES  |     | NULL              |
-    | label_results        | varchar(240)  | YES  |     | NULL              |
-    | slug                 | varchar(255)  | YES  |     | NULL              |
-    | old_slug             | varchar(255)  | YES  |     | NULL              |
-    | referred_slug        | varchar(255)  | YES  |     | NULL              |
-    | intro                | varchar(1023) | YES  |     | NULL              |
-    | tooltip              | varchar(255)  | YES  |     | NULL              |
-    | dict_context         | varchar(255)  | YES  |     | NULL              |
-    | dict_name            | varchar(255)  | YES  |     | NULL              |
-    | dict_context_results | varchar(255)  | YES  |     | NULL              |
-    | dict_name_results    | varchar(255)  | YES  |     | NULL              |
-    | sub_heading          | varchar(150)  | YES  |     | NULL              |
-    | ranges               | json          | YES  |     | NULL              |
-    | field_hints1         | varchar(255)  | YES  |     | NULL              |
-    | field_hints2         | varchar(255)  | YES  |     | NULL              |
-    | id                   | int unsigned  | NO   | PRI | NULL              |
-    | timestamp            | timestamp     | YES  |     | CURRENT_TIMESTAMP |
-    +----------------------+---------------+------+-----+-------------------+
+    +----------------------+---------------+------+-----+---------+
+    | Field                | Type          | Null | Key | Default |
+    +----------------------+---------------+------+-----+---------+
+    | category_name        | varchar(150)  | YES  | MUL | NULL    |
+    | name                 | varchar(87)   | YES  | MUL | NULL    |
+    | form_type            | varchar(100)  | YES  |     | NULL    |
+    | display              | tinyint       | NO   |     | NULL    |
+    | display_results      | tinyint       | NO   |     | NULL    |
+    | disp_order           | int           | NO   |     | NULL    |
+    | label                | varchar(240)  | YES  |     | NULL    |
+    | label_results        | varchar(240)  | YES  |     | NULL    |
+    | slug                 | varchar(255)  | YES  |     | NULL    |
+    | old_slug             | varchar(255)  | YES  |     | NULL    |
+    | referred_slug        | varchar(255)  | YES  |     | NULL    |
+    | intro                | varchar(1023) | YES  |     | NULL    |
+    | tooltip              | varchar(255)  | YES  |     | NULL    |
+    | dict_context         | varchar(255)  | YES  |     | NULL    |
+    | dict_name            | varchar(255)  | YES  |     | NULL    |
+    | dict_context_results | varchar(255)  | YES  |     | NULL    |
+    | dict_name_results    | varchar(255)  | YES  |     | NULL    |
+    | sub_heading          | varchar(150)  | YES  |     | NULL    |
+    | ranges               | json          | YES  |     | NULL    |
+    | field_hints1         | varchar(255)  | YES  |     | NULL    |
+    | field_hints2         | varchar(255)  | YES  |     | NULL    |
+    | id                   | int unsigned  | NO   | PRI | NULL    |
+    +----------------------+---------------+------+-----+---------+
 
 The fields are:
 
-* ``category_name``: The name of the ``obs_*`` table containing the metadata field.
-* ``name``: The name of the field in the above-referenced table.
+* ``category_name``: The name of the category containing the metadata field: an ``obs_*`` table, or a surface geometry category (`The Surface Geometry Tables`_), whose fields are the template's with the body's name in their labels and slugs.
+* ``name``: The name of the field's column in the category's table.
 * ``form_type``: Information about the field so that OPUS knows how to present it for searching and metadata display. The format is ``TYPE[precision][:units]``. The available ``TYPE``\ s are described in the section "Opus Metadata" above.
 
   * For numeric fields (``RANGE`` and ``LONG``), ``precision`` defines the precision of the value using ``%`` notation:
@@ -475,7 +678,7 @@ The fields are:
     * ``%.nf`` means a floating point value with ``n`` digits to the right of the decimal point.
   * When specified, ``units`` is a descriptor of the encoding of the value, including what the default units are, what other units are available, and how to convert the value between units. The list of available units is given in the ``src/opus_support/units.py`` module. For example, ``form_type="RANGE%.4f:duration"`` means to use the ``duration`` type of units, which has a default unit of ``seconds`` and support for ``microseconds``, ``milliseconds``, ``minutes``, ``hours``, and ``days``. The values are displayed numerically and the precision of the default ``%.3f`` is adjusted based on the factor needed to convert from unit to unit. Another example is ``form_type="RANGE:range_cassini_sclk"``. In this case, the "units" are really a way of indicating the conversion to and from the Cassini Spacecraft Clock Count, which has the format ``dddddddddd.sss`` where ``sss`` can be between 0 and 255 inclusive. There is no need to specify a precision because it is already implied by ``range_cassini_sclk``. Likewise there are no units available other than the default units, since there is no other way to display this metadata.
 * ``display``: A boolean value indicating whether this metadata is available for searching in the UI. The primary reason to hide a metadata value from searching is because a min/max pair of ``XXX1`` and ``XXX2`` really only represents a single UI search widget. By convention we mark the ``1`` field as displayed and the ``2`` field hidden.
-* ``display_results``: A boolean value indicating whether this metadata is available for viewing. This is set to ``False`` only in rare occasions, such as the hidden ``preview_images`` field which is only for internal use.
+* ``display_results``: A boolean value indicating whether this metadata is available for viewing. This is set to ``False`` only in rare occasions, such as ``obs_preview.preview_images``, which is only for internal use.
 * ``disp_order``: An integer indicating how the metadata fields within a given category should be sorted for display. Smaller values will appear higher in the list.
 * ``label``: The English name of the metadata field as displayed in the title of a search widget, such as ``Right Ascension``.
 * ``label_results``: The English name of the metadata field as displayed as a result, such as ``Right Ascension (Min)`` or ``Right Ascension (Max)``.
@@ -493,7 +696,6 @@ The fields are:
 * ``ranges``: A JSON field giving details of pre-programmed ranges that can be selected during searching, if any. For example, the ``Wavelength`` field has a number of pre-programmed options such as "Red" or "Violet".
 * ``field_hints1`` and ``field_hints2``: When ``ranges`` is specified, the grey text to display in the search widget to give a hint as to what can be typed. For example, for the ``Wavelength`` field this is "Wavelength or Color".
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
 The ``table_names`` Table
 -------------------------
@@ -503,25 +705,27 @@ The ``table_names`` table contains the mapping between the ``obs_*`` SQL table n
 ::
 
     mysql> DESC table_names;
-    +------------+--------------+------+-----+-------------------+
-    | Field      | Type         | Null | Key | Default           |
-    +------------+--------------+------+-----+-------------------+
-    | table_name | char(60)     | NO   | MUL | NULL              |
-    | label      | char(60)     | NO   |     | NULL              |
-    | display    | char(1)      | NO   |     | Y                 |
-    | disp_order | int          | NO   |     | NULL              |
-    | id         | int unsigned | NO   | PRI | NULL              |
-    | timestamp  | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +------------+--------------+------+-----+-------------------+
+    +----------------+-------------------+------+-----+---------+
+    | Field          | Type              | Null | Key | Default |
+    +----------------+-------------------+------+-----+---------+
+    | table_name     | varchar(60)       | NO   | MUL | NULL    |
+    | label          | varchar(60)       | NO   |     | NULL    |
+    | display        | varchar(1)        | NO   |     | Y       |
+    | disp_order     | int               | NO   |     | NULL    |
+    | physical_table | varchar(60)       | YES  |     | NULL    |
+    | target_name    | smallint unsigned | YES  |     | NULL    |
+    | id             | int unsigned      | NO   | PRI | NULL    |
+    +----------------+-------------------+------+-----+---------+
 
 The fields are:
 
-* ``table_name``: The name of the SQL ``obs_*`` table.
+* ``table_name``: The name of the category: an SQL ``obs_*`` table, or a surface geometry category (`The Surface Geometry Tables`_).
 * ``label``: The English label, such as ``Occultation/Reflectance Profiles Constraints``.
 * ``display``: A flag ``Y`` or ``N`` indicating whether to display this table. Currently this is always ``Y``.
 * ``disp_order``: An integer indicating how the table should be sorted when displaying them.
+* ``physical_table``: The table a category's rows are in when the category is not a table of its own, ``obs_surface_geometry_target`` for every surface geometry category; ``NULL`` for a table.
+* ``target_name``: For a surface geometry body's category, the body's id in the selector's mult field, which the rows of the category hold in ``obs_surface_geometry_target.target_name``; ``NULL`` for every other category, the selector ``obs_surface_geometry_name`` among them, which reads every row of the table.
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
 The ``partables`` Table
 -----------------------
@@ -531,23 +735,21 @@ The ``partables`` table is used to instruct OPUS on how to figure out when a par
 ::
 
     mysql> DESC partables;
-    +-------------+--------------+------+-----+-------------------+
-    | Field       | Type         | Null | Key | Default           |
-    +-------------+--------------+------+-----+-------------------+
-    | trigger_tab | char(200)    | YES  | MUL | NULL              |
-    | trigger_col | char(200)    | YES  |     | NULL              |
-    | trigger_val | char(60)     | YES  |     | NULL              |
-    | partable    | char(200)    | YES  |     | NULL              |
-    | id          | int unsigned | NO   | PRI | NULL              |
-    | timestamp   | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +-------------+--------------+------+-----+-------------------+
+    +-------------+--------------+------+-----+---------+
+    | Field       | Type         | Null | Key | Default |
+    +-------------+--------------+------+-----+---------+
+    | trigger_tab | varchar(200) | YES  | MUL | NULL    |
+    | trigger_col | varchar(200) | YES  |     | NULL    |
+    | trigger_val | varchar(60)  | YES  |     | NULL    |
+    | partable    | varchar(200) | YES  |     | NULL    |
+    | id          | int unsigned | NO   | PRI | NULL    |
+    +-------------+--------------+------+-----+---------+
 
 * ``trigger_tab``: The table to look at for a particular value.
 * ``trigger_col``: The column in that table to look at for a particular value.
 * ``trigger_val``: The value to look for.
 * ``partable``: When that value is found in that column in that table for all search results, trigger the display of this table.
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
 For example:
 
@@ -573,72 +775,106 @@ The ``cart`` table records the current Cart contents for all users. As long as t
 ::
 
     mysql> DESC cart;
-    +----------------+--------------+------+-----+-------------------+
-    | Field          | Type         | Null | Key | Default           |
-    +----------------+--------------+------+-----+-------------------+
-    | session_id     | char(80)     | NO   | MUL | NULL              |
-    | obs_general_id | int unsigned | NO   | MUL | NULL              |
-    | opus_id        | char(50)     | NO   | MUL | NULL              |
-    | recycled       | tinyint      | NO   |     | NULL              |
-    | id             | int unsigned | NO   | PRI | NULL              |
-    | timestamp      | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +----------------+--------------+------+-----+-------------------+
+    +----------------+--------------+------+-----+---------+
+    | Field          | Type         | Null | Key | Default |
+    +----------------+--------------+------+-----+---------+
+    | session_id     | varchar(40)  | NO   | MUL | NULL    |
+    | obs_general_id | int unsigned | NO   | MUL | NULL    |
+    | opus_id        | varchar(50)  | NO   | MUL | NULL    |
+    | recycled       | tinyint      | NO   |     | NULL    |
+    | id             | int unsigned | NO   | PRI | NULL    |
+    +----------------+--------------+------+-----+---------+
 
 The fields are:
 
-* ``session_id``: The Django session ID.
-* ``obs_general_id``: The ``obs_general`` unique ID of the observation in the cart.
+* ``session_id``: The Django session key, in ASCII.
+* ``obs_general_id``: The ``obs_general`` unique ID of the observation in the cart. It is a foreign key that cascades on delete, so deleting an observation -- when its bundle is imported again, deleted with ``--delete-bundles``, or settled by finalization's duplicate step -- deletes the cart rows that hold it.
 * ``opus_id``: The OPUS ID of the observation in the cart (which could also be found by joining the ``obs_general_id`` with the ``obs_general`` table).
 * ``recycled``: A boolean flag saying whether or not this observation is in the recycle bin.
 * ``id``: A unique ID.
-* ``timestamp``: The date and time this row was last modified.
 
-The ``user_searches`` and ``cache_*`` Tables
---------------------------------------------
+The ``user_searches`` and ``search_results`` Tables
+---------------------------------------------------
 
-When a search query comes in, OPUS first looks in the ``user_searches`` table to see if the exact same search has already been performed; if so the results are already cached in one of the ``cache_*`` tables. If not, the details of the search are stored in ``user_searches`` and a new ``cache_*`` table is created with the results.
+OPUS stores every search a user makes, so that a later request for the same search reads
+the stored results instead of running the search again:
+
+* ``user_searches`` has one row for each distinct search. The row's ``id`` is the
+  search's number.
+* ``search_results`` holds each search's results: the observations it matched, in sort
+  order.
+
+When a request makes a search, OPUS looks for it in ``user_searches``. If the search is
+not there, OPUS adds a row for it. If the search's results are not stored yet, the request
+writes them into ``search_results``; every later request for the search reads them.
+
+The import creates both tables from their schema files, and empties them when it resets
+the search tables (``opus_import --reset-search-tables``). Between imports,
+``opus_manage prune`` removes the searches that have gone longest without use
+(:ref:`user_guide_deployment_prune`).
 
 ::
 
     mysql> DESC user_searches;
-    +-----------------+--------------+------+-----+-------------------+
-    | Field           | Type         | Null | Key | Default           |
-    +-----------------+--------------+------+-----+-------------------+
-    | id              | int unsigned | NO   | PRI | NULL              |
-    | selections_json | text         | NO   |     | NULL              |
-    | selections_hash | varchar(32)  | NO   | MUL | NULL              |
-    | qtypes_json     | text         | YES  |     | NULL              |
-    | qtypes_hash     | varchar(32)  | YES  |     | NULL              |
-    | units_json      | text         | YES  |     | NULL              |
-    | units_hash      | varchar(32)  | YES  |     | NULL              |
-    | order_json      | text         | YES  |     | NULL              |
-    | order_hash      | varchar(32)  | YES  |     | NULL              |
-    | timestamp       | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    +-----------------+--------------+------+-----+-------------------+
+    +------------------+--------------+------+-----+---------+
+    | Field            | Type         | Null | Key | Default |
+    +------------------+--------------+------+-----+---------+
+    | id               | int unsigned | NO   | PRI | NULL    |
+    | search_hash      | binary(32)   | NO   | UNI | NULL    |
+    | result_count     | int unsigned | YES  |     | NULL    |
+    | results_built_at | datetime     | YES  |     | NULL    |
+    | last_used_at     | datetime     | NO   |     | NULL    |
+    +------------------+--------------+------+-----+---------+
 
-    mysql> DESC cache_1;
-    +------------+--------------+------+-----+---------+
-    | Field      | Type         | Null | Key | Default |
-    +------------+--------------+------+-----+---------+
-    | sort_order | int          | NO   | PRI | NULL    |
-    | id         | int unsigned | YES  | UNI | NULL    |
-    +------------+--------------+------+-----+---------+
+    mysql> DESC search_results;
+    +----------------+--------------+------+-----+---------+
+    | Field          | Type         | Null | Key | Default |
+    +----------------+--------------+------+-----+---------+
+    | search_id      | int unsigned | NO   | PRI | NULL    |
+    | sort_order     | int unsigned | NO   | PRI | NULL    |
+    | obs_general_id | int unsigned | NO   |     | NULL    |
+    +----------------+--------------+------+-----+---------+
 
 The fields of ``user_searches`` are:
 
-* ``selections_json`` and ``selections_hash``: A JSON structure containing internal details of the search query, and an MD5 hash of the structure for ease of searching.
-* ``qtypes_json`` and ``qtypes_hash``: A JSON structure containing internal details of the qtypes used in the search query, and an MD5 hash of the structure for ease of searching.
-* ``units_json`` and ``units_hash``: A JSON structure containing internal details of the units used in the search query, and an MD5 hash of the structure for ease of searching.
-* ``order_json`` and ``order_hash``: A JSON structure containing internal details of the sort order used in the search query, and an MD5 hash of the structure for ease of searching.
-* ``id``: A unique ID. This unique ID is also used to identify the particular associated ``cache_N`` table.
-* ``timestamp``: The date and time this row was last modified.
+* ``id``: The search's number. The search's rows in ``search_results`` carry it.
+* ``search_hash``: What identifies the search: the SHA-256 hash, stored as 32 bytes, of
+  a JSON list of the search's selections, qtypes, units and sort order; each of the last
+  three is ``null`` when the search has none. It is a unique key, so two searches are the
+  same search only if all four match.
+* ``result_count``: How many results the search has. ``NULL`` until its results are
+  stored.
+* ``results_built_at``: When the search's results were stored. ``NULL`` until they are;
+  this is how OPUS tells whether a search's results exist yet.
+* ``last_used_at``: When the search was added or last used, updated at most once a day.
+  ``opus_manage prune`` removes the searches with the oldest ``last_used_at`` first.
 
-Only if all of the fields ``selections``, ``qtypes``, ``units``, and ``order`` match is a search considered to have been previously performed.
+Both times are in UTC.
 
-The ``cache_*`` tables each contain all of the results from one search. Each row represents one OPUS ID in the search results. The fields of ``cache_*`` are:
+Each row of ``search_results`` is one observation in one search's results. Its fields are:
 
-* ``id``: The ``obs_general`` ID of the result.
-* ``sort_order``: An integer indicating how the result appears in the sorted order. It is necessary because the ``CREATE TABLE`` operation in ``get_search_results_chunk`` does not preserve the ordering of the original table.
+* ``search_id``: The search's number, its ``user_searches`` ``id``.
+* ``sort_order``: The observation's position in the search's sorted order: 1, 2, 3, ...
+  with no gaps.
+* ``obs_general_id``: The observation's ``obs_general`` ``id``.
+
+It has two keys:
+
+* The primary key, ``(search_id, sort_order)``, keeps each search's results together and
+  in order, so a page of results is one range of the key.
+* The unique key, ``(search_id, obs_general_id)``, finds an observation in one search's
+  results. The queries that join the ``obs_*`` tables to a search's results use it.
+
+Neither table has a foreign key. The code that removes a search removes its rows of
+``search_results`` too.
+
+A search's results are written by one ``INSERT INTO search_results ... SELECT``
+statement, which runs the search and numbers its rows in sort order with
+``ROW_NUMBER()``. The same transaction locks the search's ``user_searches`` row
+(``SELECT ... FOR UPDATE``) and fills in ``result_count``, ``results_built_at`` and
+``last_used_at``. Two requests that make the same new search at once therefore cannot
+both write its results: the second waits for the lock, then finds the results stored.
+:ref:`dev_guide_webapp_search_flow` describes this step by step.
 
 The ``contexts`` and ``definitions`` Tables
 -------------------------------------------
@@ -650,15 +886,14 @@ The ``contexts`` table has the following schema:
 ::
 
     mysql> DESC contexts;
-    +-------------+--------------+------+-----+-------------------+
-    | Field       | Type         | Null | Key | Default           |
-    +-------------+--------------+------+-----+-------------------+
-    | name        | char(50)     | NO   | UNI | NULL              |
-    | description | char(100)    | NO   |     | NULL              |
-    | parent      | char(25)     | NO   |     | NULL              |
-    | timestamp   | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    | id          | int unsigned | NO   | PRI | NULL              |
-    +-------------+--------------+------+-----+-------------------+
+    +-------------+--------------+------+-----+---------+
+    | Field       | Type         | Null | Key | Default |
+    +-------------+--------------+------+-----+---------+
+    | name        | varchar(50)  | NO   | UNI | NULL    |
+    | description | varchar(100) | NO   |     | NULL    |
+    | parent      | varchar(25)  | NO   |     | NULL    |
+    | id          | int unsigned | NO   | PRI | NULL    |
+    +-------------+--------------+------+-----+---------+
 
 Contexts are arranged in a tree, such that each context has a single parent. In the eventual website interface, a term will be displayed in multiple contexts if appropriate. The top-level context is the NASA PDS Planetary Science Data Dictionary, ``PSDD``. Under this are the top-level OPUS Constraints categories: ``OPUS_GENERAL``, ``OPUS_PDS``, ``OPUS_TYPE_IMAGE``, ``OPUS_WAVELENGTH``, etc., as well as the missions like ``CASSINI``. Under each mission are the instruments: ``CASSINI`` has ``COCIRS``, ``COISS``, ``COUVIS``, etc.
 
@@ -667,7 +902,6 @@ The fields are:
 * ``name``: The internal name of the context (e.g. ``CASSINI``).
 * ``description``: The pretty English name of the context (e.g. ``Cassini Mission``).
 * ``parent``: The internal name of the parent context.
-* ``timestamp``: The date and time this row was last modified.
 * ``id``: A unique ID.
 
 The ``definitions`` table has the following schema:
@@ -675,20 +909,138 @@ The ``definitions`` table has the following schema:
 ::
 
     mysql> DESC definitions;
-    +------------+--------------+------+-----+-------------------+
-    | Field      | Type         | Null | Key | Default           |
-    +------------+--------------+------+-----+-------------------+
-    | term       | char(255)    | NO   | MUL | NULL              |
-    | context    | char(50)     | NO   | MUL | NULL              |
-    | definition | text         | NO   |     | NULL              |
-    | timestamp  | timestamp    | YES  |     | CURRENT_TIMESTAMP |
-    | id         | int unsigned | NO   | PRI | NULL              |
-    +------------+--------------+------+-----+-------------------+
+    +------------+--------------+------+-----+---------+
+    | Field      | Type         | Null | Key | Default |
+    +------------+--------------+------+-----+---------+
+    | term       | varchar(255) | NO   | MUL | NULL    |
+    | context    | varchar(50)  | NO   | MUL | NULL    |
+    | definition | text         | NO   |     | NULL    |
+    | id         | int unsigned | NO   | PRI | NULL    |
+    +------------+--------------+------+-----+---------+
 
 The fields are:
 
 * ``term``: The internal name of the term (e.g. ``PLANET_NAME``).
 * ``context``: The associated internal name of the context.
 * ``definition``: The full free-form text definition.
-* ``timestamp``: The date and time this row was last modified.
 * ``id``: A unique ID.
+
+.. _dev_guide_database_schema_version:
+
+The ``schema_version`` Table
+----------------------------
+
+The ``schema_version`` table records which generation of the table schemas imported the database, and whether the import is finished. It holds one row.
+
+::
+
+    mysql> DESC schema_version;
+    +--------------------+-------------------------------------------------+------+-----+---------+
+    | Field              | Type                                            | Null | Key | Default |
+    +--------------------+-------------------------------------------------+------+-----+---------+
+    | version            | int unsigned                                    | NO   | PRI | NULL    |
+    | state              | enum('ready','appending')                       | NO   |     | NULL    |
+    | generation         | int unsigned                                    | NO   |     | NULL    |
+    | pending_generation | int unsigned                                    | YES  |     | NULL    |
+    | pending_state      | enum('writing','finalized','validated','ready') | YES  |     | NULL    |
+    | revertible         | tinyint unsigned                                | NO   |     | 0       |
+    +--------------------+-------------------------------------------------+------+-----+---------+
+
+The fields are:
+
+* ``version``: The :data:`~opus_import.schema_version.SCHEMA_VERSION` of the release whose import created the tables. A release that changes a table schema in a way an existing database does not have raises it, and is deployed with a fresh import.
+* ``state``: ``ready`` once the database is finished; ``appending`` while an append to it is writing.
+* ``generation``: The import generation the web application serves, which the ``obs_general`` view shows (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). A fresh import writes 1.
+* ``pending_generation``: The generation an incremental update is writing, one above ``generation``, or ``NULL`` (:ref:`dev_guide_import_running_generations`).
+* ``pending_state``: How far the pending generation has got: ``writing`` from ``--begin-generation`` and again whenever anything writes it, ``finalized`` once every step of ``--finalize`` succeeded on it, ``validated`` once ``--validate`` passed on a finalized one, and ``ready`` once ``--write-schema-version`` stamped a validated one. Only a ``ready`` generation is switched in.
+* ``revertible``: 1 from a switch until the purge has deleted the rows it retired. ``--revert-generation`` can switch back while it is 1 and the ``__prev`` auxiliary tables are whole, which is until the purge's first step drops them.
+
+The import's last step, ``--write-schema-version`` (:ref:`dev_guide_import_steps_do_schema_version`), writes the row. It is the only writer of ``ready``, it never changes a ``version`` the row already holds, and it refuses to write ``ready`` while any bundle in ``import_bundle`` is not ``done``. An append, and ``--delete-bundles`` on a finished database, set ``state`` to ``appending`` before the first write (:ref:`dev_guide_import_write_paths`). An update by generation writes neither ``version`` nor ``state``: the row stays ``ready``, and the update writes the generation columns. ``--scorched-earth`` drops the table before any other.
+
+Two things read it, and both require the release's own version in the ``ready`` state:
+
+* the web application, as it loads (:mod:`opus_app.schema_guard`, called from :mod:`opus_app.wsgi`). Any other row, or none, makes every request answer 503 with a message naming the remedy, and each refused request checks again, so a worker serves the database as soon as it is finished, without a reload. Once the check passes the worker does not make it again, so a worker already serving a database goes on serving it if the row later changes: an append or a deletion is made only to a database nothing is serving. The check is in the WSGI entry point and not in the settings, so management commands, ``inspectdb`` among them, work against any database;
+* both deploy scripts, before they write anything (:ref:`user_guide_deployment_schema_version`).
+
+The web application also reads ``pending_generation`` and ``revertible``, on each request that reads a child table's rows outside a search's results: while either is set, ``obs_general_rows`` holds rows outside the served generation, and the statement joins the ``obs_general`` view (:func:`~opus_app.apps.tools.db_utils.unserved_observations_exist`).
+
+.. _dev_guide_database_schema_import_bundle:
+
+The ``import_bundle`` Table
+---------------------------
+
+The ``import_bundle`` table is the bundle registry: the import's record of each bundle registered for import, the range its observation ids come from, and how far it got (:ref:`dev_guide_import_steps_registry`). Its states are also the work queue several import processes draw from. The web application never reads it.
+
+::
+
+    mysql> DESC import_bundle;
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
+    | Field              | Type                                        | Null | Key | Default | Extra          |
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
+    | bundle_number      | smallint unsigned                           | NO   | PRI | NULL    | auto_increment |
+    | bundle_id          | varchar(75)                                 | NO   | MUL | NULL    |                |
+    | size_estimate      | bigint unsigned                             | NO   |     | NULL    |                |
+    | first_id           | int unsigned                                | NO   |     | NULL    |                |
+    | id_capacity        | int unsigned                                | NO   |     | NULL    |                |
+    | state              | enum('pending','importing','done','failed') | NO   | MUL | pending |                |
+    | started_at         | datetime                                    | YES  |     | NULL    |                |
+    | finished_at        | datetime                                    | YES  |     | NULL    |                |
+    | process_id         | int unsigned                                | YES  |     | NULL    |                |
+    | rows_done          | bigint unsigned                             | NO   |     | 0       |                |
+    | losses             | tinyint unsigned                            | NO   |     | 0       |                |
+    | generation         | int unsigned                                | NO   |     | 1       |                |
+    | retired_generation | int unsigned                                | YES  |     | NULL    |                |
+    +--------------------+---------------------------------------------+------+-----+---------+----------------+
+
+The fields are:
+
+* ``bundle_number``: The bundle's place in registration order, which fixes its id range and so which copy of a shared OPUS ID finalization keeps. A plain ``--import`` imports its bundles in this order; queue importers claim the largest pending bundle first, whatever its number. A bundle keeps its number when it is imported again, except into a pending generation, which registers it afresh.
+* ``bundle_id``: The bundle, such as ``COISS_2002``. A bundle OPUS deliberately skips is never registered.
+* ``size_estimate``: The rows the bundle's primary index labels declared when it was registered.
+* ``first_id``: The ``obs_general.id`` of the bundle's first observation. A bundle's range starts where the range of the bundle registered before it ends, so the ranges ascend in ``bundle_number`` order and the copy of a shared OPUS ID that finalization keeps, the one with the highest ``id``, is the one from the bundle registered later.
+* ``id_capacity``: How many ids, from ``first_id``, the bundle's observations may take: a hundred for each row of ``size_estimate``. A bundle that needs more fails its import, naming its capacity.
+* ``state``: ``pending`` once the bundle is registered and before an import takes it; ``importing`` while the bundle is deleted and loaded; ``done`` once it is imported without logging an error, or under ``--ignore-errors``; ``failed`` when its import failed or logged an error.
+* ``started_at`` and ``finished_at``: When the bundle's latest import began and ended, in UTC. Both are ``NULL`` while the bundle is ``pending``, and ``finished_at`` is ``NULL`` while an import of it is running.
+* ``process_id``: The ``import_process`` row of the importer that claimed the bundle, set with ``importing``, and kept on a ``failed`` bundle so its importer's log can be found; ``NULL`` for a bundle imported by a plain ``opus_import``, and once the bundle returns to ``pending``.
+* ``rows_done``: The ``obs_general`` rows the bundle's latest import has committed, advanced in each chunk's transaction.
+* ``losses``: How many importers died holding the bundle. Its second loss marks it ``failed``.
+* ``generation``: The import generation that registered this copy of the bundle; 1 on a fresh import.
+* ``retired_generation``: The generation that retired this copy, by importing the bundle again or dropping it, or ``NULL``. A bundle re-imported in a pending generation has two rows until the purge, its served copy's, retired at the pending generation, and its pending copy's, with a number and an id range after every existing one; the purge deletes the rows of the copies it deletes. The import reads and writes a bundle's **live row**, the one no generation retired.
+
+The unique key is ``(bundle_id, generation)``.
+
+The key on ``(state, size_estimate, bundle_number)`` is what a claim reads: scanned from its highest entry, it gives the largest ``pending`` bundle in one index entry, so a claim locks only the row it takes.
+
+Every invocation that registers or imports bundles creates the table when the schema lacks it, on a fresh import and an append alike, and registers its bundles before the first one starts. ``--finalize`` refuses to run, and ``--write-schema-version`` refuses to write ``ready``, while any row is not ``done``. ``--delete-bundles`` deletes a bundle's row with its observations, and ``--scorched-earth`` drops the table.
+
+.. _dev_guide_database_schema_import_process:
+
+The ``import_process`` Table
+----------------------------
+
+The ``import_process`` table records two kinds of process. An **importer** is an ``opus_import --join`` process drawing bundles from the queue (:ref:`dev_guide_import_full_run`). A **writer** is an invocation, or a recovery, that writes a schema with a version row and records itself so that no generation command runs beside it: an import, a registration, a requeue, a delete, ``--finalize``, ``--create-indexes``, ``--create-param-info``, ``--create-partables``, ``--create-table-names``, validation, the stamp, and the recovery of a lost importer's bundle (:ref:`dev_guide_import_running_generations`). Only the import reads the table; the web application never does, and ``SCHEMA_VERSION`` does not cover it, since the import creates it when the schema lacks it.
+
+::
+
+    mysql> DESC import_process;
+    +-------------+---------------------------------+------+-----+---------+----------------+
+    | Field       | Type                            | Null | Key | Default | Extra          |
+    +-------------+---------------------------------+------+-----+---------+----------------+
+    | process_id  | int unsigned                    | NO   | PRI | NULL    | auto_increment |
+    | host        | varchar(255)                    | NO   |     | NULL    |                |
+    | pid         | int unsigned                    | NO   |     | NULL    |                |
+    | log_path    | varchar(1024)                   | NO   |     | NULL    |                |
+    | started_at  | datetime                        | NO   |     | NULL    |                |
+    | progress_at | datetime                        | NO   |     | NULL    |                |
+    | state       | enum('running','exited','lost') | NO   |     | NULL    |                |
+    +-------------+---------------------------------+------+-----+---------+----------------+
+
+The fields are:
+
+* ``process_id``: The process. An importer's is what ``import_bundle.process_id`` names.
+* ``host`` and ``pid``: The computer the process runs on, and its process id there.
+* ``log_path``: The process's information log, on its computer.
+* ``started_at`` and ``progress_at``: When the process started, and, for an importer, when it last committed a chunk of rows, in UTC. A writer's ``progress_at`` stays at its start.
+* ``state``: ``running`` from its start; ``exited`` once it has exited; ``lost`` once a recovery of lost importers found its lock free while the row was ``running``, for a writer as for an importer.
+
+Whether a process is alive is not in the table: it is whether the server-wide named lock :func:`opus_import.import_processes.importer_lock_name` names is held, which the server frees when the process's lock connection closes. ``--scorched-earth`` drops the table.

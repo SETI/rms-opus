@@ -4,7 +4,7 @@ A table's schema names, for each column, where its value comes from: a Python me
 the bundle's obs class (``COMPUTE``), the ``obs_general`` row this observation already
 produced, one of two longitude computations, or the next id in sequence. This module
 walks the schema, obtains each value, checks it against the type and range the schema
-declares, replaces an enumerated value with its ``mult_`` table id, and assembles the
+declares, replaces an enumerated value with the id of its ``mult`` row, and assembles the
 row.
 
 Validation reports rather than raises, so one bad row does not end the run: a flag with
@@ -24,15 +24,15 @@ their own.
 
 from __future__ import annotations
 
-import json
 import traceback
 from typing import TYPE_CHECKING, Any
 
-from opus_import import config_data, import_util
+from opus_import import config_data, deferred, generations, import_util
 from opus_import.obs.obs_base import ObsBase
 from opus_import.obs.obs_ring_geometry import ObsRingGeometry
 from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
 from opus_import.steps import do_import_mult
+from opus_support import UNSTORED_ASCII_CHARACTER
 
 if TYPE_CHECKING:
     from opus_import.context import ImportContext
@@ -45,21 +45,29 @@ def import_observation_table(
     table_name: str,
     table_schema: TableSchema,
     metadata: dict[str, Any],
-) -> dict[str, Any] | None:
+) -> dict[str, Any]:
     """Compute one observation's row of one table.
 
-    Three kinds of column are skipped: ``timestamp``, which the database maintains
-    itself; a column marked ``put_mults_here``, which holds another column's mult id;
-    and a ``pi_referred_slug`` entry, which describes a search parameter rather than a
-    column.
+    Two kinds of entry are skipped: a column marked ``put_mults_here``, which holds
+    another column's mult id; and an entry with no ``field_name`` -- a
+    ``pi_referred_slug`` entry, which describes a search parameter rather than a column,
+    or a table-level key.
 
-    A column whose form type is a GROUP type stores a ``mult_`` table id rather than the
-    value, and the value is added to that table if it is new. A ``mult_list`` column
+    A column whose form type is a GROUP type stores the id of a ``mult`` row rather than
+    the value, and the value is added to its mult field if it is new. When its field
+    method failed, which has been logged, or returned plain values rather than mult
+    specifications, which is logged here, the column takes its field's absent value, so
+    one bad value fails the bundle rather than the index. A ``mult_list`` column
     holds several values and is written as a JSON array, with a missing value omitted
     rather than stored as null; every other column holds exactly one value.
 
     The row is left on ``metadata`` under ``<table_name>_row`` as well as returned, so
     that a later table's field functions can read what an earlier one computed.
+
+    A string bound for an ASCII column (``field_charset`` ``"ascii"``, a ``varcharNNN`` or
+    ``text`` column) that holds DEL (`opus_support.UNSTORED_ASCII_CHARACTER`) logs an
+    error naming the column, and is stored with the DEL removed, so no stored value holds
+    it whether or not the run ignores errors.
 
     Parameters:
         ctx: The import run's context.
@@ -71,32 +79,27 @@ def import_observation_table(
             here.
 
     Returns:
-        The row, keyed by column name, or None if a mult column's field function
-        returned something that is not a mult specification, which is not recoverable.
+        The row, keyed by column name.
     """
     new_row: dict[str, Any] = {}
 
     metadata[table_name + '_row'] = new_row
 
-    # Run through all the based columns and compute their values.
-    # Always skip "id" for tables other than obs_general, because this is just
-    # an AUTO_INCREMENT field used by Django and has no other purpose.
-    # Always skip "timestamp" fields because these are automatically filled in
-    # by SQL because we mark them as ON CREATE and ON UPDATE.
-    # Skip "mult_" tables because they are handled separately when the search
-    # type is a GROUP-type.
+    # Compute every column's value. An entry that is not a column of this table -- a
+    # param_info row of another table's column, or a table-level key -- is skipped.
 
     for table_column in table_schema:
-        if table_column.get('put_mults_here', False) or table_column.get('pi_referred_slug', False):
+        if 'field_name' not in table_column or table_column.get('put_mults_here', False):
+            # A param_info row of another table's column, or a table-level key.
+            continue
+        if table_column.get('data_source') == generations.GENERATION_DATA_SOURCE:
+            # The loader writes the generation the import writes (do_import_index).
             continue
         field_name = table_column['field_name']
         field_type = table_column['field_type']
 
         metadata['table_name'] = table_name
         metadata['field_name'] = field_name
-
-        if field_name == 'timestamp':
-            continue
 
         data_source = table_column.get('data_source', None)
         if not data_source:
@@ -109,12 +112,13 @@ def import_observation_table(
 
             column_val_list = None
             mult_label_list: list[Any] | None = None
-            aliases_list: list[Any] | None = None
             disp_list: list[Any] | None = None
             # Might be set with mult_label but not otherwise
-            disp_order_list: list[Any] | None = None
+            pin_list: list[Any] | None = None
             grouping_list: list[Any] | None = None
-            group_disp_order_list: list[Any] | None = None
+            group_pin_list: list[Any] | None = None
+            # Whether the field method failed, which it has already logged.
+            field_failed = False
 
             if data_source == 'OBS_GENERAL_ID':
                 obs_general_row = metadata['obs_general_row']
@@ -132,19 +136,20 @@ def import_observation_table(
                     # they all have to be.
                     if not isinstance(ret, (list, tuple)):
                         ret = [ret]
-                    if isinstance(ret[0], dict):
+                    # An empty list is a mult_list field with no value.
+                    if len(ret) > 0 and isinstance(ret[0], dict):
                         column_val_list = [x['col_val'] for x in ret]
                         mult_label_list = [x['disp_name'] for x in ret]
-                        aliases_list = [x['aliases'] for x in ret]
                         disp_list = [x['disp'] for x in ret]
-                        disp_order_list = [x['disp_order'] for x in ret]
+                        pin_list = [x['pin'] for x in ret]
                         grouping_list = [x['grouping'] for x in ret]
-                        group_disp_order_list = [x['group_disp_order'] for x in ret]
+                        group_pin_list = [x['group_pin'] for x in ret]
                     else:
                         column_val_list = ret
                 else:
                     # Error will already be logged by import_run_field_function
                     column_val_list = [None]
+                    field_failed = True
 
             elif data_source == 'LONGITUDE_FIELD':
                 column_val_list = [instrument_obj.compute_longitude_field()]
@@ -153,12 +158,7 @@ def import_observation_table(
                 column_val_list = [instrument_obj.compute_d_longitude_field()]
 
             elif data_source == 'MAX_ID':
-                if table_name not in ctx.max_table_id_cache:
-                    ctx.max_table_id_cache[table_name] = import_util.find_max_table_id(
-                        ctx, table_name
-                    )
-                ctx.max_table_id_cache[table_name] = ctx.max_table_id_cache[table_name] + 1
-                column_val_list = [ctx.max_table_id_cache[table_name]]
+                column_val_list = [import_util.next_table_id(ctx, table_name)]
 
             else:
                 import_util.log_nonrepeating_error(
@@ -194,6 +194,10 @@ def import_observation_table(
                         f'Column "{field_name}" in table "{table_name}" '
                         + 'has NULL value but NOT NULL is set',
                     )
+            elif deferred.is_deferred(column_val):
+                # A row id a pool worker handed out, which the import's process turns
+                # into the real one; an id has nothing to validate.
+                pass
             else:
                 if field_type.startswith('flag'):
                     if column_val in [0, 'n', 'N', 'no', 'No', 'NO', 'off', 'OFF']:
@@ -216,24 +220,25 @@ def import_observation_table(
                             + 'a valid flag value',
                         )
                         column_val = None
-                if field_type.startswith('char'):
-                    field_size = int(field_type[4:])
+                if field_type.startswith('varchar'):
+                    field_size = int(field_type.removeprefix('varchar'))
                     if not isinstance(column_val, str):
                         import_util.log_nonrepeating_error(
                             ctx,
                             f'Column "{field_name}" in table "{table_name}" '
-                            + f'has CHAR type but value "{column_val}" is of '
+                            + f'has VARCHAR type but value "{column_val}" is of '
                             + f'type "{type(column_val)}"',
                         )
                         column_val = ''
-                    elif len(column_val) > field_size:
-                        import_util.log_nonrepeating_error(
-                            ctx,
-                            f'Column "{field_name}" in table "{table_name}" '
-                            + f'has CHAR size {field_size} but value '
-                            + f'"{column_val}" is too long',
-                        )
-                        column_val = column_val[:field_size]
+                    else:
+                        if len(column_val) > field_size:
+                            import_util.log_nonrepeating_error(
+                                ctx,
+                                f'Column "{field_name}" in table "{table_name}" '
+                                + f'has VARCHAR size {field_size} but value '
+                                + f'"{column_val}" is too long',
+                            )
+                            column_val = column_val[:field_size]
                 elif (
                     field_type.startswith('real')
                     or field_type.startswith('int')
@@ -312,8 +317,23 @@ def import_observation_table(
                                 )
                                 import_util.log_nonrepeating_error(ctx, msg)
                             column_val = None
+                if (
+                    table_column.get('field_charset') == 'ascii'
+                    and isinstance(column_val, str)
+                    and UNSTORED_ASCII_CHARACTER in column_val
+                ):
+                    # The web application binds this character for one a caller gave
+                    # that has no ASCII form, so no stored value may hold it, even when
+                    # the run ignores errors.
+                    import_util.log_nonrepeating_error(
+                        ctx,
+                        f'Column "{field_name}" in table "{table_name}" '
+                        + f'is ASCII but value {column_val!r} holds the '
+                        + 'character DEL, which no ASCII column may hold',
+                    )
+                    column_val = column_val.replace(UNSTORED_ASCII_CHARACTER, '')
 
-            ### CHECK TO SEE IF THERE IS AN ASSOCIATED MULT_ TABLE ###
+            ### CHECK TO SEE IF THE COLUMN HOLDS MULT IDS ###
 
             form_type = table_column.get('pi_form_type', None)
             if form_type is not None and form_type.find(':') != -1:
@@ -324,26 +344,39 @@ def import_observation_table(
                 # (ex: flag)
                 mult_label = None
                 if mult_label_list is None:
-                    import_util.log_nonrepeating_error(
+                    if not field_failed:
+                        import_util.log_nonrepeating_error(
+                            ctx,
+                            f'Column "{field_name}" in table "{table_name}" holds mult ids, '
+                            'but its field method returned values rather than mult '
+                            'specifications; the observation is given the absent value',
+                        )
+                    column_val = do_import_mult.update_mult_table(
                         ctx,
-                        f'Fatal error processing column "{field_name}" in '
-                        f'table "{table_name}" - bad data type returned for mult',
+                        table_name,
+                        field_name,
+                        table_column,
+                        None,
+                        do_import_mult.ABSENT_LABEL,
                     )
-                    return None
-                # The seven lists are assigned together in the full-spec mult branch
-                # above, so the check just made establishes the other five as well.
-                assert aliases_list is not None
+                    if field_type != 'mult_list':
+                        row_val.append(column_val)
+                    continue
+                # The lists are assigned together in the full-spec mult branch above,
+                # so the check just made establishes the others as well.
                 assert disp_list is not None
-                assert disp_order_list is not None
+                assert pin_list is not None
                 assert grouping_list is not None
-                assert group_disp_order_list is not None
+                assert group_pin_list is not None
                 mult_label = mult_label_list[column_val_num]
                 if mult_label is None:
                     if column_val is None:
                         mult_label = 'N/A'
                     else:
                         mult_label = str(column_val)
-                        if not mult_label[0].isdigit() or not mult_label[-1].isdigit():
+                        if mult_label != '' and (
+                            not mult_label[0].isdigit() or not mult_label[-1].isdigit()
+                        ):
                             # This catches things like 2014 MU69 and leaves them
                             # in all caps
                             mult_label = mult_label.title()
@@ -355,11 +388,10 @@ def import_observation_table(
                     table_column,
                     column_val,
                     mult_label,
-                    aliases_list[column_val_num],
                     disp_list[column_val_num],
-                    disp_order_list[column_val_num],
+                    pin_list[column_val_num],
                     grouping_list[column_val_num],
-                    group_disp_order_list[column_val_num],
+                    group_pin_list[column_val_num],
                 )
 
             if field_type != 'mult_list' or column_val is not None:
@@ -374,11 +406,11 @@ def import_observation_table(
             if len(row_val) == 0:
                 new_row[field_name] = None
             else:
-                new_row[field_name] = json.dumps(row_val)
+                new_row[field_name] = deferred.json_list(row_val)
         else:
             new_row[field_name] = row_val[0]  # Only a single value
 
-    if not ctx.args.import_ignore_geo_mismatch:
+    if not ctx.args.ignore_geo_mismatch:
         if table_name == 'obs_ring_geometry':
             # A geometry table is only ever filled by a class that mixes in the module
             # defining it, which every class in config_bundle_info does.
@@ -401,9 +433,9 @@ def field_function_name(table_name: str, field_name: str) -> str:
     rule here changes what that test checks.
 
     Parameters:
-        table_name: The table being filled. Every ``obs_surface_geometry__<TARGET>``
-            table shares the methods named for ``obs_surface_geometry_target``, since
-            they are all built from that one template.
+        table_name: The table being filled, or the surface geometry category,
+            ``obs_surface_geometry__<target>``, a row of ``obs_surface_geometry_target`` is
+            computed under; every category shares the methods named for that table.
         field_name: The column being computed.
 
     Returns:
@@ -424,9 +456,9 @@ def import_run_field_function(
 ) -> tuple[bool, Any]:
     """Call the obs class method that computes one column's value.
 
-    The method is named ``field_<table>_<column>``, and every
-    ``obs_surface_geometry__<TARGET>`` table shares the one named for
-    ``obs_surface_geometry_target``, since they are all built from that template.
+    The method is named ``field_<table>_<column>``, and every surface geometry category,
+    ``obs_surface_geometry__<target>``, shares the one named for
+    ``obs_surface_geometry_target``, the table its rows are written to.
 
     Parameters:
         ctx: The import run's context, for the logger.

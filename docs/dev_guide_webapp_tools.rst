@@ -21,7 +21,9 @@ Each of its modules is covered in full below.
    * - :mod:`~opus_app.apps.tools.sql_builder`
      - Assembling raw SQL from structure instead of from string concatenation.
    * - :mod:`~opus_app.apps.tools.db_utils`
-     - Finding a model by table name, and the labels behind the ``mult_`` tables.
+     - Finding a model by table name, and the labels behind the mult ids.
+   * - :mod:`~opus_app.apps.tools.import_constants`
+     - Each worker's copy of the tables only an import changes.
    * - :mod:`~opus_app.apps.tools.file_utils`
      - Lookups against ``obs_files``: an observation's products, its preview images, and
        the browse products the Details tab shows.
@@ -108,15 +110,14 @@ Slug and name helpers
 :func:`~opus_app.apps.tools.app_utils.cols_to_slug_list`
     A comma-separated slug list, or an empty list.
 
-:func:`~opus_app.apps.tools.app_utils.get_mult_name`
-    The ``mult_`` table name for a ``<table>.<column>`` field.
+:func:`~opus_app.apps.tools.app_utils.mult_alias`
+    The alias a statement joins the ``mult`` table under for a ``<table>.<column>``
+    field: ``mult_`` and the name with its period replaced by an underscore, such as
+    ``mult_obs_general_planet_id``. A statement that reads several mult columns joins
+    ``mult`` once for each, so each join needs a name of its own.
 
 :func:`~opus_app.apps.tools.app_utils.sort_dictionary`
     A copy with the keys in sorted order, which is what makes a search's hash stable.
-
-:func:`~opus_app.apps.tools.app_utils.is_old_format_ring_obs_id` and :func:`~opus_app.apps.tools.app_utils.convert_ring_obs_id_to_opus_id`
-    A ``RING_OBS_ID`` is the identifier some bookmarks carry in place of an OPUS ID.
-    These recognize one and convert it.
 
 :func:`~opus_app.apps.tools.app_utils.download_filename`
     The name of a temporary download: a fixed prefix, a timestamp, the kind of file, one
@@ -166,8 +167,7 @@ same way wherever it is found, and so that changing the wording is one edit.
        :func:`~opus_app.apps.tools.app_utils.http400_unknown_download_file_format`
      - The request named a field, a unit, a category or an archive format OPUS does not
        have.
-   * - :func:`~opus_app.apps.tools.app_utils.http404_unknown_opus_id`,
-       :func:`~opus_app.apps.tools.app_utils.http404_unknown_ring_obs_id`
+   * - :func:`~opus_app.apps.tools.app_utils.http404_unknown_opus_id`
      - The URL named an observation that does not exist.
    * - :func:`~opus_app.apps.tools.app_utils.http404_unknown_format`
      - A handler was reached with a format it does not produce.
@@ -187,11 +187,11 @@ opus_app.apps.tools.sql_builder
 -------------------------------
 
 Most of the OPUS API is served by hand-written SQL rather than by the ORM, for two
-reasons the module's own docstring states: the search results live in a cache table whose
-name is computed at runtime and which therefore **has no Django model at all**, so any
-query joining a search to its results cannot be expressed with the ORM; and the queries
-that remain are wide joins over the generated ``obs_*`` tables that are far clearer as
-SQL.
+reasons the module's own docstring states: the search results live in
+``search_results``, which **has no Django model** and is joined as one search's rows in a
+derived table (:func:`~opus_app.apps.tools.sql_builder.search_results_source`); and the
+queries that join a search to its results are wide joins over the generated ``obs_*``
+tables that are far clearer as SQL.
 
 **This module is the one place allowed to turn Python values into SQL text.** Every call
 site elsewhere describes the *structure* of its statement and lets this module render it,
@@ -202,8 +202,7 @@ which gives three properties uniformly:
 ``[A-Za-z0-9_]`` before handing the name to the backend's quoting. Django's ``quote_name``
 wraps a name in backticks but does not escape a backtick *inside* one, so validation, not
 quoting, is what closes that hole -- and it matters because several identifiers are
-computed at run time: the cache table name, the temporary table names built from a
-session id and a process id, and the column names that come out of ``param_info``.
+computed at run time: the column names that come out of ``param_info``.
 
 **Values are always parameters.** Anything that is data is rendered as a placeholder and
 collected into a parameter list. There are exactly **two** exceptions, and both are
@@ -245,6 +244,7 @@ The shape of it
             +source
             +joins
             +add_join()
+            +append_join()
             +render()
         }
         class Join {
@@ -258,9 +258,8 @@ The shape of it
             +alias
             +render()
         }
-        class JSONTable {
-            +source_column
-            +value_column
+        class AliasedTable {
+            +table
             +alias
             +render()
         }
@@ -272,13 +271,12 @@ The shape of it
         Select "1" *-- "many" FromSource : FROM
         FromSource "1" *-- "many" Join
         FromSource ..> Subquery : source may be
-        FromSource ..> JSONTable : source may be
+        FromSource ..> AliasedTable : source may be
         Join ..> Subquery : source may be
-        Join ..> JSONTable : source may be
+        Join ..> AliasedTable : source may be
         Subquery *-- Select
         Select ..> Expr : columns, WHERE, GROUP BY, ORDER BY
         Join ..> Expr : ON
-        JSONTable ..> Expr : source column
         ValueError <|-- SQLIdentifierError
 
 Reading it in three groups:
@@ -292,10 +290,39 @@ one.
 and the joins hanging off it; :class:`~opus_app.apps.tools.sql_builder.Join` is one of
 those joins; and a source may be a plain table name, a
 :class:`~opus_app.apps.tools.sql_builder.Subquery` -- which holds a whole
-:class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or a
-:class:`~opus_app.apps.tools.sql_builder.JSONTable`.
+:class:`~opus_app.apps.tools.sql_builder.Select` under a mandatory alias -- or an
+:class:`~opus_app.apps.tools.sql_builder.AliasedTable`, a table under an alias.
 The :class:`~opus_app.apps.tools.sql_builder.Subquery` case is why the diagram is not a
 tree: a statement can hold a statement.
+
+**The served observations.** ``obs_general`` is a view of the rows of the import
+generation the database serves (:ref:`dev_guide_import_generations`); the child tables
+carry no generation. While the database holds rows outside that generation, a statement
+that reads a child table's rows outside a search's results -- the empty search's mult
+counts and range endpoints of a child's column, the product types and the files of an
+OPUS ID or of the empty search -- hangs
+:func:`~opus_app.apps.tools.sql_builder.served_observations_join` off the child's
+source, an inner join to ``obs_general`` on ``obs_general_id``, so a generation the
+database does not serve reaches no response.
+
+Those rows exist from ``--begin-generation`` until the pending generation is switched in
+or abandoned, and from the switch until the purge has deleted the rows it retired;
+``schema_version`` says so for exactly that long, by a ``pending_generation`` or a
+``revertible`` of 1, since the begin records the pending generation before any of its
+rows is written and the purge clears ``revertible`` only after the last retired row is
+gone (:ref:`dev_guide_import_steps_do_generation`). The row is read for each such
+statement (:func:`~opus_app.apps.tools.db_utils.unserved_observations_exist`), once for
+the two statements of a child's range endpoints, and the join is hung only while it says
+so. Otherwise the join
+drops no row and costs every child row a lookup into ``obs_general_rows`` by its primary
+key. The answer is never kept from one request to the next: a begin runs while the site
+serves, and a stale answer would show the pending generation's child rows.
+
+A statement joined to a search's results needs no join: the search was built from the
+view. The autocomplete from every observation takes no join at any time: like the mult
+choices, it suggests every stored value, so a value only a pending generation holds is
+offered before the switch and one only a retired generation holds until the purge, and
+the field's index answers it as it would without generations.
 
 **The statement.** :class:`~opus_app.apps.tools.sql_builder.Select` owns the clause
 order. It and :class:`~opus_app.apps.tools.sql_builder.FromSource` are the two mutable
@@ -327,13 +354,9 @@ parameters its placeholders consume. Everything below returns one.
        :func:`~opus_app.apps.tools.sql_builder.min_of`,
        :func:`~opus_app.apps.tools.sql_builder.max_of`
      - The five aggregates OPUS uses.
-   * - :func:`~opus_app.apps.tools.sql_builder.json_contains`
-     - Whether a MULTIGROUP column's JSON list holds a value. A multiple-choice field
-       stores a list of mult ids, so a search for one value asks whether the list
-       contains it rather than whether the column equals it.
    * - :func:`~opus_app.apps.tools.sql_builder.json_extract_first`
-     - The first element of such a list, which is what a MULTIGROUP field sorts and joins
-       on, since it has no single value.
+     - The first element of a MULTIGROUP column's JSON list of mult ids, which is what
+       the field sorts and joins on, since it has no single value.
    * - :func:`~opus_app.apps.tools.sql_builder.angular_separation`
      - The angular distance between a longitude column and a target longitude, mapped
        into 0 to 180 degrees. **This is what makes a search that straddles zero degrees
@@ -355,6 +378,33 @@ parameters its placeholders consume. Everything below returns one.
      - Grouping. :func:`~opus_app.apps.tools.sql_builder.join_exprs` adds no parentheses;
        :func:`~opus_app.apps.tools.sql_builder.combine_exprs` parenthesizes each
        operand first.
+   * - :func:`~opus_app.apps.tools.sql_builder.between`,
+       :func:`~opus_app.apps.tools.sql_builder.sort_order_range`
+     - A range test with both bounds as parameters, and the window of a table numbered
+       by ``sort_order`` that a page reads.
+   * - :func:`~opus_app.apps.tools.sql_builder.row_number`
+     - ``ROW_NUMBER() OVER (ORDER BY ...)``, or ``ROW_NUMBER() OVER ()`` given no
+       terms. It numbers a search's results as they are stored, and numbers the cart in
+       a sort order the same way.
+
+:func:`~opus_app.apps.tools.sql_builder.ascii_comparable` is not an expression but the
+value to bind for one: a caller's text, to be compared with a column in the ASCII
+character set. MySQL refuses that comparison for text holding any other character, so the
+text is folded as the accent-blind ``utf8mb4_0900_ai_ci`` compares it -- decomposed
+(NFKD), its combining marks dropped -- and a character that still has no ASCII form is
+replaced by ``opus_support.UNSTORED_ASCII_CHARACTER``, DEL, which the import refuses in
+an ASCII column, so the comparison finds what it finds for any value the column does not
+hold. A regular expression is folded with canonical decomposition alone (NFD, the
+function's ``compatibility=False``): its accents still go, but a compatibility character
+keeps no ASCII form, since that form may be an operator (a full-width ``．`` would become
+``.``, which matches any character); it becomes DEL and matches only itself. Every
+lookup by a caller's OPUS ID binds it this way, and a string search does for a column
+:func:`~opus_app.apps.tools.db_utils.is_ascii_column` names
+(:ref:`dev_guide_database_schema`). Code that pairs a value read from such a column with
+the caller's text it was found by keys both with
+:func:`~opus_app.apps.tools.sql_builder.ascii_collation_key`, the folded text without
+its trailing spaces and in lower case, which two strings share exactly when the column's
+``ascii_general_ci`` collation calls their folded forms equal.
 
 The statement layer
 ~~~~~~~~~~~~~~~~~~~
@@ -371,27 +421,65 @@ The statement layer
 :class:`~opus_app.apps.tools.sql_builder.FromSource` and :class:`~opus_app.apps.tools.sql_builder.Join`
     One table source and the joins hanging off it. A statement may have more than one
     source, rendered comma-separated -- and **the comma binds more loosely than JOIN**,
-    which is what the cart's download summary and the cache-table queries rely on.
+    which is what the cart's download summary and the queries that join a search to its
+    results rely on. :meth:`~opus_app.apps.tools.sql_builder.FromSource.add_join` builds
+    a join from its kind, source and condition;
+    :meth:`~opus_app.apps.tools.sql_builder.FromSource.append_join` appends one built
+    elsewhere, such as by :func:`~opus_app.apps.tools.sql_builder.mult_join`.
+
+:class:`~opus_app.apps.tools.sql_builder.AliasedTable`
+    A table joined under an alias, rendered ``<table> AS <alias>``: ``mult`` under a
+    column's alias, and ``obs_surface_geometry_target`` under a surface geometry
+    category's name.
+
+:func:`~opus_app.apps.tools.sql_builder.exists`
+    ``EXISTS (SELECT 1 FROM <source> WHERE <condition>)``, the form a condition on a
+    table holding several rows of one observation takes, so that the observation is not
+    repeated once for each row a join would match.
+
+:func:`~opus_app.apps.tools.sql_builder.list_contains_any`
+    Whether a MULTIGROUP column's list holds any of some mult ids: an
+    :func:`~opus_app.apps.tools.sql_builder.exists` on the column's junction table,
+    ``EXISTS (SELECT 1 FROM <junction> WHERE <junction>.obs_general_id = obs_general.id
+    AND <junction>.mult_id IN (%s, ...))``, with the ids bound as integers. The junction
+    table, ``<table>_<column>``, holds one row per id of each observation's list
+    (:ref:`dev_guide_database_schema_junction_tables`), so the test reads its primary
+    key.
+
+:func:`~opus_app.apps.tools.sql_builder.scalar_subquery`
+    A :class:`~opus_app.apps.tools.sql_builder.Select` of one column and at most one row
+    as a value, ``(SELECT ...)``, which may name the outer statement's tables.
+
+:func:`~opus_app.apps.tools.sql_builder.mult_join`
+    The join that reads one mult column's labels:
+    ``LEFT JOIN mult AS <alias> ON <alias>.field_id = %s AND <alias>.id = <column>``,
+    with the field's ``mult_field`` id as the parameter. The ``mult`` table holds every
+    field's values, so a statement joins it once for each mult column it reads, each
+    time under the column's alias
+    (:func:`~opus_app.apps.tools.app_utils.mult_alias`), and each join reads ``mult``
+    through its primary key.
 
 :class:`~opus_app.apps.tools.sql_builder.Subquery`
     A :class:`~opus_app.apps.tools.sql_builder.Select` used as a table source, under a
     mandatory alias.
 
-:class:`~opus_app.apps.tools.sql_builder.JSONTable`
-    Turns each element of a MULTIGROUP column's JSON list into its own row, so the
-    elements can be counted. The mult-count endpoint is the caller.
+:func:`~opus_app.apps.tools.sql_builder.search_results_source`
+    One search's rows of ``search_results`` as a
+    :class:`~opus_app.apps.tools.sql_builder.Subquery`: ``(SELECT obs_general_id AS id,
+    sort_order FROM search_results WHERE search_id = %s)`` under
+    :data:`~opus_app.apps.tools.sql_builder.SEARCH_RESULTS_ALIAS`. The server merges a
+    derived table this simple into the statement that names it, so a join on ``id``
+    reads the table's ``(search_id, obs_general_id)`` key and a range of ``sort_order``
+    its primary key.
 
 :exc:`~opus_app.apps.tools.sql_builder.SQLIdentifierError`
     Raised when a name about to be used as an identifier is unsafe.
 
-Nine module-level functions render whole statements:
-:func:`~opus_app.apps.tools.sql_builder.create_table_from_select_sql` and
-:func:`~opus_app.apps.tools.sql_builder.create_table_as_select` (the first for the one
-caller whose SELECT is already rendered),
-:func:`~opus_app.apps.tools.sql_builder.drop_table`,
-:func:`~opus_app.apps.tools.sql_builder.count_rows`,
+The module-level functions that render whole statements are
 :func:`~opus_app.apps.tools.sql_builder.delete_from`,
 :func:`~opus_app.apps.tools.sql_builder.delete_joined`,
+:func:`~opus_app.apps.tools.sql_builder.insert_into_select` (which stores a search's
+results in ``search_results``),
 :func:`~opus_app.apps.tools.sql_builder.replace_into_values`,
 :func:`~opus_app.apps.tools.sql_builder.replace_into_select` and
 :func:`~opus_app.apps.tools.sql_builder.update`.
@@ -404,35 +492,120 @@ And the cart's writes go through ``REPLACE INTO`` rather than a delete followed 
 insert, because the cart table's unique key over the session and the observation turns a
 concurrent second write into a replacement instead of a duplicate.
 
-:data:`~opus_app.apps.tools.sql_builder.CACHE_TABLE_COLUMN_DEFS` is the column definition
-both the durable ``cache_NNN`` table and the cart range editor's temporary table are
-created with, because both are consumed the same way.
-
 .. _dev_guide_webapp_tools_db_utils:
 
 opus_app.apps.tools.db_utils
 ----------------------------
 
-Model lookup by table name, and the labels behind the ``mult_`` tables.
+Model lookup by category name, and the labels behind the mult ids.
 
 :func:`~opus_app.apps.tools.db_utils.table_model_from_name`
     ``obs_pds`` becomes ``ObsPds``, looked up in the ``search`` app. The return has no
     static type, because the class depends on the name.
 
+:func:`~opus_app.apps.tools.db_utils.resolve_category`
+    Where a ``param_info`` category's rows are, as a
+    :class:`~opus_app.apps.tools.db_utils.ResolvedCategory`: the table's model, the table,
+    the alias a statement names the table by, which is the category's name, and the
+    surface geometry body's id the rows hold, or None. A category whose ``table_names``
+    row names a ``physical_table`` -- every surface geometry category -- is that table
+    under the category's name, with the row's ``target_name``; any other is the table of
+    its name. Every view that reads a category as a source, a join or a model resolves it
+    here; :meth:`~opus_app.apps.tools.db_utils.ResolvedCategory.restrict` adds a body's
+    condition to a statement that reads the category. The ``table_names`` rows come from
+    the worker's copy (:mod:`~opus_app.apps.tools.import_constants`).
+
+:func:`~opus_app.apps.tools.db_utils.is_ascii_column`
+    Whether a table's column is in the ASCII character set, which its generated model
+    says by naming :data:`~opus_support.collation.ASCII_COLLATION` as the field's
+    ``db_collation``.
+
 :func:`~opus_app.apps.tools.db_utils.query_table_for_opus_id`
-    One table's rows for one observation, filtering on ``opus_id`` for ``obs_general``
-    -- where it is the primary key -- and on the foreign key for every other table.
+    One category's rows for one observation, filtering on ``opus_id`` for
+    ``obs_general``, which holds it, and on ``obs_general``'s ``opus_id`` through the
+    ``obs_general`` relation for every other table, and for a surface geometry body's
+    category on the body's id as well.
+
+:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id` and :func:`~opus_app.apps.tools.db_utils.observation_has_body`
+    The surface geometry bodies one observation has rows of, in one query, which answers
+    for every body's category at once; the second asks it once per table and answers
+    for one body's category from the result.
 
 :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult` and :func:`~opus_app.apps.tools.db_utils.lookup_pretty_value_for_mult_list`
-    A mult column stores a row id, so displaying it means a second lookup. **The results
-    are cached in a module-level dictionary for the life of the process.** There are not
-    many mult tables or values, so the memory cost is small; the cost is that nothing
-    clears it, so a re-imported label needs the workers restarted.
+    A mult column stores the id of a ``mult`` row, so displaying it means a second
+    lookup, which reads the worker's copy of the field's ``mult`` rows from
+    :mod:`~opus_app.apps.tools.import_constants`. The field's absent value, whose stored
+    value is the empty string, is reported as nothing unless the caller asks for its
+    label.
 
-Three MySQL error numbers are declared here for callers to match a database exception
-against: ``MYSQL_TABLE_NOT_EXISTS``, ``MYSQL_TABLE_ALREADY_EXISTS`` -- which is how the
-cache-table race is resolved -- and ``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
-autocomplete endpoint learns its restricted query timed out.
+:func:`~opus_app.apps.tools.db_utils.unserved_observations_exist`
+    Whether the database holds observation rows outside the generation it serves, read
+    from ``schema_version`` on every call: true while ``pending_generation`` is set or
+    ``revertible`` is 1, false otherwise and when the table or its row is absent. It
+    decides whether a statement joins the served observations
+    (:ref:`dev_guide_webapp_tools_sql_builder`).
+
+The MySQL error numbers declared here for callers to match a database exception against
+are ``MYSQL_TABLE_NOT_EXISTS``, which is how a database with no version table is told;
+``MYSQL_EXECUTION_TIME_EXCEEDED``, which is how the
+autocomplete endpoint learns its restricted query timed out; and
+``MYSQL_LOCK_WAIT_TIMEOUT``, which
+:func:`~opus_app.apps.tools.db_utils.is_lock_timeout_error` matches, and which is how a
+request learns that it waited too long for another request storing the same search's
+results.
+
+.. _dev_guide_webapp_tools_import_constants:
+
+opus_app.apps.tools.import_constants
+------------------------------------
+
+The ``table_names``, ``partables``, ``mult_field`` and ``mult`` tables hold the same rows
+from one import to the next, so each worker process reads them on first use and answers
+from memory after that: ``table_names``, ``partables`` and ``mult_field`` whole, and
+``mult`` one field at a time. **Nothing here notices an import**: the deploy restarts the
+workers after one (:ref:`dev_guide_webapp_caching`). A copy is built in full before it is
+stored, so a thread never sees part of one; two threads that miss at once each read the
+table, and one of the two equal copies is kept.
+
+:func:`~opus_app.apps.tools.import_constants.table_names`, :func:`~opus_app.apps.tools.import_constants.displayed_table_names`, :func:`~opus_app.apps.tools.import_constants.get_table_name` and :func:`~opus_app.apps.tools.import_constants.partables`
+    The rows, shared by every request in the process. A caller that sets an attribute
+    on a row, as the menu does, copies it first.
+
+:func:`~opus_app.apps.tools.import_constants.mult_field_id`
+    The ``mult_field`` id of a field, by its ``<table>.<column>`` name, read from a copy
+    of ``mult_field`` taken whole on first use. A name ``mult_field`` lacks raises
+    :exc:`LookupError`.
+
+:func:`~opus_app.apps.tools.import_constants.mult_table`
+    One mult field's ``mult`` rows, as a
+    :class:`~opus_app.apps.tools.import_constants.MultTable`, keyed by the field's
+    ``<table>.<column>`` name: its rows by id, each a
+    :class:`~opus_app.apps.tools.import_constants.MultRow` carrying ``id``, ``value``,
+    ``label`` and ``disp_rank``, for showing a stored id as its label and for ordering
+    the field's values; and its ids by label and by value, for turning a search's mult
+    selection into ids. The absent value, stored as the empty string, is never a key by
+    its value, and :attr:`~opus_app.apps.tools.import_constants.MultRow.is_absent` tells
+    it apart. :meth:`~opus_app.apps.tools.import_constants.MultTable.ids_for` answers
+    what the query ``label IN (...) OR value IN (...)`` over the field's rows answered,
+    and asks the server instead when a name finds nothing or when the field holds a name
+    that is not printable ASCII.
+
+:func:`opus_support.collation.collation_key`
+    **The server compares strings without regard to case or accent**
+    (``utf8mb4_0900_ai_ci``), and the public API relies on it: ``planet=saturn`` finds
+    the row labeled ``Saturn``. Every lookup here by a string compares the strings'
+    keys. **The key is the collation only for printable ASCII**: it folds case and
+    accents but does not ignore what the collation ignores, such as a soft hyphen or a
+    control character, and it maps some characters onto others the collation keeps apart
+    (``¨`` onto a space). Strings that are printable ASCII
+    (:func:`~opus_app.apps.tools.import_constants.collates_as_key`) compare the same way
+    under both. So a mult lookup goes to the server when a requested name is not printable
+    ASCII, finds nothing, or searches a field that is not all printable ASCII; and
+    ``get_metadata`` asks the server about a category list its copy does not match in
+    full, that holds a name that is not printable ASCII, or that is looked up while a
+    displayed table's label or name is not printable ASCII. The function lives in
+    :mod:`opus_support` because the import keys its cache of a field's values the same
+    way (:ref:`dev_guide_import_steps_do_import_mult`).
 
 .. _dev_guide_webapp_tools_file_utils:
 
@@ -440,7 +613,10 @@ opus_app.apps.tools.file_utils
 ------------------------------
 
 Lookups against ``obs_files``, the table listing every file of every observation. Every
-function here starts from one or more OPUS IDs and returns files that belong to them.
+function here starts from one or more OPUS IDs and returns files that belong to them,
+joined to the ``obs_general`` view while the database holds another generation's rows, so
+an OPUS ID a generation the database does not serve shares returns only the served
+observation's files.
 **Nothing here writes to the database, and nothing here touches the filesystem** -- the
 size and the checksum are columns the import wrote from a shelf.
 
@@ -450,11 +626,20 @@ size and the checksum are columns the import wrote from a shelf.
     on-disk path, ``'raw'`` a dictionary carrying both plus the checksum, the size and
     the category. A requested product type may carry ``@<version>``; a bare type matches
     the current version only, matching the download endpoint's behavior. Every requested
-    OPUS ID appears in the result even if it has no files.
+    OPUS ID appears in the result, keyed as the caller spelled it, even if it has no
+    files. A spelling finds the stored ID it equals under the column's collation
+    (:func:`~opus_app.apps.tools.sql_builder.ascii_collation_key`: any case, accents
+    folded, trailing spaces ignored), so several spellings of one ID each get its files.
+    The files are read newest
+    version first, then by the product types' display order, and last by
+    ``file_number``, so the files of one product type keep the order the import wrote
+    them in.
 
 :func:`~opus_app.apps.tools.file_utils.get_pds_preview_images`
     The preview images at one or more of the four sizes, from the JSON view set the
-    import stored in ``obs_general.preview_images``. Each size contributes a URL,
+    import stored in ``obs_preview.preview_images``. A caller that read the JSON with
+    a page of results passes it in; otherwise each observation's row is looked up by
+    its OPUS ID. Each size contributes a URL,
     alternative text, a byte size and the two dimensions. A missing preview yields the
     "not found" placeholder, or is skipped entirely under ``ignore_missing``.
 
@@ -476,9 +661,13 @@ Both are **unmanaged**, because the import pipeline writes them and the web appl
 never does. Both came from Django's ``inspectdb``, and their field definitions are
 reproduced verbatim: a field changed here would silently stop matching the table.
 
-:func:`~opus_app.apps.tools.dictionary.get_def_for_tooltip` is the lookup. A missing
-definition is logged as an error **except** under a ``MULT_`` context, because a mult
-value legitimately has none.
+:func:`~opus_app.apps.tools.dictionary.get_definition` is the lookup, made against a
+copy of ``definitions`` each worker process reads whole on first use and keeps, and
+compared the way the server's collation compares
+(:func:`~opus_support.collation.collation_key`).
+:func:`~opus_app.apps.tools.dictionary.get_def_for_tooltip` is the tooltip's use of it: a
+missing definition is logged as an error **except** under a ``MULT_`` context, because a
+mult value legitimately has none.
 
 They live in ``tools`` rather than in an app of their own because ``paraminfo``, ``ui``
 and ``cart`` all use them.

@@ -25,69 +25,164 @@ An import run turns the index tables of a set of bundles into the whole OPUS dat
         H[(PDS3 and PDS4 holdings:<br/>primary index, summary and<br/>supplemental index files, shelves)]
         BI[config_bundle_info:<br/>which obs class, which index files]
         OB[One obs class instance per bundle]
-        IMP[(Import tables:<br/>imp_obs_*, imp_mult_*)]
-        PERM[(Permanent tables:<br/>obs_*, mult_*)]
+        OBS[(Observation tables:<br/>obs_*, mult, mult_field, mult_group)]
+        REG[(Bundle registry:<br/>import_bundle)]
         AUX[(Auxiliary tables:<br/>param_info, table_names,<br/>partables, contexts, definitions)]
-        SUP[(Support tables:<br/>cart, user_searches)]
+        SUP[(Support tables:<br/>cart, user_searches,<br/>search_results)]
 
         H --> BI
         BI --> OB
-        OB --> IMP
-        IMP -->|only if the import phase logged no error| PERM
-        PERM --> AUX
-        PERM -.-> SUP
+        OB -->|each bundle deleted, then loaded:<br/>a fresh import or an append| OBS
+        OB -.->|each bundle's state| REG
+        OBS -->|finalization| AUX
+        OBS -.-> SUP
 
-Four groups of table come out, and they are produced at different times and with
+Five groups of table come out, and they are produced at different times and with
 different guarantees:
 
 **The observation tables** -- ``obs_general``, ``obs_pds``, the per-mission and
-per-instrument tables, the geometry tables, ``obs_files``, and the ``mult_`` tables of
-enumerated values that go with them. These are the imported data.
+per-instrument tables, the geometry tables, ``obs_files``, and the mult tables
+(``mult``, ``mult_field`` and ``mult_group``), which hold the enumerated values that go
+with them. These are the imported data.
 
 **The auxiliary tables** -- ``param_info``, ``table_names``, ``partables``,
 ``contexts`` and ``definitions``. These describe the search form rather than the
-observations, and only ``param_info`` is really derived from what was imported; the
-others come from the checked-in table schemas and configuration maps.
+observations. ``param_info``, ``table_names`` and ``partables`` are derived in part from
+what was imported: each has rows for every body ``obs_surface_geometry_target`` holds
+(:func:`~opus_import.surface_geometry.stored_targets`), and ``param_info`` has rows for
+the ``obs_`` tables the import created. Their other rows, and all of ``contexts`` and
+``definitions``, come from the checked-in table schemas and configuration maps.
 :ref:`dev_guide_database_schema` describes each of them.
 
-**The support tables** -- ``cart``, ``user_searches`` and the ``cache_*`` tables. The
-web application owns their contents; the import only resets them, because an import
-changes what a search means.
+**The support tables** -- ``cart``, ``user_searches`` and ``search_results``. The web
+application owns their contents; the import only resets them, because an import changes
+what a search means.
+
+**The import's own records** -- ``import_bundle``, the bundle registry, which records
+each bundle an import takes on and how far it got
+(:ref:`dev_guide_import_steps_registry`), and ``schema_version``, whose one row says
+which release finished the schema and whether it is ready to serve
+(:ref:`dev_guide_database_schema_version`).
 
 **Django's own contrib tables** -- sessions, auth, content types, admin. These come from
 ``opus_manage migrate``, not from the import. There are no OPUS migrations, because
 every OPUS table is created from a table schema by the import itself.
 
-.. _dev_guide_import_two_namespaces:
+.. _dev_guide_import_write_paths:
 
-The two namespaces
-------------------
+The two write paths
+-------------------
 
-Every imported table exists twice. The **import namespace** carries the prefix the
-configuration's ``table_temp_prefix`` names (``imp_`` by default), and the **permanent
-namespace** carries no prefix and is what the web application reads.
-:meth:`~opus_import.importdb.super.ImportDBSuper.convert_raw_to_namespace` is what turns
-a bare table name into one or the other, and no step module builds a prefixed name
-itself.
+There is one set of tables, the one the web application reads, and every import writes
+into it directly. What differs is the state of the schema it writes into, which chooses
+one of two paths; no option chooses (:ref:`dev_guide_import_running_paths`).
 
-A run writes only the import tables. It copies them over the permanent tables at the very
-end, and **only if the import phase logged no error**: an error logged through the run's
-own log sets :attr:`~opus_import.context.ImportContext.import_has_bad_data`, and
-:func:`~opus_import.steps.do_import.do_import_steps` skips the copy, unless
-``--import-ignore-errors`` says to go ahead. This is the guarantee the whole design rests
-on: a failed import cannot leave the web application serving half a bundle of observation
-metadata.
+**A fresh import** is the path into a schema with no ``schema_version`` row. Such a
+schema is not served -- the web application refuses it and both deploy scripts refuse to
+promote it -- so there is nothing to protect while it fills. The observation tables are
+created with only the keys a load needs, and finalization adds the
+rest once, after the last bundle (:ref:`dev_guide_import_steps_create_indexes`), which is
+far cheaper than maintaining every index row by row through every load. A failed fresh
+import leaves a schema that is still not served until an import finishes it.
 
-The protection covers the imported tables and no others. ``cart`` is created directly in
-the permanent namespace, and the ``cache_*`` and ``user_searches`` tables are dropped
-there outright, so a failed run can leave those already reset. They hold no imported
-data, which is why they are outside the copy. ``--drop-permanent-tables`` with
-``--scorched-earth`` is outside it too: it deletes the permanent observation and mult
-tables before the import starts, ahead of any error gate.
+**An append** is the path into a schema that holds this release's version row, whether
+``ready`` or left ``appending`` by an earlier append: a finished database that bundles
+are being added to or replaced in. Its tables keep their indexes, and the bundles load
+into them in place. Before the first bundle the append sets the row's state to
+``appending``, so a web application that loads the schema refuses it and both deploy
+scripts refuse to promote it until ``--write-schema-version`` sets it back to
+``ready``. **An append never finalizes the schema itself**: ``--finalize``,
+``--validate`` and ``--write-schema-version`` follow as invocations of their own, as
+they do after a fresh import. Each finalization step then either does its work again,
+because an append invalidates it -- the duplicate step, the mult step, the auxiliary
+tables, the cart and search tables, ``ANALYZE`` and validation -- or finds nothing to
+do, as ``--create-indexes`` does on tables that already carry every key. A table first
+created by an append, because its bundle is the first to need it, is created with only
+the keys a load needs and keyed by the ``--finalize`` that follows.
 
-Because the import tables survive a failure, a run can be **resumed rather than
-restarted**: the per-step options let a second invocation redo only the part that
-failed.
+A schema holding another release's version is imported into on neither path: it is
+re-imported under the release that will serve it, starting from
+``opus_import --scorched-earth --yes``.
+
+**A served schema is updated by generation** (:ref:`dev_guide_import_generations`): the
+append path, into a pending generation the web application does not see until it is
+switched in whole.
+
+**On both paths each bundle's earlier rows go before it is loaded.** Outside a
+generation update,
+:func:`~opus_import.steps.do_import_tables.delete_bundle_from_obs_tables` removes the
+bundle's rows from every observation table with foreign key checks on, so ``cart``'s
+cascading foreign key removes the cart rows that name them; in a generation update the
+served rows are retired instead, and only rows the pending generation added are deleted
+(below). The bundle is then loaded with the checks off, and validation's orphan count
+stands in for them (:ref:`dev_guide_import_steps_do_validate`). A bundle imported again
+therefore replaces its earlier rows rather than adding a second copy, and a failed bundle
+is repaired by importing it again.
+
+**The bundle registry keeps an unfinished import from being finished.** Every invocation
+that imports bundles registers each of them in ``import_bundle`` before the first starts,
+which fixes the range its observation ids come from, and moves each from ``pending``
+through ``importing`` to ``done``, or to ``failed`` when it logged an error.
+``--finalize`` refuses to run, and ``--write-schema-version`` refuses to mark the schema
+ready, while any bundle there is not ``done``. An append resumes every bundle an earlier
+append left ``pending`` or ``failed`` before the ones it names. The registry is also the
+queue several import processes draw from at once (``opus_import --join``).
+:ref:`dev_guide_import_steps_registry` gives the rules.
+
+The other tables are not the import's to protect. Finalization's cart and search-table
+steps drop and recreate ``cart``, ``user_searches`` and ``search_results`` empty, and
+flush the web application's cache, because an import changes what a search means; ``--scorched-earth`` drops every table the
+import creates before anything else runs.
+
+On either path a run can be **resumed rather than restarted**: the bundles already
+written stay, the registry names the ones that did not finish, and the per-step options
+let a second invocation redo only the part that failed.
+
+.. _dev_guide_import_generations:
+
+Generations: nothing is served until it is finished
+---------------------------------------------------
+
+The rule that keeps a request from reading a database part way through an import holds
+on a served schema too. Every row of ``obs_general_rows``, the base table behind
+``obs_general``, carries the import **generation** that added it, ``added_generation``,
+and the one that retired it, ``removed_generation``; the view leaves both columns out.
+``obs_general`` is a view of the rows
+in the generation the schema serves, the ``generation`` column of its ``schema_version``
+row: a row is in generation G when it was added at or before G and was not retired at or
+before G. A fresh import writes generation 1, and its version row serves it. While every
+row is in the served generation the view has no condition, so a request reads the table
+as it would the table itself; while other generations' rows are there, it names the
+served generation (:ref:`the obs_general view <dev_guide_database_schema_obs_general_rows>`). The child
+tables carry no generation; while other generations' rows are there, a request reaches a
+child row only through an observation the view returned, or a search built from the view.
+:mod:`opus_import.generations` defines the view's name, the generation columns and the
+states of a pending generation.
+
+An update (:ref:`dev_guide_import_running_generations`) begins a **pending generation**,
+one above the served one, and writes only the bundles it changes into it: a re-imported
+bundle's old rows are retired at the pending generation and its new rows added in it, and
+a dropped bundle's rows are retired. The served generation still shows every row it
+showed, so nothing a request reads changes while the update imports, finalizes and
+validates, with one exception: bundle registration writes the pinned fields' ``mult``
+rows from the release's ``mult_options`` (:ref:`dev_guide_import_steps_registry`), so an
+update run with a release whose pinned labels differ from the served schema's relabels
+those rows at once, and an abandon does not undo it. The auxiliary tables are built from
+the pending generation beside the live ones. The **switch**, while the web service is
+stopped, runs as separate steps: it swaps those tables in, moves the cart to the new
+generation's rows, resets the search tables, re-creates the view, and last serves the new
+generation in one statement; a switch that stops part way is completed or undone by
+running it or the revert again (:ref:`dev_guide_import_steps_do_generation`). The web
+workers restart afterwards, refreshing what each process caches. The retired rows stay
+until the **purge**, so until then a switch can be reverted, and an update that never
+switched can be abandoned with nothing served having changed.
+
+The import itself always reads and writes the base table:
+:mod:`opus_import.importdb` renders the name ``obs_general`` as ``obs_general_rows`` and
+reports the base table under the name ``obs_general``, and every step that compares
+observations -- the duplicate step, the unique-OPUS-ID check, the surface geometry
+bodies the auxiliary tables list -- reads the generation the run works on, the pending one
+if there is one and the served one otherwise.
 
 .. _dev_guide_import_context:
 
@@ -98,11 +193,21 @@ The run's state lives in one object
 layers. Exactly one is built, by :func:`opus_import.cli.main`, and passed by hand from
 there down: ``cli`` hands it to each step, the steps hand it to each other, and the obs
 classes keep it as their ``_ctx``. **Nothing in the pipeline reaches for pipeline state
-any other way**, and no step module has a module-level global.
+any other way.** The one step module with a module-level global is
+:mod:`~opus_import.steps.do_import_pool`, which installs the context and the index's
+state there for the length of one index, because a module global is what a forked worker
+inherits without anything being pickled; each worker then works on its own copy of the
+context, with no database and a :attr:`~opus_import.context.ImportContext.capture` in
+place of one (:ref:`dev_guide_import_steps_do_import_pool`).
 
 Its fields fall into three groups:
 
-**What the run was given** -- the parsed arguments, the logger, and the open database.
+**What the run was given** -- the parsed arguments, the logger, the open database, and
+the resolved worker counts (:attr:`~opus_import.context.ImportContext.workers`,
+:attr:`~opus_import.context.ImportContext.worker_rows` and
+:attr:`~opus_import.context.ImportContext.index_workers`), which :mod:`opus_import.cli`
+sets once it has checked them against the ceiling
+(:ref:`dev_guide_import_running_parallelism`).
 
 **Where the run currently is** -- the bundle, the 1-based index row number, and the
 primary file specification. These are what
@@ -113,16 +218,22 @@ the top of each row and is filled in as soon as it has been computed.
 **What the run has accumulated** -- the caches described in
 :ref:`dev_guide_import_ids` and :ref:`dev_guide_import_steps_do_import_mult`, the
 records of which non-repeating messages have already been logged, the Python warnings
-collected since they were last reported, and
-:attr:`~opus_import.context.ImportContext.import_has_bad_data`.
+collected since they were last reported, the wall-clock of each step timed so far
+(:attr:`~opus_import.context.ImportContext.step_timings`, which ``--timing-json``
+writes), and :attr:`~opus_import.context.ImportContext.import_has_bad_data`.
 
-Three of those have different lifetimes, and mixing them up is a real bug:
-:attr:`~opus_import.context.ImportContext.max_table_id_cache`,
-:attr:`~opus_import.context.ImportContext.mult_table_cache` and
-:attr:`~opus_import.context.ImportContext.modified_mult_tables` are cleared **per
-bundle**, while
-:attr:`~opus_import.context.ImportContext.created_import_mult_tables` is cleared **per
-run**.
+Four of those are reset **per bundle**, and treating one as per run is a real bug:
+:attr:`~opus_import.context.ImportContext.bundle_ids`, the observation ids the bundle
+hands out from its registered range,
+:attr:`~opus_import.context.ImportContext.mult_table_cache`,
+:attr:`~opus_import.context.ImportContext.python_warning_list`, the Python warnings
+collected since they were last reported, and
+:attr:`~opus_import.context.ImportContext.bundle_has_errors`, which says whether the
+bundle being imported has logged an error, beside
+:attr:`~opus_import.context.ImportContext.import_has_bad_data`, which says it for the
+whole run. The collected warnings are reported, as errors charged to the bundle, each
+time a PDS3 table is read, and the list is emptied at the start of each bundle, whether
+the bundles share an invocation or each has its own.
 
 Logging goes through :attr:`~opus_import.context.ImportContext.log`, an
 :class:`~opus_import.context.ImportLog` bound to the context. Its methods are the four
@@ -135,7 +246,11 @@ levels :meth:`~opus_import.context.ImportLog.error`,
 :meth:`~opus_import.context.ImportLog.unknown_target_name`, which reports a target the
 configuration does not describe and names the file to edit. The step modules reach the
 same operations through the ``log_*`` functions in :mod:`opus_import.import_util`, which
-take the context as their first argument; both spellings are one implementation.
+take the context as their first argument; both spellings are one implementation. While
+the context has a :attr:`~opus_import.context.ImportContext.capture`, in a pool worker,
+every one of them records the call and the position instead of logging it, deduplicating
+and marking nothing, and the import's process makes the call when it replays the worker's
+task.
 
 .. _dev_guide_import_pass_structure:
 
@@ -147,27 +262,38 @@ The command line asks for the ones it wants and :mod:`opus_import.cli` runs the
 requested subset **in a fixed order**. The order is not a preference; each part of it is
 forced by something:
 
-1. **Clean up the cart and cache tables** (:mod:`~opus_import.steps.do_cart`,
-   :mod:`~opus_import.steps.do_django`). A ``cart`` row can reference an observation, so
-   the cart has to be emptied before the permanent tables are rebuilt underneath it.
+1. **Erase or delete**, inside :mod:`~opus_import.steps.do_import`:
+   ``--scorched-earth`` drops every table the import creates, before anything else, so
+   that no ``mult`` row survives and the ids start again; ``--delete-bundles``
+   then deletes the named bundles.
 2. **Import the observations** (:mod:`~opus_import.steps.do_import`). This is the long
-   part, and it owns the copy to the permanent namespace as well.
-3. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
+   part.
+3. **Add the secondary keys** (:mod:`~opus_import.steps.do_indexes`) a fresh import
+   left out, foreign keys last, then **keep one copy of each OPUS ID**
+   (:mod:`~opus_import.steps.do_duplicate_ids`), which finds and deletes the copies
+   through those keys. ``--finalize`` refuses before this point, changing nothing,
+   while any bundle in the bundle registry is not ``done``.
+4. **Finalize the mult fields** (:mod:`~opus_import.steps.do_finalize_mult`): delete the
+   values no observation holds, apply the schemas' ``mult_overrides``, and rank every
+   field's values and groups. The duplicate step's deletions can leave a value unused,
+   and ``partables`` reads the ``mult`` rows, so it comes between them.
+5. **Build the auxiliary tables** (:mod:`~opus_import.steps.do_param_info`,
    :mod:`~opus_import.steps.do_partables`,
-   :mod:`~opus_import.steps.do_table_names`). Each of these is derived from the
-   permanent tables -- from which of them exist, and from their schemas -- so it must
-   follow the copy.
-4. **Pin the mult display details** (:mod:`~opus_import.steps.do_update_mult_info`),
-   **validate** (:mod:`~opus_import.steps.do_validate`), and retry the cart if creating
-   it earlier failed because the permanent tables did not exist yet.
-5. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`), last.
+   :mod:`~opus_import.steps.do_table_names`), **recreate the cart, recreate the search
+   tables empty and flush the web application's cache** (:mod:`~opus_import.steps.do_cart`,
+   :mod:`~opus_import.steps.do_django`),
+   then analyze the tables. Each auxiliary table is derived from the imported tables --
+   from which of them exist, and from their schemas -- and ``cart`` carries a foreign
+   key onto ``obs_general``, so all of them must follow the import.
+6. **Write the mult presentation from the schemas**
+   (:mod:`~opus_import.steps.do_update_mult_info`) and **validate**
+   (:mod:`~opus_import.steps.do_validate`).
+7. **Load the data dictionary** (:mod:`~opus_import.steps.do_dictionary`).
+8. **Mark the schema ready** (:mod:`~opus_import.steps.do_schema_version`), last,
+   because its row is what makes the schema servable.
 
-``--drop-permanent-tables`` reorders the first part: the leading cleanup is skipped and
-:mod:`~opus_import.steps.do_import` performs it instead, after the drop, because
-dropping the permanent tables also drops the cart.
-
-:mod:`opus_import.steps` states the whole order and what forces each part of it, and is
-the authority if this summary and it ever disagree.
+:ref:`dev_guide_import_steps` gives what forces each part of the order, and
+:mod:`opus_import.steps` lists every step module and where each runs.
 
 .. _dev_guide_import_per_bundle:
 
@@ -178,17 +304,18 @@ Inside one bundle
 bundle id it:
 
 1. **Looks the bundle up** in ``BUNDLE_INFO``
-   (:mod:`opus_import.config_bundle_info`). A bundle id matching no entry is one OPUS
-   does not know, and is an error. An entry whose ``instrument_class`` is None names a
-   bundle OPUS knows about and deliberately ignores, which counts as success.
+   (:mod:`opus_import.config_bundle_info`). An entry whose ``instrument_class`` is None
+   names a bundle OPUS knows about and deliberately ignores
+   (:func:`~opus_import.steps.do_import_tables.opus_imports_bundle` is False), which
+   counts as success; such a bundle is never recorded in the bundle registry. A bundle
+   id matching no entry is one OPUS does not know, and is an error.
 2. **Resolves it to a ``pdsfile`` object** -- ``Pds3File.from_path`` or
    ``Pds4File.from_path`` -- and requires it to be a bundle.
 3. **Finds the primary index files.** ``BUNDLE_INFO`` gives one or more file-name
    patterns with ``<BUNDLE>`` standing for the bundle id. The search looks through the
    bundle's ``metadata`` directories and, for PDS3, the volume's own ``INDEX`` and
-   ``index`` directories. **Every index in the first directory that has one is
-   imported, and no later directory is searched**, so a bundle whose indexes are split
-   across directories imports only the first group.
+   ``index`` directories, and **stops at the first directory that holds one, importing
+   every index there**: a bundle's primary indexes live in one directory.
 4. **Imports each index** through
    :func:`~opus_import.steps.do_import_index.import_one_index`.
 
@@ -227,24 +354,35 @@ file specification (expensive) to decide which row to keep. The rest are dropped
 log line. ``temporal_camera`` is passed straight through onto the metadata for the obs
 classes to read.
 
-**The second half is the master loop.** For each index row, and for each *phase* of that
+**The second half computes the rows.** For each index row, and for each *phase* of that
 row, every table the observation belongs to gets one row computed by
-:func:`~opus_import.steps.do_import_obs.import_observation_table`. Three things are
-deferred, in this order:
+:func:`~opus_import.steps.do_import_obs.import_observation_table`, through the one row
+function :func:`~opus_import.steps.do_import_index.import_index_row`. Each row starts
+from the metadata as it stood before the first row, so a row's result depends on that row
+alone. Three things are deferred, in this order:
 
-* the ``obs_surface_geometry__<TARGET>`` tables, because which of them exist depends on
-  the targets the observations turn out to mention;
+* the ``obs_surface_geometry_target`` rows, one per body the observation has geometry
+  for, each computed under the body's category, ``obs_surface_geometry__<target>``;
 * ``obs_surface_geometry`` itself, because its target list is only known once those have
   been walked;
 * ``obs_files``, because it needs the ``obs_general`` and ``obs_pds`` rows and
   contributes many rows per observation rather than one.
 
-**Nothing is written to the database until every row of the index has been computed.**
-Then the ``mult_`` tables go out, and only then the ``obs_`` tables -- because an
-``obs_`` row stores the row id its value was given in the corresponding ``mult_`` table,
-and that row has to exist to be looked up. Nothing enforces the order: a ``mult_idx``
-column carries a plain index, not a foreign key. Within the ``obs_`` tables,
-``obs_general`` goes first, and *that* one really is a foreign-key target for the rest.
+**The rows are computed by one process or by many, and written by one.** With
+``[import] workers`` above 1, a pool of forked workers computes ranges of rows and records
+every database call and log write instead of making it; the import's own process replays
+each range's events in index order, where the serial loop would have made them, so the
+tables, their ids and the log are the same whatever the number of workers
+(:ref:`dev_guide_import_steps_do_import_pool`).
+
+**Each finished row goes to a sink** that loads a table's rows as soon as
+``[import] transaction_rows`` of them are waiting, so an index is never held in memory
+whole. Once every row has been computed, the ``obs_`` rows still waiting go out, table
+by table in order with ``obs_general`` first. An ``obs_`` row stores the id its value was
+given in the column's mult field, and each ``mult`` row is inserted when its value is
+met, as the row is computed or replayed, so it is written before any ``obs_`` row that
+holds its id is loaded. Nothing enforces the order, because a ``mult_idx`` column carries
+no foreign key, and the bundle loads with foreign key checks off.
 
 Where the surface geometry comes from varies. Most bundles have separate summary files
 per target. Some -- COCIRS_[01]xxx among them -- carry it inline in the primary index
@@ -259,10 +397,10 @@ Inside one row
 
 :func:`~opus_import.steps.do_import_obs.import_observation_table` computes one
 observation's row of one table by walking that table's schema and producing one value
-per column. Three kinds of column are skipped outright: ``timestamp``, which the
-database maintains itself; a column marked ``put_mults_here``, which holds another
-column's mult id; and a ``pi_referred_slug`` entry, which describes a search parameter
-rather than a column.
+per column. Two kinds of entry are skipped outright: a column marked
+``put_mults_here``, which holds another column's mult id; and an entry with no
+``field_name`` -- a ``pi_referred_slug`` entry, which describes a search parameter
+rather than a column, or a table-level key.
 
 For every other column it dispatches on the schema's ``data_source``:
 
@@ -278,8 +416,9 @@ For every other column it dispatches on the schema's ``data_source``:
      - The ``id`` of this observation's ``obs_general`` row, which is how every other
        table hangs off it.
    * - ``MAX_ID``
-     - One more than the largest id used in this table so far, from the run's
-       per-table id cache.
+     - The next id of the bundle's registered range
+       (:attr:`~opus_import.context.ImportContext.bundle_ids`), which
+       ``obs_general.id``, the one column that uses it, takes.
    * - ``LONGITUDE_FIELD``
      - :meth:`~opus_import.obs.obs_base.ObsBase.compute_longitude_field`.
    * - ``D_LONGITUDE_FIELD``
@@ -288,8 +427,8 @@ For every other column it dispatches on the schema's ``data_source``:
 The method name is produced by
 :func:`~opus_import.steps.do_import_obs.field_function_name`, and that is the pipeline's
 **only** rule for finding a field method: ``field_`` plus the table name plus the column
-name, with every ``obs_surface_geometry__<TARGET>`` table folded onto
-``obs_surface_geometry_target`` because they are all built from one template. A method
+name, with every surface geometry category, ``obs_surface_geometry__<target>``, folded
+onto ``obs_surface_geometry_target``, the table its rows are written to. A method
 whose name that rule cannot produce is a method that is never called.
 
 The computed value is then checked against what the schema declares, and **validation
@@ -298,20 +437,28 @@ reports rather than raises**, so one bad row does not end the run:
 * a flag column's value is folded onto ``Yes``/``No`` or ``On``/``Off``; ``N/A``,
   ``UNK`` and ``NULL`` become NULL quietly, and any other unrecognized spelling becomes
   NULL and logs an error;
-* a ``charNNN`` column keeps a value of the right type -- an over-long string is
+* a ``varcharNNN`` column keeps a value of the right type -- an over-long string is
   truncated, a non-string becomes the empty string -- and logs an error either way;
+* a string bound for an ASCII column, ``varcharNNN`` or ``text``, that holds DEL logs an
+  error and is stored with the DEL removed, so no stored value holds it even in a run
+  that ignores errors. Any other character outside an ASCII column's character set is
+  not checked here: the load that writes the row fails, naming the column and the row;
 * a numeric column's value must parse, must not equal a ``val_sentinel``, and must lie
   between ``val_min`` and ``val_max``. It becomes NULL if it does not. A column carrying
   ``val_set_invalid_to_null`` logs an out-of-range value at **debug** level instead of
   as an error, so those are discarded silently and the run still succeeds.
 
-Logging an error is what marks the run as having produced bad data, and that is what
-suppresses the copy to the permanent tables at the end.
+Logging an error is what marks the run, and the bundle, as having produced bad data:
+the bundle is recorded ``failed`` in the bundle registry, which keeps finalization and
+the version step from running until it is imported again or deleted.
 
-Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced by a
-``mult_`` table row id, adding the value to that table if it is new. A ``mult_list``
-column holds several values and is written as a JSON array, with a missing value omitted
-rather than stored as null.
+Finally, a column whose ``pi_form_type`` is a GROUP type has its value replaced by the
+id of a ``mult`` row of its field, adding the value to the field if the field lacks it.
+A ``mult_list`` column holds several values and is written as a JSON array, with a missing
+value omitted rather than stored as null. When the row is handed to the table loader, one
+row per distinct id of the array is queued for the column's junction table, which loads
+it a transaction at a time like any other table, so a junction row may load before its
+``obs_general`` row does (:ref:`dev_guide_database_schema_junction_tables`).
 
 Each computed row is left on the metadata dictionary under ``<table_name>_row`` as well
 as returned, which is how a later table's field methods read what an earlier one
@@ -333,40 +480,62 @@ Row ids and mult ids
 Two kinds of surrogate integer hold the database together, and neither is assigned by the
 database server.
 
-**The row id.** Every ``obs_`` table has an ``id`` column, and every table but
-``obs_general`` also has an ``obs_general_id`` naming the row this one hangs off. The
-pipeline assigns both: a ``MAX_ID`` column gets one more than the largest id used in that
-table so far, and an ``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this
-observation already produced.
+**The row id.** ``obs_general`` numbers its rows in an ``id`` column, and every other
+``obs_`` table has an ``obs_general_id`` naming the row this one hangs off. In most of
+them that is the whole primary key, since such a table holds at most one row per
+observation; ``obs_files`` adds ``file_number``, the file's position among its
+observation's files; and ``obs_surface_geometry_target``, which holds one row per
+observation and body, adds ``target_name``, the body. The pipeline assigns the ids: the
+``MAX_ID`` column, ``obs_general.id``, gets the next id of the bundle's range, an
+``OBS_GENERAL_ID`` column gets the id of the ``obs_general`` row this observation
+already produced, and ``file_number`` counts from 1 in the order the files are written.
 
-The "largest so far" comes from :func:`~opus_import.import_util.find_max_table_id`, which
-takes the larger of the two namespaces' maxima. That is what makes a **re-import** of one
-bundle safe: its new rows are numbered above everything already present in either
-namespace, and its old rows are deleted only afterwards. It is also why a re-import
-renumbers that bundle above the rest of the table, which is a documented consequence
-rather than an accident.
+**A bundle's ids come from its range in the bundle registry**
+(:ref:`dev_guide_import_steps_registry`). Registration gives each bundle a range of
+``obs_general`` ids, a hundred for each row its labels declare, the ranges ascending in
+registration order, and the bundle's observations take the range's first id and those
+after it, in the order they are produced. So ids depend only on the labels and the
+registration order, never on which process imports a bundle or when, and several
+processes can import into one schema at once. A bundle imported again outside a
+generation update keeps its range, and its observations their ids; one deleted and
+imported again, or imported into a pending generation, is registered afresh, after every
+other bundle. Within a bundle **ids depend on the order rows are produced
+in**, which is why the pipeline sorts every directory listing and every table name it
+iterates. A pool worker numbers its ids from zero within its task, and the import's
+process rebases them onto the bundle's range as it replays the tasks in index order; the
+ids are the ones the serial loop gives.
 
-The run keeps the running maximum in
-:attr:`~opus_import.context.ImportContext.max_table_id_cache` rather than querying for
-each row, and clears it per bundle. **Ids therefore depend on the order rows are
-produced in**, which is why the pipeline sorts every directory listing and every table
-name it iterates.
+**The mult id.** A column whose value comes from a fixed set stores the id of a ``mult``
+row rather than the value itself. The column's values form one mult field, named
+``<table>.<column>`` unless the column's schema gives a ``mult_field`` key, and every
+``mult`` row of the field carries the field's ``field_id`` from ``mult_field``. Ids are
+numbered within a field: they start at zero, and a value not already there takes the
+next id of the field's counter, ``mult_field.last_id`` -- unless the column's schema pins
+its values with ``mult_options``, in which case the ids are the ones listed and a value
+that is not among them is an error. A stored row keeps its id and its value, so renaming
+a value rewrites no observation row. The counter only goes up, so an id it handed out
+is never handed out again, even once finalization deletes its row. With several processes importing at once, a field's
+new values number in the order they arrive, and may leave gaps where two processes met
+the same value; with one, they number as the serial import does.
 
-**The mult id.** A column whose value comes from a fixed set stores an integer index into
-that column's ``mult_`` table rather than the value itself. The table is
-``mult_<table>_<column>``, its ids start at zero, and a value not already there is given
-one more than the current maximum -- unless the column's schema pins its values with
-``mult_options``, in which case a value that is not among them is an error.
+The field ids are numbered once in each database, over every mult field of the packaged
+``obs_*.json`` schemas in order of qualified name, and a field a later release adds takes
+the next id (:mod:`opus_import.mult_fields`).
 
-Nothing enforces the reference: a ``mult_idx`` column carries a plain index and **no
-foreign key**. That is why the write order matters, and why the mult tables go out before
-the ``obs_`` tables.
+Nothing enforces the reference: a ``mult_idx`` column carries **no foreign key**. The
+order keeps it instead: a ``mult`` row is inserted when its value is met, before any
+``obs_`` row that holds its id is loaded. A pool worker cannot know a value's id
+either; it records the value, and the import's process resolves each one in the order
+the serial loop meets them, so every value gets the id the serial loop gives it.
 
 A ``mult_list`` column -- one an observation can have several values of -- stores a JSON
-array of those ids instead, with missing values omitted rather than stored as null.
+array of those ids instead, with missing values omitted rather than stored as null, and
+its junction table holds one row per distinct id of each array
+(:ref:`dev_guide_database_schema_junction_tables`).
 
-:ref:`dev_guide_import_steps_do_import_mult` describes the caching and the derived sort
-order, and :ref:`dev_guide_database_schema` describes what the tables look like.
+:ref:`dev_guide_import_steps_do_import_mult` describes the caching,
+:ref:`dev_guide_import_steps_do_finalize_mult` the order the values are listed in, and
+:ref:`dev_guide_database_schema_mult` what the tables look like.
 
 .. _dev_guide_import_obs_dispatch:
 
@@ -388,16 +557,37 @@ contract it defines, and the method resolution order that falls out.
 Invariants
 ----------
 
-* **Nothing is visible until the run succeeds.** Every imported table is written under
-  the import prefix and copied over the permanent tables at the end. Deleting the import
-  tables before the copy, or copying before every bundle has been read, breaks the
-  guarantee the design rests on.
-* **The** ``mult_`` **tables go out before the** ``obs_`` **tables.** No database
-  constraint enforces it.
-* **An import run is single-threaded, and one obs instance serves a whole bundle**,
-  whose metadata dictionary is replaced in place once per row -- so **no obs method may
-  cache anything derived from it**. :ref:`dev_guide_import_obs_base` gives the one
-  pattern that is allowed.
+* **Nothing is served until it is finished.** A fresh import writes a schema with no
+  version row, and an append, or ``--delete-bundles`` on a finished schema, sets the row
+  to ``appending`` before its first write; a web application that loads either, and both
+  deploy scripts, refuse it until ``--write-schema-version`` marks it ``ready``, which it
+  refuses to do while any bundle in the bundle registry is not ``done``. A step that
+  wrote a finished schema before setting it ``appending`` would break the guarantee the
+  design rests on. A web application already serving a schema does not check it again,
+  so appends and deletions go to a schema nothing is serving.
+* **Every mult id an** ``obs_`` **row holds names a** ``mult`` **row of its field by
+  the end of the index.** Each ``mult`` row an index adds is inserted as its value is
+  met, before any ``obs_`` row holding its id is loaded, and finalization deletes only
+  the values no observation holds. No database constraint enforces it.
+* **A stored** ``mult`` **row keeps its id and its value.** Neither the import,
+  ``--update-mult-info`` nor finalization rewrites the id or the value of a row it
+  holds: a new value is inserted, never written over another row, and a list entry that
+  disagrees with a stored row is an error. Renaming a value or reordering a field
+  touches no observation row. A row finalization deletes does not free an id the
+  counter handed out: ``mult_field.last_id`` never goes down, so the id is never handed
+  out again. A pinned field's ids are its list's, and an absent value its list lacks
+  takes 65535.
+* **An import computes in many processes and writes from one.** Only the import's own
+  process uses the database and writes the log; pool workers compute rows and record
+  what they would have written, and that process replays it in index order, so the
+  result does not depend on how many workers there are
+  (:ref:`dev_guide_import_steps_do_import_pool`).
+* **A row's result depends on that row alone.** One obs instance serves a whole bundle,
+  and its metadata dictionary is cleared and refilled from the index's pre-loop metadata
+  at the start of every row -- so **no obs method may cache anything derived from it**,
+  since a cache carried from one row to the next would make a row's result depend on
+  which rows the same process computed before it.
+  :ref:`dev_guide_import_obs_base` gives the one pattern that is allowed.
 * **Row ids depend on insertion order**, so anything that changes the order rows are
   produced in changes every id. Directory listings are sorted for exactly this reason.
 * **Longitudes carry two derived columns.** A ``LONG`` field stores, besides its minimum
@@ -431,10 +621,16 @@ that. They exist because a single systematic fault -- one column missing from on
 index -- would otherwise be reported once per observation, hundreds of thousands of
 times.
 
-:attr:`~opus_import.context.ImportContext.import_has_bad_data` is the flag that
-suppresses the copy to the permanent tables. Every ``log`` error sets it, and a few
-sites set it directly; it is **not** a complete record of the run's errors, because
-several steps log failures straight to the underlying logger and leave it alone.
+:attr:`~opus_import.context.ImportContext.import_has_bad_data` is the flag that makes
+an import exit with failure, unless ``--ignore-errors``, and
+:attr:`~opus_import.context.ImportContext.bundle_has_errors`, set with it and reset at
+the start of each bundle, is what records the bundle ``failed`` in the bundle registry.
+Every ``log`` error sets both, through
+:meth:`~opus_import.context.ImportContext.mark_bad_data`, and a few sites set them
+through it directly. Several steps log their failures straight to the underlying
+logger instead, so the record of every error a run logged is ``ERRORS.log``, and that
+file, rather than these flags or the exit status, is what a run is checked by
+(:ref:`dev_guide_import_verifying`).
 
 Where to go next
 ----------------

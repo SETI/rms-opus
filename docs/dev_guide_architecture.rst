@@ -47,18 +47,28 @@ that observation belongs to.
         B --> C[pdstable / pdsfile:<br/>read the primary index and its supplements]
         C --> D[One obs class instance for the bundle]
         D --> E[For each index row:<br/>replace the metadata, then call one<br/>field_obs_table_column method per column]
-        E --> F[(Import tables: imp_obs_*, imp_mult_*)]
-        F --> G[(Permanent tables: obs_*, mult_*)]
-        G --> H[(Auxiliary tables:<br/>param_info, table_names, partables)]
+        E -->|each bundle deleted, then loaded:<br/>a fresh import or an append| G[(Observation tables: obs_*, mult, mult_field, mult_group)]
+        G -->|finalization| H[(Auxiliary tables:<br/>param_info, table_names, partables)]
 
-Every **imported** table is written to the import tables first and copied over the
-permanent tables only once the whole run has succeeded, which is the guarantee the design
-rests on; the cart and cache tables are reset outside that protection.
-:ref:`dev_guide_import_two_namespaces` is the whole of it.
+There is one set of tables, and every import writes into it. An import into a schema
+that is not served yet -- one with no ``schema_version`` row -- is a **fresh import**: the
+observation tables are created with only the keys a load needs, and finalization adds the
+remaining keys once at the end. An import into a finished schema is an **append**, into
+the tables with their keys in place; it marks the schema ``appending`` first, so a web
+application that loads it refuses to serve it until finalization has run again and the
+schema is marked ready. On both paths each bundle is deleted before it is loaded, and a
+bundle registry keeps a schema with an unfinished bundle from being finalized or marked
+ready.
+:ref:`dev_guide_import_write_paths` is the whole of it.
 
-The auxiliary tables are built after the permanent tables, but only ``param_info`` is
-derived from what was imported. ``table_names`` lists the permanent tables that actually
-exist, while ``partables`` walks the configuration maps alone, so a mission that was never
+A served schema is updated by **generation**: the bundles that changed are written into
+it as a pending generation, which the ``obs_general`` view hides until a switch, while the
+web service is stopped, serves it whole. The rows it replaced stay until a purge, so the
+switch can be reverted until then (:ref:`dev_guide_import_generations`).
+
+The auxiliary tables are built after the observation tables, but only ``param_info`` is
+derived from what was imported. ``table_names`` lists the observation tables that
+actually exist, while ``partables`` walks the configuration maps alone, so a mission that was never
 imported still gets a ``partables`` row.
 
 :ref:`dev_guide_import_steps` states the order the steps run in, what forces each part of
@@ -101,8 +111,8 @@ The web application
 -------------------
 
 A request arrives at one of the routes :mod:`opus_app.urls` assembles, is answered by a
-view, and -- for anything that searches -- reaches the database through a cache table
-built once per distinct search.
+view, and -- for anything that searches -- reaches the database through the rows of
+``search_results`` stored once for each distinct search.
 
 .. mermaid::
     :zoom:
@@ -111,8 +121,8 @@ built once per distinct search.
         R([HTTP request]) --> U[opus_app.urls:<br/>each app contributes its routes]
         U --> V[The view, wrapped in api_view]
         V --> P[url_to_search_params:<br/>the query string becomes<br/>selections and extras]
-        P --> Q[get_user_query_table:<br/>find or build cache_NNN<br/>for this search]
-        Q --> S[sql_builder.Select:<br/>join the obs_ and mult_ tables]
+        P --> Q[get_search_id:<br/>register the search, and write<br/>its results once]
+        Q --> S[sql_builder.Select:<br/>join the obs_ tables and mult]
         S --> D[(MySQL)]
         D --> F[Format as JSON, CSV or HTML]
         F --> RESP([HTTP response])
@@ -130,18 +140,19 @@ exceptions Django answers specifically are re-raised rather than absorbed, so ea
 the response and the logging Django gives it. :ref:`dev_guide_webapp_errors` is the
 detail.
 
-**A search becomes a cache table.**
+**A search becomes rows of** ``search_results``.
 :func:`~opus_app.apps.search.views.url_to_search_params` turns the query string into the
 two dictionaries the rest of the search code works with, and
-:func:`~opus_app.apps.search.views.get_user_query_table` then finds or builds a
-``cache_NNN`` table holding the ids of the matching observations in sort order. Every
-later query -- a page of results, a count, a set of file URLs -- joins against that table
-rather than re-running the search. :ref:`dev_guide_webapp_search_flow` walks all four
+:func:`~opus_app.apps.search.views.get_search_id` then registers the search in
+``user_searches`` and, the first time anyone makes it, writes the ids of the matching
+observations into ``search_results`` in sort order. Every later query -- a page of
+results, a count, a set of file URLs -- joins against those rows rather than re-running
+the search. :ref:`dev_guide_webapp_search_flow` walks all four
 steps.
 
 **The wide joins are assembled, not written.**
 :mod:`opus_app.apps.tools.sql_builder` builds the statements that join the ``obs_``
-tables to each other and to the ``mult_`` tables holding their enumerated values. Values
+tables to each other and to the ``mult`` table holding their enumerated values. Values
 are always passed as parameters, and identifiers are validated before they are quoted.
 :ref:`dev_guide_webapp_tools_sql_builder` says what that buys and where the two
 exceptions are.
@@ -158,10 +169,13 @@ means. The two ideas to carry into any other chapter:
 
 * An ``obs_*`` table corresponds one-for-one to a "Constraints" category in the user
   interface, and a row is one observation. ``obs_general`` is the master table: every
-  observation has a row there, and every other table's rows hang off it.
-* A field whose value comes from a fixed set stores an integer index into a ``mult_``
-  table rather than the value itself, which is what makes the checkbox searches fast.
-  :ref:`dev_guide_table_schemas` describes how a column declares that.
+  observation has a row there, and every other table's rows hang off it. It is a view of
+  the served generation's rows of the base table ``obs_general_rows``.
+* A field whose value comes from a fixed set stores the integer id of a row of the
+  ``mult`` table rather than the value itself, which is what makes the checkbox searches
+  fast. Each such field's values carry its ``field_id`` from ``mult_field``, and
+  ``mult_group`` holds its groups. :ref:`dev_guide_table_schemas` describes how a column
+  declares that.
 
 What each subsystem owns
 ------------------------
@@ -175,7 +189,7 @@ The division of responsibility, in one table, because several questions turn on 
    * - Thing
      - Written by
      - Read by
-   * - The ``obs_*`` and ``mult_*`` tables
+   * - The ``obs_*`` tables, ``mult``, ``mult_field`` and ``mult_group``
      - the import pipeline
      - the web application
    * - ``param_info``, ``table_names``, ``partables``
@@ -187,8 +201,9 @@ The division of responsibility, in one table, because several questions turn on 
    * - ``cart``
      - the web application (created by the import)
      - the web application
-   * - ``user_searches`` and ``cache_*``
-     - the web application (reset by the import)
+   * - ``user_searches`` and ``search_results``
+     - the web application (created and reset by the import, pruned by
+       ``opus_manage prune``)
      - the web application
    * - Django's contrib tables
      - ``opus_manage migrate``

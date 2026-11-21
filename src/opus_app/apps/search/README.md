@@ -5,7 +5,9 @@ exploring the data itself is handled.
 
 It also handles the way the interface keeps track of user-defined result sets:
 
-  When a user does a search, the PDS data is queried and then a single column
-  table of ids is made that matches the user's query results. This column of
-  result ids is used for subsequent queries against the set. Queries are logged
-  and these tables are re-used when the same query is issued again.
+  When a user does a search, it is registered in the `user_searches` table, and
+  the first request for it queries the PDS data and writes the ids of the matching
+  observations, in sort order, into the `search_results` table under the search's
+  id. Those rows are used for subsequent queries against the set, and are re-used
+  whenever the same query is issued again, until `opus_manage prune` removes the
+  search.

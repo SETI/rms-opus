@@ -1,0 +1,46 @@
+[
+    {
+        "field_name": "process_id",
+        "field_type": "uint4",
+        "field_autoincrement": true,
+        "field_key": "primary",
+        "field_notnull": true,
+        "comment": "The importer, as import_bundle.process_id names it."
+    },
+    {
+        "field_name": "host",
+        "field_type": "varchar255",
+        "field_notnull": true,
+        "comment": "The computer the importer runs on."
+    },
+    {
+        "field_name": "pid",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comment": "The importer's process id on its computer."
+    },
+    {
+        "field_name": "log_path",
+        "field_type": "varchar1024",
+        "field_notnull": true,
+        "comment": "The importer's information log, on its computer."
+    },
+    {
+        "field_name": "started_at",
+        "field_type": "datetime",
+        "field_notnull": true,
+        "comment": "When the importer started, in UTC."
+    },
+    {
+        "field_name": "progress_at",
+        "field_type": "datetime",
+        "field_notnull": true,
+        "comment": "When the importer last committed a chunk of rows, in UTC."
+    },
+    {
+        "field_name": "state",
+        "field_type": "enum",
+        "field_enum_options": "'running','exited','lost'",
+        "field_notnull": true
+    }
+]

@@ -5,8 +5,10 @@ from unittest import TestCase
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db import connection
 from django.http import Http404
-from django.test import RequestFactory
+from django.test import Client, RequestFactory
+from django.test.utils import CaptureQueriesContext
 
 from opus_app.apps.metadata.views import (
     api_get_fields,
@@ -102,6 +104,25 @@ class MetadataTests(TestCase):
             Http404, r'Internal error \(No request was provided\) for /api/meta/mults/target.json'
         ):
             api_get_mult_counts(request, 'target', 'json')
+
+    def test__api_get_mult_counts_selector_reads_a_key_not_the_table(self) -> None:
+        "[test_metadata.py] api_get_mult_counts: the selector's count scans a key, not the table"
+        with CaptureQueriesContext(connection) as queries:
+            response = Client().get('/api/meta/mults/surfacegeometrytargetname.json')
+        self.assertEqual(response.status_code, 200)
+        counts = [
+            query['sql']
+            for query in queries.captured_queries
+            if 'GROUP BY' in query['sql'] and 'obs_surface_geometry_target' in query['sql']
+        ]
+        self.assertEqual(len(counts), 1, queries.captured_queries)
+        self.assertIn('IGNORE INDEX FOR GROUP BY (`PRIMARY`)', counts[0])
+        with connection.cursor() as cursor:
+            cursor.execute('EXPLAIN FORMAT=TREE ' + counts[0])
+            plan = cursor.fetchone()[0]
+        scan = next(line for line in plan.splitlines() if ' scan on ' in line)
+        self.assertIn('index scan on obs_surface_geometry_name using', scan.lower())
+        self.assertNotIn('using PRIMARY', scan)
 
     def test__api_get_mult_counts_no_get(self) -> None:
         "[test_metadata.py] api_get_mult_counts: no GET"

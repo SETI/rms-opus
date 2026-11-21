@@ -65,6 +65,7 @@ The shape of it
         }
         class ObsGeneralPDS3 { obs_general, PDS3 }
         class ObsGeneralPDS4 { obs_general, PDS4 }
+        class ObsPreview { obs_preview }
         class ObsPds {
             <<abstract>>
             obs_pds
@@ -81,8 +82,7 @@ The shape of it
         class ObsWavelength { obs_wavelength }
         class ObsRingGeometry { obs_ring_geometry }
         class ObsSurfaceGeometry { obs_surface_geometry }
-        class ObsSurfaceGeometryName { obs_surface_geometry_name }
-        class ObsSurfaceGeometryTarget { obs_surface_geometry__TARGET }
+        class ObsSurfaceGeometryTarget { obs_surface_geometry_target }
         class ObsCommonPDS3 {
             <<abstract>>
             combines the PDS3 table modules
@@ -95,13 +95,13 @@ The shape of it
         ObsBase <|-- ObsBasePDS3
         ObsBase <|-- ObsBasePDS4
         ObsBase <|-- ObsGeneral
+        ObsBase <|-- ObsPreview
         ObsBase <|-- ObsPds
         ObsBase <|-- ObsProfile
         ObsBase <|-- ObsTypeImage
         ObsBase <|-- ObsWavelength
         ObsBase <|-- ObsRingGeometry
         ObsBase <|-- ObsSurfaceGeometry
-        ObsBase <|-- ObsSurfaceGeometryName
         ObsBase <|-- ObsSurfaceGeometryTarget
         ObsGeneral <|-- ObsGeneralPDS3
         ObsBasePDS3 <|-- ObsGeneralPDS3
@@ -116,22 +116,22 @@ The shape of it
         ObsProfile <|-- ObsProfilePDS4
         ObsBasePDS4 <|-- ObsProfilePDS4
         ObsGeneralPDS3 <|-- ObsCommonPDS3
+        ObsPreview <|-- ObsCommonPDS3
         ObsPdsPDS3 <|-- ObsCommonPDS3
         ObsTypeImage <|-- ObsCommonPDS3
         ObsWavelength <|-- ObsCommonPDS3
         ObsProfilePDS3 <|-- ObsCommonPDS3
         ObsRingGeometry <|-- ObsCommonPDS3
         ObsSurfaceGeometry <|-- ObsCommonPDS3
-        ObsSurfaceGeometryName <|-- ObsCommonPDS3
         ObsSurfaceGeometryTarget <|-- ObsCommonPDS3
         ObsGeneralPDS4 <|-- ObsCommonPDS4
+        ObsPreview <|-- ObsCommonPDS4
         ObsPdsPDS4 <|-- ObsCommonPDS4
         ObsTypeImage <|-- ObsCommonPDS4
         ObsWavelength <|-- ObsCommonPDS4
         ObsProfilePDS4 <|-- ObsCommonPDS4
         ObsRingGeometry <|-- ObsCommonPDS4
         ObsSurfaceGeometry <|-- ObsCommonPDS4
-        ObsSurfaceGeometryName <|-- ObsCommonPDS4
         ObsSurfaceGeometryTarget <|-- ObsCommonPDS4
 
 The diagram shows every class in this chapter and every direct base of each, and it pans
@@ -198,11 +198,12 @@ Reading a Cassini ISS volume's order off the tree gives:
     ObsVolumeCOISS12xxx     the volume set
     ObsCassiniCommonPDS3    the mission, PDS3 half
     ObsCommonPDS3           the assembly class
-    ObsGeneralPDS3, ObsGeneral, ObsPdsPDS3, ObsPds, ObsTypeImage, ObsWavelength,
-    ObsProfilePDS3, ObsProfile      one per table, in the order ObsCommonPDS3 lists them
+    ObsGeneralPDS3, ObsGeneral, ObsPreview, ObsPdsPDS3, ObsPds, ObsTypeImage,
+    ObsWavelength, ObsProfilePDS3, ObsProfile
+                            one per table, in the order ObsCommonPDS3 lists them
     ObsBasePDS3             the PDS3 base, released here by the last table module
                             above that derives from it
-    ObsRingGeometry, ObsSurfaceGeometry, ObsSurfaceGeometryName,
+    ObsRingGeometry, ObsSurfaceGeometry,
     ObsSurfaceGeometryTarget        the remaining table modules
     ObsCassiniCommon        the mission's PDS-version-independent half
     ObsBase                 the root
@@ -230,11 +231,13 @@ The root: ObsBase
 :class:`opus_import.obs.obs_base.ObsBase`
 
 One instance is created per bundle, not per observation.
-:func:`~opus_import.steps.do_import_index.import_one_index` mutates the metadata
-dictionary in place for each row it reads, so **no method may cache anything derived
-from it**. :attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows what caching is
-allowed to look like: it re-derives whenever the file specification it was computed from
-changes.
+:func:`~opus_import.steps.do_import_index.import_index_row` clears the metadata
+dictionary and refills it from the index's pre-loop metadata for each row, so **no
+method may cache anything derived from it**: with ``[import] workers`` above 1 each pool
+worker has its own copy of the instance and computes only some of the rows, so a value
+carried from one row to the next would differ with the number of workers.
+:attr:`~opus_import.obs.obs_base.ObsBase.opus_id` shows what caching is allowed to look
+like: it re-derives whenever the file specification it was computed from changes.
 
 Construction and attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,16 +255,19 @@ Construction and attributes
        only to log and to read the run's arguments; it never reaches the database
        through it**, which is what lets
        :func:`~opus_import.steps.do_import_obs.import_run_field_function` treat a field
-       method's exception as a bad field rather than an aborted import.
+       method's exception as a bad field rather than an aborted import, and what lets a
+       pool worker, whose context has no database, run it
+       (:ref:`dev_guide_import_steps_do_import_pool`).
    * - ``_bundle``
      - The PDS3 volume or PDS4 bundle being imported, exposed as
        :attr:`~opus_import.obs.obs_base.ObsBase.bundle`.
    * - ``_metadata``
      - Everything the import has assembled for the current observation. **It is the same
-       dictionary object for the whole index file, mutated in place.** It is None while
-       the tables are being created, before any observation has been read.
+       dictionary object for the whole index file, cleared and refilled at the start of
+       every row** from what the index had before the first. It is None while the tables
+       are being created, before any observation has been read.
    * - ``_ignore_errors``
-     - ``--import-ignore-errors``, read off the run's arguments at construction rather
+     - ``--ignore-errors``, read off the run's arguments at construction rather
        than taken as a parameter, so that every construction site reaches the branches
        that consult it. Read eagerly, so a context built without real parsed arguments
        fails at construction rather than only on a rare error path.
@@ -274,8 +280,9 @@ The metadata dictionary
 
 A subclass reads it through the ``_*_col`` helpers rather than reaching into it, because
 those apply the ``pdstable`` mask that marks a value as missing. The keys
-:func:`~opus_import.steps.do_import_index.import_one_index` fills, and which an obs
-class may read:
+:func:`~opus_import.steps.do_import_index.import_one_index` fills before the first row
+and :func:`~opus_import.steps.do_import_index.import_index_row` fills for each one, and
+which an obs class may read:
 
 .. list-table::
    :header-rows: 1
@@ -403,14 +410,23 @@ supposed to be.
 Building a mult value
 ~~~~~~~~~~~~~~~~~~~~~
 
-A group column stores an index into a ``mult_`` table rather than the value itself, and
-that table also carries how the web application presents the value.
-``_create_mult(col_val, disp_name=None, disp='Y', disp_order=None, grouping=None,
-group_disp_order=None, tooltip=None, aliases=None)`` builds the dictionary a group
-column's field method must return. Everything but ``col_val`` is presentation, and every
-one of those may be left out --
-:func:`~opus_import.steps.do_import_mult.update_mult_table` derives a label and a sort
-order from the value when none is given.
+A group column stores the id of a row of the ``mult`` table rather than the value
+itself, and that row also carries how the web application presents the value.
+``_create_mult(col_val, disp_name=None, disp='Y', pin=None, grouping=None,
+group_pin=None)`` builds the dictionary a group column's field method must return.
+Everything but ``col_val`` is presentation, and every one of those may be left out:
+:func:`~opus_import.steps.do_import_obs.import_observation_table` derives a label from
+the value when none is given, and finalization places each value in its field's list
+from what the values hold (:ref:`dev_guide_import_steps_do_finalize_mult`). A ``pin``
+places a value ahead of every value without one, and a ``group_pin`` does the same for
+its group.
+
+The presentation is read only when the field lacks the value, and never for a
+column whose schema lists its values in ``mult_options``. A value the field already
+holds keeps its stored label, display and grouping; when a field method gives a
+different one, the import logs a warning once a run, and the column's
+``mult_overrides`` (:ref:`dev_guide_table_schemas`) is the way to change the stored
+presentation.
 
 ``_create_mult_keep_case`` is the variant that passes the value through as the label
 rather than letting the derivation title-case it, which is what a value whose
@@ -424,7 +440,7 @@ Other helpers
     (:mod:`opus_import.config_targets.target_name_mapping`), and looks it up in
     ``TARGET_NAME_INFO`` (:mod:`opus_import.config_targets.target_name_info`). An unknown
     name is reported through :meth:`~opus_import.context.ImportLog.unknown_target_name`
-    and returns ``(None, None)`` -- or ``OTHER`` under ``--import-ignore-errors``, so the
+    and returns ``(None, None)`` -- or ``OTHER`` under ``--ignore-errors``, so the
     observation still imports.
 
 ``_get_planet_group_info(target_name)``
@@ -470,16 +486,16 @@ is written once, inside it, and deliberately not restated here.
    * - Alias
      - Covers
    * - :data:`~opus_import.obs.field_types.StrField`
-     - ``char*``, ``varchar*`` and ``text`` columns, and the one ``json`` column
-       (``obs_general.preview_images``, whose method returns the output of
+     - ``varchar*`` and ``text`` columns, and the one ``json`` column
+       (``obs_preview.preview_images``, whose method returns the output of
        :func:`json.dumps`).
    * - :data:`~opus_import.obs.field_types.FloatField`
      - ``real4`` and ``real8`` columns.
    * - :data:`~opus_import.obs.field_types.IntField`
      - ``int*`` and ``uint*`` columns.
    * - :class:`~opus_import.obs.field_types.MultField`
-     - One value of a ``GROUP`` column, as the eight-key dictionary
-       ``_create_mult`` builds.
+     - One value of a ``GROUP`` column, as the dictionary ``_create_mult`` builds:
+       ``col_val``, ``disp``, ``disp_name``, ``pin``, ``grouping`` and ``group_pin``.
    * - :data:`~opus_import.obs.field_types.MultFieldRet`
      - What a ``GROUP`` column's method returns: a
        :class:`~opus_import.obs.field_types.MultField` or a list of them. A
@@ -488,12 +504,13 @@ is written once, inside it, and deliberately not restated here.
 Two rules are worth stating explicitly, because both are easy to get wrong:
 
 * **The form type decides, not the storage type.** A ``flag_yesno`` or ``flag_onoff``
-  column is stored as ``int unsigned`` exactly like a ``mult_idx`` one, because it *is*
-  an index into a ``mult_`` table, so its method returns a
-  :class:`~opus_import.obs.field_types.MultField`. So does the one ``char3`` column that
+  column is stored as ``smallint unsigned`` exactly like a ``mult_idx`` one, because it
+  *is* the id of a ``mult`` row, so its method returns a
+  :class:`~opus_import.obs.field_types.MultField`. So does the one ``varchar3`` column that
   carries a ``GROUP`` form type. Returning a bare value from a group column makes
-  :func:`~opus_import.steps.do_import_obs.import_observation_table` log ``bad data type
-  returned for mult`` and **discard the whole observation**.
+  :func:`~opus_import.steps.do_import_obs.import_observation_table` log an error naming
+  the column, which fails the bundle, and **store the field's absent value** in its
+  place.
 * **A PDS index does not hand out builtin integers.** ``pdstable`` parses an integer
   column with NumPy, so what reaches a field method is a ``numpy.int64``, which is not
   an :class:`int`. :func:`~opus_import.obs.field_types.as_int` is what converts one, and
@@ -501,10 +518,6 @@ Two rules are worth stating explicitly, because both are easy to get wrong:
   :class:`float` and ``numpy.str_`` *does* subclass :class:`str`, so
   :data:`~opus_import.obs.field_types.FloatField` and
   :data:`~opus_import.obs.field_types.StrField` need no equivalent.
-
-Two keys of :class:`~opus_import.obs.field_types.MultField` are inert: nothing reads
-``tooltip`` -- a ``mult_`` table has no such column -- and no obs class passes either
-``tooltip`` or ``aliases``, so both are None in every row the pipeline writes.
 
 .. _dev_guide_import_obs_version_bases:
 
@@ -556,21 +569,11 @@ is the master table, and every other table's rows hang off it.
 The methods fall into three groups:
 
 * **Do not override** -- ``opus_id``, ``bundle_id``, ``instrument_id``,
-  ``inst_host_id``, ``mission_id``, ``target_class``, ``primary_filespec`` and
-  ``preview_images``. These are derived from the contract members above.
-  ``preview_images`` is the interesting one: it asks ``rms-pdsfile`` for a view set
-  through its ``viewset`` property and renders the result to JSON, and it honors
-  ``--import-ignore-missing-images`` and ``--import-fake-images``. **Its guard does real work**, because "no previews" reaches it in three different shapes: the
-  property answers a miss with ``False`` rather than None, having converted it; a lookup
-  that succeeds but finds nothing gives an *empty* view set, which is falsy and whose
-  ``thumbnail`` raises rather than returning nothing; and the two exception branches set
-  None themselves. The guard is an ``isinstance`` test **and** a truthiness test for that
-  reason: the first rejects ``False`` and None while keeping a ``PdsViewSet`` in the type,
-  and the second rejects the empty one.
+  ``inst_host_id``, ``mission_id`` and ``target_class``. These are derived from the contract members above.
 * **Might override** -- ``target_name``, ``time1``, ``time2``,
-  ``observation_duration``, the four right-ascension and declination columns, and
-  ``ring_obs_id``. The four sky columns and ``ring_obs_id`` default to None;
-  ``observation_duration`` is ``max(time2 - time1, 0)``.
+  ``observation_duration``, and the four right-ascension and declination columns. The
+  four sky columns default to None; ``observation_duration`` is
+  ``max(time2 - time1, 0)``.
 * **Must override** -- ``planet_id``, ``quantity`` and ``observation_type``, each of
   which raises. ``_target_name`` belongs with them: it returns one ``(name, shown name)``
   pair per target and raises too, since no two archives record the target the same way,
@@ -582,14 +585,30 @@ The methods fall into three groups:
 pairing exists to put the PDS4 base into the class's ancestry, and a PDS4 bundle class
 has to answer ``_target_name`` itself.
 
+ObsPreview -- ``obs_preview``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`opus_import.obs.obs_preview.ObsPreview`
+
+The preview images every observation has, in one column, ``preview_images``, whose
+method is not to be overridden. It asks ``rms-pdsfile`` for a view set through its ``viewset``
+property and renders the result to JSON, and it honors ``--ignore-missing-images`` and
+``--fake-images``. **Its guard does real work**, because "no previews" reaches it in
+three different shapes: the property answers a miss with ``False`` rather than None,
+having converted it; a lookup that succeeds but finds nothing gives an *empty* view set,
+which is falsy and whose ``thumbnail`` raises rather than returning nothing; and the two
+exception branches set None themselves. The guard is an ``isinstance`` test **and** a
+truthiness test for that reason: the first rejects ``False`` and None while keeping a
+``PdsViewSet`` in the type, and the second rejects the empty one.
+
 ObsPds -- ``obs_pds``
 ~~~~~~~~~~~~~~~~~~~~~
 
 :class:`opus_import.obs.obs_pds.ObsPds`
 
 What the PDS archive says about the product: its data set, its product id, and when it
-was made. ``opus_id``, ``bundle_id``, ``instrument_id`` and ``primary_filespec`` are
-derived; ``data_set_id``, ``product_id``, ``product_creation_time`` and ``primary_lid``
+was made. ``opus_id``, ``bundle_id`` and ``primary_filespec`` are derived;
+``data_set_id``, ``product_id``, ``product_creation_time`` and ``primary_lid``
 raise; ``note`` defaults to None.
 
 The two variants split on identity: a PDS3 product has a data set id and a product id
@@ -605,9 +624,8 @@ ObsTypeImage -- ``obs_type_image``
 
 :class:`opus_import.obs.obs_type_image.ObsTypeImage`
 
-An image's dimensions and its intensity levels. Everything but the three derived id
-columns defaults to None or to a null mult, because an observation that is not an image
-fills none of it. Module constants give the number of distinct intensity levels a
+An image's dimensions and its intensity levels. Every column defaults to None or to a
+null mult, because an observation that is not an image fills none of it. Module constants give the number of distinct intensity levels a
 detector of a given bit depth records: ``EIGHT_BIT_IMAGE_LEVELS``,
 ``TWELVE_BIT_IMAGE_LEVELS`` and ``SIXTEEN_BIT_IMAGE_LEVELS``.
 
@@ -635,7 +653,7 @@ ObsProfile -- ``obs_profile``
 :class:`opus_import.obs.obs_profile.ObsProfile`
 
 What an occultation profile records: its direction, its source, and its optical depth.
-Every field method beyond the standard identifiers raises here, and both PDS-version
+Every field method raises here, and both PDS-version
 variants (:class:`~opus_import.obs.obs_profile_pds3.ObsProfilePDS3` and
 :class:`~opus_import.obs.obs_profile_pds4.ObsProfilePDS4`) concretize them all with empty
 defaults -- because the table has a row for *every* observation, so a bundle that
@@ -672,30 +690,30 @@ Two things in it are not a plain read:
   bundle's ``temporal_camera`` flag is set, because such an observation legitimately
   spans enough time for those to vary, and it exempts a 0/360 pair on a longitude
   column. :func:`~opus_import.steps.do_import_obs.import_observation_table` calls it
-  unless ``--import-ignore-geo-mismatch``.
+  unless ``--ignore-geo-mismatch``.
 
-The three surface geometry modules
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The two surface geometry modules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Surface geometry is three tables, because it answers three different questions.
+Surface geometry is two tables, because it answers two different questions.
 
 :class:`~opus_import.obs.obs_surface_geometry.ObsSurfaceGeometry` -- ``obs_surface_geometry``
     **Which bodies the observation covered**, as one comma-separated list of display
     names built from the inventory file's target list. A single unknown target name
-    makes the whole column None. Under ``--import-report-inventory-mismatch`` it also
+    makes the whole column None. Under ``--report-inventory-mismatch`` it also
     builds the same list from the targets surface geometry rows were actually found for
     and warns when they differ -- retrying first with the central planets removed, since
     it is fine for the surface geometry to carry the central planet when the inventory
     does not.
 
-:class:`~opus_import.obs.obs_surface_geometry_name.ObsSurfaceGeometryName` -- ``obs_surface_geometry_name``
-    **The one body a per-target geometry row belongs to.** It has one field method of
-    substance, which reads ``surface_geo_target_name`` off the metadata, resolves it, and
-    builds a mult carrying the target's display name and its planet group. This is the
-    many-to-one mapping of rows to OPUS IDs.
-
-:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` -- ``obs_surface_geometry__<TARGET>``
-    **Where the observation fell on one body's surface**: field methods read the surface
+:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` -- ``obs_surface_geometry_target``
+    **Which body a row is for, and where the observation fell on its surface.** The
+    ``target_name`` method reads ``surface_geo_target_name`` off the metadata, resolves
+    it, and builds a value of the selector's mult field carrying the target's display
+    name and its planet group;
+    :meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.surface_geo_target`
+    is the same resolution, which the driver uses to choose the row's category. The
+    other field methods read the surface
     geometry summary row for the current target, grouped by planetographic and
     planetocentric latitude, west longitude, distance and resolution, lighting geometry,
     pole and limb, image geometry and timing. The eight **east longitude** columns are
@@ -708,33 +726,41 @@ Surface geometry is three tables, because it answers three different questions.
 
 .. _dev_guide_import_obs_target_template:
 
-One class, many tables
-~~~~~~~~~~~~~~~~~~~~~~
+Surface geometry categories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is exactly one
-:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` class and
-one template schema, and the ``<TARGET>`` placeholder is substituted at three separate
-points. This is the mechanism to understand before touching surface geometry:
+:class:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget` computes
+the rows of ``obs_surface_geometry_target``, and each body's rows are presented as a
+category of its own, ``obs_surface_geometry__<target>``
+(:mod:`opus_import.surface_geometry`). The category names are table names that do not
+exist: every other constraint category is an ``obs_*`` table of that name, and naming each
+body's rows as if they were one keeps that convention for the search menus, the Details
+page, the API and the ``table_names``, ``param_info`` and ``partables`` rows
+(:ref:`dev_guide_database_schema`). This is the mechanism to understand before touching
+surface geometry:
 
-1. **The table list carries the placeholder.** ``TABLES_TO_POPULATE`` ends with
-   ``obs_surface_geometry__<TARGET>``.
-2. **The schema reader expands it.**
+1. **A row is computed under its body's category.** The driver resolves each body's
+   name (:meth:`~opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.surface_geo_target`),
+   writes no row for a name that resolves to no target, and one row for the first of two
+   names that resolve to the same target, warning with the observation and both names.
+   It rewrites two metadata keys per body and hands
+   :func:`~opus_import.steps.do_import_obs.import_observation_table` the schema with the
+   category's name, which the geometry checks report.
+2. **The field-method lookup collapses the category back to the table.**
+   :func:`~opus_import.steps.do_import_obs.field_function_name` maps every
+   ``obs_surface_geometry__<target>`` category onto ``obs_surface_geometry_target``.
+3. **The row is written to ``obs_surface_geometry_target``.** The row sink maps the category to
+   ``obs_surface_geometry_target`` (:func:`~opus_import.surface_geometry.physical_table`)
+   when it takes the row.
+4. **The schema reader expands a category for the steps after the import.**
    :func:`~opus_import.import_util.read_schema_for_table` recognizes a name starting
-   ``obs_surface_geometry__``, redirects to ``obs_surface_geometry_target.json``, and
+   ``obs_surface_geometry__``, reads ``obs_surface_geometry_target.json``, and
    substitutes ``<TARGET>`` with
    :func:`~opus_import.import_util.table_name_for_sfc_target` and ``<SLUGTARGET>`` with
    :func:`~opus_import.import_util.slug_name_for_sfc_target`. The substitution is plain
-   text, applied to the file's contents before it is parsed.
-3. **The field-method lookup collapses back to the template name.**
-   :func:`~opus_import.steps.do_import_obs.field_function_name` maps every
-   ``obs_surface_geometry__<TARGET>`` table onto
-   ``obs_surface_geometry_target``, which is why the methods are named
-   ``field_obs_surface_geometry_target_*`` while the tables are not.
+   text, applied to the file's contents before it is parsed. ``param_info``'s build
+   reads each body's category this way, from the bodies the table holds.
 
-The driver loops the targets, replaces the token in the table name, and rewrites two
-metadata keys per iteration -- and hands
-:func:`~opus_import.steps.do_import_obs.import_observation_table` the **unsubstituted**
-template schema with the **substituted** table name.
 :func:`~opus_import.import_util.slug_name_for_sfc_target` carries a warning worth
 repeating: changing it means changing ``getSurfacegeoTargetSlug`` in the front end's
 ``utils.js`` too.
@@ -745,7 +771,7 @@ The assembly classes
 :class:`~opus_import.obs.obs_common_pds3.ObsCommonPDS3` and
 :class:`~opus_import.obs.obs_common_pds4.ObsCommonPDS4` each list the same table
 modules in the same order -- general, pds, type image, wavelength, profile, ring
-geometry, surface geometry, surface geometry name, surface geometry target -- differing
+geometry, surface geometry, surface geometry target -- differing
 only in the three PDS-version variants. That order is what decides which module wins
 when two define the same method, and it is the only reason these classes exist.
 

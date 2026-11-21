@@ -21,9 +21,13 @@ What is worth pinning here, and why:
   that possible from the builder's side.
 """
 
+import json
+from pathlib import Path
 from unittest import TestCase
 
-from opus_app.apps.tools import sql_builder
+import opus_import
+from opus_app.apps.tools import db_utils, sql_builder
+from opus_support import UNSTORED_ASCII_CHARACTER
 
 
 class SQLBuilderIdentifierTests(TestCase):
@@ -88,6 +92,40 @@ class SQLBuilderExpressionTests(TestCase):
         self.assertEqual(expr.sql, '`obs_general`.`id`=`obs_pds`.`obs_general_id`')
         self.assertEqual(expr.params, [])
 
+    def test__aliased_table_renders_the_keys_it_ignores_for_grouping(self) -> None:
+        "[test_sql_builder.py] AliasedTable: IGNORE INDEX FOR GROUP BY after the alias"
+        source = sql_builder.AliasedTable(
+            'obs_surface_geometry_target', 's', ignore_for_group_by=('PRIMARY',)
+        )
+        self.assertEqual(
+            source.render(),
+            ('`obs_surface_geometry_target` AS `s` IGNORE INDEX FOR GROUP BY (`PRIMARY`)', []),
+        )
+        plain = sql_builder.AliasedTable('obs_surface_geometry_target', 's')
+        self.assertEqual(plain.render(), ('`obs_surface_geometry_target` AS `s`', []))
+
+    def test__exists_renders_its_source_and_condition_with_their_params(self) -> None:
+        "[test_sql_builder.py] exists: an aliased source, a condition naming the outer table"
+        expr = sql_builder.exists(
+            sql_builder.AliasedTable('obs_surface_geometry_target', 's'),
+            sql_builder.join_exprs(
+                [
+                    sql_builder.columns_equal(
+                        sql_builder.column('obs_general_id', 's'),
+                        sql_builder.column('id', 'obs_general'),
+                    ),
+                    sql_builder.in_values(sql_builder.column('target_name', 's'), [3, 7]),
+                ],
+                'AND',
+            ),
+        )
+        self.assertEqual(
+            expr.sql,
+            'EXISTS (SELECT 1 FROM `obs_surface_geometry_target` AS `s` WHERE '
+            '`s`.`obs_general_id`=`obs_general`.`id` AND `s`.`target_name` IN (%s,%s))',
+        )
+        self.assertEqual(expr.params, [3, 7])
+
     def test__columns_equal_rejects_a_parameter(self) -> None:
         "[test_sql_builder.py] columns_equal: a join condition never carries data"
         with self.assertRaises(ValueError):
@@ -109,11 +147,17 @@ class SQLBuilderExpressionTests(TestCase):
         self.assertEqual(expr.sql, '`obs_files`.`opus_id` IN %s')
         self.assertEqual(expr.params, [['a', 'b']])
 
-    def test__json_contains(self) -> None:
-        "[test_sql_builder.py] json_contains: the MULTIGROUP membership test"
-        expr = sql_builder.json_contains(sql_builder.column('target_name', 'obs_general'), '1')
-        self.assertEqual(expr.sql, 'JSON_CONTAINS(`obs_general`.`target_name`,%s)')
-        self.assertEqual(expr.params, ['1'])
+    def test__list_contains_any(self) -> None:
+        "[test_sql_builder.py] list_contains_any: a semi-join on the list column's junction table"
+        expr = sql_builder.list_contains_any('obs_general', 'target_name', [4, 9])
+        self.assertEqual(
+            expr.sql,
+            'EXISTS (SELECT 1 FROM `obs_general_target_name` WHERE '
+            '`obs_general_target_name`.`obs_general_id`=`obs_general`.`id` AND '
+            '`obs_general_target_name`.`mult_id` IN (%s,%s))',
+        )
+        self.assertEqual(expr.params, [4, 9])
+        self.assertTrue(all(isinstance(param, int) for param in expr.params))
 
     def test__json_extract_first(self) -> None:
         "[test_sql_builder.py] json_extract_first: the MULTIGROUP join key"
@@ -258,6 +302,25 @@ class SQLBuilderSelectTests(TestCase):
         )
         self.assertEqual(params, [])
 
+    def test__served_observations_join_reads_the_child_first(self) -> None:
+        """A child's rows reach obs_general by its primary key, the child read first."""
+        select = sql_builder.Select()
+        select.add_column(sql_builder.column('short_name', 'obs_files'))
+        select.add_from('obs_files').append_join(sql_builder.served_observations_join('obs_files'))
+        sql, params = select.build()
+        self.assertEqual(
+            sql,
+            'SELECT `obs_files`.`short_name` FROM `obs_files` STRAIGHT_JOIN `obs_general` '
+            'ON `obs_general`.`id`=`obs_files`.`obs_general_id`',
+        )
+        self.assertEqual(params, [])
+
+    def test__join_rejects_an_unknown_kind(self) -> None:
+        """Only the kinds the builder renders are accepted."""
+        join = sql_builder.Join('CROSS', 'obs_files', sql_builder.column('id', 'obs_files'))
+        with self.assertRaises(ValueError):
+            join.render()
+
     def test__select_rejects_non_int_limit_and_offset(self) -> None:
         "[test_sql_builder.py] Select: LIMIT/OFFSET are rendered literally, so they must be ints"
         select = sql_builder.Select()
@@ -275,7 +338,11 @@ class SQLBuilderSelectTests(TestCase):
         "[test_sql_builder.py] Select: only INNER and LEFT joins"
         select = sql_builder.Select()
         select.add_column(sql_builder.column('id', 'a'))
-        select.add_from('a').add_join('RIGHT', 'b', None)
+        select.add_from('a').add_join(
+            'RIGHT',
+            'b',
+            sql_builder.columns_equal(sql_builder.column('id', 'a'), sql_builder.column('id', 'b')),
+        )
         with self.assertRaises(ValueError):
             select.build()
 
@@ -310,73 +377,69 @@ class SQLBuilderSelectTests(TestCase):
         )
         self.assertEqual(params, ['sess'])
 
-    def test__select_json_table_source(self) -> None:
-        "[test_sql_builder.py] Select: the JSON_TABLE join the mult counts use"
-        select = sql_builder.Select()
-        select.add_column(sql_builder.column('_mult_val_', 'obs_general'))
-        select.add_from('obs_general').add_join(
-            'INNER',
-            sql_builder.JSONTable(
-                source_column=sql_builder.column('target_name', 'obs_general'),
-                value_column='_mult_val_',
-                alias='obs_general',
-            ),
-        )
-        sql, _params = select.build()
-        self.assertEqual(
-            sql,
-            'SELECT `obs_general`.`_mult_val_` FROM `obs_general`'
-            ' INNER JOIN JSON_TABLE(`obs_general`.`target_name`, "$[*]"'
-            ' COLUMNS (`_mult_val_` TEXT PATH "$")) `obs_general`',
-        )
-
 
 class SQLBuilderStatementTests(TestCase):
     """The statements built around a SELECT: INSERT ... SELECT, DELETE and the rest."""
 
-    def test__count_rows(self) -> None:
-        "[test_sql_builder.py] count_rows"
-        self.assertEqual(sql_builder.count_rows('cache_12'), 'SELECT COUNT(*) FROM `cache_12`')
-
-    def test__drop_table(self) -> None:
-        "[test_sql_builder.py] drop_table"
-        self.assertEqual(sql_builder.drop_table('temp_abc_1_2'), 'DROP TABLE `temp_abc_1_2`')
-
-    def test__create_table_as_select_with_column_defs(self) -> None:
-        "[test_sql_builder.py] create_table_as_select: the cache-table shape"
+    def test__search_results_source(self) -> None:
+        "[test_sql_builder.py] search_results_source: one search's rows, shaped id and sort_order"
         select = sql_builder.Select()
-        select.add_column(sql_builder.column('id', 'obs_general'))
-        select.add_from('obs_general')
-        sql, params = sql_builder.create_table_as_select(
-            'cache_12', select, column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS
+        select.add_column(sql_builder.column('sort_order', sql_builder.SEARCH_RESULTS_ALIAS))
+        select.add_from('obs_general').add_join(
+            'INNER',
+            sql_builder.search_results_source(12),
+            sql_builder.columns_equal(
+                sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS),
+                sql_builder.column('id', 'obs_general'),
+            ),
         )
+        sql, params = select.build()
         self.assertEqual(
             sql,
-            'CREATE TABLE `cache_12`(sort_order INT NOT NULL AUTO_INCREMENT,'
-            ' PRIMARY KEY(sort_order), id INT UNSIGNED, UNIQUE KEY(id)) '
-            'SELECT `obs_general`.`id` FROM `obs_general`',
+            'SELECT `results`.`sort_order` FROM `obs_general` INNER JOIN'
+            ' (SELECT `search_results`.`obs_general_id` AS `id`,`search_results`.`sort_order`'
+            ' FROM `search_results` WHERE `search_results`.`search_id` = %s) AS `results`'
+            ' ON `results`.`id`=`obs_general`.`id`',
         )
-        self.assertEqual(params, [])
+        self.assertEqual(params, [12])
 
-    def test__create_table_as_select_temporary_without_column_defs(self) -> None:
-        "[test_sql_builder.py] create_table_as_select: TEMPORARY, columns from the SELECT"
-        select = sql_builder.Select()
-        select.add_column(sql_builder.column('sort_order'))
-        select.add_from('cache_12')
-        select.limit(10)
-        select.offset(5)
-        sql, _params = sql_builder.create_table_as_select('temp_x', select, temporary=True)
+    def test__between(self) -> None:
+        "[test_sql_builder.py] between: both bounds are parameters, after the expression's"
         self.assertEqual(
-            sql,
-            'CREATE TEMPORARY TABLE `temp_x` SELECT `sort_order` FROM `cache_12` LIMIT 10 OFFSET 5',
+            sql_builder.between(sql_builder.column('sort_order', 'results'), 3, 7),
+            sql_builder.Expr('`results`.`sort_order` BETWEEN %s AND %s', [3, 7]),
         )
 
-    def test__create_table_from_select_sql(self) -> None:
-        "[test_sql_builder.py] create_table_from_select_sql: the pre-rendered SELECT"
+    def test__sort_order_range(self) -> None:
+        "[test_sql_builder.py] sort_order_range: the window after an offset, numbered from 1"
         self.assertEqual(
-            sql_builder.create_table_from_select_sql('cache_12', 'SELECT 1'),
-            'CREATE TABLE `cache_12` SELECT 1',
+            sql_builder.sort_order_range('results', 200, 100),
+            sql_builder.Expr('`results`.`sort_order` BETWEEN %s AND %s', [201, 300]),
         )
+
+    def test__row_number(self) -> None:
+        "[test_sql_builder.py] row_number: the window's ORDER BY renders as Select's does"
+        self.assertEqual(
+            sql_builder.row_number(
+                [
+                    (sql_builder.column('time1', 'obs_general'), True),
+                    (sql_builder.column('opus_id', 'obs_general'), None),
+                    (
+                        sql_builder.binary_op(sql_builder.column('x'), '+', sql_builder.value(1)),
+                        False,
+                    ),
+                ]
+            ),
+            sql_builder.Expr(
+                'ROW_NUMBER() OVER (ORDER BY `obs_general`.`time1` DESC,`obs_general`.`opus_id`,'
+                '`x` + %s ASC)',
+                [1],
+            ),
+        )
+
+    def test__row_number_without_an_order(self) -> None:
+        "[test_sql_builder.py] row_number: no order terms number the rows in no stated order"
+        self.assertEqual(sql_builder.row_number([]), sql_builder.Expr('ROW_NUMBER() OVER ()', []))
 
     def test__delete_from(self) -> None:
         "[test_sql_builder.py] delete_from"
@@ -421,6 +484,26 @@ class SQLBuilderStatementTests(TestCase):
             'REPLACE INTO `cart` (`session_id`,`opus_id`) VALUES (%s,%s)',
         )
 
+    def test__insert_into_select(self) -> None:
+        "[test_sql_builder.py] insert_into_select: a search build's statement"
+        select = sql_builder.Select()
+        select.add_column(sql_builder.value(12))
+        select.add_column(
+            sql_builder.row_number([(sql_builder.column('opus_id', 'obs_general'), False)])
+        )
+        select.add_column(sql_builder.column('id', 'obs_general'))
+        select.add_from('obs_general')
+        sql, params = sql_builder.insert_into_select(
+            'search_results', ('search_id', 'sort_order', 'obs_general_id'), select
+        )
+        self.assertEqual(
+            sql,
+            'INSERT INTO `search_results` (`search_id`,`sort_order`,`obs_general_id`)'
+            ' SELECT %s,ROW_NUMBER() OVER (ORDER BY `obs_general`.`opus_id` ASC),'
+            '`obs_general`.`id` FROM `obs_general`',
+        )
+        self.assertEqual(params, [12])
+
     def test__replace_into_select(self) -> None:
         "[test_sql_builder.py] replace_into_select"
         select = sql_builder.Select()
@@ -446,3 +529,94 @@ class SQLBuilderStatementTests(TestCase):
         )
         self.assertEqual(sql, 'UPDATE `cart` SET `recycled`=%s WHERE `cart`.`session_id` = %s')
         self.assertEqual(params, [0, 'sess'])
+
+
+class SQLBuilderASCIITests(TestCase):
+    """Text bound for a comparison with an ASCII column, and which columns are ASCII."""
+
+    def test__ascii_comparable_keeps_ascii(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: ASCII text, case and punctuation kept"
+        self.assertEqual(
+            sql_builder.ascii_comparable('CO-ISS-n1460960653_%\\'), 'CO-ISS-n1460960653_%\\'
+        )
+
+    def test__ascii_comparable_folds_accents_as_the_old_collation_did(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: decomposed, the combining marks dropped"
+        self.assertEqual(sql_builder.ascii_comparable('Müller'), 'Muller')
+        self.assertEqual(sql_builder.ascii_comparable('Európa'), 'Europa')
+        self.assertEqual(sql_builder.ascii_comparable('cö-iss-ñ'), 'co-iss-n')
+        # A compatibility form decomposes to its ASCII letters.
+        self.assertEqual(sql_builder.ascii_comparable('ﬁle'), 'file')
+
+    def test__ascii_comparable_replaces_what_has_no_ascii_form(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: one unstored character for each such one"
+        unstored = UNSTORED_ASCII_CHARACTER
+        # A sharp s, a degree sign and an emoji have no decomposition into ASCII.
+        self.assertEqual(
+            sql_builder.ascii_comparable('straße°🪐'), f'stra{unstored}e{unstored * 2}'
+        )
+        self.assertTrue(unstored.isascii())
+
+    def test__ascii_comparable_for_a_regex_maps_no_compatibility_character(self) -> None:
+        "[test_sql_builder.py] ascii_comparable: canonical decomposition alone for a regex"
+        unstored = UNSTORED_ASCII_CHARACTER
+        # The accents go; a full-width full stop and asterisk stay characters, not operators.
+        self.assertEqual(
+            sql_builder.ascii_comparable('VGÍSS\uff0e62\uff0a', compatibility=False),
+            f'VGISS{unstored}62{unstored}',
+        )
+        self.assertEqual(sql_builder.ascii_comparable('VGÍSS\uff0e62\uff0a'), 'VGISS.62*')
+
+    def test__ascii_collation_key_equals_what_the_collation_does(self) -> None:
+        "[test_sql_builder.py] ascii_collation_key: folded, unpadded, without case"
+        self.assertEqual(
+            sql_builder.ascii_collation_key('CÓ-ISS-N1460960653  '), 'co-iss-n1460960653'
+        )
+        self.assertEqual(
+            sql_builder.ascii_collation_key('co-iss-n1460960653'), 'co-iss-n1460960653'
+        )
+        # A leading space and a trailing tab are kept, as the collation keeps them.
+        self.assertEqual(sql_builder.ascii_collation_key(' a\t'), ' a\t')
+
+    def test__generated_models_declare_the_ascii_columns(self) -> None:
+        "[test_sql_builder.py] is_ascii_column: as each schema's field_charset says"
+        ascii_columns, other_strings = _schema_string_columns()
+        self.assertIn(('obs_general', 'opus_id'), ascii_columns)
+        self.assertEqual(
+            other_strings, {('obs_pds', 'note'), ('obs_mission_hubble', 'hst_pi_name')}
+        )
+        for table, column in sorted(ascii_columns):
+            with self.subTest(table=table, column=column):
+                self.assertTrue(db_utils.is_ascii_column(table, column))
+        for table, column in sorted(other_strings | {('obs_files', 'short_name')}):
+            with self.subTest(table=table, column=column):
+                self.assertFalse(db_utils.is_ascii_column(table, column))
+
+
+def _schema_string_columns() -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
+    """Return the ASCII columns of the tables with a model, and the other STRING columns.
+
+    Returns:
+        Every column a packaged schema gives ``field_charset``, in a table the ``search``
+        app has a model for; and every column whose ``pi_form_type`` is ``STRING`` and
+        that has none.
+    """
+    ascii_columns: set[tuple[str, str]] = set()
+    other_strings: set[tuple[str, str]] = set()
+    for path in sorted((Path(opus_import.__file__).parent / 'table_schemas').glob('*.json')):
+        entries = json.loads(path.read_text(encoding='utf-8'))
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if 'field_name' not in entry:
+                continue
+            key = (path.stem, entry['field_name'])
+            if entry.get('field_charset') == 'ascii':
+                try:
+                    db_utils.table_model_from_name(path.stem)
+                except LookupError:
+                    continue
+                ascii_columns.add(key)
+            elif entry.get('pi_form_type') == 'STRING':
+                other_strings.add(key)
+    return ascii_columns, other_strings

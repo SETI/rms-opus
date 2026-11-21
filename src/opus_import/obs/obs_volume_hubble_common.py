@@ -104,17 +104,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
     def field_obs_general_observation_duration(self) -> FloatField:
         return cast(FloatField, self._index_col('EXPOSURE_DURATION'))
 
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        instrument_id = self._index_col('INSTRUMENT_ID')
-        image_date = self._index_col('START_TIME')[:10]
-        filename = self._index_col('PRODUCT_ID')
-        planet = self._planet_id()
-        if planet == 'OTH':
-            pl_str = ''
-        else:
-            pl_str = planet[0]
-        return f'{pl_str}_IMG_HST_{instrument_id}_{image_date}_{filename}'
-
     def _planet_id(self) -> str:
         """Return which planet this observation was of.
 
@@ -226,15 +215,6 @@ class ObsVolumeHubbleCommon(ObsCommonPDS3):
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
-
-    def field_obs_mission_hubble_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_mission_hubble_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_mission_hubble_instrument_id(self) -> StrField:
-        return self.instrument_id
 
     def field_obs_mission_hubble_stsci_group_id(self) -> StrField:
         return cast(StrField, self._index_col('STSCI_GROUP_ID'))

@@ -138,18 +138,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
             return ra
         return cast(FloatField, self._index_col('DECLINATION'))
 
-    def field_obs_general_ring_obs_id(self) -> StrField:
-        filename = self._index_col('FILE_NAME')
-        image_num = filename[1:11]
-        phase_name = self.phase_name
-        planet = self._cassini_planet_id()
-        if planet == 'OTH':
-            pl_str = ''
-        else:
-            pl_str = planet[0]
-
-        return f'{pl_str}_CUBE_CO_VIMS_{image_num}_{phase_name}'
-
     def field_obs_general_planet_id(self) -> MultFieldRet:
         return self._create_mult(self._cassini_planet_id())
 
@@ -320,12 +308,6 @@ class ObsVolumeCOVIMS0xxx(ObsCassiniCommonPDS3):
     ###############################################
     ### FIELD METHODS FOR obs_instrument_covims ###
     ###############################################
-
-    def field_obs_instrument_covims_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_instrument_covims_bundle_id(self) -> StrField:
-        return self.bundle
 
     def field_obs_instrument_covims_instrument_mode_id(self) -> MultFieldRet:
         return self._create_mult(self._index_col('INSTRUMENT_MODE_ID'))

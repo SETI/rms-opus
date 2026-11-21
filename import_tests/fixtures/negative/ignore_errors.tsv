@@ -1,4 +1,4 @@
-# The unknown-target case, which pins what --import-ignore-errors does when a PDS label
+# The unknown-target case, which pins what --ignore-errors does when a PDS label
 # names a target the pipeline does not describe: the observation imports with its target
 # recorded as OTHER instead of being dropped. Without the flag the same row loses its
 # target entirely, so this is the one place the fallback runs at all.

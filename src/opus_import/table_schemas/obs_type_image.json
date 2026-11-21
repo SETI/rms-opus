@@ -2,42 +2,21 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
+        "field_key": "primary",
         "field_notnull": true,
         "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "opus_id",
-        "field_type": "char50",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "opus_id"
-        ],
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "This is the secondary key linking the record to obs_general."
-    },
-    {
-        "field_name": "bundle_id",
-        "field_type": "char75",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The bundle_id is included here for ease of database manipulation only."
-    },
-    {
-        "field_name": "instrument_id",
-        "field_type": "char60",
-        "field_key": false,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The instrument_id is included here for ease of database manipulation only."
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
     },
     {
         "field_name": "image_type_id",
@@ -61,11 +40,11 @@
         "pi_sub_heading": null,
         "pi_tooltip": "",
         "mult_options": [
-              [   0, "FRAM",       "Frame",   "010", "Y", null, null],
-              [   1, "RAST", "Raster Scan",   "020", "Y", null, null],
-              [   2, "PUSH",   "Pushbroom",   "030", "Y", null, null],
-              [   3, "MOSAIC",    "Mosaic",   "040", "Y", null, null],
-              [   4,   null,         "N/A",   "050", "Y", null, null]
+              [   0, "FRAM",       "Frame",      10, "Y", null, null],
+              [   1, "RAST", "Raster Scan",      20, "Y", null, null],
+              [   2, "PUSH",   "Pushbroom",      30, "Y", null, null],
+              [   3, "MOSAIC",    "Mosaic",      40, "Y", null, null],
+              [   4,   null,         "N/A",      50, "Y", null, null]
           ]
     },
     {
@@ -94,7 +73,7 @@
         "field_name": "levels",
         "field_type": "uint4",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "definition": "The number of discrete values that can appear in a single data point. This is a property of the instrument and does not represent the actual contents of the observation. For example, a camera with 12-bit pixels will support 4096 levels.",
         "pi_category_name": "obs_type_image",
@@ -156,17 +135,5 @@
         "pi_slug": "lesserpixelsize",
         "pi_sub_heading": null,
         "pi_tooltip": ""
-    },
-    {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": "MAX_ID"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

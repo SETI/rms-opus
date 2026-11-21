@@ -1,0 +1,31 @@
+# The servers the harness owns, and where it keeps its result files. Every path is
+# expanded at run time ("~" is the home directory of whoever runs the harness), and
+# every directory named here is outside the repository.
+
+[mysql]
+# The unpacked MySQL generic Linux tarball; bin/mysqld under it is what runs.
+basedir = "~/opt/mysql/mysql-8.0.46-linux-glibc2.28-x86_64"
+# Put first on LD_LIBRARY_PATH for mysqld, for the libraries the tarball's binary needs
+# under names the distribution does not ship (libaio.so.1 on Ubuntu 24.04). Empty for
+# none.
+library_dir = "~/opt/mysql/lib"
+# Holds the data directory, the socket, the rendered my.cnf and the error log. The
+# socket path under it has to stay below 107 bytes.
+data_root = "~/opus_bench/mysql"
+# The memory the tuning baseline treats as the server's: the rules in my.cnf.template
+# that MySQL's documentation states in terms of the machine's memory are applied to
+# this figure instead, because the measuring machine is shared with whatever else the
+# operator runs on it.
+memory_budget_gb = 24
+# innodb_io_capacity: the documentation's figure for a bus-attached SSD.
+io_capacity = 1000
+
+[memcached]
+# The memcached binary, a path or a name looked up on PATH; the harness starts its own
+# on web.toml's port and never touches one it did not start.
+binary = "memcached"
+
+[results]
+# Holds every result file the bench commands write, one per label, and the floors
+# files benchmarks.compare writes from them. None of them is committed.
+root = "~/opus_bench/results"

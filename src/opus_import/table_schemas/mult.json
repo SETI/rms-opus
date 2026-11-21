@@ -1,0 +1,65 @@
+[
+    {
+        "field_name": "field_id",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "comment": "The mult_field row of the field the value belongs to."
+    },
+    {
+        "field_name": "id",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "comment": "What an observation's column holds for this value; numbered within its field."
+    },
+    {
+        "field_name": "value",
+        "field_type": "varchar100",
+        "field_notnull": true,
+        "comment": "The value as the import read it; the absent value is the empty string."
+    },
+    {
+        "field_name": "label",
+        "field_type": "varchar100",
+        "field_notnull": true,
+        "comment": "The value as the interface shows it."
+    },
+    {
+        "field_name": "pin",
+        "field_type": "uint2",
+        "field_default": null,
+        "comment": "The value's configured position, or NULL to place it by what it holds."
+    },
+    {
+        "field_name": "disp_rank",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "field_default": "0",
+        "comment": "The value's position among its field's values, from 1; finalization computes it."
+    },
+    {
+        "field_name": "display",
+        "field_type": "enum",
+        "field_default": "Y",
+        "field_enum_options": "'Y','N'",
+        "field_notnull": true,
+        "comment": "Y to offer the value in the search form, N to hide it."
+    },
+    {
+        "field_name": "grouping",
+        "field_type": "varchar100",
+        "field_default": null,
+        "comment": "The mult_group the value is listed under in the search form, or NULL for none."
+    },
+    {
+        "primary_key": [
+            "field_id",
+            "id"
+        ]
+    },
+    {
+        "unique": [
+            "field_id",
+            "value"
+        ]
+    }
+]

@@ -3,15 +3,12 @@
 from typing import Any
 from unittest import TestCase
 
-from django.apps import apps
 from django.db import connection
-from django.db.models import Count
+from django.db.models import Count, QuerySet
 
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.search.models import (
-    MultObsGeneralInstrumentId,
-    MultObsGeneralMissionId,
-    MultObsGeneralPlanetId,
+    Mult,
     ObsGeneral,
     ObsInstrumentCocirs,
     ObsInstrumentCoiss,
@@ -27,15 +24,28 @@ from opus_app.apps.search.models import (
     ObsMissionNewHorizons,
     ObsMissionVoyager,
     ObsPds,
+    ObsPreview,
     ObsProfile,
-    ObsSurfaceGeometryMimas,
-    ObsSurfaceGeometryName,
+    ObsSurfaceGeometryTarget,
     ObsTypeImage,
     ObsWavelength,
     Partables,
     TableNames,
 )
 from opus_app.apps.tools.db_utils import MYSQL_TABLE_NOT_EXISTS
+from opus_app.apps.tools.import_constants import mult_field_id
+
+
+def _mult_rows(param_qualified_name: str) -> QuerySet[Mult]:
+    """Return one mult field's ``mult`` rows.
+
+    Parameters:
+        param_qualified_name: The field's ``<table>.<column>`` name.
+
+    Returns:
+        The rows, as a queryset to filter further.
+    """
+    return Mult.objects.filter(field_id=mult_field_id(param_qualified_name))
 
 
 class DBIntegrityTest(TestCase):
@@ -47,7 +57,7 @@ class DBIntegrityTest(TestCase):
     def test__pds_image_wl_bundle_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_pds, obs_type_image, obs_wavelength, obs_profile
         Test that the observation count per bundle is the same in
-        obs_general, obs_pds, obs_type_image, and obs_wavelength, since
+        obs_general, obs_pds, obs_type_image, obs_wavelength, and obs_preview, since
         these tables should all include the exact same set of observations.
         """
         self.maxDiff = None
@@ -63,30 +73,38 @@ class DBIntegrityTest(TestCase):
         )
         self.assertEqual(list(obs), list(pds))
         img = (
-            ObsTypeImage.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsTypeImage.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         self.assertEqual(list(obs), list(img))
         wl: Any = (
-            ObsWavelength.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsWavelength.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         self.assertEqual(list(obs), list(wl))
         wl = (
-            ObsProfile.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsProfile.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         self.assertEqual(list(obs), list(wl))
+        preview = (
+            ObsPreview.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
+        )
+        self.assertEqual(list(obs), list(preview))
 
     def test__cassini_counts_match_obs_general(self) -> None:
         """DB Integrity: bundles in obs_general = obs_mission_cassini
         Test that the observation count per bundle is the same in
         obs_general for mission_id='CO' and obs_mission_cassini.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='CO'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='CO'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -94,9 +112,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionCassini.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionCassini.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -109,7 +127,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='GO' and obs_mission_galileo.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='GO'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='GO'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -117,9 +137,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionGalileo.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionGalileo.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -132,7 +152,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='HST' and obs_mission_hubble.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='HST'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='HST'))[
+            0
+        ][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -140,9 +162,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionHubble.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionHubble.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -155,7 +177,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='NH' and obs_mission_newhorizons.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='NH'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='NH'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -163,9 +187,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionNewHorizons.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionNewHorizons.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -178,7 +202,9 @@ class DBIntegrityTest(TestCase):
         Test that the observation count per bundle is the same in
         obs_general for mission_id='VG' and obs_mission_voyager.
         """
-        mission_id = (MultObsGeneralMissionId.objects.values_list('id').filter(value='VG'))[0][0]
+        mission_id = (_mult_rows('obs_general.mission_id').values_list('id').filter(value='VG'))[0][
+            0
+        ]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
             .filter(mission_id=mission_id)
@@ -186,9 +212,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsMissionVoyager.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsMissionVoyager.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -202,7 +228,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COCIRS' and obs_instrument_cocirs.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COCIRS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COCIRS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -211,9 +237,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCocirs.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCocirs.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -227,7 +253,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COISS' and obs_instrument_coiss.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COISS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COISS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -236,9 +262,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCoiss.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCoiss.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -252,7 +278,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COUVIS' and obs_instrument_couvis.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COUVIS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COUVIS')
         )[0][0]
         print(instrument_id)
         obs = (
@@ -262,9 +288,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCouvis.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCouvis.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -278,7 +304,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='COVIMS' and obs_instrument_covims.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='COVIMS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='COVIMS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -287,9 +313,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentCovims.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentCovims.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -303,7 +329,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='GOSSI' and obs_instrument_gossi.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='GOSSI')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='GOSSI')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -312,9 +338,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentGossi.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentGossi.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -328,7 +354,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='NHLORRI' and obs_instrument_nhlorri.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='NHLORRI')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='NHLORRI')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -337,9 +363,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentNhlorri.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentNhlorri.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -353,7 +379,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='NHMVIC' and obs_instrument_nhmvic.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='NHMVIC')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='NHMVIC')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -362,9 +388,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentNhmvic.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentNhmvic.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -378,7 +404,7 @@ class DBIntegrityTest(TestCase):
         obs_general for instrument_id='VGISS' and obs_instrument_vgiss.
         """
         instrument_id = (
-            MultObsGeneralInstrumentId.objects.values_list('id').filter(value='VGISS')
+            _mult_rows('obs_general.instrument_id').values_list('id').filter(value='VGISS')
         )[0][0]
         obs = (
             ObsGeneral.objects.values_list('bundle_id')
@@ -387,9 +413,9 @@ class DBIntegrityTest(TestCase):
             .order_by('bundle_id')
         )
         ref = (
-            ObsInstrumentVgiss.objects.values_list('bundle_id')
-            .annotate(Count('bundle_id'))
-            .order_by('bundle_id')
+            ObsInstrumentVgiss.objects.values_list('obs_general__bundle_id')
+            .annotate(Count('obs_general__bundle_id'))
+            .order_by('obs_general__bundle_id')
         )
         try:
             self.assertEqual(list(obs), list(ref))
@@ -405,65 +431,67 @@ class DBIntegrityTest(TestCase):
         cursor = connection.cursor()
         q = """SELECT COUNT(*) FROM obs_general
                WHERE instrument_id NOT IN
-                   (SELECT id FROM mult_obs_general_instrument_id)"""
-        cursor.execute(q)
+                   (SELECT id FROM mult WHERE field_id = %s)"""
+        cursor.execute(q, [mult_field_id('obs_general.instrument_id')])
         result = cursor.fetchone()
         cursor.close()
         self.assertEqual(result[0], 0)
 
-    def test__all_sfc_geo_models_should_have_same_fields_as_each_other(self) -> None:
-        """DB Integrity: all surface geometry tables have same fields
-        Find all surface geo models by inspecting the param_info table and
-        check that they each have the same parameters defined in the
-        Django models.
+    def test__every_surface_geometry_body_has_its_category_rows(self) -> None:
+        """DB Integrity: each body ``obs_surface_geometry_target`` holds has its category rows
+        Every distinct target_name of obs_surface_geometry_target has a table_names row
+        naming the table and the body, a partables row revealing that category, and the
+        template's param_info rows under it, as many as every other body's.
         """
-        # Mimas sets the standard template
-        expected_fields = sorted(ObsSurfaceGeometryMimas.__dict__)
-        param_info = ParamInfo.objects.filter(category_name__contains='surface_geometry__')
-        all_category_names = sorted({p.category_name for p in param_info})
-        for cat_name in all_category_names:
-            model_name = cat_name.title().replace('_', '')
-            print(f'Working on {model_name}')
-            model = apps.get_model('search', model_name)
-            fields = sorted(model.__dict__)
-            print(f'Found {len(fields)} fields expected {len(expected_fields)}')
-            self.assertEqual(expected_fields, fields)
+        targets = set(ObsSurfaceGeometryTarget.objects.values_list('target_name', flat=True))
+        categories = {
+            row.target_name: row.table_name
+            for row in TableNames.objects.filter(physical_table='obs_surface_geometry_target')
+            if row.target_name is not None
+        }
+        self.assertEqual(set(categories), targets)
+        partables = set(
+            Partables.objects.filter(trigger_tab='obs_surface_geometry_name').values_list(
+                'partable', flat=True
+            )
+        )
+        self.assertEqual(partables, set(categories.values()))
+        field_counts = {
+            row['category_name']: row['fields']
+            for row in ParamInfo.objects.filter(category_name__in=categories.values())
+            .values('category_name')
+            .annotate(fields=Count('id'))
+        }
+        self.assertEqual(set(field_counts), set(categories.values()))
+        self.assertEqual(len(set(field_counts.values())), 1)
 
-    def test__partables_has_all_surface_geo_tables(self) -> None:
-        """DB Integrity: partables table has an entry for each surface_geo table"""
-        count_partables = (
-            Partables.objects.filter(partable__contains='surface_geometry__')
-            .values('partable')
-            .distinct()
-            .count()
+    def test__the_selector_category_reads_every_row_of_the_surface_geometry_table(self) -> None:
+        """DB Integrity: the selector category names the table and no body"""
+        row = TableNames.objects.get(table_name='obs_surface_geometry_name')
+        self.assertEqual(
+            (row.physical_table, row.target_name), ('obs_surface_geometry_target', None)
         )
-        count_surface_geo = ObsSurfaceGeometryName.objects.values('target_name').distinct().count()
-        self.assertEqual(count_partables, count_surface_geo)
-
-    def test__tablenames_has_all_surface_geo_tables(self) -> None:
-        """DB Integrity: table_names table has an entry for each surface_geo table"""
-        count_partables = (
-            Partables.objects.filter(partable__contains='surface_geometry__')
-            .values('partable')
-            .distinct()
-            .count()
+        self.assertEqual(
+            list(
+                ParamInfo.objects.filter(category_name='obs_surface_geometry_name').values_list(
+                    'name', 'slug'
+                )
+            ),
+            [('target_name', 'surfacegeometrytargetname')],
         )
-        count_tablenames = (
-            TableNames.objects.filter(table_name__contains='surface_geometry__')
-            .values('table_name')
-            .distinct()
-            .count()
-        )
-        self.assertEqual(count_partables, count_tablenames)
 
     def test__planets_properly_ordered(self) -> None:
-        "DB Integrity: planets are properly ordered in the planet mult table"
+        "DB Integrity: planets are properly ordered by their rank"
         the_planets = [
             planet['label']
-            for planet in MultObsGeneralPlanetId.objects.filter(display='Y').values('label')
+            for planet in _mult_rows('obs_general.planet_id')
+            .filter(display='Y')
+            .order_by('disp_rank')
+            .values('label')
         ]
         print(
-            'SELECT label FROM mult_obs_general_planet_id WHERE display = "Y" ORDER BY disp_order;'
+            'SELECT label FROM mult WHERE field_id = <planet_id> AND display = "Y" '
+            'ORDER BY disp_rank;'
         )
         expect = [
             'Venus',

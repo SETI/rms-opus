@@ -9,17 +9,17 @@ them.
 
 The second half is the master loop: for each index row, and for each phase of it (Cassini
 VIMS produces both a visible and an infrared observation from one row), every table gets
-a row computed by `opus_import.steps.do_import_obs`. The surface geometry tables are
-deferred, because which of them exist depends on the targets the observations turned out
-to mention, and ``obs_files`` is deferred past even those, because it needs the
-``obs_general`` and ``obs_pds`` rows and contributes many rows per observation rather
-than one.
+a row computed by `opus_import.steps.do_import_obs`. The surface geometry rows, one per
+body the observation has geometry for, are computed after the other tables' rows, and
+``obs_surface_geometry``'s row, which lists the bodies, after them; ``obs_files`` is
+deferred past even that, because it needs the ``obs_general`` and ``obs_pds`` rows and
+contributes many rows per observation rather than one.
 
-Nothing is written to the database until every row has been computed. The ``mult_``
-tables go out first, because an ``obs_`` row stores the row id a value was given in its
-``mult_`` table and that row has to exist to be looked up -- by convention rather than by
-a database constraint, since a ``mult_idx`` column carries a plain index and no foreign
-key.
+Each new ``mult`` row is inserted as its value is met (`opus_import.steps.do_import_mult`),
+and an ``obs_`` row is loaded only after it has been computed, so a ``mult`` row is
+always written before an ``obs_`` row that stores its id -- the order a lookup needs, kept
+by convention rather than by a database constraint, since a ``mult_idx`` column carries
+no foreign key.
 
 These are the per-index internals of `opus_import.steps.do_import`, not a step of their
 own.
@@ -28,18 +28,22 @@ own.
 from __future__ import annotations
 
 import csv
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
 
 import pdsfile
 
-from opus_import import import_util
-from opus_import.steps import do_import_mult, do_import_obs, do_import_tables
+from opus_import import generations, import_util, list_junctions, surface_geometry, table_keys
+from opus_import.obs.obs_surface_geometry_target import ObsSurfaceGeometryTarget
+from opus_import.steps import do_import_obs, do_import_pool, do_import_tables
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Sequence
 
     from opus_import.config_bundle_info import BundleInfo
     from opus_import.context import ImportContext
+    from opus_import.import_util import IndexRow, TableSchema
+    from opus_import.obs.obs_base import ObsBase
 
 
 def import_one_index(
@@ -241,10 +245,10 @@ def import_one_index(
                         for csv_row in csvreader:
                             if len(csv_row) > 2 and csv_row[2].count('-') > 1:
                                 # Old format with OPUS ID column
-                                (csv_bundle, csv_filespec, csv_ringobsid, *csv_targets) = csv_row
+                                (csv_bundle, csv_filespec, csv_opus_id, *csv_targets) = csv_row
                             else:
                                 # New format without OPUS ID column
-                                csv_ringobsid = None
+                                csv_opus_id = None
                                 (csv_bundle, csv_filespec, *csv_targets) = csv_row
                             if len(csv_targets) == 1:
                                 csv_targets = csv_targets[0].split(',')  # New format
@@ -253,8 +257,8 @@ def import_one_index(
                                 'FILE_SPECIFICATION_NAME': csv_filespec.strip(),
                                 'TARGET_LIST': csv_targets,
                             }
-                            if csv_ringobsid:
-                                row_dict['OPUS_ID'] = csv_ringobsid.strip()
+                            if csv_opus_id:
+                                row_dict['OPUS_ID'] = csv_opus_id.strip()
 
                             assoc_rows.append(row_dict)
                 else:
@@ -349,311 +353,432 @@ def import_one_index(
                 metadata[assoc_type] = assoc_dict
                 metadata[assoc_type + '_label'] = assoc_label_dict
 
-    table_schemas, table_names_in_order = do_import_tables.create_tables_for_import(
-        ctx, bundle_id, 'import'
+    table_schemas, table_names_in_order = do_import_tables.create_tables_for_import(ctx, bundle_id)
+
+    state = IndexState(
+        instrument_obj=instrument_obj,
+        metadata=metadata,
+        base_metadata=dict(metadata),
+        table_schemas=table_schemas,
+        table_names_in_order=table_names_in_order,
+        pds_version=pds_version,
+        obs_rows=obs_rows,
     )
+    sink = TableRowSink(ctx, table_names_in_order, list_junctions.junctions(table_schemas))
 
-    # It's time to actually compute the values that will go in the database!
-    # Start with the obs_general table, because other tables reference
-    # it with foreign keys. Then do general, mission, and instrument in that
-    # order. Later come things like type_id, wavelength, and ring_geo. Finally
-    # take care of surface geometry, which has to be done once for each target
-    # in the image, so is handled separately.
-    table_rows: dict[str, list[dict[str, Any]]] = {}
-    for table_name in table_names_in_order:
-        table_rows[table_name] = []
-
-    # Also look for duplicates in the existing import tables
-    used_opus_id_prev_vol: Collection[str]
-    if ctx.args.import_check_duplicate_id:
-        used_opus_id_prev_vol = do_import_tables.read_existing_import_opus_id(ctx)
-    else:
-        used_opus_id_prev_vol = set()
-
-    used_targets: set[str] = set()
-
-    ##############################################
-    ### MASTER LOOP - IMPORT ONE ROW AT A TIME ###
-    ##############################################
-
-    for index_row_num, index_row in enumerate(obs_rows):
-        metadata['index_row'] = index_row
-        metadata['index_row_num'] = index_row_num + 1
-        metadata['phase_name'] = None
-        obs_general_row = None
-        obs_pds_row = None
-        ctx.current_index_row_number = index_row_num + 1
-
-        # Sometimes the primary_filespec is taken from the supplemental index, which we
-        # don't have yet, so we can't look it up until later.
-        ctx.current_primary_filespec = None
-
-        # For supplemental_index and logging
-        # Note we don't use primary_filespec_from_index_row here because that doesn't
-        # currently work with CIRS, which makes the logging not give full
-        # row information.
-        primary_filespec = instrument_obj.primary_filespec
-        # Every observation reaching this point came from an index row that named a
-        # file; an obs class returns None only for a row that did not.
-        assert primary_filespec is not None
-        primary_filespec = instrument_obj.convert_filespec_from_lbl(primary_filespec)
-        ctx.current_primary_filespec = primary_filespec
-        primary_filespec = primary_filespec.upper()
-        if 'supp_index' in metadata:
-            supp_index = metadata['supp_index']
-            if primary_filespec in supp_index:
-                metadata['supp_index_row'] = supp_index[primary_filespec]
-            else:
-                import_util.log_nonrepeating_warning(
-                    ctx, f'FILESPEC "{primary_filespec}" is missing supplemental data'
-                )
-                metadata['supp_index_row'] = None
-
-        # Sometimes a single row in the index turns into multiple opus_id
-        # in the database. This happens with COVIMS because each observation
-        # might include both VIS and IR entries. Build up a list of such entries
-        # here and then process the row as many times as necessary.
-        phase_names = instrument_obj.phase_names
-        for phase_name in phase_names:
-            metadata['phase_name'] = phase_name
-
-            # For the geo indexes - we have to add in the phase because COVIMS_0xxx has
-            # separate rows for IR and VIS
-            primary_filespec_phase = instrument_obj.primary_filespec_from_index_row(
-                index_row, convert_lbl=True, add_phase_from_inst=True
-            )
-            assert primary_filespec_phase is not None
-            primary_filespec_phase = primary_filespec_phase.upper()
-            if 'ring_geo' in metadata:
-                ring_geo = metadata['ring_geo'].get(primary_filespec_phase, None)
-                metadata['ring_geo_row'] = ring_geo
-                if ring_geo is None and ctx.args.import_report_missing_ring_geo:
-                    import_util.log_warning(
-                        ctx, f'RING GEO metadata missing for "{primary_filespec_phase}"'
-                    )
-            if 'sky_geo' in metadata:
-                sky_geo = metadata['sky_geo'].get(primary_filespec_phase, None)
-                metadata['sky_geo_row'] = sky_geo
-                if sky_geo is None and ctx.args.import_report_missing_sky_geo:
-                    import_util.log_warning(
-                        ctx, f'SKY GEO metadata missing for "{primary_filespec_phase}"'
-                    )
-            if 'surface_geo' in metadata:
-                body_geo = metadata['surface_geo'].get(primary_filespec_phase)
-                metadata['surface_geo_row'] = body_geo
-
-            # Handle everything except surface_geo
-
-            for table_name in table_names_in_order:
-                if table_name.startswith('obs_surface_geometry'):
-                    # Deal with surface geometry a little later
-                    continue
-                if table_name == 'obs_files':
-                    # obs_files is done separately below because it has multiple
-                    # rows per observation
-                    continue
-                if table_name not in table_schemas:
-                    # Table not relevant for this product
-                    continue
-                obs_row = do_import_obs.import_observation_table(
-                    ctx, instrument_obj, table_name, table_schemas[table_name], metadata
-                )
-                # A missing row means a mult column returned something that is not a
-                # mult specification, which has already been reported. No table can be
-                # filled from one, so every call site below narrows it the same way.
-                assert obs_row is not None
-                if table_name == 'obs_pds':
-                    obs_pds_row = obs_row
-                if table_name == 'obs_general':
-                    obs_general_row = obs_row
-                    opus_id = obs_row['opus_id']
-                    if opus_id in used_opus_id_prev_vol:
-                        # Some of the GO_xxxx and COUVIS_xxxx bundles have
-                        # duplicate observations across bundles. In these cases
-                        # we have to use the NEW one and delete the old one
-                        # from the database itself. Note this will only be
-                        # triggered if we have already loaded the previous
-                        # bundle into the import tables but not clear them out.
-                        # In the case where we copied them to the perm tables
-                        # and cleared them out, a future check during the copy
-                        # process will catch the duplicates.
-                        do_import_tables.delete_opus_id_from_obs_tables(ctx, opus_id, 'import')
-                table_rows[table_name].append(obs_row)
-                metadata[table_name + '_row'] = obs_row
-
-            assert obs_general_row is not None
-
-            # Handle obs_surface_geometry_name and
-            # obs_surface_geometry__<TARGET>
-
-            target_dict: dict[str, Any] = {}
-            if 'surface_geo' in metadata:
-                surface_geo_dict = metadata['surface_geo']
-                for table_name in table_names_in_order:
-                    if not table_name.startswith('obs_surface_geometry_'):
-                        # Deal with obs_surface_geometry_name and
-                        # obs_surface_geometry__<TARGET> only
-                        continue
-                    # Here we are handling both obs_surface_geometry_name and
-                    # obs_surface_geometry as well as all of the
-                    # obs_surface_geometry__<TARGET> tables
-
-                    # Retrieve the opus_id from obs_general to find the
-                    # surface_geo
-                    target_dict = surface_geo_dict.get(primary_filespec_phase, {})
-                    for target_name in sorted(target_dict.keys()):
-                        used_targets.add(target_name)
-                        # Note the following only affects
-                        # obs_surface_geometry__<T> not the generalized
-                        # obs_surface_geometry. This is fine because we want the
-                        # generalized obs_surface_geometry to include all the
-                        # targets.
-                        new_target_name = import_util.table_name_for_sfc_target(target_name)
-                        new_table_name = table_name.replace('<TARGET>', new_target_name)
-                        metadata['surface_geo_row'] = target_dict[target_name]
-                        metadata['surface_geo_target_name'] = target_name
-
-                        obs_row = do_import_obs.import_observation_table(
-                            ctx, instrument_obj, new_table_name, table_schemas[table_name], metadata
-                        )
-                        assert obs_row is not None
-                        if new_table_name not in table_rows:
-                            table_rows[new_table_name] = []
-                            import_util.log_debug(
-                                ctx, f'Creating surface geo table for new target {target_name}'
-                            )
-                        table_rows[new_table_name].append(obs_row)
-
-            inline_surface_geo_targets = instrument_obj.surface_geo_target_list()
-            if inline_surface_geo_targets:
-                # The are some cases (like COCIRS_[01]xxx) where the index files
-                # contain the surface geo information instead of a separate
-                # summary file. In these cases we ask the instrument for the list of
-                # targets and process them directly.
-                for table_name in table_names_in_order:
-                    if not table_name.startswith('obs_surface_geometry_'):
-                        # Deal with obs_surface_geometry_name and
-                        # obs_surface_geometry__<TARGET> only
-                        continue
-                    # Here we are handling both obs_surface_geometry_name and
-                    # obs_surface_geometry as well as all of the
-                    # obs_surface_geometry__<TARGET> tables
-
-                    for target_name in inline_surface_geo_targets:
-                        used_targets.add(target_name)
-                        # Note the following only affects
-                        # obs_surface_geometry__<T> not the generalized
-                        # obs_surface_geometry. This is fine because we want the
-                        # generalized obs_surface_geometry to include all the
-                        # targets.
-                        new_target_name = import_util.table_name_for_sfc_target(target_name)
-                        new_table_name = table_name.replace('<TARGET>', new_target_name)
-                        metadata['surface_geo_row'] = None
-                        metadata['surface_geo_target_name'] = target_name
-
-                        obs_row = do_import_obs.import_observation_table(
-                            ctx, instrument_obj, new_table_name, table_schemas[table_name], metadata
-                        )
-                        assert obs_row is not None
-                        if new_table_name not in table_rows:
-                            table_rows[new_table_name] = []
-                            import_util.log_debug(
-                                ctx, f'Creating surface geo table for new target {target_name}'
-                            )
-                        table_rows[new_table_name].append(obs_row)
-
-            # Handle obs_surface_geometry
-            # We have to do this later than the other obs_ tables because only
-            # now do we know what all the available targets are
-
-            surface_target_list = None
-            if 'inventory' in metadata:
-                inventory = metadata['inventory']
-                if primary_filespec_phase in inventory:
-                    surface_target_list = inventory[primary_filespec_phase]['TARGET_LIST']
-            metadata['inventory_list'] = surface_target_list
-            metadata['used_surface_geo_targets'] = list(target_dict.keys())
-
-            for table_name in table_names_in_order:
-                if table_name != 'obs_surface_geometry':
-                    # Deal with obs_surface_geometry only
-                    continue
-                # This is used to populate the surface geo target_list
-                # field
-
-                obs_row = do_import_obs.import_observation_table(
-                    ctx, instrument_obj, table_name, table_schemas[table_name], metadata
-                )
-                assert obs_row is not None
-                if table_name not in table_rows:
-                    table_rows[table_name] = []
-                table_rows[table_name].append(obs_row)
-
-            # Handle obs_files
-
-            if 'obs_files' not in table_rows:
-                table_rows['obs_files'] = []
-            for table_name in table_names_in_order:
-                if table_name != 'obs_files':
-                    # Deal with obs_files only
-                    continue
-                assert obs_pds_row is not None
-                rows = get_opus_products_rows_for_filespec(
-                    ctx,
-                    vol_info['pds_version'],
-                    obs_pds_row['primary_filespec'],
-                    obs_general_row['id'],
-                    obs_general_row['opus_id'],
-                    obs_general_row['bundle_id'],
-                    obs_general_row['instrument_id'],
-                )
-                table_rows[table_name].extend(rows)
-
-    #################################################################
-    ### DONE COMPUTING ROW CONTENTS - CREATE MULTS AND DUMP TO DB ###
-    #################################################################
+    # Two bundles can produce the same OPUS ID; finalization's duplicate step keeps the
+    # copy from the bundle registered later.
+    if not do_import_pool.compute_index(ctx, state, import_index_row, sink.add, bundle_label_path):
+        # A failed index leaves none of its rows; the mult values it added stay, and
+        # finalization deletes those no observation holds.
+        sink.discard()
+        return False
 
     ctx.current_index_row_number = None
     ctx.current_primary_filespec = None
 
-    # The mult tables go first: an obs_ row holds the id its value was given in the
-    # mult_ table, so that row has to be there to be looked up. Nothing enforces it --
-    # a mult_idx column is a plain index, not a foreign key.
-    do_import_mult.dump_import_mult_tables(ctx)
-
-    # Now dump out the obs tables, in order: obs_general really is a foreign-key target
-    # for the other obs_ tables (on id and on opus_id), so it has to exist first.
-    db = ctx.db
-    assert db is not None
-    for table_name in table_names_in_order:
-        if table_name.find('<TARGET>') == -1:
-            imp_name = db.convert_raw_to_namespace('import', table_name)
-            import_util.log_debug(ctx, f'Inserting into obs table "{imp_name}"')
-            db.insert_rows('import', table_name, table_rows[table_name])
-        else:
-            for target_name in sorted(used_targets):
-                new_table_name = table_name.replace(
-                    '<TARGET>', import_util.table_name_for_sfc_target(target_name)
-                )
-                imp_name = db.convert_raw_to_namespace('import', new_table_name)
-                import_util.log_debug(ctx, f'Inserting into obs table "{imp_name}"')
-                surface_geo_schema = import_util.read_schema_for_table(
-                    ctx,
-                    'obs_surface_geometry_target',
-                    replace=[
-                        ('<TARGET>', import_util.table_name_for_sfc_target(target_name)),
-                        ('<SLUGTARGET>', import_util.slug_name_for_sfc_target(target_name)),
-                    ],
-                )
-                # We can finally get around to creating the
-                # obs_surface_geometry_<T> tables now that we know what targets
-                # we have
-                # obs_surface_geometry_target.json is packaged with opus_import.
-                assert surface_geo_schema is not None
-                db.create_table('import', new_table_name, surface_geo_schema)
-                db.insert_rows('import', new_table_name, table_rows[new_table_name])
+    sink.finish()
 
     return True  # SUCCESS!
+
+
+@dataclass
+class IndexState:
+    """What every row of one index is computed from.
+
+    Attributes:
+        instrument_obj: The obs class instance for the bundle, whose field functions
+            compute the columns. It holds `metadata` itself.
+        metadata: The dictionary the field functions read, which each row starts afresh
+            from `base_metadata` and adds to.
+        base_metadata: `metadata` as it stands before the first row: the index, its
+            label, and the associated metadata files.
+        table_schemas: Each table's column definitions.
+        table_names_in_order: The tables, in the order their rows are computed.
+        pds_version: 3 or 4.
+        obs_rows: The index rows to import.
+    """
+
+    instrument_obj: ObsBase
+    metadata: dict[str, Any]
+    base_metadata: dict[str, Any]
+    table_schemas: dict[str, TableSchema]
+    table_names_in_order: list[str]
+    pds_version: Literal[3, 4]
+    obs_rows: list[IndexRow]
+
+
+def _observation_id_column(table_name: str) -> str:
+    """Return the column a failed index's rows of a table are taken back by.
+
+    Parameters:
+        table_name: An observation table.
+
+    Returns:
+        ``id`` for ``obs_general``, which numbers its own rows, and ``obs_general_id``
+        for every other table, which a key of the table leads.
+    """
+    return 'id' if table_keys.is_bundle_keyed_table(table_name) else 'obs_general_id'
+
+
+@dataclass
+class TableRowSink:
+    """Collects an index's rows per table and loads each table a transaction at a time.
+
+    A table's rows are loaded as soon as `transaction_rows` of them are waiting, so the
+    import holds at most that many rows of a table at once rather than a whole index's.
+    A surface geometry row arrives under its body's category and waits with the surface
+    geometry table's rows (`opus_import.surface_geometry.physical_table`). A row of a
+    table with ``mult_list`` columns also gives each column's junction table its rows
+    (`opus_import.list_junctions.junction_rows`), from the row's final values, so they
+    hold the ids the JSON column holds whichever process computed the row. An index
+    that fails partway takes back what was loaded (`discard`), so a failed index leaves
+    no rows, as it would if its rows were loaded only at the end.
+
+    Attributes:
+        ctx: The import run's context, for the open database and the logger.
+        table_names_in_order: The tables, in the order `finish` loads what is left of
+            them, before the junction tables.
+        junctions: The ``mult_list`` columns of each table that has any, as
+            `opus_import.list_junctions.junctions` returns them.
+        rows: The rows waiting to be loaded, per table.
+        first_loaded: The observation id of the first row loaded into each table, in the
+            order the tables were first loaded.
+    """
+
+    ctx: ImportContext
+    table_names_in_order: list[str]
+    junctions: dict[str, list[str]] = field(default_factory=dict)
+    rows: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    first_loaded: dict[str, int] = field(default_factory=dict)
+
+    def add(self, table_name: str, row: dict[str, Any]) -> None:
+        """Take one computed row, loading its table's rows once a transaction's worth wait.
+
+        Parameters:
+            table_name: The table the row goes into, or the surface geometry category it
+                was computed under.
+            row: The row, with every value final. An ``obs_general`` row is given the
+                generation the import writes (`ImportContext.import_generation`).
+        """
+        table_name = surface_geometry.physical_table(table_name)
+        if table_name == generations.OBS_GENERAL_VIEW:
+            row = {**row, generations.ADDED_GENERATION_COLUMN: self.ctx.import_generation}
+        self._wait(table_name, row)
+        for column in self.junctions.get(table_name, ()):
+            junction = list_junctions.junction_table(table_name, column)
+            observation_id = row[_observation_id_column(table_name)]
+            for junction_row in list_junctions.junction_rows(observation_id, row[column]):
+                self._wait(junction, junction_row)
+
+    def finish(self) -> None:
+        """Load every row still waiting, table by table in order, then the junction tables."""
+        junction_tables = [
+            list_junctions.junction_table(table_name, column)
+            for table_name in self.table_names_in_order
+            for column in self.junctions.get(table_name, ())
+        ]
+        for table_name in [*self.table_names_in_order, *junction_tables]:
+            self._load(table_name)
+
+    def discard(self) -> None:
+        """Delete every row this sink loaded, and drop the rows still waiting.
+
+        Ids are handed out in ascending order from the bundle's own range, which no other
+        process writes, so this index's rows are those from the first it loaded to the
+        end of the range: by ``id`` in ``obs_general``, and by ``obs_general_id``, the
+        observation's id, in every other table. The tables are emptied of them in the
+        reverse of the order they were first loaded, except that ``obs_general`` always
+        goes last, after every table whose rows refer to it: a table with many rows per
+        observation, such as ``obs_files``, can fill a transaction and load before
+        ``obs_general`` does.
+
+        An importer drawing from the queue takes back nothing here: it deletes the whole
+        failed bundle while it holds the bundle's registry row
+        (`opus_import.steps.do_recover.release_bundle`), so its delete can never reach a
+        bundle another importer has taken since.
+        """
+        db = self.ctx.db
+        assert db is not None
+        assert self.ctx.bundle_ids is not None
+        if self.ctx.importer is not None:
+            self.first_loaded.clear()
+            self.rows.clear()
+            return
+        end = self.ctx.bundle_ids.range.end
+        in_order = [name for name in reversed(self.first_loaded) if name != 'obs_general']
+        if 'obs_general' in self.first_loaded:
+            in_order.append('obs_general')
+        for table_name in in_order:
+            first_id = self.first_loaded[table_name]
+            column = db.quote_identifier(_observation_id_column(table_name))
+            db.delete_rows(table_name, f'{column} >= %s AND {column} < %s', [first_id, end])
+        self.first_loaded.clear()
+        self.rows.clear()
+
+    def _wait(self, table_name: str, row: dict[str, Any]) -> None:
+        """Queue one row for a table, loading the table's rows once a transaction's worth wait.
+
+        Parameters:
+            table_name: The table.
+            row: The row.
+        """
+        waiting = self.rows.setdefault(table_name, [])
+        waiting.append(row)
+        db = self.ctx.db
+        assert db is not None
+        if len(waiting) >= db.transaction_rows:
+            self._load(table_name)
+
+    def _load(self, table_name: str) -> None:
+        """Load one table's waiting rows, each chunk under the bundle's guard.
+
+        The guard (`opus_import.import_processes.BundleGuard`) records the bundle's
+        progress in the registry inside each chunk's transaction, and for an importer
+        drawing from the queue commits the chunk only while it holds its lock and its
+        bundle.
+
+        Parameters:
+            table_name: The table.
+        """
+        db = self.ctx.db
+        assert db is not None
+        import_util.log_debug(self.ctx, f'Inserting into obs table "{table_name}"')
+        waiting = self.rows.get(table_name, [])
+        if waiting:
+            self.first_loaded.setdefault(table_name, waiting[0][_observation_id_column(table_name)])
+        db.bulk_load_rows(table_name, waiting, guard=self.ctx.load_guard)
+        self.rows[table_name] = []
+
+
+def import_index_row(
+    ctx: ImportContext, state: IndexState, index_row_num: int, emit: do_import_pool.RowEmitter
+) -> None:
+    """Compute every table's rows for one index row, handing each to `emit` in order.
+
+    The row starts from the index's metadata as it stood before the first row, so what
+    it computes depends on the row alone, not on the rows computed before it. Where an
+    index row produces more than one observation (Cassini VIMS's visible and infrared
+    phases), each phase is computed in turn.
+
+    Parameters:
+        ctx: The import run's context.
+        state: What every row of the index is computed from.
+        index_row_num: The row's position in `IndexState.obs_rows`, from zero.
+        emit: Where each computed row goes, in the order the rows are computed.
+    """
+    instrument_obj = state.instrument_obj
+    metadata = state.metadata
+    table_schemas = state.table_schemas
+    table_names_in_order = state.table_names_in_order
+    index_row = state.obs_rows[index_row_num]
+
+    metadata.clear()
+    metadata.update(state.base_metadata)
+    metadata['index_row'] = index_row
+    metadata['index_row_num'] = index_row_num + 1
+    metadata['phase_name'] = None
+    obs_general_row = None
+    obs_pds_row = None
+    ctx.current_index_row_number = index_row_num + 1
+
+    # Sometimes the primary_filespec is taken from the supplemental index, which we
+    # don't have yet, so we can't look it up until later.
+    ctx.current_primary_filespec = None
+
+    # For supplemental_index and logging
+    # Note we don't use primary_filespec_from_index_row here because that doesn't
+    # currently work with CIRS, which makes the logging not give full
+    # row information.
+    primary_filespec = instrument_obj.primary_filespec
+    # Every observation reaching this point came from an index row that named a
+    # file; an obs class returns None only for a row that did not.
+    assert primary_filespec is not None
+    primary_filespec = instrument_obj.convert_filespec_from_lbl(primary_filespec)
+    ctx.current_primary_filespec = primary_filespec
+    primary_filespec = primary_filespec.upper()
+    if 'supp_index' in metadata:
+        supp_index = metadata['supp_index']
+        if primary_filespec in supp_index:
+            metadata['supp_index_row'] = supp_index[primary_filespec]
+        else:
+            import_util.log_nonrepeating_warning(
+                ctx, f'FILESPEC "{primary_filespec}" is missing supplemental data'
+            )
+            metadata['supp_index_row'] = None
+
+    # Sometimes a single row in the index turns into multiple opus_id
+    # in the database. This happens with COVIMS because each observation
+    # might include both VIS and IR entries. Build up a list of such entries
+    # here and then process the row as many times as necessary.
+    phase_names = instrument_obj.phase_names
+    for phase_name in phase_names:
+        metadata['phase_name'] = phase_name
+
+        # For the geo indexes - we have to add in the phase because COVIMS_0xxx has
+        # separate rows for IR and VIS
+        primary_filespec_phase = instrument_obj.primary_filespec_from_index_row(
+            index_row, convert_lbl=True, add_phase_from_inst=True
+        )
+        assert primary_filespec_phase is not None
+        primary_filespec_phase = primary_filespec_phase.upper()
+        if 'ring_geo' in metadata:
+            ring_geo = metadata['ring_geo'].get(primary_filespec_phase, None)
+            metadata['ring_geo_row'] = ring_geo
+            if ring_geo is None and ctx.args.report_missing_ring_geo:
+                import_util.log_warning(
+                    ctx, f'RING GEO metadata missing for "{primary_filespec_phase}"'
+                )
+        if 'sky_geo' in metadata:
+            sky_geo = metadata['sky_geo'].get(primary_filespec_phase, None)
+            metadata['sky_geo_row'] = sky_geo
+            if sky_geo is None and ctx.args.report_missing_sky_geo:
+                import_util.log_warning(
+                    ctx, f'SKY GEO metadata missing for "{primary_filespec_phase}"'
+                )
+        if 'surface_geo' in metadata:
+            body_geo = metadata['surface_geo'].get(primary_filespec_phase)
+            metadata['surface_geo_row'] = body_geo
+
+        # Handle everything except surface_geo
+
+        for table_name in table_names_in_order:
+            if table_name.startswith('obs_surface_geometry'):
+                # Deal with surface geometry a little later
+                continue
+            if table_name == 'obs_files':
+                # obs_files is done separately below because it has multiple
+                # rows per observation
+                continue
+            if table_name not in table_schemas:
+                # Table not relevant for this product
+                continue
+            obs_row = do_import_obs.import_observation_table(
+                ctx, instrument_obj, table_name, table_schemas[table_name], metadata
+            )
+            if table_name == 'obs_pds':
+                obs_pds_row = obs_row
+            if table_name == 'obs_general':
+                obs_general_row = obs_row
+            emit(table_name, obs_row)
+            metadata[table_name + '_row'] = obs_row
+
+        assert obs_general_row is not None
+
+        # Every body the observation has surface geometry for: the summary file's, in
+        # sorted order, then the ones an index holding the geometry itself lists.
+        target_dict: dict[str, Any] = {}
+        if 'surface_geo' in metadata:
+            target_dict = metadata['surface_geo'].get(primary_filespec_phase, {})
+        bodies: list[tuple[str, Any]] = [(name, target_dict[name]) for name in sorted(target_dict)]
+        bodies += [(name, None) for name in instrument_obj.surface_geo_target_list() or ()]
+        if bodies and surface_geometry.SURFACE_GEOMETRY_TABLE in table_schemas:
+            _emit_surface_geometry_rows(
+                ctx,
+                state,
+                table_schemas[surface_geometry.SURFACE_GEOMETRY_TABLE],
+                obs_general_row['opus_id'],
+                bodies,
+                emit,
+            )
+
+        # Handle obs_surface_geometry
+        # We have to do this later than the other obs_ tables because only
+        # now do we know what all the available targets are
+
+        surface_target_list = None
+        if 'inventory' in metadata:
+            inventory = metadata['inventory']
+            if primary_filespec_phase in inventory:
+                surface_target_list = inventory[primary_filespec_phase]['TARGET_LIST']
+        metadata['inventory_list'] = surface_target_list
+        metadata['used_surface_geo_targets'] = list(target_dict.keys())
+
+        for table_name in table_names_in_order:
+            if table_name != 'obs_surface_geometry':
+                # Deal with obs_surface_geometry only
+                continue
+            # This is used to populate the surface geo target_list
+            # field
+
+            obs_row = do_import_obs.import_observation_table(
+                ctx, instrument_obj, table_name, table_schemas[table_name], metadata
+            )
+            emit(table_name, obs_row)
+
+        # Handle obs_files
+
+        for table_name in table_names_in_order:
+            if table_name != 'obs_files':
+                # Deal with obs_files only
+                continue
+            assert obs_pds_row is not None
+            rows = get_opus_products_rows_for_filespec(
+                ctx,
+                state.pds_version,
+                obs_pds_row['primary_filespec'],
+                obs_general_row['id'],
+                obs_general_row['opus_id'],
+                obs_general_row['bundle_id'],
+                obs_general_row['instrument_id'],
+            )
+            for row in rows:
+                emit(table_name, row)
+
+
+def _emit_surface_geometry_rows(
+    ctx: ImportContext,
+    state: IndexState,
+    schema: TableSchema,
+    opus_id: str,
+    bodies: Sequence[tuple[str, Any]],
+    emit: do_import_pool.RowEmitter,
+) -> None:
+    """Compute one observation's surface geometry row for each body it has geometry for.
+
+    Each row is computed under the body's category, ``obs_surface_geometry__<target>``,
+    which the field functions and the geometry checks are told, and goes to the one
+    surface geometry table when it is loaded. The body is the target the raw name
+    resolves to (`opus_import.obs.obs_surface_geometry_target.ObsSurfaceGeometryTarget.
+    surface_geo_target`). A body that resolves to no target gets no row, its name having
+    been reported as unknown. Two raw names that resolve to the same target, such as two
+    spellings of one body, get one row, the first in `bodies`, and a warning naming the
+    observation and both names.
+
+    Parameters:
+        ctx: The import run's context, for the logger.
+        state: What every row of the index is computed from.
+        schema: ``obs_surface_geometry_target``'s schema.
+        opus_id: The observation's OPUS id, for the warning.
+        bodies: Each body's raw name and its summary-file row, or None for a body whose
+            geometry the index row itself holds, in the order the rows are computed.
+        emit: Where each computed row goes.
+    """
+    instrument_obj = state.instrument_obj
+    # Every obs class mixes in the module that fills obs_surface_geometry_target.
+    assert isinstance(instrument_obj, ObsSurfaceGeometryTarget)
+    metadata = state.metadata
+    first_names: dict[str, str] = {}
+    for raw_name, geo_row in bodies:
+        metadata['surface_geo_row'] = geo_row
+        metadata['surface_geo_target_name'] = raw_name
+        target = instrument_obj.surface_geo_target(raw_name)
+        if target is None:
+            continue
+        if target in first_names:
+            import_util.log_nonrepeating_warning(
+                ctx,
+                f'Observation "{opus_id}" has surface geometry for "{first_names[target]}" '
+                f'and "{raw_name}", which are both {target}; only "{first_names[target]}" '
+                'is imported',
+            )
+            continue
+        first_names[target] = raw_name
+        category = surface_geometry.target_category(import_util.table_name_for_sfc_target(target))
+        obs_row = do_import_obs.import_observation_table(
+            ctx, instrument_obj, category, schema, metadata
+        )
+        emit(category, obs_row)
 
 
 def get_opus_products_rows_for_filespec(
@@ -669,11 +794,13 @@ def get_opus_products_rows_for_filespec(
 
     Each row is one file of one product type at one version: where it lives, how big it
     is, its checksum, and the ordering the results page shows the product types in. A
-    file that is not the current version is never checked by default.
+    file that is not the current version is never checked by default. A row's
+    ``file_number`` is its position in the list, from 1, which with the observation's id
+    is the table's primary key and keeps the observation's files in this order.
 
     Two kinds of file are left out. A shared index or summary file that does not list
     this observation contributes nothing, since it holds no data for it; that check runs
-    only for PDS3 and only without ``--import-dont-use-row-files``, so otherwise every
+    only for PDS3 and only without ``--no-row-files``, so otherwise every
     index file is listed. A PDS3 file whose shelf metadata is missing is left out too,
     with a warning, because its size and checksum are unknown.
 
@@ -683,7 +810,7 @@ def get_opus_products_rows_for_filespec(
         filespec: The observation's primary filespec.
         obs_general_id: The observation's ``obs_general`` row id.
         opus_id: The observation's OPUS id.
-        bundle_id: The bundle being imported.
+        bundle_id: The bundle being imported, for a warning's message.
         instrument_id: The OPUS instrument id.
 
     Returns:
@@ -709,7 +836,7 @@ def get_opus_products_rows_for_filespec(
         # A product that is not local has no absolute path; it cannot be named in the
         # message, and there is nothing to say about it beyond the ones that can.
         file_list_str = '  '.join([x.abspath for x in products[''][0] if x.abspath is not None])
-        if ctx.args.import_report_empty_products:
+        if ctx.args.report_empty_products:
             import_util.log_nonrepeating_warning(
                 ctx, f'Empty opus_product key for files: {file_list_str}'
             )
@@ -746,7 +873,7 @@ def get_opus_products_rows_for_filespec(
         # when the current index product type is skip.
         current_rows: list[dict[str, Any]] = []
         for sublist in list_of_sublists:
-            if not ctx.args.import_dont_use_row_files and skip_current_product_type:
+            if not ctx.args.no_row_files and skip_current_product_type:
                 current_rows = []
                 break
             for file_num, file in enumerate(sublist):
@@ -766,7 +893,7 @@ def get_opus_products_rows_for_filespec(
                 # about missing pickle files in _indexshelf-metadata, so for now we will
                 # assume the selection is always in the index file and create a row for
                 # it in db. Will fix this when pickle files in indexshelf is ready.
-                if not ctx.args.import_dont_use_row_files and file.is_index and pds_version == 3:
+                if not ctx.args.no_row_files and file.is_index and pds_version == 3:
                     basename = filespec.split('/')[-1]
                     selection = basename.split('.')[0]
                     try:
@@ -819,18 +946,9 @@ def get_opus_products_rows_for_filespec(
                 width = file.width or None
                 height = file.height or None
 
-                if 'obs_files' not in ctx.max_table_id_cache:
-                    ctx.max_table_id_cache['obs_files'] = import_util.find_max_table_id(
-                        ctx, 'obs_files'
-                    )
-                ctx.max_table_id_cache['obs_files'] = ctx.max_table_id_cache['obs_files'] + 1
-                table_id = ctx.max_table_id_cache['obs_files']
-
                 row = {
-                    'id': table_id,
                     'obs_general_id': obs_general_id,
                     'opus_id': opus_id,
-                    'bundle_id': bundle_id,
                     'instrument_id': instrument_id,
                     'version_number': version_number,
                     'version_name': version_name,
@@ -859,30 +977,6 @@ def get_opus_products_rows_for_filespec(
 
         rows += current_rows
 
+    for file_number, row in enumerate(rows, 1):
+        row['file_number'] = file_number
     return rows
-
-
-def remove_opus_id_from_tables(
-    ctx: ImportContext, table_rows: dict[str, list[dict[str, Any]]], opus_id: str
-) -> None:
-    """Drop every row an observation contributed, before any of them is written.
-
-    An observation can have more than one row in a table -- one per target in the
-    surface geometry tables -- so every match is removed rather than the first.
-
-    Parameters:
-        ctx: The import run's context, for the logger.
-        table_rows: The rows computed so far, keyed by table name, edited in place.
-        opus_id: The observation to drop.
-    """
-    for table_name in table_rows:
-        rows = table_rows[table_name]
-        i = 0
-        while i < len(rows):
-            if 'opus_id' in rows[i] and rows[i]['opus_id'] == opus_id:
-                import_util.log_debug(
-                    ctx, f'Removing "{opus_id}" from unwritten table "{table_name}"'
-                )
-                del rows[i]
-                continue  # There might be more than one in obs_surface_geometry
-            i += 1

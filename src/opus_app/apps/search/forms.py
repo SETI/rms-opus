@@ -10,11 +10,12 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from django import forms
-from django.apps import apps
 from django.conf import settings
 
+from opus_app.apps.search.models import Mult
 from opus_app.apps.search.views import get_param_info_by_slug, is_single_column_range
-from opus_app.apps.tools.app_utils import get_mult_name, get_numeric_suffix, strip_numeric_suffix
+from opus_app.apps.tools.app_utils import get_numeric_suffix, strip_numeric_suffix
+from opus_app.apps.tools.import_constants import mult_field_id
 from opus_support import parse_form_type
 
 if TYPE_CHECKING:
@@ -147,15 +148,14 @@ class SearchForm(forms.Form):
 
             elif form_type in settings.MULT_FORM_TYPES:
                 param_qualified_name = param_info.param_qualified_name()
-                mult_param = get_mult_name(param_qualified_name)
-                model = apps.get_model('search', mult_param.title().replace('_', ''))
+                field_id = mult_field_id(param_qualified_name)
 
                 # grouped mult fields
                 choices = [
                     (mult.label, mult.label)
-                    for mult in model.objects.filter(grouping=grouping, display='Y').order_by(
-                        'disp_order'
-                    )
+                    for mult in Mult.objects.filter(
+                        field_id=field_id, grouping=grouping, display='Y'
+                    ).order_by('disp_rank')
                 ]
 
                 if param_qualified_name == 'obs_surface_geometry_name.target_name':

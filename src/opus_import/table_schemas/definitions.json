@@ -1,13 +1,13 @@
 [
     {
         "field_name": "term",
-        "field_type": "char255",
+        "field_type": "varchar255",
         "field_notnull": true,
         "field_key": true
     },
     {
         "field_name": "context",
-        "field_type": "char50",
+        "field_type": "varchar50",
         "field_notnull": true,
         "field_key": "foreign",
         "field_key_foreign": [
@@ -19,10 +19,6 @@
         "field_name": "definition",
         "field_type": "text",
         "field_notnull": true
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp"
     },
     {
         "field_name": "id",

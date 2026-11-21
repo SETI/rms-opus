@@ -40,6 +40,12 @@ secret_key = "opus-ci-not-a-real-secret-key"
 debug = false
 allowed_hosts = ["127.0.0.1", "localhost", "testserver"]
 cache_server_prefix = "opus_ci"
+# A port nothing listens on, so the settings' memcached probe is refused and the
+# application runs on its local-memory cache wherever the suite runs, rather than
+# writing into whichever memcached the machine happens to have on its default port.
+cache_location = "127.0.0.1:1"
+conn_max_age = 300
+conn_health_checks = true
 public_url = "https://opus.pds-rings.seti.org/"
 product_http_path = "https://opus.pds-rings.seti.org/"
 viewmaster_url = "https://pds-rings.seti.org/"
@@ -52,6 +58,11 @@ fake_error404_probability = 0.0
 fake_error500_probability = 0.0
 
 [import]
-table_temp_prefix = "imp_"
 log_file = "/tmp/opus_ci_import.log"
 debug_log_file = "/tmp/opus_ci_import_debug.log"
+bulk_load = true
+transaction_rows = 100000
+index_workers = 1
+importers = 1
+stall_warning_minutes = 30
+status_interval_minutes = 5

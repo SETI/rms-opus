@@ -1,5 +1,4 @@
-"""The ``obs_surface_geometry__<TARGET>`` columns: where the observation fell on one
-body's
+"""The ``obs_surface_geometry_target`` columns: where the observation fell on one body's
 surface.
 
 One module per OPUS table, mixed into every obs class that fills the table. A column
@@ -10,16 +9,30 @@ outright.
 
 from typing import Any
 
-from opus_import.obs.field_types import FloatField, StrField
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_base import ObsBase
 
 
 class ObsSurfaceGeometryTarget(ObsBase):
-    """The ``obs_surface_geometry__<TARGET>`` columns, filled once per target.
+    """The ``obs_surface_geometry_target`` columns, filled once per body.
 
     Its ``field_obs_*`` methods each fill the schema column their name ends in,
-    declaring the type `opus_import.obs.field_types` gives that column.
+    declaring the type `opus_import.obs.field_types` gives that column. The body is the
+    one ``surface_geo_target_name`` in the metadata names.
     """
+
+    def surface_geo_target(self, target_name: str) -> str | None:
+        """Return the target a body's name in a surface geometry file resolves to.
+
+        Parameters:
+            target_name: The body's name as the file spells it, in any case.
+
+        Returns:
+            The target's name as `opus_import.config_targets.TARGET_NAME_INFO` keys it,
+            after the spelling corrections; ``'OTHER'`` for an unknown name under
+            ``--ignore-errors``; None for an unknown name otherwise, which is reported.
+        """
+        return self._get_target_info(target_name.upper())[0]
 
     ####################################
     ### FIELD METHODS FOR THIS TABLE ###
@@ -27,14 +40,20 @@ class ObsSurfaceGeometryTarget(ObsBase):
 
     ### Don't override these ###
 
-    def field_obs_surface_geometry_target_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_surface_geometry_target_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_surface_geometry_target_instrument_id(self) -> StrField:
-        return self.instrument_id
+    def field_obs_surface_geometry_target_target_name(self) -> MultFieldRet:
+        # The body this row is for, as a value of the selector's mult field
+        assert self._metadata is not None
+        target_name = self._metadata['surface_geo_target_name'].upper()
+        target_name, target_info = self._get_target_info(target_name)
+        if target_info is None:
+            return self._create_mult(None)
+        group_info = self._get_planet_group_info(target_name)
+        return self._create_mult(
+            col_val=target_name,
+            disp_name=target_info[2],
+            grouping=group_info['label'],
+            group_pin=group_info['disp_order'],
+        )
 
     # East Longitude
 
@@ -336,10 +355,11 @@ class ObsSurfaceGeometryTarget(ObsBase):
         `opus_import.obs.obs_ring_geometry.ObsRingGeometry.validate_ring_geo_fields`.
 
         Parameters:
-            row: The per-target surface geometry row this observation produced.
+            row: The surface geometry row this observation produced for one body.
             metadata: What the import has computed for this observation, for the bundle's
                 ``temporal_camera`` setting.
-            table_name: The ``obs_surface_geometry__<TARGET>`` table, for the message.
+            table_name: The body's category, ``obs_surface_geometry__<target>``, for the
+                message.
         """
         # This runs after all fields have been populated.
         # Compare min/max gridless fields and make sure they are the same

@@ -8,9 +8,10 @@ search *found*; :mod:`opus_app.apps.metadata` describes what is *searchable* and
 observations match; :mod:`opus_app.apps.cart` holds what a session has *selected* and
 builds the downloads.
 
-All three depend on the cache table :ref:`dev_guide_webapp_search_flow` describes, and
-every handler that returns a *page* of observations goes through one paging routine.
-``metadata`` counts and aggregates over that table instead, and never pages.
+All three depend on the search's rows of ``search_results`` that
+:ref:`dev_guide_webapp_search_flow` describes, and every handler that returns a *page* of
+observations goes through one paging routine. ``metadata`` counts and aggregates over
+those rows instead, and never pages.
 
 .. _dev_guide_webapp_results_app:
 
@@ -33,8 +34,7 @@ observations goes through :func:`~opus_app.apps.results.views.get_search_results
    * - ``api/data.(json|html|csv)``, ``__api/data.csv``
      - public
      - :func:`~opus_app.apps.results.views.api_get_data`
-   * - ``api/metadata/<opus_id>.(json|html|csv)``,
-       ``api/metadata_v2/<opus_id>.(json|html|csv)``
+   * - ``api/metadata/<opus_id>.(json|html|csv)``
      - public
      - :func:`~opus_app.apps.results.views.api_get_metadata`
    * - ``__api/metadata/<opus_id>.(json|html|csv)``
@@ -80,13 +80,18 @@ order, an auxiliary dictionary and an error pair.
 
 It has two modes:
 
-**Reading a search.** It resolves the query string to a cache table, creates a
-**temporary table** holding just that page's slice of it -- ``sort_order`` and ``id``,
-with the limit and offset applied -- INNER JOINs the wide query to that, and drops the
-temporary table before returning. Settling the ordering and the paging before the joins
-run is the point.
+**Reading a search.** It resolves the query string to the search's id and INNER JOINs
+the wide query to the search's results
+(:func:`~opus_app.apps.tools.sql_builder.search_results_source`) on ``id`` **and on the
+page's range of** ``sort_order``
+(:func:`~opus_app.apps.tools.sql_builder.sort_order_range`). A search's results are
+numbered from 1 with no gaps, so the rows after the first *offset* and *limit* of them are
+exactly those whose ``sort_order`` lies between *offset* + 1 and *offset* + *limit*, and
+the ``(search_id, sort_order)`` primary key of ``search_results`` reads only those: the
+last page costs what the first does, settling the ordering and the paging before the
+joins run.
 
-**Reading the cart.** No temporary table: it joins the ``cart`` table directly and
+**Reading the cart.** It joins the ``cart`` table directly and
 applies the sort order and the paging to the main statement. The paging parameters are
 named differently in this mode, so that a browse position and a cart position can both be
 in one URL.
@@ -95,8 +100,9 @@ Around the query it does four things worth knowing. Every requested slug is reso
 through :func:`~opus_app.apps.search.views.get_param_info_by_slug`, so an unknown column
 is a 400 rather than a SQL error. Two columns may be prepended and appended to the
 caller's list and stripped off the right end afterwards, which is how a caller gets the
-OPUS ID or the preview JSON without them appearing in the output. A SQL NULL becomes the
-string ``'N/A'``. And every value is put through
+OPUS ID or the preview JSON without them appearing in the output. A SQL NULL becomes
+:data:`~opus_app.apps.results.views.NULL_RESULT`, the string ``'N/A'``. And every value is
+put through
 :func:`opus_support.units.format_unit_value`, so a number arrives already formatted in
 the unit the request asked for.
 
@@ -110,17 +116,28 @@ What each handler returns
 :func:`~opus_app.apps.results.views.api_get_data_and_images`
     One page of the browse or cart grid: per observation an OPUS ID, the metadata column
     values, the four preview images with their dimensions, and whether the observation is
-    in the cart, in the recycle bin, or neither. It is the busiest endpoint in OPUS.
+    in the cart, in the recycle bin, or neither. It is the busiest endpoint in OPUS. The
+    preview JSON is the column ``**previewimages``, which the page reads from
+    ``obs_preview``, joined to ``obs_general`` by ``obs_general_id`` as any other
+    category's table is. :func:`~opus_app.apps.results.views.page_preview_json` decodes
+    it, and reads an observation without an ``obs_preview`` row, which the page delivers
+    as :data:`~opus_app.apps.results.views.NULL_RESULT`, as no preview images, for which
+    the not-found placeholder is shown.
 
 :func:`~opus_app.apps.results.views.api_get_data`
     The public tabular page: the labels, the rows, and how many observations the search
-    found. JSON, HTML or CSV.
+    found. JSON, HTML or CSV. A page has one row per observation: the surface geometry
+    selector, whose category holds one row per body, is selected as
+    :func:`~opus_app.apps.search.views.selector_label` rather than joined.
 
 :func:`~opus_app.apps.results.views.api_get_metadata` and :func:`~opus_app.apps.results.views.api_get_metadata_internal`
     One observation's metadata. Both delegate to
     :func:`~opus_app.apps.results.views.get_metadata`. Without a column list it walks the
     "Constraints" categories in display order and returns every displayable field of each;
     with ``cols`` it returns exactly those fields, through ``_get_metadata_by_slugs``. The
+    surface geometry bodies the observation has rows of are read in one query
+    (:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id`), and a body's category is
+    read only when the observation has the body. The
     private form differs in three ways: its HTML is the Details tab's flavor, with
     tooltips and search icons; its column slugs may carry a ``:unit`` suffix; and it
     accepts a list of columns to embed in the search links it renders.
@@ -128,7 +145,7 @@ What each handler returns
 :func:`~opus_app.apps.results.views.api_get_images_by_size`, :func:`~opus_app.apps.results.views.api_get_images` and :func:`~opus_app.apps.results.views.api_get_image`
     The preview images for a search at one size, for a search at every size, and for one
     observation. All three share ``_api_get_images``, which reads the preview JSON out of
-    ``obs_general`` and hands it to
+    ``obs_preview``, joined to the page by ``obs_general_id``, and hands it to
     :func:`~opus_app.apps.tools.file_utils.get_pds_preview_images`. The single-observation
     form works by injecting an OPUS ID constraint into a copy of the query string, so that
     one code path serves both.
@@ -140,22 +157,25 @@ What each handler returns
 
 :func:`~opus_app.apps.results.views.api_get_categories_for_opus_id` and :func:`~opus_app.apps.results.views.api_get_categories_for_search`
     Which "Constraints" categories an observation appears in, and which a search
-    triggers. The first probes each table for a row; the second uses
+    triggers. The first probes each table for a row, and answers every surface geometry
+    body's category from one query listing the bodies the observation has rows of
+    (:func:`~opus_app.apps.tools.db_utils.targets_for_opus_id`), in ``table_names``
+    display order; the second uses
     :func:`~opus_app.apps.results.views.get_triggered_tables`. Both skip
     ``obs_surface_geometry_name``, which is not a data table.
 
 :func:`~opus_app.apps.results.views.api_get_product_types_for_opus_id` and :func:`~opus_app.apps.results.views.api_get_product_types_for_search`
     The product types available for one observation, or across a whole search. The
-    search form caches its built response in the Django cache under the cache table's
-    name.
+    search form caches its response in the Django cache under the search's number.
 
 :func:`~opus_app.apps.results.views.get_triggered_tables`
     Which tables a search makes relevant. With no selections it is the ``BASE_TABLES``
     setting; otherwise it walks every ``partables`` row and fires a trigger when the
     search's observations all carry the triggering value. A surface geometry trigger is
-    the exception, compared as text rather than through a query --
-    :ref:`dev_guide_import_steps_do_partables` explains why. The result is ordered by the
-    ``table_names`` display order and cached.
+    the exception: it fires when its body is one of the bodies the search selects, each
+    resolved to its ``mult`` id whether the search names it by label or by value, rather
+    than through a query (:ref:`dev_guide_import_steps_do_partables`). The result is
+    ordered by the ``table_names`` display order and cached.
 
 :func:`~opus_app.apps.results.views.labels_for_slugs`
     A slug list to its display labels, with the unit appended. The cart app imports it
@@ -211,25 +231,34 @@ each simply calls its public twin, which is where the
      - public
      - :func:`~opus_app.apps.metadata.views.api_get_fields`
 
-**The result count** is a row count over the cache table, cached in the Django cache under
-the installation's cache prefixes plus ``:resultcount:`` and that table's name.
-:func:`~opus_app.apps.metadata.views.get_result_count_helper` is
-the routine, and it returns the count, the table name and an error response, so that a
-caller that also needs the table does not resolve the search twice. The results and cart
-apps both use it.
+**The result count** is the ``result_count`` stored in the search's ``user_searches``
+row when its results were stored, so counting a search's results reads one row.
+:func:`~opus_app.apps.metadata.views.get_result_count_helper` is the routine, and it
+returns the count, the search's id and an error response, so that a caller that also
+needs the search's results does not resolve the search twice. The results and cart apps
+both use it.
 
 **The mult counts** are what the interface's green numbers beside each checkbox are: for
 each value of a mult field, how many of the search's observations have it. **The field's
 own constraint is removed from the search first**, so that ticking one box does not make
-the other boxes read zero. A ``MULTIGROUP`` field holds a JSON list, so its counts come
-from a :class:`~opus_app.apps.tools.sql_builder.JSONTable` that explodes the list into
-rows. The values come back in the mult table's display order.
+the other boxes read zero. The field's category is read as
+:func:`~opus_app.apps.tools.db_utils.resolve_category` resolves it, so the surface
+geometry selector's counts are over every row of ``obs_surface_geometry_target``, one per
+observation and body. A ``MULTIGROUP`` field holds a JSON list, so its counts group the
+rows of the column's junction table by ``mult_id``, joined to the search's rows of
+``search_results`` when the search has selections; an observation counts once for each
+distinct value its list holds (:ref:`dev_guide_database_schema_junction_tables`). The
+values come back in the order of their ``disp_rank``, the integer rank finalization gives
+each value of the field
+(:ref:`dev_guide_import_steps_do_finalize_mult`).
 
 **The range endpoints** are the smallest and largest value a numeric field takes over the
 search, plus how many observations have neither. The field's own constraints are removed
 for the same reason as above. With no search at all it uses the ORM's aggregates over the
-whole table; with one it issues raw ``MIN`` and ``MAX`` joined to the cache table. The
-answer is cached per field, per unit and per search.
+whole category; with one it issues raw ``MIN`` and ``MAX`` joined to the search's results.
+Either way a surface geometry body's category keeps to the body's rows of
+``obs_surface_geometry_target``, which every body shares.
+The answer is cached per field, per unit and per search.
 
 **The field descriptions** are the public field dictionary:
 :func:`~opus_app.apps.metadata.views.get_fields_info` builds one entry per field, or one
@@ -249,7 +278,7 @@ The ``cart`` app
 ----------------
 
 The one app that writes rows a user can see. (The search app writes too --
-``user_searches`` and the ``cache_NNN`` tables -- but nothing a user selected.) A cart is
+``user_searches`` and ``search_results`` -- but nothing a user selected.) A cart is
 the set of ``cart`` rows carrying one session id; a row whose ``recycled`` column is set
 is in the recycle bin -- still in the table, counted separately, and left out of the
 download totals and the archives themselves.
@@ -312,8 +341,12 @@ Adding a range
 
 ``_edit_cart_range`` adds or removes an inclusive range of observations, given the two
 ends' OPUS IDs, **in the current sort order**. Reading the browse list it uses the
-search's cache table; reading the cart it has to build a **temporary table** of the
-session's cart in sort order first, because the cart has no cache table of its own. The
+search's results (:func:`~opus_app.apps.tools.sql_builder.search_results_source`);
+reading the cart it numbers the session's cart in sort order with ``ROW_NUMBER()`` in a
+derived table (:func:`~opus_app.apps.tools.sql_builder.row_number`, aliased
+``cart_order``), which has the same ``id`` and ``sort_order`` columns, because the cart
+has no stored results of its own. Each derived table is computed afresh by each statement
+that names it. The
 delete form explicitly carries the session id in its WHERE clause, so it cannot reach
 another user's cart.
 
@@ -386,7 +419,7 @@ The model
 ~~~~~~~~~
 
 :class:`opus_app.apps.cart.models.Cart` is a hand-written unmanaged model: the session
-id, a foreign key to ``obs_general``, the OPUS ID, the recycled flag and a timestamp. The
+id, a foreign key to ``obs_general``, the OPUS ID and the recycled flag. The
 generated models file carries a ``ZZ``-prefixed duplicate of the same table, which
 nothing uses.
 

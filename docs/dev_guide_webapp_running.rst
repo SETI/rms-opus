@@ -39,8 +39,9 @@ Running it from the command line
 --------------------------------
 
 Django management commands are how the application is administered: creating its contrib
-tables, gathering its static files, opening a shell with the models loaded, and running
-the development server. There are three ways to reach them. The first two are the same
+tables, gathering its static files, opening a shell with the models loaded, running
+the development server, pruning its stored searches, and warming the landing page after a
+deploy. There are three ways to reach them. The first two are the same
 program under two names; the third is Django's own command, and is the only one that
 needs a second environment variable.
 
@@ -88,6 +89,15 @@ Then open ``http://127.0.0.1:8000/opus/``, or ask the API a question directly::
 The number depends on what has been imported into the database this installation names;
 that it answers at all is the check.
 
+**A database must be finished before it is served.** ``runserver`` serves
+:mod:`opus_app.wsgi` (the settings' ``WSGI_APPLICATION``), as the production server does,
+so it applies the same check as it starts: unless the database's ``schema_version`` row
+holds this release's version in the ``ready`` state (:ref:`dev_guide_database_schema_version`),
+every request is answered 503 with a message naming the remedy. A database built with
+``opus_import --do-it-all`` needs ``opus_import --write-schema-version`` before it is
+served; the running server picks the row up on its next request. Management commands other than the servers do not check, so ``migrate`` and the
+rest work against any database.
+
 Two things about what those commands do:
 
 **The site is served twice.** ``http://127.0.0.1:8000/opus/`` and
@@ -103,8 +113,10 @@ to do the second time.
 The commands worth knowing
 --------------------------
 
-OPUS adds no management commands of its own, so these are all Django's. Each one below
-takes ``opus_manage`` or ``python manage.py`` in front of it.
+``prune`` and ``warm_search`` are OPUS's, defined by the ``search`` app in
+:mod:`opus_app.apps.search.management.commands.prune` and
+:mod:`opus_app.apps.search.management.commands.warm_search`; the others are Django's own. Each one below takes
+``opus_manage`` or ``python manage.py`` in front of it.
 
 .. list-table::
    :header-rows: 1
@@ -130,6 +142,24 @@ takes ``opus_manage`` or ``python manage.py`` in front of it.
    * - ``diffsettings``
      - Prints the settings that differ from Django's defaults, which is the quickest way
        to see what a configuration file actually produced.
+   * - ``prune``
+     - Removes the least recently used searches until ``search_results`` holds no more
+       than ``--max-rows`` rows and none has gone unused for ``--unused-days`` days, then
+       expired sessions, then the cart rows of sessions that no longer exist. Every run
+       first reports the table's size and what it is about to remove, and ``--dry-run``
+       reports that and changes nothing. A server runs it from cron;
+       :ref:`user_guide_deployment_prune` gives the options, their defaults and the
+       sizing rule.
+   * - ``warm_search``
+     - Asks the running site's API, over HTTP and several requests at a time, for the
+       landing page -- the empty search's result count and first page, the default
+       widgets' fan-out, and the empty search's counts for every mult field -- and for
+       one search per value of each common field, such as each planet, mission and
+       instrument, so that their results are built and their answers cached. It prints
+       each request's status and time and the total, and exits with failure if a request
+       does not answer 200. Both deploy scripts run it after the switch;
+       :ref:`user_guide_deployment_warm_search` says when, and
+       :ref:`dev_guide_webapp_search_warm` what it warms.
 
 **The test suites are not run through any of them** -- ``pytest`` runs the holdings-free
 suite and ``pytest integration_tests`` the live-database ones; see
@@ -204,10 +234,14 @@ Caching, and clearing it
 :ref:`user_guide_installation_prereqs` says how a server installs ``memcached``, and why
 its client is not a declared dependency. The behavior to know here is the fallback:
 :mod:`opus_app.settings` decides at import time, and it decides **twice** -- whether
-``pymemcache`` imports, and whether a connection to a local memcached succeeds -- falling
-back to Django's per-process local-memory cache if the import fails or the connection is
-**refused**. Any other connection failure, a timeout or a name that resolves oddly, is
-**not caught** and stops the application at startup.
+``pymemcache`` imports, and whether the memcached named by the configuration's
+``[django] cache_location`` (``127.0.0.1:11211`` unless it says otherwise, or ``unix:``
+and a socket's path) stores a test key and says so, with a second allowed for the
+connection and a second for the answer -- falling back to Django's per-process
+local-memory cache if the import fails or the write does not succeed, for whatever
+reason: refused, unanswered, a name that does not resolve, or a socket that is missing
+or not writable. The same address is the one ``CACHES`` points Django's cache at,
+so the server the check found answering is the one used.
 
 Emptying the shared cache is one module::
 
@@ -232,7 +266,11 @@ worth reading once end to end. It has three parts:
 
 **Django's own settings**, assigned from the configuration file: the secret key, the
 debug flag, the allowed hosts, the database connection, the static root, and the log
-levels. The database engine is chosen from the configured *brand* through a two-entry
+levels. Each worker thread keeps its database connection across requests for
+``[django] conn_max_age`` seconds, checking it before reuse when ``[django]
+conn_health_checks`` is true, so a request opens a connection only when its thread has
+none, the one it had reached that age at the end of an earlier request (Django closes it
+then, healthy or not), or the server dropped it. The database engine is chosen from the configured *brand* through a two-entry
 map, so the web application and the import pipeline cannot disagree about which database
 they are talking to.
 

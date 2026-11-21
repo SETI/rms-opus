@@ -3,9 +3,9 @@
 **Scope:** what would have to change in the application and its operations, beyond the
 database schema, to run OPUS with one database server and several stateless web workers
 behind a load balancer that sends any request to any worker. The schema itself needs no
-change for that layout (`plans/2026-10-28_database_design.md`, §5). None of the items
-below is part of the database performance plan; this file exists so that they are not
-lost and are not mistaken for that plan's work. The port itself is #1199.
+change for that layout (`plans/archive/2026-10-28_database_design.md`, §5). None of the
+items below is part of the database performance plan; this file exists so that they are
+not lost and are not mistaken for that plan's work. The port itself is #1199.
 
 **Date:** 2026-10-28. Each item names what the code does today, in the tree at
 `2179d937`, with the file, and what the multi-host layout would need. The plan's PR-00,
@@ -138,7 +138,8 @@ parameters and the default port. Each request opens and closes its own connectio
   search build in progress; `[django] search_build_timeout` should stay below
   it, or the front end answers 504 while the search build completes and the next
   request finds it done.
-- No read replica on the search path (`plans/2026-10-28_database_design.md`, §5).
+- No read replica on the search path (`plans/archive/2026-10-28_database_design.md`,
+  §5).
 
 ## 6. Managed database services
 

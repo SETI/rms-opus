@@ -30,3 +30,15 @@ lineno  # unused variable (warnings.showwarning callback)
 # subprocess starts, which is the whole point, and pytest resolves the dependency by
 # parameter name -- so the parameter cannot be renamed or dropped.
 subprocess_coverage  # unused variable (pytest fixture requested for its effect)
+
+# `signum` and `frame` are the two positional parameters every `signal.signal` handler
+# receives. The SIGINT handlers in src/opus_import/cli.py (a queue importer's) and
+# src/opus_import/coordinator.py (the coordinator's) act on the interrupt itself and read
+# neither, but cannot drop them without breaking the handler signature.
+signum  # unused variable (signal handler signature)
+frame  # unused variable (signal handler signature)
+
+# `signal_restored` is a pytest fixture in tests/opus_import/test_import_pool.py
+# requested by name for its effect: it puts this process's SIGINT handler back after a
+# test whose pool workers interrupt themselves.
+signal_restored  # unused variable (pytest fixture requested for its effect)

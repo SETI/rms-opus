@@ -23,8 +23,9 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
 
-from opus_app.apps.search.models import ObsGeneral
+from opus_app.apps.search.models import ObsPreview
 from opus_app.apps.tools import sql_builder
+from opus_app.apps.tools.db_utils import unserved_observations_exist
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -54,8 +55,12 @@ def get_pds_products(
             `@` matches the current version only.
 
     Returns:
-        A dict with one entry per opus_id given, in the order they were given; an
-        opus_id with no matching file maps to an empty dict. Each entry maps a
+        A dict with one entry per opus_id given, keyed as it was given, in the order
+        they were given; an opus_id with no matching file maps to an empty dict. An
+        opus_id finds a stored one as the ASCII ``opus_id`` column compares them
+        (`sql_builder.ascii_collation_key`): in any case, its accents folded and its
+        trailing spaces ignored, so several spellings of one observation's ID each map
+        to that observation's files, the same dict for each. Each entry maps a
         version name to a dict keyed by
         `(category, sort_order, short_name, full_name)`, whose value is the list of
         that product type's files. What each file is reported as is chosen by
@@ -77,10 +82,6 @@ def get_pds_products(
 
     assert len(opus_id_list) > 0
     assert len(product_types) > 0
-
-    results: dict[
-        str, dict[str, dict[tuple[str, int, str, str], list[Any]]]
-    ] = {}  # Dict of opus_ids
 
     cursor = connection.cursor()
 
@@ -107,7 +108,10 @@ def get_pds_products(
     if loc_type == 'raw':
         select.add_column(obs_files_column('checksum'))
 
-    select.add_from('obs_files')
+    # The served observations' files: an unserved generation may hold the same OPUS ID.
+    files_source = select.add_from('obs_files')
+    if unserved_observations_exist():
+        files_source.append_join(sql_builder.served_observations_join('obs_files'))
     if product_types != ['all']:
         # Because we didn't store @version in the database, when multiple versions (or
         # product types) are passed in, we need to query the database by both short name
@@ -155,22 +159,27 @@ def get_pds_products(
         select.add_where(
             sql_builder.parenthesize(sql_builder.join_exprs(product_type_conditions, 'OR'))
         )
-    select.add_where(sql_builder.in_sequence(obs_files_column('opus_id'), opus_id_list))
+    select.add_where(
+        sql_builder.in_sequence(
+            obs_files_column('opus_id'), [sql_builder.ascii_comparable(x) for x in opus_id_list]
+        )
+    )
     select.add_order_by(obs_files_column('opus_id'))
     select.add_order_by(obs_files_column('version_number'), descending=True)
     select.add_order_by(obs_files_column('sort_order'))
     select.add_order_by(obs_files_column('product_order'))
-    # Keep individual files in original order
-    select.add_order_by(obs_files_column('id'))
+    # Keep individual files in the order the import wrote them
+    select.add_order_by(obs_files_column('file_number'))
 
     sql, values = select.build()
     log.debug('get_pds_products SQL: %r %r', sql, values)
     cursor.execute(sql, values)
 
-    # We do this here so if there aren't any products, there's still an empty
-    # dictionary returned
-    for opus_id in opus_id_list:
-        results[opus_id] = {}  # Dict of versions
+    # The products are gathered under each stored OPUS ID's collation key, and each
+    # requested OPUS ID then takes those of the stored one it finds. A caller's spelling
+    # may differ from the stored ID in case, accents or trailing spaces, and several
+    # spellings may find one ID.
+    found: dict[str, dict[str, dict[tuple[str, int, str, str], list[Any]]]] = {}
 
     for row in cursor:
         path: str | None = None
@@ -217,11 +226,12 @@ def get_pds_products(
         # sort_order is in the format CASISSxxx where xxx is the original numeric
         # sort order
         sort_order = int(sort_order[6:])
-        if version_name not in results[opus_id]:
-            results[opus_id][version_name] = {}
+        versions = found.setdefault(sql_builder.ascii_collation_key(opus_id), {})
+        if version_name not in versions:
+            versions[version_name] = {}
         product_type = (category, sort_order, short_name, full_name)
-        if product_type not in results[opus_id][version_name]:
-            results[opus_id][version_name][product_type] = []
+        if product_type not in versions[version_name]:
+            versions[version_name][product_type] = []
 
         if path:
             if pds_version == 3:
@@ -250,10 +260,13 @@ def get_pds_products(
                 'size': size,
                 'pds_version': pds_version,
             }
-        if res not in results[opus_id][version_name][product_type]:
-            results[opus_id][version_name][product_type].append(res)
+        if res not in versions[version_name][product_type]:
+            versions[version_name][product_type].append(res)
 
-    return results
+    # An OPUS ID with no products still gets an entry, an empty dict of versions.
+    return {
+        opus_id: found.get(sql_builder.ascii_collation_key(opus_id), {}) for opus_id in opus_id_list
+    }
 
 
 def get_pds_preview_images(
@@ -267,8 +280,9 @@ def get_pds_preview_images(
     Parameters:
         opus_id_list: One opus_id, or a list or tuple of them; nothing at all is
             also accepted and gives an empty list back.
-        preview_jsons: The `obs_general.preview_images` entry for each opus_id, in
-            the same order, or nothing at all to look each one up.
+        preview_jsons: The `obs_preview.preview_images` entry for each opus_id, in
+            the same order, or nothing at all to look each one up, by the observation's
+            `obs_general` row and its `obs_preview` row.
         sizes: One image size, or a collection of them, out of `'thumb'`,
             `'small'`, `'med'` and `'full'`; all four when omitted.
         ignore_missing: When true, an observation with no preview image is reported
@@ -308,10 +322,10 @@ def get_pds_preview_images(
             preview_json = preview_jsons[idx]
         else:
             try:
-                preview_json = ObsGeneral.objects.get(opus_id=opus_id).preview_images
+                preview_json = ObsPreview.objects.get(obs_general__opus_id=opus_id).preview_images
             except ObjectDoesNotExist:  # pragma: no cover - import error
                 log.error(
-                    'get_pds_preview_images: Failed to find opus_id "%r" ' + 'in obs_general',
+                    'get_pds_preview_images: Failed to find opus_id "%r" ' + 'in obs_preview',
                     opus_id,
                 )
         viewset = None

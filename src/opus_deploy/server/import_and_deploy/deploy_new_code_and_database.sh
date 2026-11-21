@@ -28,9 +28,9 @@ if [[ $# < 1 || $# > 2 ]]; then
     echo "Usage: deploy_new_code_and_database.sh <database_name> [<version_spec>]"
     echo
     echo "  <version_spec>  a PEP 440 specifier appended to the distribution name,"
-    echo "                  for example '==3.23.0'. Omit it to install the newest"
-    echo "                  release. The deploy installs rms-opus from PyPI, so this"
-    echo "                  selects a release rather than a source revision."
+    echo "                  for example '==3.23.0', or '@' and a git branch, tag or"
+    echo "                  commit to install an unreleased revision, for example"
+    echo "                  '@main'. Omit it to install the newest release."
     exit 1
 fi
 
@@ -42,7 +42,19 @@ export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/
 export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
+source ${IMPORT_SCRIPT_DIR}/_version_spec.sh
+if ! check_version_spec deploy_new_code_and_database.sh "${OPUS_VERSION_SPEC}"; then
+    exit 1
+fi
+
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
+# One deploy at a time: held from before the served schema is read until the promotion
+# is done, and released when this script exits.
+source ${IMPORT_SCRIPT_DIR}/_deploy_lock.sh
+if ! take_deploy_lock "${OPUS_DIR}/deploy.lock"; then
+    echo "*** ABORTING: nothing was changed ***"
+    exit 1
+fi
 source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
 source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
@@ -54,13 +66,21 @@ export OPUS_SRC_DIR=${OPUS_DIR}/staged
 # rebuild.
 export OPUS_DIR_NAME=${OPUS_DB_NAME}_`date +%Y%m%dT%H%M%S`
 INSTALL_DIR=${OPUS_SRC_DIR}/${OPUS_DIR_NAME}
+source ${IMPORT_SCRIPT_DIR}/_promote_steps.sh
+export OPUS_PREVIOUS_DB_NAME=$(previous_db_name "${OPUS_DIR}/deployed/opus.toml" "${OPUS_DB_NAME}")
+echo "Sessions and carts carried over from: ${OPUS_PREVIOUS_DB_NAME:-(none)}"
 
 mkdir -p ${OPUS_LOG_DIR}
 # The application's log outlives the installation that wrote it, so a file left by a
 # deploy that ran as another account is made writable again rather than being an
 # installation that starts and cannot log.
 if [ -f ${OPUS_LOG_DIR}/opus_log.txt ]; then
-    sudo chmod ug+w ${OPUS_LOG_DIR}/opus_log.txt
+    if ! sudo chmod ug+w ${OPUS_LOG_DIR}/opus_log.txt; then
+        echo "ERROR: could not make ${OPUS_LOG_DIR}/opus_log.txt writable: sudo refused,"
+        echo "       as after a mistyped password, or chmod failed."
+        echo "*** ABORTING: nothing was built or switched ***"
+        exit 1
+    fi
 fi
 mkdir -p ${OPUS_SRC_DIR}
 
@@ -79,12 +99,26 @@ echo
 
 # Get sudo password input and cached, before anything long runs: the switch at the
 # end needs it, and being asked for it then would leave a built installation waiting
-# on a prompt nobody is watching.
-sudo echo
+# on a prompt nobody is watching. A password sudo does not accept ends the deploy here,
+# saying so, rather than at the switch.
+if ! sudo -v; then
+    echo "ERROR: sudo did not accept a password, and the switch at the end needs it."
+    echo "*** ABORTING: nothing was built or switched ***"
+    exit 1
+fi
 
 # Everything from here to the switch happens beside the running installation, which
 # goes on serving.
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh
+
+# Before anything writes to the database: it must be one this release imported and
+# finished, its schema_version row holding the release's version in the ready state.
+source ${IMPORT_SCRIPT_DIR}/_check_schema_version.sh
+if ! check_schema_version; then
+    echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+    exit 1
+fi
+
 pip install mod-wsgi
 
 # Django's contrib tables (sessions, auth, contenttypes, admin). The OPUS tables
@@ -94,10 +128,13 @@ pip install mod-wsgi
 opus_manage migrate
 opus_manage collectstatic --noinput
 
-opus_import --import-dictionary --cleanup-aux-tables
+# The import finalized the database. This reloads the dictionary, and empties the
+# search tables of any searches made while the staged installation was being tried out.
+opus_import --import-dictionary --reset-search-tables
 
-# The staged installation is complete. Switch to it, empty the shared cache, and
-# restart the workers.
+# The staged installation is complete. Carry the sessions and carts over from the
+# schema being served, switch to it, empty the shared cache, restart the workers, and
+# warm the landing page.
 source ${IMPORT_SCRIPT_DIR}/_promote.sh
 
 echo

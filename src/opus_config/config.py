@@ -51,8 +51,10 @@ Example of a complete file::
 """
 
 import functools
+import math
 import os
 import tomllib
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NoReturn
@@ -69,6 +71,54 @@ DATABASE_BRANDS = ('MySQL', 'PostgreSQL')
 #: names a method that `getattr` resolves on a logger, and ``Logger.warn`` raises a
 #: DeprecationWarning, which the unit suite turns into an error.
 LOG_LEVELS = ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+
+#: The memcached server `DjangoConfig.cache_location` names when the file does not.
+DEFAULT_CACHE_LOCATION = '127.0.0.1:11211'
+
+#: What begins a server address naming a Unix socket rather than a TCP port.
+UNIX_SOCKET_PREFIX = 'unix:'
+
+#: Seconds a worker thread keeps its database connection open when the file does not say.
+DEFAULT_CONN_MAX_AGE = 300
+
+#: The default seconds a search build waits for another worker's build of the same
+#: search, `DjangoConfig.search_build_timeout`.
+DEFAULT_SEARCH_BUILD_TIMEOUT = 270
+
+#: The default rows ``search_results`` is pruned to, `DjangoConfig.search_results_max_rows`.
+DEFAULT_SEARCH_RESULTS_MAX_ROWS = 50_000_000
+
+#: The most rows one bulk load writes in one transaction when the file does not say.
+DEFAULT_TRANSACTION_ROWS = 100_000
+
+#: How many tables finalization builds indexes on at once when the file does not say.
+DEFAULT_INDEX_WORKERS = 1
+
+#: How many processes compute an index's observations when the file does not say. One
+#: means the import's own process, with no pool.
+DEFAULT_WORKERS = 1
+
+#: The share of the computer's cores the parallelism ceiling allows when the file does not
+#: say.
+DEFAULT_CPU_FRACTION = 0.75
+
+#: The index rows one worker task covers when the file does not say.
+DEFAULT_WORKER_ROWS = 500
+
+#: How many importers ``opus_import_all`` starts when neither its command line nor the
+#: file says, before it is capped at the total of workers.
+DEFAULT_IMPORTERS = 4
+
+#: The minutes an importer may go without committing a chunk before ``opus_import_all``
+#: reports it as stalled, when the file does not say.
+DEFAULT_STALL_WARNING_MINUTES = 30
+
+#: The minutes between ``opus_import_all``'s totals lines when its output is not a
+#: terminal, when the file does not say.
+DEFAULT_STATUS_INTERVAL_MINUTES = 5
+
+#: The ``workers`` or ``index_workers`` value that asks for the ceiling itself.
+MAX_WORKERS = 'max'
 
 #: Names of the tables a configuration file must contain, in file order.
 TABLE_NAMES = ('database', 'paths', 'django', 'import')
@@ -149,6 +199,23 @@ class DjangoConfig:
         allowed_hosts: Host names and addresses Django is permitted to serve.
         cache_server_prefix: Prefix for every memcached key, which lets several
             installations share one memcached without colliding.
+        cache_location: The memcached server the web application uses, as
+            ``host:port`` for a TCP port or ``unix:`` and an absolute path for a Unix
+            socket. The default is ``127.0.0.1:11211``, memcached's own port on the
+            same machine.
+        conn_max_age: Seconds each worker thread keeps its database connection open
+            across requests, Django's ``CONN_MAX_AGE``; 0 opens and closes one for every
+            request. The default is 300.
+        conn_health_checks: Whether a kept connection is checked before a request
+            reuses it, and replaced if the server has dropped it, Django's
+            ``CONN_HEALTH_CHECKS``. The default is true.
+        search_build_timeout: Seconds a request building a search's results waits for
+            another worker already building the same search, as the session's
+            ``innodb_lock_wait_timeout`` during the build. It has to be at least 30
+            seconds below the web server's worker timeout. The default is 270.
+        search_results_max_rows: The rows ``opus_manage prune`` cuts ``search_results``
+            down to by default, removing the least recently used searches first. The
+            default is 50,000,000.
         public_url: Public URL of this OPUS installation.
         product_http_path: Root URL products are retrieved from.
         viewmaster_url: Root URL of the viewmaster file browser.
@@ -170,6 +237,11 @@ class DjangoConfig:
     debug: bool
     allowed_hosts: tuple[str, ...]
     cache_server_prefix: str
+    cache_location: str
+    conn_max_age: int
+    conn_health_checks: bool
+    search_build_timeout: int
+    search_results_max_rows: int
     public_url: str
     product_http_path: str
     viewmaster_url: str
@@ -188,15 +260,101 @@ class ImportConfig:
     """Settings of the import pipeline.
 
     Attributes:
-        table_temp_prefix: Prefix of the temporary tables an import builds before
-            copying them over the permanent ones.
         log_file: File the pipeline writes its information-level log to.
         debug_log_file: File the pipeline writes its debug-level log to.
+        bulk_load: Whether observation rows are written with ``LOAD DATA LOCAL
+            INFILE`` from a scratch file, rather than with ``INSERT`` statements. The
+            default is true; the import falls back to ``INSERT`` statements on its own
+            when the server refuses local files.
+        scratch_dir: Directory the bulk load writes its scratch files in, or None for
+            the system temporary directory.
+        transaction_rows: The most rows one bulk load writes in one transaction. The
+            default is 100,000.
+        index_workers: How many tables finalization builds secondary indexes on at
+            once, each over a connection of its own, or `MAX_WORKERS` for the ceiling
+            (`resolve_parallelism`). The default is 1, because the database server,
+            which does the work, may share the computer.
+        server_tmpdir: A directory on the database server's host that ``mysqld`` can
+            write, where it sorts the indexes finalization builds, or None to leave the
+            server's own setting.
+        workers: How many processes compute an index's observations, or `MAX_WORKERS`
+            for the ceiling. The default is 1, the import's own process with no pool.
+        cpu_fraction: The share of the cores the ceiling allows, greater than 0 and at
+            most 1. The default is 0.75.
+        worker_rows: The index rows one worker task covers. The default is 500.
+        importers: How many importers ``opus_import_all`` starts on this computer. The
+            default is 4. The importers started are capped at the total of workers, so
+            with the default of one worker a run starts one importer.
+        stall_warning_minutes: How long an importer that is alive may go without
+            committing a chunk before ``opus_import_all`` reports it as stalled. It is
+            never stopped for it. The default is 30.
+        status_interval_minutes: How often ``opus_import_all`` logs its totals line when
+            its output is not a terminal. The default is 5.
     """
 
-    table_temp_prefix: str
     log_file: str
     debug_log_file: str
+    bulk_load: bool
+    scratch_dir: str | None
+    transaction_rows: int
+    index_workers: int | str
+    server_tmpdir: str | None
+    workers: int | str
+    cpu_fraction: float
+    worker_rows: int
+    importers: int
+    stall_warning_minutes: int
+    status_interval_minutes: int
+
+
+@dataclass(frozen=True)
+class Parallelism:
+    """How many processes and connections an import may use, and why.
+
+    Attributes:
+        cores: The cores the process may run on, as counted, which the ceiling is
+            computed from.
+        cpu_fraction: The share of `cores` the ceiling allows.
+        ceiling: ``max(1, floor(cores * cpu_fraction))``, the most either count may be.
+        workers: The processes that compute an index's observations.
+        index_workers: The tables finalization builds indexes on at once.
+        capped: Each count asked for above the ceiling and lowered to it, as its
+            source and the number asked for, such as ``[import] workers 24``.
+    """
+
+    cores: int
+    cpu_fraction: float
+    ceiling: int
+    workers: int
+    index_workers: int
+    capped: tuple[str, ...] = ()
+
+    def describe(self) -> str:
+        """Return the one line an import logs about its parallelism.
+
+        Returns:
+            The cores detected, the fraction, the ceiling, both counts, and any count
+            lowered to the ceiling.
+        """
+        return (
+            f'Parallelism: {self.cores} cores detected, cpu_fraction '
+            f'{self.cpu_fraction:g}, ceiling {self.ceiling}; workers {self.workers}, '
+            f'index_workers {self.index_workers}{describe_capped(self.capped)}'
+        )
+
+
+def describe_capped(capped: Sequence[str]) -> str:
+    """Return the clause a parallelism line ends with when a count was lowered.
+
+    Parameters:
+        capped: Each count lowered to the ceiling, as `Parallelism.capped` holds them.
+
+    Returns:
+        ``"; capped at the ceiling: "`` and the counts, or an empty string for none.
+    """
+    if len(capped) == 0:
+        return ''
+    return '; capped at the ceiling: ' + ', '.join(capped)
 
 
 @dataclass(frozen=True)
@@ -396,28 +554,51 @@ class _TableReader:
             f'not {type(value).__name__}'
         )
 
-    def read_optional_int(self, key: str) -> int | None:
+    def read_int(self, key: str, *, default: Any = _REQUIRED, minimum: int | None = None) -> int:
+        """Read a whole number.
+
+        Parameters:
+            key: The key to read.
+            default: Value to use when the key is absent; by default the key is
+                required.
+            minimum: The smallest value allowed, or None for no bound.
+
+        Returns:
+            The number.
+
+        Raises:
+            ConfigError: If the key is missing and has no default, its value is not a
+                whole number, or it is below ``minimum``. A boolean is rejected even
+                though Python counts one as an integer.
+        """
+        value = self._take(key, default)
+        if isinstance(value, bool) or not isinstance(value, int):
+            self._fail(f'{key!r} must be a whole number, not {type(value).__name__}')
+        if minimum is not None and value < minimum:
+            self._fail(f'{key!r} must be at least {minimum}, not {value}')
+        return value
+
+    def read_optional_int(self, key: str, *, minimum: int | None = None) -> int | None:
         """Read a whole number that may be left out of the file.
 
         Parameters:
             key: The key to read.
+            minimum: The smallest value allowed, or None for no bound.
 
         Returns:
             The number, or None if the key is absent.
 
         Raises:
-            ConfigError: If the key is present but its value is not a whole number.
-                A boolean is rejected even though Python counts one as an integer.
+            ConfigError: If the key is present but its value is not a whole number, or
+                it is below ``minimum``. A boolean is rejected even though Python counts
+                one as an integer.
         """
-        value = self._take(key, None)
-        if value is None:
+        if key not in self._values:
             return None
-        if isinstance(value, bool) or not isinstance(value, int):
-            self._fail(f'{key!r} must be a whole number, not {type(value).__name__}')
-        return value
+        return self.read_int(key, minimum=minimum)
 
-    def read_float(self, key: str, *, default: Any = _REQUIRED) -> float:
-        """Read a number, accepting one written without a decimal point.
+    def read_int_or_max(self, key: str, *, default: Any = _REQUIRED) -> int | str:
+        """Read a count of at least 1, or `MAX_WORKERS` for the ceiling.
 
         Parameters:
             key: The key to read.
@@ -425,17 +606,98 @@ class _TableReader:
                 required.
 
         Returns:
-            The number, as a float.
+            The number, or `MAX_WORKERS`.
 
         Raises:
             ConfigError: If the key is missing and has no default, or its value is
-                not a number. A boolean is rejected even though Python counts one as
-                an integer.
+                neither a whole number of at least 1 nor the string ``"max"``. A boolean
+                is rejected even though Python counts one as an integer.
+        """
+        value = self._take(key, default)
+        if isinstance(value, str):
+            if value != MAX_WORKERS:
+                self._fail(f'{key!r} must be a whole number or "{MAX_WORKERS}", not {value!r}')
+            return value
+        if isinstance(value, bool) or not isinstance(value, int):
+            self._fail(
+                f'{key!r} must be a whole number or "{MAX_WORKERS}", not {type(value).__name__}'
+            )
+        if value < 1:
+            self._fail(f'{key!r} must be at least 1, not {value}')
+        return value
+
+    def read_float(
+        self,
+        key: str,
+        *,
+        default: Any = _REQUIRED,
+        above: float | None = None,
+        maximum: float | None = None,
+    ) -> float:
+        """Read a number, accepting one written without a decimal point.
+
+        Parameters:
+            key: The key to read.
+            default: Value to use when the key is absent; by default the key is
+                required.
+            above: A value the number must be greater than, or None for no bound.
+            maximum: The largest value allowed, or None for no bound.
+
+        Returns:
+            The number, as a float.
+
+        Raises:
+            ConfigError: If the key is missing and has no default, its value is not a
+                number, or it is outside the bounds. A boolean is rejected even though
+                Python counts one as an integer.
         """
         value = self._take(key, default)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             self._fail(f'{key!r} must be a number, not {type(value).__name__}')
+        if above is not None and value <= above:
+            self._fail(f'{key!r} must be greater than {above:g}, not {value}')
+        if maximum is not None and value > maximum:
+            self._fail(f'{key!r} must be at most {maximum:g}, not {value}')
         return float(value)
+
+    def read_server_address(self, key: str, *, default: Any = _REQUIRED) -> str:
+        """Read a server address: a ``host:port`` network address or a Unix socket.
+
+        A Unix socket is written ``unix:`` and the socket's absolute path, the form
+        Django's memcached backends take.
+
+        Parameters:
+            key: The key to read.
+            default: Value to use when the key is absent; by default the key is
+                required.
+
+        Returns:
+            The address, exactly as written in the file.
+
+        Raises:
+            ConfigError: If the key is missing and has no default, its value is not a
+                string, the string holds a comma or a semicolon, or it is neither
+                ``unix:`` and an absolute path nor a non-empty host, a colon, and a port
+                number from 1 to 65535.
+        """
+        value = self.read_str(key, default=default)
+        # Django reads a memcached location holding a comma or a semicolon as several
+        # servers, so such an address would be probed as one and used as others.
+        if ',' in value or ';' in value:
+            self._fail(f'{key!r} names one server, without "," or ";", not {value!r}')
+        if value.startswith(UNIX_SOCKET_PREFIX):
+            if not value.removeprefix(UNIX_SOCKET_PREFIX).startswith('/'):
+                self._fail(f'{key!r} must name a socket by its absolute path, not {value!r}')
+            return value
+        host, separator, port = value.rpartition(':')
+        # isdigit alone accepts digits int() rejects, such as superscripts.
+        valid_port = port.isascii() and port.isdigit() and 0 < int(port) < 65536
+        if separator == '' or host == '' or not valid_port:
+            self._fail(
+                f'{key!r} must be "host:port" with a port from 1 to 65535, or '
+                f'"unix:/path/to/socket", not {value!r}'
+            )
+        return value
 
     def read_str_tuple(self, key: str) -> tuple[str, ...]:
         """Read an array of strings.
@@ -546,6 +808,15 @@ def _read_django(source: Path, values: dict[str, Any]) -> DjangoConfig:
         debug=table.read_bool('debug'),
         allowed_hosts=table.read_str_tuple('allowed_hosts'),
         cache_server_prefix=table.read_str('cache_server_prefix'),
+        cache_location=table.read_server_address('cache_location', default=DEFAULT_CACHE_LOCATION),
+        conn_max_age=table.read_int('conn_max_age', default=DEFAULT_CONN_MAX_AGE, minimum=0),
+        conn_health_checks=table.read_bool('conn_health_checks', default=True),
+        search_build_timeout=table.read_int(
+            'search_build_timeout', default=DEFAULT_SEARCH_BUILD_TIMEOUT, minimum=1
+        ),
+        search_results_max_rows=table.read_int(
+            'search_results_max_rows', default=DEFAULT_SEARCH_RESULTS_MAX_ROWS, minimum=0
+        ),
         public_url=table.read_str('public_url'),
         product_http_path=table.read_str('product_http_path'),
         viewmaster_url=table.read_str('viewmaster_url'),
@@ -573,16 +844,98 @@ def _read_import(source: Path, values: dict[str, Any]) -> ImportConfig:
         The validated import configuration.
 
     Raises:
-        ConfigError: If any key is missing, of the wrong type, or unknown.
+        ConfigError: If any key is missing, of the wrong type, below its minimum, or
+            unknown.
     """
     table = _TableReader(source, 'import', values)
     config = ImportConfig(
-        table_temp_prefix=table.read_str('table_temp_prefix', default='imp_'),
         log_file=table.read_str('log_file'),
         debug_log_file=table.read_str('debug_log_file'),
+        bulk_load=table.read_bool('bulk_load', default=True),
+        scratch_dir=table.read_optional_str('scratch_dir'),
+        transaction_rows=table.read_int(
+            'transaction_rows', default=DEFAULT_TRANSACTION_ROWS, minimum=1
+        ),
+        index_workers=table.read_int_or_max('index_workers', default=DEFAULT_INDEX_WORKERS),
+        server_tmpdir=table.read_optional_str('server_tmpdir'),
+        workers=table.read_int_or_max('workers', default=DEFAULT_WORKERS),
+        cpu_fraction=table.read_float(
+            'cpu_fraction', default=DEFAULT_CPU_FRACTION, above=0.0, maximum=1.0
+        ),
+        worker_rows=table.read_int('worker_rows', default=DEFAULT_WORKER_ROWS, minimum=1),
+        importers=table.read_int('importers', default=DEFAULT_IMPORTERS, minimum=1),
+        stall_warning_minutes=table.read_int(
+            'stall_warning_minutes', default=DEFAULT_STALL_WARNING_MINUTES, minimum=1
+        ),
+        status_interval_minutes=table.read_int(
+            'status_interval_minutes', default=DEFAULT_STATUS_INTERVAL_MINUTES, minimum=1
+        ),
     )
     table.finish()
     return config
+
+
+def detected_cores() -> int:
+    """Return the number of cores this process may run on.
+
+    Returns:
+        The size of the process's CPU affinity set where the platform has one, else the
+        computer's core count, and at least 1.
+    """
+    if hasattr(os, 'sched_getaffinity'):
+        return max(1, len(os.sched_getaffinity(0)))
+    return max(1, os.cpu_count() or 1)
+
+
+def resolve_parallelism(
+    config: ImportConfig,
+    workers: int | str | None = None,
+    *,
+    detected: int | None = None,
+) -> Parallelism:
+    """Resolve the import's worker counts against the ceiling no count may exceed.
+
+    The ceiling is ``max(1, floor(C * cpu_fraction))``, where C is the number of cores the
+    process may run on (`detected_cores`), because the database server or another user may
+    share the computer. `MAX_WORKERS` asks for the ceiling itself, and a count above it is
+    lowered to it and named in `Parallelism.capped`, so one configuration serves
+    computers of different sizes.
+
+    Parameters:
+        config: The ``[import]`` table.
+        workers: A worker count given on the command line, which replaces
+            ``[import] workers``, or None to use the file's.
+        detected: The cores to take as detected, for a caller that has counted them;
+            None counts them with `detected_cores`.
+
+    Returns:
+        The resolved counts, how the ceiling was reached, and which counts it lowered.
+    """
+    cores = detected_cores() if detected is None else detected
+    ceiling = max(1, math.floor(cores * config.cpu_fraction))
+    capped: list[str] = []
+
+    def resolve(value: int | str, name: str) -> int:
+        """Return one count, the ceiling for `MAX_WORKERS` or for one above it."""
+        if value == MAX_WORKERS:
+            return ceiling
+        assert isinstance(value, int)
+        if value > ceiling:
+            capped.append(f'{name} {value}')
+            return ceiling
+        return value
+
+    workers_name = '--workers' if workers is not None else '[import] workers'
+    resolved_workers = resolve(config.workers if workers is None else workers, workers_name)
+    resolved_index_workers = resolve(config.index_workers, '[import] index_workers')
+    return Parallelism(
+        cores=cores,
+        cpu_fraction=config.cpu_fraction,
+        ceiling=ceiling,
+        workers=resolved_workers,
+        index_workers=resolved_index_workers,
+        capped=tuple(capped),
+    )
 
 
 def _read_tables(source: Path, raw: dict[str, Any]) -> dict[str, dict[str, Any]]:

@@ -33,7 +33,6 @@ import csv
 import logging
 import os
 import tarfile
-import time
 import zipfile
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -55,7 +54,7 @@ from opus_app.apps.search.views import (
     add_mult_table_joins,
     add_obs_table_joins,
     create_order_by_terms,
-    get_user_query_table,
+    get_search_id,
     parse_order_slug,
     url_to_search_params,
 )
@@ -82,7 +81,7 @@ from opus_app.apps.tools.app_utils import (
     http500_search_cache_failed,
     json_response,
 )
-from opus_app.apps.tools.dictionary import Definitions
+from opus_app.apps.tools.dictionary import get_definition
 from opus_app.apps.tools.file_size import nice_file_size
 from opus_app.apps.tools.file_utils import get_pds_products
 
@@ -93,6 +92,10 @@ log = logging.getLogger(__name__)
 
 #: The cart table's columns, in the order every write to it supplies them.
 _CART_COLUMNS = ('session_id', 'obs_general_id', 'opus_id', 'recycled')
+
+#: The alias of the derived table that lists a session's cart in a sort order, giving each
+#: observation its position, 1, 2, 3, ..., in ``sort_order``.
+CART_ORDER_ALIAS = 'cart_order'
 
 
 ################################################################################
@@ -369,7 +372,8 @@ def api_edit_cart(
         if not opus_id_str:  # Also catches empty string
             log.error('api_edit_cart: Missing opusid: %r', request.GET)
             raise Http400Error(http400_missing_opus_id(request))
-        opus_id = opus_id_str.split(',')
+        # Every query below compares these with an ASCII column.
+        opus_id = [sql_builder.ascii_comparable(x) for x in opus_id_str.split(',')]
 
     recycle_bin_str = request.GET.get('recyclebin', 0)
     try:
@@ -968,12 +972,9 @@ def _get_download_info(product_types: list[str], session_id: str | None) -> dict
             else:
                 cur_product_list = []
                 product_cat_dict[pretty_name][ver] = cur_product_list
-        try:
-            entry = Definitions.objects.get(context__name='OPUS_PRODUCT_TYPE', term=short_name)
-            tooltip = entry.definition
-        except Definitions.DoesNotExist:  # pragma: no cover - import error
+        tooltip = get_definition(short_name, 'OPUS_PRODUCT_TYPE')
+        if tooltip is None:  # pragma: no cover - import error
             log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"', short_name)
-            tooltip = None
         product_dict_entry = {
             'slug_name': short_name,
             'tooltip': tooltip,
@@ -1322,9 +1323,13 @@ def _edit_cart_range(
         log.error('_edit_cart_range: Bad range format: %r', request.GET)
         raise Http400Error(http400_bad_or_missing_range(request))
 
-    temp_table_name: str | None = None
-
-    user_query_table: str | None
+    # The ordered list the range is taken from: the session's cart in the requested sort
+    # order for view=cart, or the search's stored results otherwise. Either way it is a
+    # derived table with one row per observation, holding the observation's id and its
+    # position in the list, sort_order, counting 1, 2, 3, ... with no gaps.
+    # ordered_alias is the name its columns are read through.
+    query_source: sql_builder.Subquery
+    ordered_alias: str
     if request.GET.get('view', 'browse') == 'cart':
         # This is for the cart page - we don't have any pre-done sort order
         # so we have to do it ourselves here
@@ -1353,27 +1358,22 @@ def _edit_cart_range(
         assert order_mult_tables is not None
         assert order_obs_tables is not None
 
-        cursor = connection.cursor()
-
-        # First we create a temporary table that contains the ids of
-        # observations in the cart, appropriately sorted, with a unique
-        # incrementing sort_id. This is just like a user_query_table, but
-        # short-lived, and we use it in the same way.
-        pid_sfx = str(os.getpid())
-        time1 = time.time()
-        time_sfx = (f'{time1:.6f}').replace('.', '_')
-        # The table name embeds the session id, which get_session_id leaves None
-        # only where Django could not create a session key at all.
+        # The session's cart as an ordered list: ROW_NUMBER() gives each observation
+        # its position in the sort order, the same columns a search's stored results
+        # have, so everything below reads either list the same way. The derived table
+        # is computed again by each statement that names it. It lists only this
+        # session's cart rows, and get_session_id leaves the session None only where
+        # Django could not create a session key at all.
         assert session_id is not None
-        temp_table_name = 'temp_' + session_id + '_' + pid_sfx + '_' + time_sfx
-        temp_select = sql_builder.Select()
-        temp_select.add_column(sql_builder.column('id', 'obs_general'))
-        temp_from = temp_select.add_from('obs_general')
+        order_select = sql_builder.Select()
+        order_select.add_column(sql_builder.column('id', 'obs_general'), 'id')
+        order_select.add_column(sql_builder.row_number(order_terms), 'sort_order')
+        order_from = order_select.add_from('obs_general')
         # Now JOIN all the obs_ tables together
-        add_obs_table_joins(temp_from, sorted(order_obs_tables))
-        # And JOIN all the mult_ tables together
-        add_mult_table_joins(temp_from, sorted(order_mult_tables))
-        temp_from.add_join(
+        add_obs_table_joins(order_from, sorted(order_obs_tables))
+        # And JOIN mult once for each mult column
+        add_mult_table_joins(order_from, sorted(order_mult_tables))
+        order_from.add_join(
             'INNER',
             'cart',
             sql_builder.join_exprs(
@@ -1383,33 +1383,21 @@ def _edit_cart_range(
                         sql_builder.column('obs_general_id', 'cart'),
                     ),
                     sql_builder.binary_op(
-                        sql_builder.column('session_id', 'cart'), '=', sql_builder.value(session_id)
+                        sql_builder.column('session_id', 'cart'),
+                        '=',
+                        sql_builder.value(session_id),
                     ),
                 ],
                 'AND',
             ),
         )
-        for order_column, descending in order_terms:
-            temp_select.add_order_by(order_column, descending=descending)
-        temp_sql, params = sql_builder.create_table_as_select(
-            temp_table_name,
-            temp_select,
-            column_defs=sql_builder.CACHE_TABLE_COLUMN_DEFS,
-            temporary=True,
-        )
-        try:
-            cursor.execute(temp_sql, params)
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception('_edit_cart_range: "%r" "%r" failed', temp_sql, params)
-            return HttpResponseServerError(http500_database_error(request))
-        log.debug('_edit_cart_range SQL (%.2f secs): %r %r', time.time() - time1, temp_sql, params)
-
-        user_query_table = temp_table_name
+        query_source = sql_builder.Subquery(order_select, CART_ORDER_ALIAS)
+        ordered_alias = CART_ORDER_ALIAS
     else:
-        # This is for the browse page - everything is based on the
-        # user_query_table
+        # This is for the browse page - everything is based on the search's
+        # results
 
-        # Find the index in the cache table for the min and max opus_ids
+        # Find the positions in the search's results of the min and max opus_ids
 
         (selections, extras) = url_to_search_params(request.GET)
         if selections is None:
@@ -1421,36 +1409,38 @@ def _edit_cart_range(
         # url_to_search_params returns both values or neither, and the check above
         # has ruled out "neither".
         assert extras is not None
-        user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-        if not user_query_table:  # pragma: no cover - database error
+        search_id = get_search_id(selections, extras, api_code=api_code)
+        if search_id is None:  # pragma: no cover - database error
             log.error(
-                '_edit_cart_range: get_user_query_table failed '
-                + '*** Selections %r *** Extras %r',
+                '_edit_cart_range: get_search_id failed ' + '*** Selections %r *** Extras %r',
                 str(selections),
                 str(extras),
             )
             return HttpResponseServerError(http500_search_cache_failed(request))
+        query_source = sql_builder.search_results_source(search_id)
+        ordered_alias = sql_builder.SEARCH_RESULTS_ALIAS
 
     cursor = connection.cursor()
 
-    def cache_table_join_condition() -> sql_builder.Expr:
-        """Return the condition matching obs_general rows to those of the query table."""
+    def ordered_join_condition() -> sql_builder.Expr:
+        """Return the condition matching obs_general rows to the ordered list's rows."""
         return sql_builder.columns_equal(
-            sql_builder.column('id', user_query_table), sql_builder.column('id', 'obs_general')
+            sql_builder.column('id', ordered_alias), sql_builder.column('id', 'obs_general')
         )
 
     sort_orders = []
     for opus_id in ids:
         sort_order_select = sql_builder.Select()
         sort_order_select.add_column(sql_builder.column('sort_order'))
-        # INNER JOIN because we only want rows that exist in the
-        # user_query_table
+        # INNER JOIN because only observations in the ordered list are in range
         sort_order_select.add_from('obs_general').add_join(
-            'INNER', user_query_table, cache_table_join_condition()
+            'INNER', query_source, ordered_join_condition()
         )
         sort_order_select.add_where(
             sql_builder.binary_op(
-                sql_builder.column('opus_id', 'obs_general'), '=', sql_builder.value(opus_id)
+                sql_builder.column('opus_id', 'obs_general'),
+                '=',
+                sql_builder.value(sql_builder.ascii_comparable(opus_id)),
             )
         )
         sql, values = sort_order_select.build()
@@ -1468,7 +1458,7 @@ def _edit_cart_range(
                 )
         sort_orders.append(results[0][0])
 
-    sort_order_column = sql_builder.column('sort_order', user_query_table)
+    sort_order_column = sql_builder.column('sort_order', ordered_alias)
     range_condition = sql_builder.join_exprs(
         [
             sql_builder.binary_op(sort_order_column, '>=', sql_builder.value(min(sort_orders))),
@@ -1480,9 +1470,8 @@ def _edit_cart_range(
     def range_from_source(restrict_to_cart: bool) -> sql_builder.FromSource:
         """Return the FROM clause selecting the observations in the range."""
         from_source = sql_builder.FromSource('obs_general')
-        # INNER JOIN because we only want rows that exist in the
-        # user_query_table
-        from_source.add_join('INNER', user_query_table, cache_table_join_condition())
+        # INNER JOIN because only observations in the ordered list are in range
+        from_source.add_join('INNER', query_source, ordered_join_condition())
         if restrict_to_cart:
             # Restrict to observations already in this session's cart
             from_source.add_join(
@@ -1589,20 +1578,20 @@ def _edit_cart_range(
         delete_from_source = sql_builder.FromSource('cart')
         delete_from_source.add_join(
             'INNER',
-            user_query_table,
+            query_source,
             sql_builder.columns_equal(
-                sql_builder.column('id', user_query_table),
+                sql_builder.column('id', ordered_alias),
                 sql_builder.column('obs_general_id', 'cart'),
             ),
         )
         # The join above matches on obs_general_id alone, and the cart table
         # holds every session's rows, so the session has to be named here as
         # well or this deletes the observations in the range from every other
-        # user's cart too. The user_query_table does not supply the restriction:
-        # with view=browse it is the shared search cache table, and even with
-        # view=cart, where it is a temporary table holding only this session's
-        # cart, it only narrows which observations are in range -- another
-        # session's row for one of those same observations still joins.
+        # user's cart too. The ordered list does not supply the restriction:
+        # with view=browse it is the shared search's results, and even with
+        # view=cart, where it lists only this session's cart, it only narrows
+        # which observations are in range -- another session's row for one of
+        # those same observations still joins.
         delete_condition = sql_builder.join_exprs(
             [
                 sql_builder.binary_op(
@@ -1619,14 +1608,6 @@ def _edit_cart_range(
 
     log.debug('_edit_cart_range SQL: %r %r', sql, sql_params)
     cursor.execute(sql, sql_params)
-
-    if temp_table_name:
-        sql = sql_builder.drop_table(temp_table_name)
-        try:
-            cursor.execute(sql)
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception('_edit_cart_range: "%r" failed', sql)
-            return HttpResponseServerError(http500_database_error(request))
 
     return False
 
@@ -1660,14 +1641,15 @@ def _edit_cart_addall(
     view = request.GET.get('view', 'browse')
     if view == 'browse':
         # We ignore recycle_bin here because it doesn't mean anything
-        count, user_query_table, err = get_result_count_helper(request, api_code)
+        count, search_id, err = get_result_count_helper(request, api_code)
         if err is not None:  # pragma: no cover - database errors
             return err
 
-        # get_result_count_helper returns a count and a table name whenever it
+        # get_result_count_helper returns a count and a search id whenever it
         # returns no error.
         assert count is not None
-        assert user_query_table is not None
+        assert search_id is not None
+        results_alias = sql_builder.SEARCH_RESULTS_ALIAS
 
         num_cart_and_recycle = Cart.objects.filter(session_id__exact=session_id).count()
 
@@ -1676,12 +1658,12 @@ def _edit_cart_addall(
         dup_select = sql_builder.Select()
         dup_select.add_column(sql_builder.count_star())
         # INNER JOIN because we only want rows that exist in the
-        # user_query_table
+        # search's results
         dup_select.add_from('cart').add_join(
             'INNER',
-            user_query_table,
+            sql_builder.search_results_source(search_id),
             sql_builder.columns_equal(
-                sql_builder.column('id', user_query_table),
+                sql_builder.column('id', results_alias),
                 sql_builder.column('obs_general_id', 'cart'),
             ),
         )
@@ -1718,12 +1700,12 @@ def _edit_cart_addall(
         # Always set recycled=0
         addall_select.add_column(sql_builder.value(0))
         # INNER JOIN because we only want rows that exist in the
-        # user_query_table
+        # search's results
         addall_select.add_from('obs_general').add_join(
             'INNER',
-            user_query_table,
+            sql_builder.search_results_source(search_id),
             sql_builder.columns_equal(
-                sql_builder.column('id', user_query_table), sql_builder.column('id', 'obs_general')
+                sql_builder.column('id', results_alias), sql_builder.column('id', 'obs_general')
             ),
         )
         sql, values = sql_builder.replace_into_select('cart', _CART_COLUMNS, addall_select)

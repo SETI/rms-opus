@@ -11,7 +11,14 @@ rather than at first request.
 
 from pathlib import Path
 
-from opus_config import get_config
+from opus_config import UNIX_SOCKET_PREFIX, get_config
+
+_config = get_config()
+
+# The memcached server, as "host:port" or "unix:" and a socket's path. The probe below
+# and CACHES both read it, so the server the probe found answering is the one the cache
+# is pointed at. Django's memcached backends take either form as it is.
+CACHE_LOCATION = _config.django.cache_location
 
 # Module-level helpers in this file are lower-case on purpose. Django treats every
 # upper-case name here as a setting, and its only test is str.isupper(), which a
@@ -24,19 +31,41 @@ _has_memcache = False
 try:  # pragma: no cover
     # An optional accelerator rather than a declared dependency: OPUS runs
     # without it, on Django's local-memory cache. It is not in the project's
-    # requirements and ships no stubs, so the checker cannot see it either.
-    import pymemcache  # type: ignore[import-not-found]
+    # requirements, only in the benchmarks extra, and it ships no stubs, so
+    # [tool.mypy] lets the import go unchecked whether or not it is installed.
+    import pymemcache
 
     _has_memcache = True
 except ImportError:  # pragma: no cover
     pass
 
+# The seconds a connection to memcached, or one reply from it, may take before the
+# attempt counts as a failure. memcached answers in well under a millisecond, so this
+# only ever matters when it is unreachable or hung.
+_memcache_timeout = 1.0
+
 # Now check to see if memcached is actually running
 if _has_memcache:
+    # pymemcache's client takes a socket as its bare path and a TCP port as a
+    # (host, port) pair.
+    _memcache_server: str | tuple[str, int]
+    if CACHE_LOCATION.startswith(UNIX_SOCKET_PREFIX):
+        _memcache_server = CACHE_LOCATION.removeprefix(UNIX_SOCKET_PREFIX)
+    else:
+        _cache_host, _, _cache_port = CACHE_LOCATION.rpartition(':')
+        _memcache_server = (_cache_host, int(_cache_port))
     try:
-        _memcache_client = pymemcache.client.base.Client(('127.0.0.1', 11211))
-        _memcache_client.set('__test_key__', 'test_val')
-    except ConnectionRefusedError:
+        _memcache_client = pymemcache.client.base.Client(
+            _memcache_server,
+            connect_timeout=_memcache_timeout,
+            timeout=_memcache_timeout,
+        )
+        # noreply=False makes the client wait for memcached's answer, so a server that
+        # accepts the connection but does not answer counts as missing. A refusal of the
+        # write is False rather than an exception.
+        _has_memcache = _memcache_client.set('__test_key__', 'test_val', noreply=False) is True
+        _memcache_client.close()
+    except (OSError, pymemcache.exceptions.MemcacheError):
         _has_memcache = False
 
 BASE_PATH = 'opus'  # production base path is handled by apache, local is not.
@@ -55,8 +84,6 @@ BASE_DIR = Path(__file__).resolve().parent
 # location: importing this module without OPUS_CONFIG set raises ConfigError
 # rather than starting the site against another installation's settings.
 ################################################################################
-
-_config = get_config()
 
 # Django core.
 SECRET_KEY = _config.django.secret_key
@@ -81,6 +108,10 @@ PDS4_DATA_DIR = _config.paths.pds4_holdings
 # Static files and public URLs.
 OPUS_STATIC_ROOT = _config.paths.opus_static_root
 CACHE_SERVER_PREFIX = _config.django.cache_server_prefix
+# The seconds a search build waits for another worker's build of the same search, and
+# the rows `opus_manage prune` cuts search_results down to by default.
+SEARCH_BUILD_TIMEOUT = _config.django.search_build_timeout
+SEARCH_RESULTS_MAX_ROWS = _config.django.search_results_max_rows
 PUBLIC_OPUS_URL = _config.django.public_url
 PRODUCT_HTTP_PATH = _config.django.product_http_path
 VIEWMASTER_ROOT_PATH = _config.django.viewmaster_url
@@ -190,6 +221,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'opus_app.urls'
 
+# What runserver serves, so the development server checks the schema's version row as
+# the production entry point does.
+WSGI_APPLICATION = 'opus_app.wsgi.application'
+
 FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 TEMPLATES = [
@@ -250,8 +285,17 @@ if _has_memcache:  # pragma: no cover
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
-            'LOCATION': '127.0.0.1:11211',
+            'LOCATION': CACHE_LOCATION,
             'TIMEOUT': None,
+            # A memcached that stops or hangs while the site runs must not fail
+            # requests: with ignore_exc, every read that cannot reach it is a miss
+            # and every write is skipped, so the site runs uncached, from the
+            # database, until it is back.
+            'OPTIONS': {
+                'ignore_exc': True,
+                'connect_timeout': _memcache_timeout,
+                'timeout': _memcache_timeout,
+            },
         },
     }
 else:
@@ -370,6 +414,11 @@ DATABASES = {
         'ENGINE': _db_engines[_config.database.brand],
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
+        # Each worker thread keeps its connection for this long rather than opening
+        # one per request, and checks it before reusing it, so a connection the server
+        # dropped in the meantime is replaced rather than failing the request.
+        'CONN_MAX_AGE': _config.django.conn_max_age,
+        'CONN_HEALTH_CHECKS': _config.django.conn_health_checks,
         # 'OPTIONS':{ 'unix_socket': '/private/tmp/mysql.sock'}
         'TEST': {
             'NAME': DB_SCHEMA_NAME,  # use same database for test as prod YES
@@ -477,11 +526,11 @@ DEFAULT_STRINGCHOICE_LIMIT = 100
 
 SQL_MAX_LIMIT = 100000000  # Max size for a LIMIT clause
 
-# More than this many rows in the cache table -> don't join it
+# More than this many results in the search -> don't join them
 STRINGCHOICE_FULL_SEARCH_COUNT_THRESHOLD = 100000
-# Timeout for SELECT when joined with cache table
+# Timeout for SELECT when joined with the search's results
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD = 500  # ms
-# Timeout for SELECT When not joined with cache table
+# Timeout for SELECT When not joined with the search's results
 STRINGCHOICE_FULL_SEARCH_TIME_THRESHOLD2 = 500  # ms
 
 THUMBNAIL_NOT_FOUND = 'https://opus.pds-rings.seti.org/static_media/img/thumbnail_not_found.png'

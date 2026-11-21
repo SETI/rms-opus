@@ -84,7 +84,6 @@ src/opus_import/obs/obs_bundle_cassini_iss_fring_mosaics_rsfrench2025.py::ObsBun
 # runs -- so a volume set whose class stops overriding one of them takes its entry off
 # this list.
 src/opus_import/obs/obs_base_pds4.py::ObsBasePDS4._time2_from_index
-src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_bundle_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_camera
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_combined_filter
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_compression_type
@@ -94,14 +93,12 @@ src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_image_observation_type
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_instrument_mode_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_missing_lines
-src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_opus_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_shutter_mode_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_shutter_state_id
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_instrument_coiss_target_desc
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_mission_cassini_obs_name
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_mission_cassini_spacecraft_clock_count1
 src/opus_import/obs/obs_cassini_common.py::ObsCassiniCommon.field_obs_mission_cassini_spacecraft_clock_count2
-src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_bundle_id
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_combined_filter
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_compression_type
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_data_conversion_type
@@ -110,7 +107,6 @@ src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_i
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_image_observation_type
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_instrument_mode_id
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_missing_lines
-src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_opus_id
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_shutter_mode_id
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_shutter_state_id
 src/opus_import/obs/obs_cassini_common_pds4.py::ObsCassiniCommonPDS4.field_obs_instrument_coiss_target_desc

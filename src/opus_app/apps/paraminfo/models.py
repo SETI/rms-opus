@@ -11,8 +11,8 @@ from typing import Any
 from django.conf import settings
 from django.db import models
 
-from opus_app.apps.search.models import TableNames
 from opus_app.apps.tools.dictionary import get_def_for_tooltip
+from opus_app.apps.tools.import_constants import get_table_name
 from opus_support import (
     display_result_unit,
     get_default_unit,
@@ -52,7 +52,6 @@ class ParamInfo(models.Model):
     dict_context_results = models.CharField(max_length=255, blank=True, null=True)
     dict_name_results = models.CharField(max_length=255, blank=True, null=True)
     sub_heading = models.CharField(max_length=150, blank=True, null=True)
-    timestamp = models.DateTimeField()
 
     class Meta:
         """Model options: the table the rows come from, and the order they come in."""
@@ -107,7 +106,7 @@ class ParamInfo(models.Model):
             django.core.exceptions.ObjectDoesNotExist: If no table is registered
                 under the field's category name.
         """
-        table_label = TableNames.objects.get(table_name=self.category_name).label
+        table_label = get_table_name(self.category_name).label
         return (
             f'This field is a link to one available under {table_label}. '
             + 'It is provided here for your convenience.'
@@ -129,7 +128,7 @@ class ParamInfo(models.Model):
                 under the field's category name.
         """
         # Append "[Ring]" or "[<Surface Body>]" or "[Mission]" or "[Instrument]"
-        pretty_name = TableNames.objects.get(table_name=self.category_name).label
+        pretty_name = get_table_name(self.category_name).label
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Mission Constraints', '')
@@ -170,7 +169,7 @@ class ParamInfo(models.Model):
         if self.label_results is None:
             return None
 
-        pretty_name = TableNames.objects.get(table_name=self.category_name).label
+        pretty_name = get_table_name(self.category_name).label
         pretty_name = pretty_name.replace(' Surface Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Geometry Constraints', '')
         pretty_name = pretty_name.replace(' Mission Constraints', '')

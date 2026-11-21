@@ -2,23 +2,27 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
+        "field_key": "primary",
         "field_notnull": true,
         "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
+    },
+    {
         "field_name": "opus_id",
-        "field_type": "char50",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "opus_id"
-        ],
+        "field_type": "varchar50",
+        "field_charset": "ascii",
+        "field_key": true,
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -34,11 +38,12 @@
         "pi_slug": "opusid",
         "pi_sub_heading": null,
         "pi_tooltip": null,
-        "comments": "This is the secondary key linking the record to obs_general."
+        "comments": "The OPUS ID as the public opusid field shows and autocompletes it; obs_general_id is what links the record to obs_general."
     },
     {
         "field_name": "bundle_id",
-        "field_type": "char75",
+        "field_type": "varchar75",
+        "field_charset": "ascii",
         "field_key": true,
         "field_notnull": true,
         "data_source": "COMPUTE",
@@ -59,16 +64,9 @@
         "pi_tooltip": null
     },
     {
-        "field_name": "instrument_id",
-        "field_type": "char60",
-        "field_key": false,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The instrument_id is included here for ease of database manipulation only."
-    },
-    {
         "field_name": "data_set_id",
-        "field_type": "char40",
+        "field_type": "varchar40",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -88,7 +86,8 @@
     },
     {
         "field_name": "product_id",
-        "field_type": "char50",
+        "field_type": "varchar50",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -108,7 +107,8 @@
     },
     {
         "field_name": "primary_lid",
-        "field_type": "char240",
+        "field_type": "varchar240",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_pds",
@@ -152,7 +152,8 @@
     },
     {
         "field_name": "primary_filespec",
-        "field_type": "char240",
+        "field_type": "varchar240",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -173,7 +174,7 @@
     },
     {
         "field_name": "note",
-        "field_type": "char255",
+        "field_type": "varchar255",
         "field_default": null,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -191,17 +192,5 @@
         "pi_slug": "note",
         "pi_sub_heading": null,
         "pi_tooltip": ""
-    },
-    {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": "MAX_ID"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

@@ -1,31 +1,50 @@
 #!/bin/sh
 # Run from the repository root, against a fully imported database.
 rm -f /tmp/_*models.py
-python manage.py inspectdb > /tmp/_models.py
-if [ `grep Cache /tmp/_models.py | wc -l` -ne 0 ]
-then
-  echo "Must clear out caches before running!"
-else
-  # Now hide all the new classes because there might be tables in the DB
-  # we don't want to expose models for
-  sed -e 's/^class /class ZZ/' < /tmp/_models.py > /tmp/___models.py
-  # Then unhide the ones we actually want
-  sed -e 's/^class ZZ\(Mult\|Obs\|Partables\|TableNames\|UserSearches\)/class \1/' < /tmp/___models.py > /tmp/__models.py
-  # The dictionary Contexts is still handing around badly
-  sed -e 's/Contexts,/ZZContexts,/' < /tmp/__models.py > /tmp/_models.py
-  # Fix up problems with opus_id, where Django deletes the _id on the end for some reason
-  sed -e 's/opus =/opus_id =/' < /tmp/_models.py > /tmp/__models.py
-  sed -e "s/opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING)/opus_id = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')/g" < /tmp/__models.py > /tmp/_models.py
-  sed -e "s/opus_id = models.ForeignKey('ObsGeneral', models.DO_NOTHING)/opus_id = models.ForeignKey('ObsGeneral', models.DO_NOTHING, related_name='%(class)s_opus_id', db_column='opus_id')/g" < /tmp/_models.py > /tmp/__models.py
-  sed -e "s/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/__models.py > /tmp/_models.py
-  sed -e "s/obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)/obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/_models.py > /tmp/__models.py
-  # Then get rid of any Auth or Django tables that are left
-  sed -e "s/'Django/'ZZDjango/g" < /tmp/__models.py | sed -e "s/'Auth/'ZZAuth/g" | sed -e "s/(Auth/(ZZAuth/g" > src/opus_app/apps/search/models.py
-  # inspectdb emits one long line per field, so the raw output is unreadable and
-  # every regeneration diff is unreviewable. The generator is the only durable
-  # place to fix that: a hand-edit to the output is destroyed by the next run.
-  # The file is excluded from `ruff check` (see [tool.ruff] exclude in
-  # pyproject.toml), but ruff honours an explicitly named path regardless of the
-  # exclusion, so this formats it.
-  ruff format src/opus_app/apps/search/models.py
-fi
+# obs_general is a view of the served generation's rows of obs_general_rows; the model
+# reads the view, so views are included and the base table's class is dropped below.
+python manage.py inspectdb --include-views > /tmp/_models.py
+# Now hide all the new classes because there might be tables in the DB
+# we don't want to expose models for
+sed -e 's/^class /class ZZ/' < /tmp/_models.py > /tmp/___models.py
+# Then unhide the ones we actually want
+sed -e 's/^class ZZ\(Mult\|Obs\|Partables\|TableNames\|UserSearches\)/class \1/' < /tmp/___models.py > /tmp/__models.py
+# The dictionary Contexts is still handing around badly
+sed -e 's/Contexts,/ZZContexts,/' < /tmp/__models.py > /tmp/_models.py
+# The children's foreign keys reference the base table, and their models relate to the
+# view's class, ObsGeneral, and the base table's class is hidden
+sed -e 's/^class ObsGeneralRows(/class ZZObsGeneralRows(/' \
+    -e "s/ForeignKey(ObsGeneralRows,/ForeignKey(ObsGeneral,/" \
+    -e "s/ForeignKey('ObsGeneralRows',/ForeignKey('ObsGeneral',/" \
+    -e "s/OneToOneField(ObsGeneralRows,/OneToOneField(ObsGeneral,/" \
+    -e "s/OneToOneField('ObsGeneralRows',/OneToOneField('ObsGeneral',/" < /tmp/_models.py > /tmp/__models.py
+mv /tmp/__models.py /tmp/_models.py
+# A view has no primary key for inspectdb to read, and a field named id that is not the
+# primary key fails Django's checks (models.E004), so the view's id is marked as the
+# base table's primary key it is
+sed -e '/^class ObsGeneral(models.Model):$/,/^class /s/^    id = models.PositiveIntegerField()$/    id = models.PositiveIntegerField(primary_key=True)/' < /tmp/_models.py > /tmp/__models.py
+mv /tmp/__models.py /tmp/_models.py
+# Every obs_general_id names its relation to ObsGeneral, so that the many relations
+# from one class to ObsGeneral do not clash
+sed -e "s/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING)/obs_general = models.ForeignKey(ObsGeneral, models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/_models.py > /tmp/__models.py
+sed -e "s/obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING)/obs_general = models.ForeignKey('ObsGeneral', models.DO_NOTHING, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/__models.py > /tmp/_models.py
+# A child keyed on obs_general_id holds it as both its primary key and its foreign key,
+# which inspectdb writes as a one-to-one field; it names its relation the same way
+sed -e "s/obs_general = models.OneToOneField(\('\{0,1\}ObsGeneral'\{0,1\}\), models.DO_NOTHING, primary_key=True)/obs_general = models.OneToOneField(\1, models.DO_NOTHING, primary_key=True, related_name='%(class)s_general_id', db_column='obs_general_id')/g" < /tmp/_models.py > /tmp/__models.py
+mv /tmp/__models.py /tmp/_models.py
+# inspectdb reads a BINARY column as text; user_searches.search_hash holds a digest's
+# bytes, which only a BinaryField returns unaltered
+sed -e "s/search_hash = models.CharField(unique=True, max_length=32)/search_hash = models.BinaryField(unique=True, max_length=32)/" < /tmp/_models.py > /tmp/__models.py
+# An ASCII column names the collation opus_support defines for every ASCII column, which
+# db_utils.is_ascii_column compares against, rather than inspectdb's copy of its value
+sed -e "s/db_collation='ascii_general_ci'/db_collation=ASCII_COLLATION/" \
+    -e 's/^from django.db import models$/from django.db import models\n\nfrom opus_support import ASCII_COLLATION/' < /tmp/__models.py > /tmp/_models.py
+# Then get rid of any Auth or Django tables that are left
+sed -e "s/'Django/'ZZDjango/g" < /tmp/_models.py | sed -e "s/'Auth/'ZZAuth/g" | sed -e "s/(Auth/(ZZAuth/g" > src/opus_app/apps/search/models.py
+# inspectdb emits one long line per field, so the raw output is unreadable and
+# every regeneration diff is unreviewable. The generator is the only durable
+# place to fix that: a hand-edit to the output is destroyed by the next run.
+# The file is excluded from `ruff check` (see [tool.ruff] exclude in
+# pyproject.toml), but ruff honours an explicitly named path regardless of the
+# exclusion, so this formats it.
+ruff format src/opus_app/apps/search/models.py

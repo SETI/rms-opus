@@ -14,12 +14,12 @@ Two layers, because either one alone can be satisfied by a mistake:
    a string where its column says a number.
 
 **What layer 2 does not cover, so nobody reads its green as more than it is.** It drives
-6 of the 25 leaf classes in `opus_import.config_bundle_info`, whose method resolution
-orders between them reach 27 of the 57 modules here: **669 of the 1185 field method
-definitions, 56%, are in modules it cannot instantiate** -- the whole PDS4 branch and all
-three ``obs_bundle_*`` leaves among them. A further **49** are inside modules it does
-reach but are shadowed by an override in every driven leaf, so **718 definitions are
-never executed here**, and the module count is the optimistic way to say it. A wrong
+one leaf class per mission out of the many in `opus_import.config_bundle_info`, whose
+method resolution orders between them reach about half of the modules here: **more than
+half of the field method definitions are in modules it cannot instantiate** -- the whole
+PDS4 branch and all three ``obs_bundle_*`` leaves among them. Dozens more are inside
+modules it does reach but are shadowed by an override in every driven leaf, so the
+module count is the optimistic way to say how much is **never executed here**. A wrong
 runtime type in one of those is caught by layer 1 only insofar as the schema can see it,
 which is not at all. Widening this needs holdings-free fixtures that can instantiate
 the rest of the hierarchy, which do not exist yet; until they do, the honest claim is
@@ -45,10 +45,13 @@ import numpy as np
 import pytest
 
 import opus_support
-from opus_import import config_data, import_util, obs
+from opus_import import config_data, import_util, obs, surface_geometry
 from opus_import.config_bundle_info import BUNDLE_INFO
+from opus_import.obs import field_types
 from opus_import.obs.field_types import MultField, as_int
 from opus_import.obs.obs_base import ObsBase
+from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
+from opus_import.obs.obs_volume_covims_0xxx import ObsVolumeCOVIMS0xxx
 from opus_import.steps.do_import_obs import field_function_name
 
 from ._source_scan import class_functions, functions_in, parsed_modules
@@ -83,7 +86,7 @@ def _alias_for(field_type: str | None, form_type: str | None) -> str | None:
         return 'list[MultField]'
     if field_type is None:
         return None
-    if field_type.startswith(('char', 'varchar')) or field_type in ('text', 'json'):
+    if field_type.startswith('varchar') or field_type in ('text', 'json'):
         return 'StrField'
     if field_type.startswith('real'):
         return 'FloatField'
@@ -191,11 +194,11 @@ def _leaf_classes() -> list[type[ObsBase]]:
 def _tables_for(instrument: ObsBase) -> list[str]:
     """Return the tables an instrument's bundle populates, as the import names them.
 
-    The per-target surface geometry table keeps its real name, ``obs_surface_geometry__``
-    plus a target, rather than being normalized here. Both the schema lookup and the
-    method name are then resolved through the pipeline's own helpers, so the mapping
-    from that name back to ``obs_surface_geometry_target`` is something this test
-    exercises rather than reimplements.
+    ``obs_surface_geometry_target`` is named, as the import computes its rows, by a body's
+    category, ``obs_surface_geometry__`` plus a target, rather than by the table. Both the
+    schema lookup and the method name are then resolved through the pipeline's own
+    helpers, so the mapping from that name back to ``obs_surface_geometry_target`` is
+    something this test exercises rather than reimplements.
     """
     inst_id = instrument.instrument_id
     mission_name = config_data.MISSION_ID_TO_MISSION_TABLE_SFX[instrument.mission_id]
@@ -205,7 +208,8 @@ def _tables_for(instrument: ObsBase) -> list[str]:
         if inst_id is not None:
             table = table.replace('<INST>', inst_id.lower())
         table = table.replace('<MISSION>', mission_name.lower())
-        table = table.replace('<TARGET>', 'saturn')
+        if table == surface_geometry.SURFACE_GEOMETRY_TABLE:
+            table = surface_geometry.target_category('saturn')
         if _schema_for(table) is not None:
             tables.append(table)
     return tables
@@ -865,12 +869,12 @@ def _is_mult(value: Any) -> bool:
 #: or a field method changes, and read a change as something to explain rather than to
 #: paper over.
 _EXPECTED_RETURNS: dict[str, tuple[int, int]] = {
-    'COISS': (249, 215),
-    'GOSSI': (233, 197),
-    'HSTWFPC2': (241, 181),
-    'NHLORRI': (228, 194),
-    'VGISS': (236, 195),
-    'eso-la_silla.1m04': (218, 179),
+    'COISS': (220, 186),
+    'GOSSI': (205, 169),
+    'HSTWFPC2': (214, 154),
+    'NHLORRI': (199, 165),
+    'VGISS': (208, 167),
+    'eso-la_silla.1m04': (194, 156),
 }
 
 
@@ -903,8 +907,8 @@ def _drive_fixture(
                 continue
             # Matched through the pipeline's own rule rather than by prefix. A prefix
             # also matches a longer table's name -- `obs_surface_geometry` is a prefix
-            # of `obs_surface_geometry_name` and of `obs_surface_geometry_target` --
-            # which drove 66 methods twice, each time under the wrong table.
+            # of `obs_surface_geometry_target` -- which drove its methods twice, once
+            # under the wrong table.
             if name != field_function_name(table, column['field_name']):
                 continue
             # `_metadata` is `dict | None` on ObsBase; `_instrument_for` always
@@ -1116,9 +1120,6 @@ def test_a_missing_index_column_is_reported_rather_than_crashing_the_bundle() ->
     `_fix_cassini_sclk` returns None only for a None input. It could not fire in either
     direction. A dead guard is worse than no guard, because it reads as coverage.
     """
-    from opus_import.obs.obs_volume_cocirs_56xxx import ObsVolumeCOCIRS56xxx
-    from opus_import.obs.obs_volume_covims_0xxx import ObsVolumeCOVIMS0xxx
-
     # An index row with none of the columns these methods read.
     metadata: dict[str, Any] = {'index_row': {}}
 
@@ -1377,8 +1378,6 @@ def test_every_integer_column_is_coerced_somewhere_it_can_be_seen() -> None:
 
 def test_the_alias_names_are_the_ones_the_package_defines() -> None:
     """The table names aliases that exist, so a rename cannot leave it checking text."""
-    from opus_import.obs import field_types
-
     for name in ('StrField', 'FloatField', 'IntField', 'MultField', 'MultFieldRet'):
         assert hasattr(field_types, name), name
     assert _alias_for('mult_list', 'MULTIGROUP') == 'list[MultField]'

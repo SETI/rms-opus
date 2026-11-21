@@ -128,9 +128,14 @@ is the same program under another name;
 
     opus_import --help
     opus_import --do-it-all COISS_2002
+    opus_import --write-schema-version
 
-``--do-it-all`` runs the whole sequence -- import, copy to the permanent tables, and
-rebuild the auxiliary tables -- for the bundles named on the command line. Every step
+``--do-it-all`` imports the bundles named on the command line and then runs
+``--finalize``, which adds the secondary keys, keeps one copy of each OPUS ID and
+rebuilds the auxiliary tables, all in one invocation; it is the one option that imports
+and finalizes together, a convenience for a small run like this one, and its
+``--finalize`` refuses if a bundle failed. ``--write-schema-version`` then records the database as finished, which the web
+application requires before it serves it (:ref:`dev_guide_database_schema_version`). Every step
 can also be asked for on its own; :mod:`opus_import.cli` documents the surface and
 :mod:`opus_import.steps` documents the order the steps run in.
 
@@ -164,9 +169,9 @@ checkout to run a script out of. ``opus_manage`` is not an OPUS program at all: 
 Django's own management command line with the settings module already named, so that an
 installation needs nothing in its environment but ``OPUS_CONFIG``, and in a checkout
 ``manage.py`` is the same program. ``opus_config_template`` writes the configuration
-template into the working directory. ``opus_import_all`` runs a full import: every bundle
-set in order, each as its own ``opus_import`` process, and the three steps that finish the
-database. ``opus_deploy_scripts`` writes the server deploy chain out of the distribution;
+template into the working directory. ``opus_import_all`` runs a full import: the registration
+of every bundle set in order, the importers it starts and tracks, and the four steps that
+finish the database, each as its own ``opus_import`` process. ``opus_deploy_scripts`` writes the server deploy chain out of the distribution;
 :ref:`user_guide_deployment` is what it is for.
 
 Running the tests and the checks

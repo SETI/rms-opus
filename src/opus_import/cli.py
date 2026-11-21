@@ -8,41 +8,127 @@ one ``opus_import.steps`` module), bundle selection, and logging.
 from __future__ import annotations
 
 import argparse
+import atexit
 import cProfile
 import io
+import json
 import logging
 import os
 import pstats
+import signal
+import socket
 import sys
+import time
 import traceback
 import warnings
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pdslogger
 from pdsfile import Pds3File, Pds4File
 
-from opus_config import get_config
-from opus_import import import_util, importdb
+from opus_config import MAX_WORKERS, get_config, resolve_parallelism
+from opus_import import bundle_registry, import_util, importdb, schema_version
 from opus_import.config_data import GROUP_FORM_TYPES
 from opus_import.context import ImportContext
+from opus_import.generations import PENDING_FINALIZED, PENDING_VALIDATED, PENDING_WRITING
 from opus_import.steps import (
+    do_carry_over,
     do_cart,
     do_dictionary,
     do_django,
+    do_duplicate_ids,
+    do_finalize_mult,
+    do_generation,
+    do_generation_purge,
     do_import,
+    do_import_tables,
+    do_indexes,
     do_param_info,
     do_partables,
+    do_schema_version,
     do_table_names,
     do_update_mult_info,
     do_validate,
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import FrameType
     from typing import TextIO
 
-    from opus_import.importdb.super import WarningHandler
+    from opus_config import OpusConfig
+    from opus_import.generations import GenerationState
+    from opus_import.importdb.super import ImportDBSuper, WarningHandler
 
 LOGNAME = 'opus_import.main'
+
+#: What a queue importer's log names carry after their time, before its computer and
+#: process id.
+JOIN_LOG_SUFFIX = 'join'
+
+
+def _interrupt_handler(ctx: ImportContext) -> Callable[[int, FrameType | None], None]:
+    """Return a queue importer's SIGINT handler: drain on the first, abort on the second.
+
+    Installed explicitly, so an importer started in the background, where SIGINT
+    starts out ignored, still hears it.
+
+    Parameters:
+        ctx: The importer's context, whose `ImportContext.interrupts` the handler counts.
+
+    Returns:
+        The handler. The first interrupt is only counted, and the importer claims
+        nothing new once its bundle is done. The second raises `KeyboardInterrupt` while
+        the importer runs (`ImportContext.importer` is set), which aborts its bundle
+        (`opus_import.steps.do_import.import_from_queue`), and before the importer has
+        begun recording itself (`ImportContext.queue_entered`), while it reads the
+        holdings and holds nothing, which stops it; otherwise it is only counted, and
+        the queue loop's check of the count stops the importer. Every later interrupt is
+        only counted, so that nothing interrupts the abort.
+    """
+
+    def handler(signum: int, frame: FrameType | None) -> None:
+        """Count the interrupt; raise on the second, while the importer runs or before it
+        has begun.
+
+        Parameters:
+            signum: The signal.
+            frame: Where the program was. Unused.
+
+        Raises:
+            KeyboardInterrupt: On the second interrupt.
+        """
+        ctx.interrupts += 1
+        if ctx.interrupts == 2 and (ctx.importer is not None or not ctx.queue_entered):
+            raise KeyboardInterrupt
+
+    return handler
+
+
+def _worker_count(text: str) -> int | str:
+    """Parse ``--workers``: a whole number of at least 1, or ``max``.
+
+    Parameters:
+        text: The argument as given.
+
+    Returns:
+        The number, or `opus_config.MAX_WORKERS`.
+
+    Raises:
+        argparse.ArgumentTypeError: If the argument is neither.
+    """
+    if text == MAX_WORKERS:
+        return text
+    try:
+        count = int(text)
+    except ValueError:
+        count = 0
+    if count < 1:
+        raise argparse.ArgumentTypeError(
+            f'must be a whole number of at least 1 or "{MAX_WORKERS}", not {text!r}'
+        )
+    return count
 
 
 def _make_warning_handler(ctx: ImportContext) -> WarningHandler:
@@ -78,6 +164,19 @@ def _make_warning_handler(ctx: ImportContext) -> WarningHandler:
         ctx.python_warning_list.append(str(message))
 
     return handler
+
+
+def _write_step_timings(path: Path, ctx: ImportContext, started: float) -> None:
+    """Write the run's step timings, plus its total, as one JSON object.
+
+    Parameters:
+        path: The file to write. Its directory must exist.
+        ctx: The run's context, whose `ImportContext.step_timings` are written.
+        started: The `time.perf_counter` reading the run started at, from which the
+            ``total`` entry is computed.
+    """
+    timings = {**ctx.step_timings, 'total': time.perf_counter() - started}
+    path.write_text(json.dumps(timings, indent=1) + '\n', encoding='utf-8')
 
 
 def _create_argument_parser() -> argparse.ArgumentParser:
@@ -128,73 +227,38 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--do-it-all',
         action='store_true',
         default=False,
-        help="""Perform all import and aux functions. This implies, in order:
-                --drop-old-import-tables
+        help="""Import the given bundles and finalize the schema in one invocation. This
+                implies, in order:
                 --import
-                --copy-import-to-permanent-tables
-                --drop-new-import-tables
-                --analyze-permanent-tables
+                --finalize
+             """,
+    )
+
+    parser.add_argument(
+        '--finalize',
+        action='store_true',
+        default=False,
+        help="""Finish the database after its bundles are imported; refused while any
+                bundle in the bundle registry is not done. This implies, in order:
+                --create-indexes,
+                the deletion of every copy of a duplicated OPUS ID but the one from the
+                bundle registered last,
+                the deletion of the mult values no observation holds,
                 --create-param-info
                 --create-partables
                 --create-table-names
                 --create-cart
-                --drop-cache-tables
+                --reset-search-tables
+                --analyze-tables
              """,
     )
 
     parser.add_argument(
-        '--do-all-import',
+        '--create-indexes',
         action='store_true',
         default=False,
-        help="""Perform all import functions. This implies, in order:
-                --drop-old-import-tables
-                --import
-                --copy-import-to-permanent-tables
-                --drop-new-import-tables
-             """,
-    )
-
-    parser.add_argument(
-        '--do-import-finalization',
-        action='store_true',
-        default=False,
-        help="""Perform all import functions related to permanent tables. This implies, in order:
-                --copy-import-to-permanent-tables
-                --drop-new-import-tables
-                --analyze-permanent-tables
-                --create-param-info
-                --create-partables
-                --create-table-names
-                --create-cart
-                --drop-cache-tables
-             """,
-    )
-
-    parser.add_argument(
-        '--cleanup-aux-tables',
-        action='store_true',
-        default=False,
-        help="""Create or clean up auxiliary tables. This implies:
-                --create-param-info
-                --create-partables
-                --create-table-names
-                --create-cart
-                --drop-cache-tables
-             """,
-    )
-
-    parser.add_argument(
-        '--drop-old-import-tables',
-        action='store_true',
-        default=False,
-        help='Drop ALL the old import tables',
-    )
-
-    parser.add_argument(
-        '--delete-import-bundles',
-        action='store_true',
-        default=False,
-        help='Delete the given bundles from the import tables',
+        help="""Add every key the table schemas declare and an observation or mult table
+                lacks, which a fresh import leaves for finalization""",
     )
 
     parser.add_argument(
@@ -202,140 +266,136 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         dest='do_import',
         action='store_true',
         default=False,
-        help="""Perform an import of the specified bundles; implies
-                --delete-import-bundles""",
+        help="Import the given bundles; the target schema's state chooses a fresh import "
+        'or an append',
     )
     parser.add_argument(
-        '--leave-old-import-tables',
+        '--register-bundles',
         action='store_true',
         default=False,
-        help="""Leave the previous import tables and just add to them. Overrides
-                --drop-old-import-tables.""",
+        help='Register the given bundles in the bundle registry, in the order given, with '
+        'their id ranges, and import nothing; a bundle already registered keeps its state',
     )
     parser.add_argument(
-        '--import-ignore-errors',
+        '--join',
         action='store_true',
         default=False,
-        help='Copy to the permanent tables even with errors, and substitute made-up '
-        'values where a real one cannot be determined -- an unknown target name '
-        'becomes OTHER rather than dropping the observation. The result is '
-        'wrong on purpose; for debugging',
+        help='Import bundles from the bundle registry, the largest pending first, until '
+        'none is pending; several processes on one computer or several may run at once. '
+        'Given bundles, claim only those; never erases or finalizes',
     )
     parser.add_argument(
-        '--import-suppress-mult-messages',
+        '--requeue',
+        action='store_true',
+        default=False,
+        help='Return the given failed or importing bundles to pending, after deleting their '
+        'rows; naming an importing bundle states that its process has stopped',
+    )
+    parser.add_argument(
+        '--workers',
+        type=_worker_count,
+        default=None,
+        metavar='N',
+        help='Compute each index\'s observations in N processes, or "max" for the ceiling '
+        '(the cores detected times [import] cpu_fraction); replaces [import] workers',
+    )
+    parser.add_argument(
+        '--ignore-errors',
+        action='store_true',
+        default=False,
+        help='Mark a bundle done even when it logs errors, so that --finalize and '
+        '--write-schema-version accept it, and substitute made-up values where a real one '
+        'cannot be determined -- an unknown target name becomes OTHER rather than dropping '
+        'the observation. The result is wrong on purpose; for debugging',
+    )
+    parser.add_argument(
+        '--suppress-mult-messages',
         action='store_true',
         default=False,
         help="Don't give messages about mult table maintenance",
     )
     parser.add_argument(
-        '--import-report-missing-ring-geo',
+        '--report-missing-ring-geo',
         action='store_true',
         default=False,
         help="Report observations that should have ring_geo data but don't",
     )
     parser.add_argument(
-        '--import-report-missing-sky-geo',
+        '--report-missing-sky-geo',
         action='store_true',
         default=False,
         help="Report observations that should have sky_geo data but don't",
     )
     parser.add_argument(
-        '--import-report-inventory-mismatch',
+        '--report-inventory-mismatch',
         action='store_true',
         default=False,
         help='Report mismatches between inventory and surface geometry tables',
     )
     parser.add_argument(
-        '--import-force-metadata-index',
+        '--force-metadata-index',
         action='store_true',
         default=False,
         help='Force the use of metadata index files and fail if none available',
     )
     parser.add_argument(
-        '--import-check-duplicate-id',
-        action='store_true',
-        default=False,
-        help='Check for duplicate opus_id; needed for GOSSI,COUVIS,NH',
-    )
-    parser.add_argument(
-        '--import-ignore-missing-images',
+        '--ignore-missing-images',
         action='store_true',
         default=False,
         help="Don't warn about missing browse images",
     )
     parser.add_argument(
-        '--import-ignore-geo-mismatch',
+        '--ignore-geo-mismatch',
         action='store_true',
         default=False,
         help="Don't warn about gridless column mismatch in geo files",
     )
     parser.add_argument(
-        '--import-dont-use-row-files',
+        '--no-row-files',
         action='store_true',
         default=False,
         help="""Do not use metadata row files to determine whether index and summary
                 files should be included in the files table""",
     )
     parser.add_argument(
-        '--import-report-empty-products',
+        '--report-empty-products',
         action='store_true',
         default=False,
         help='Report empty products during import',
     )
     parser.add_argument(
-        '--import-fake-images',
+        '--fake-images',
         action='store_true',
         default=False,
         help='Fake the existence of browse images if real browse files are missing',
     )
 
     parser.add_argument(
-        '--delete-permanent-import-bundles',
+        '--delete-bundles',
         action='store_true',
         default=False,
-        help='Delete the bundles in the import tables from the permanent tables',
-    )
-    parser.add_argument(
-        '--delete-permanent-bundles',
-        action='store_true',
-        default=False,
-        help='Delete the given bundles from the permanent tables',
-    )
-
-    parser.add_argument(
-        '--copy-import-to-permanent-tables',
-        action='store_true',
-        default=False,
-        help="""Copy all temporary import tables to the permanent tables;
-                implies --delete-permanent-import-bundles
-             """,
-    )
-    parser.add_argument(
-        '--drop-permanent-tables',
-        action='store_true',
-        default=False,
-        help="""Delete ALL permanent tables; requires --scorched-earth.
-                WARNING: THIS DELETES ALL EXISTING DATA""",
+        help="Delete the given bundles' rows from every observation table, and their bundle "
+        'registry rows',
     )
     parser.add_argument(
         '--scorched-earth',
         action='store_true',
         default=False,
-        help='You are serious about deleting all tables!',
+        help="Drop every table the import creates in the schema -- all but Django's own -- "
+        'before any other step; requires --yes. WARNING: THIS DELETES ALL EXISTING DATA',
+    )
+    parser.add_argument(
+        '--yes',
+        action='store_true',
+        default=False,
+        help='Confirm --scorched-earth; refused without it',
     )
 
     parser.add_argument(
-        '--drop-new-import-tables',
+        '--analyze-tables',
         action='store_true',
         default=False,
-        help='Drop the new import tables after copying to permanent (if selected)',
-    )
-
-    parser.add_argument(
-        '--analyze-permanent-tables',
-        action='store_true',
-        default=False,
-        help='Analyze (recompute key distribution) the permanent tables',
+        help='Analyze every observation and mult table (recompute its key distribution)',
     )
 
     # Import-related auxiliary functions
@@ -344,34 +404,38 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         '--create-param-info',
         action='store_true',
         default=False,
-        help='Create the param_info table; includes copying to permanent table',
+        help='Rebuild the param_info table from the table schemas and swap it in atomically',
     )
     parser.add_argument(
         '--create-partables',
         action='store_true',
         default=False,
-        help='Create the partables table; includes copying to permanent table',
+        help="Rebuild the partables table from the code's mission and instrument lists and "
+        'the imported mult ids, and swap it in atomically',
     )
     parser.add_argument(
         '--create-table-names',
         action='store_true',
         default=False,
-        help='Create the table_names table; includes copying to permanent table',
+        help="Rebuild the table_names table from the code's list of categories and the "
+        'imported tables, and swap it in atomically',
     )
     parser.add_argument(
         '--update-mult-info',
         action='store_true',
         default=False,
-        help='Update the details of preprogrammed mult tables',
+        help='Write the mult_options lists and the mult_overrides of the table schemas over '
+        'the stored mult rows, and rank the fields they change again',
     )
 
     # Functions other than main import
 
     parser.add_argument(
-        '--drop-cache-tables',
+        '--reset-search-tables',
         action='store_true',
         default=False,
-        help='Drop the cache tables used by OPUS; also clears user_searches',
+        help="""Re-create the web application's search tables, user_searches and
+                search_results, empty, and flush its cache""",
     )
     parser.add_argument(
         '--create-cart',
@@ -379,19 +443,107 @@ def _create_argument_parser() -> argparse.ArgumentParser:
         default=False,
         help='Create the cart table used by OPUS',
     )
+    parser.add_argument(
+        '--carry-over-sessions-from',
+        type=str,
+        default=None,
+        metavar='SCHEMA',
+        help="Replace the target schema's django_session and cart rows with SCHEMA's "
+        'unexpired sessions that own cart rows and those cart rows whose observations the '
+        'target holds; refused with any other step and when SCHEMA is the target',
+    )
 
     parser.add_argument(
-        '--validate-perm',
+        '--validate',
         action='store_true',
         default=False,
-        help='Perform validation of the final permanent tables',
+        help='Validate the imported tables; with a pending generation, refused until '
+        '--finalize has succeeded on it, and the generation is marked validated when every '
+        'check passes',
+    )
+
+    # The incremental update of a served schema, one generation at a time
+    parser.add_argument(
+        '--begin-generation',
+        action='store_true',
+        default=False,
+        help='Start a pending generation in a ready schema, which --import, --delete-bundles, '
+        '--finalize, --validate and --write-schema-version then write and the web '
+        'application does not serve until --switch-generation; runs alone',
+    )
+    parser.add_argument(
+        '--switch-generation',
+        action='store_true',
+        default=False,
+        help='Serve the pending generation once --write-schema-version has marked it ready: '
+        'swap its auxiliary tables in, point the cart at it, reset the search tables, then '
+        'serve it. Run while the web service is stopped; running it again completes an '
+        'interrupted switch; runs alone',
+    )
+    parser.add_argument(
+        '--purge-generations',
+        action='store_true',
+        default=False,
+        help='After a switch, end its revertibility and delete the rows no served generation '
+        'shows, then delete unused mult values and analyze the tables; runs alone',
+    )
+    parser.add_argument(
+        '--abandon-generation',
+        action='store_true',
+        default=False,
+        help='Throw away the pending generation, restoring the schema as it was before '
+        '--begin-generation; runs alone',
+    )
+    parser.add_argument(
+        '--revert-generation',
+        action='store_true',
+        default=False,
+        help='Undo the last switch until --purge-generations runs: serve the previous '
+        'generation again, leaving the reverted one pending and ready. Run while the web '
+        'service is stopped; runs alone',
+    )
+
+    parser.add_argument(
+        '--require-pending-generation',
+        action='store_true',
+        default=False,
+        help='Refuse, writing nothing, unless this invocation registers as a writer of the '
+        'schema and the schema has a pending generation when it does, which no generation '
+        'command can change after; '
+        'exits with status '
+        f'{do_generation.GENERATION_REFUSED_EXIT_STATUS}. An update gives it to every '
+        'invocation after --begin-generation, so none writes the served rows',
+    )
+    parser.add_argument(
+        '--check',
+        choices=CHECK_ACTIONS,
+        default=None,
+        help='Say whether an action would be refused, reading the schema without writing it: '
+        f'{CHECK_SERVE} (this release would serve it), {do_generation.CHECK_SWITCH} '
+        f'(--switch-generation), {do_generation.CHECK_REVERT} (--revert-generation), or '
+        f'{do_generation.CHECK_CONTINUE} (an import into the pending generation without '
+        f'--begin-generation, which requires one), or {do_generation.CHECK_REBUILD} (a '
+        'rebuild of the served auxiliary tables in place, refused while a generation is '
+        'pending). Exits 0 when it would run, and '
+        f'{do_generation.GENERATION_REFUSED_EXIT_STATUS} after logging why when it would be '
+        'refused; runs alone',
     )
 
     parser.add_argument(
         '--import-dictionary',
         action='store_true',
         default=False,
-        help='Import the dictionary and contexts from scratch',
+        help='Rebuild the definitions and contexts tables beside the live ones and swap them in',
+    )
+
+    parser.add_argument(
+        '--write-schema-version',
+        action='store_true',
+        default=False,
+        help="""Mark the schema finished under this release's schema version, the last
+                step of every sequence that finishes a database; implied by nothing.
+                Refuses, exiting non-zero, when the schema holds another version or any
+                bundle in the bundle registry is not done""",
     )
 
     # Arguments about bundle selection
@@ -440,65 +592,529 @@ def _create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--profile', action='store_true', default=False, help='Do performance profiling'
     )
+    parser.add_argument(
+        '--timing-json',
+        type=Path,
+        default=None,
+        metavar='PATH',
+        help='When the run exits, write the wall-clock seconds of each step it ran to '
+        'this file, as one JSON object keyed by step name',
+    )
 
     return parser
+
+
+def expand_aggregate_options(args: argparse.Namespace) -> None:
+    """Turn on the steps each aggregate option given stands for.
+
+    ``--do-it-all`` imports and then finalizes, through ``--finalize``, so it runs every
+    step of the finalization group, the duplicate step among them, which has no option of
+    its own.
+
+    Parameters:
+        args: The parsed arguments, changed in place.
+    """
+    if args.do_it_all:
+        args.do_import = True
+        args.finalize = True
+
+    if args.finalize:
+        args.create_indexes = True
+        args.create_param_info = True
+        args.create_partables = True
+        args.create_table_names = True
+        args.create_cart = True
+        args.reset_search_tables = True
+        args.analyze_tables = True
+
+
+#: The options ``--join`` is refused with: it imports from the queue and does nothing
+#: else, so an importer never erases, deletes, registers or finalizes. A read-only
+#: importer would claim the same pending bundle for ever, its claims never written.
+_JOIN_CONFLICTS = (
+    ('do_import', '--import'),
+    ('do_it_all', '--do-it-all'),
+    ('register_bundles', '--register-bundles'),
+    ('requeue', '--requeue'),
+    ('delete_bundles', '--delete-bundles'),
+    ('scorched_earth', '--scorched-earth'),
+    ('ignore_errors', '--ignore-errors'),
+    ('finalize', '--finalize'),
+    ('create_indexes', '--create-indexes'),
+    ('write_schema_version', '--write-schema-version'),
+    ('read_only', '--read-only'),
+)
+
+
+#: The action ``--check serve`` asks about: whether this release would serve the schema.
+CHECK_SERVE = 'serve'
+
+#: What ``--check`` answers for.
+CHECK_ACTIONS = (
+    CHECK_SERVE,
+    do_generation.CHECK_SWITCH,
+    do_generation.CHECK_REVERT,
+    do_generation.CHECK_CONTINUE,
+    do_generation.CHECK_REBUILD,
+)
+
+#: The generation commands, each run alone under the schema's generation lock.
+GENERATION_COMMANDS = (
+    ('begin_generation', '--begin-generation'),
+    ('switch_generation', '--switch-generation'),
+    ('purge_generations', '--purge-generations'),
+    ('abandon_generation', '--abandon-generation'),
+    ('revert_generation', '--revert-generation'),
+)
+
+#: The options ``--carry-over-sessions-from`` is refused with: every step, since it runs
+#: while the web service is stopped and so runs alone, without reading the holdings; and
+#: ``--read-only``, under which it would copy nothing.
+CARRY_OVER_CONFLICTS = (
+    *_JOIN_CONFLICTS,
+    ('join', '--join'),
+    ('create_param_info', '--create-param-info'),
+    ('create_partables', '--create-partables'),
+    ('create_table_names', '--create-table-names'),
+    ('update_mult_info', '--update-mult-info'),
+    ('reset_search_tables', '--reset-search-tables'),
+    ('create_cart', '--create-cart'),
+    ('analyze_tables', '--analyze-tables'),
+    ('validate', '--validate'),
+    ('import_dictionary', '--import-dictionary'),
+    ('bundles', 'bundle descriptors'),
+    *GENERATION_COMMANDS,
+)
+
+
+#: The options a generation command is refused with: every step, the carry-over, and the
+#: other generation commands, which `CARRY_OVER_CONFLICTS` names.
+_GENERATION_CONFLICTS = (
+    *CARRY_OVER_CONFLICTS,
+    ('carry_over_sessions_from', '--carry-over-sessions-from'),
+)
+
+#: The options that write the observation rows, the registry, the version row or the
+#: auxiliary tables, the served ones or a pending generation's. On a schema with a version
+#: row, their invocation registers itself in ``import_process`` so that no generation
+#: command runs beside it (`opus_import.steps.do_generation.register_writer`).
+_WRITERS = (
+    'do_import',
+    'join',
+    'register_bundles',
+    'requeue',
+    'delete_bundles',
+    'finalize',
+    'create_indexes',
+    'create_param_info',
+    'create_partables',
+    'create_table_names',
+    'validate',
+    'write_schema_version',
+)
+
+#: The options that move a pending generation's state forward, whose invocation writes it
+#: as its sole writer, so the state recorded describes rows no other invocation changed.
+_SOLE_WRITERS = (
+    'finalize',
+    'validate',
+    'write_schema_version',
+)
+
+
+#: The finalization group's options that rebuild from a pending generation's rows, each
+#: marking it ``writing`` again, so a generation rebuilt after its stamp is switched in
+#: only once it is finalized, validated and stamped again. ``--finalize`` turns every one
+#: on (`expand_aggregate_options`); the import group's options mark it in
+#: `opus_import.steps.do_import.do_import_steps`.
+_PENDING_REBUILDS = (
+    'create_indexes',
+    'create_param_info',
+    'create_partables',
+    'create_table_names',
+)
+
+
+def _registers_writer(args: argparse.Namespace, state: GenerationState | None) -> bool:
+    """Return whether the invocation registers itself as a writer of the schema.
+
+    It does when it writes (`_WRITERS`) a schema with a version row, which a generation
+    could be begun on. An invocation that erases the schema first is not registered,
+    since the erase drops ``import_process`` and the version row with it, and neither is
+    a read-only one, which writes nothing.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+        state: The schema's version row as the invocation started, or None.
+    """
+    if state is None or args.scorched_earth or args.read_only:
+        return False
+    return any(getattr(args, name) for name in _WRITERS)
+
+
+def _writes_as_sole_writer(args: argparse.Namespace, pending: int | None) -> bool:
+    """Return whether the invocation writes the pending generation as its sole writer.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+        pending: The pending generation, or None.
+    """
+    return pending is not None and any(getattr(args, name) for name in _SOLE_WRITERS)
+
+
+def _rebuilds_pending(args: argparse.Namespace) -> bool:
+    """Return whether the arguments rebuild anything from a pending generation's rows.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+    """
+    return any(getattr(args, name) for name in _PENDING_REBUILDS)
+
+
+#: The options that rebuild the served auxiliary tables or the cart when no generation is
+#: pending. A rebuild drops the ``__new`` tables that mark a revert stopped part way, and
+#: the cart rows it points at the previous generation, so neither runs while one is
+#: unfinished (`opus_import.steps.do_generation.unfinished_switch_problem`). Nor does one
+#: run while a purge is unfinished (`opus_import.steps.do_generation.unfinished_purge_problem`):
+#: a rebuild that stopped part way would leave ``__new`` tables with no ``__prev`` beside
+#: them, which mark a part-way revert, and so let a revert serve the purged generation.
+_SERVED_REBUILDS = (
+    'create_param_info',
+    'create_partables',
+    'create_table_names',
+    'create_cart',
+)
+
+
+def _rebuilds_served(args: argparse.Namespace) -> bool:
+    """Return whether the arguments rebuild a served auxiliary table or the cart.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+    """
+    return any(getattr(args, name) for name in _SERVED_REBUILDS)
+
+
+def _generation_command(args: argparse.Namespace) -> str | None:
+    """Return the generation command given, or None."""
+    for name, option in GENERATION_COMMANDS:
+        if getattr(args, name):
+            return option
+    return None
+
+
+def _generation_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with a generation command that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas; empty without a generation command or with none.
+    """
+    command = _generation_command(args)
+    if command is None:
+        return ''
+    return ', '.join(
+        option
+        for name, option in _GENERATION_CONFLICTS
+        if option != command and getattr(args, name)
+    )
+
+
+def _run_generation_command(ctx: ImportContext, option: str) -> bool:
+    """Run the generation command the arguments name, timed under its name.
+
+    Parameters:
+        ctx: The import run's context, with the database open.
+        option: The command, as `_generation_command` returned it.
+
+    Returns:
+        Whether it succeeded: False only when the purge's mult step failed.
+
+    Raises:
+        opus_import.steps.do_generation.GenerationRefusedError: If the command is
+            refused, having changed nothing.
+    """
+    args = ctx.args
+    with ctx.timed(option.removeprefix('--').replace('-', '_')):
+        if args.begin_generation:
+            do_generation.begin_generation(ctx)
+        elif args.switch_generation:
+            do_generation.switch_generation(ctx)
+        elif args.purge_generations:
+            return do_generation_purge.purge_generations(ctx)
+        elif args.abandon_generation:
+            do_generation_purge.abandon_generation(ctx)
+        else:
+            do_generation.revert_generation(ctx)
+    return True
+
+
+def _check_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with ``--check`` that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas: every step, generation command and carry-over,
+        which `_GENERATION_CONFLICTS` names; empty without ``--check`` or with none.
+    """
+    if args.check is None:
+        return ''
+    return ', '.join(option for name, option in _GENERATION_CONFLICTS if getattr(args, name))
+
+
+def _check_problem(db: ImportDBSuper, action: str) -> str | None:
+    """Return why the action ``--check`` names would be refused, or None.
+
+    Parameters:
+        db: The read-only connection to the schema.
+        action: One of `CHECK_ACTIONS`.
+
+    Raises:
+        opus_import.importdb.ImportDBError: If the database cannot be read.
+    """
+    if action == CHECK_SERVE:
+        return schema_version.served_schema_version_problem(db)
+    return do_generation.generation_problem(db, action)
+
+
+def _run_check(config: OpusConfig, schema: str, action: str, logger: pdslogger.PdsLogger) -> int:
+    """Answer ``--check``, reading the schema on a read-only connection.
+
+    The answer is logged at the info level: it is what was asked for, and a refusal is
+    the caller's to act on, so it writes nothing into the error log.
+
+    Parameters:
+        config: The configuration, for the database.
+        schema: The schema to read.
+        action: One of `CHECK_ACTIONS`.
+        logger: The run's logger.
+
+    Returns:
+        The exit status: 0 when the action would run,
+        `opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS` when it would be
+        refused, and -1 when the database cannot be read.
+    """
+    try:
+        db = importdb.get_db(
+            config.database.brand,
+            config.database.host,
+            config.database.database,
+            schema,
+            config.database.user,
+            config.database.password,
+            logger=logger,
+            read_only=True,
+        )
+    except importdb.ImportDBError:
+        return -1
+    try:
+        problem = _check_problem(db, action)
+    except importdb.ImportDBError as e:
+        logger.log('error', f'--check {action}: "{schema}" cannot be read: {e}')
+        return -1
+    finally:
+        db.close()
+    if problem is not None:
+        logger.log('info', f'--check {action}: refused: {problem}')
+        return do_generation.GENERATION_REFUSED_EXIT_STATUS
+    logger.log('info', f'--check {action}: would run')
+    return 0
+
+
+def _errors_logged(logger: pdslogger.PdsLogger) -> int:
+    """Return the error and fatal messages logged in the logger's open section so far,
+    counting the sections it has closed inside it."""
+    return int(logger.message_count('error')) + int(logger.message_count('fatal'))
+
+
+def _run_finishing_step(
+    logger: pdslogger.PdsLogger,
+    failed_steps: list[str],
+    name: str,
+    step: Callable[[], object],
+) -> None:
+    """Run one finishing step, recording it failed if it says so or logs an error.
+
+    A step fails when it returns False, raises `opus_import.steps.do_django.CacheFlushError`
+    (logged here), or logs a message at the error or fatal level while it runs, from
+    itself or from the database layer beneath it. So no step can report a problem only
+    in the log while ``--write-schema-version`` marks the schema ready.
+
+    Parameters:
+        logger: The run's logger.
+        failed_steps: The finishing steps that failed in this invocation, which the step
+            joins when it fails.
+        name: What the failure list calls it.
+        step: The step.
+    """
+    before = _errors_logged(logger)
+    try:
+        succeeded = step() is not False
+    except do_django.CacheFlushError as e:
+        logger.log('error', f'{name}: {e}')
+        succeeded = False
+    if not succeeded or _errors_logged(logger) > before:
+        failed_steps.append(name)
+
+
+def _carry_over_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with ``--carry-over-sessions-from`` that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas; empty without the option or with none of them.
+    """
+    if args.carry_over_sessions_from is None:
+        return ''
+    return ', '.join(option for name, option in CARRY_OVER_CONFLICTS if getattr(args, name))
+
+
+def _join_conflicts(args: argparse.Namespace) -> str:
+    """Name the options given with ``--join`` that it is refused with.
+
+    Parameters:
+        args: The parsed arguments, after `expand_aggregate_options`.
+
+    Returns:
+        The options, joined by commas; empty without ``--join`` or with none of them.
+    """
+    if not args.join:
+        return ''
+    return ', '.join(option for name, option in _JOIN_CONFLICTS if getattr(args, name))
+
+
+def _registry_finished(ctx: ImportContext, step: str) -> bool:
+    """Return whether every bundle in the bundle registry is done, refusing a step if not.
+
+    Parameters:
+        ctx: The import run's context, for the open database and the logger.
+        step: The option refused, as the message names it.
+
+    Returns:
+        True when the registry is absent or every bundle in it is ``done``; otherwise
+        False, after a fatal message naming every other bundle with its state.
+    """
+    unfinished = bundle_registry.unfinished_bundles(ctx)
+    if not unfinished:
+        return True
+    ctx.logger.log(
+        'fatal',
+        f'{step} refuses to run while bundles in the bundle registry are not done: '
+        f'{bundle_registry.unfinished_message(unfinished)}. Import them again, or remove '
+        'them with --delete-bundles',
+    )
+    return False
+
+
+def _validate(ctx: ImportContext) -> bool:
+    """Run ``--validate``, gated and recorded on a pending generation.
+
+    With a pending generation, validation is refused unless the generation is finalized
+    or validated, so a generation whose finalization failed or was skipped is never
+    validated; it is marked validated when every check passes and finalized when one
+    fails.
+
+    Parameters:
+        ctx: The import run's context.
+
+    Returns:
+        Whether validation ran and passed.
+    """
+    pending = ctx.pending_generation
+    if pending is None:
+        return do_validate.do_validate(ctx)
+    current = do_generation.read_pending_state(ctx)
+    if current not in (PENDING_FINALIZED, PENDING_VALIDATED):
+        import_util.log_error(
+            ctx,
+            f'--validate refused: generation {pending} is {current}, and only a finalized '
+            'generation is validated; run "opus_import --finalize" first',
+        )
+        return False
+    passed = do_validate.do_validate(ctx)
+    do_generation.set_pending_state(ctx, PENDING_VALIDATED if passed else PENDING_FINALIZED)
+    return passed
+
+
+def _prepare_holdings(
+    args: argparse.Namespace, config: OpusConfig, logger: pdslogger.PdsLogger
+) -> None:
+    """Load the holdings' shelves, so that the steps can read the holdings through pdsfile.
+
+    Parameters:
+        args: The parsed arguments, for the shelf and holdings-directory overrides.
+        config: The configuration, for the holdings directories.
+        logger: The run's logger, which pdsfile logs through once its preload is done.
+    """
+    if not args.dont_use_shelves_only:
+        Pds3File.use_shelves_only()
+        Pds4File.use_shelves_only()
+        Pds3File.require_shelves(True)
+        # PDS4 asks the shelves first and falls back to the file system when no
+        # shelf covers a path, so a tree with PDS4 shelves -- one a test builds --
+        # gets the shelf-answered existence PDS3 has, and a bundle without them is
+        # answered from the file system. Requiring shelves turns a bundle without one
+        # into an exception, so the line below stays commented out until every PDS4
+        # bundle in the holdings has a shelf.
+        # Pds4File.require_shelves(True)
+    if args.override_pds3_data_dir:
+        Pds3File.preload(args.override_pds3_data_dir)
+    else:
+        Pds3File.preload(config.paths.pds3_holdings)
+    if args.override_pds4_data_dir:
+        Pds4File.preload(args.override_pds4_data_dir)
+    else:
+        Pds4File.preload(config.paths.pds4_holdings)
+
+    # We do this after the preload because we don't want to see all the preload
+    # debug messages.
+    if not args.no_log_pdsfile:
+        Pds3File.set_logger(import_util.NoDupLogger(logger))
+        Pds4File.set_logger(import_util.NoDupLogger(logger))
 
 
 def main() -> None:
     """Run the import steps requested on the command line.
 
-    Every step is driven by its own option; ``--do-it-all`` and its siblings simply turn
-    several of them on. The database connection, the holdings directories and the log
-    file locations come from the configuration file named by ``OPUS_CONFIG``, which is
-    read only once the arguments parse, so ``--help`` works without one.
+    Every step is driven by its own option, apart from the duplicate step, which only
+    ``--finalize`` runs; ``--finalize`` and ``--do-it-all`` turn several of them on, and
+    ``--do-it-all`` finalizes through ``--finalize``, so it runs every step of its group.
+    The database connection, the holdings directories and the log file locations come
+    from the configuration file named by ``OPUS_CONFIG``, which is read only once the
+    arguments parse, so ``--help`` works without one.
 
     Raises:
         SystemExit: With a non-zero status, logged first, when the arguments are
             contradictory, a bundle descriptor is bad, the database connection fails,
-            the observation import fails, or an exception reaches the top-level handler.
-            **A non-zero status means the run stopped, not that a zero status means it
-            was clean:** several steps report failure through the log and leave the
-            status zero, a failed dictionary import and every validation error among
-            them. Read ``ERRORS.log`` to judge whether a run was clean.
+            the observation import fails or is refused, the carry-over fails or names
+            the schema it would write into, ``--finalize`` or
+            ``--write-schema-version`` refuses, an exception reaches the top-level
+            handler, or -- unless ``--ignore-errors`` -- a finishing step failed, after
+            the invocation's other steps have run. The finishing steps are every step
+            of the finalization group (the duplicate and mult steps among them),
+            ``--update-mult-info``, ``--validate`` and ``--import-dictionary``; one
+            fails when it reports failure or logs an error while it runs
+            (`_run_finishing_step`), and a failed one also keeps the invocation from
+            marking the schema ready.
+            An error logged while a bundle is imported fails the invocation the same
+            way, unless ``--ignore-errors``, under which the errors are in the log alone.
+            Read ``ERRORS.log`` to judge whether a run was clean.
     """
     command_list = sys.argv[1:]
 
-    args = _create_argument_parser().parse_args(command_list)
+    parser = _create_argument_parser()
+    args = parser.parse_args(command_list)
+    if args.timing_json is not None and not args.timing_json.parent.is_dir():
+        # The file is written at exit, too late for its failure to change the exit status.
+        parser.error(f'--timing-json: the directory {args.timing_json.parent} does not exist')
 
-    if args.do_it_all:
-        args.drop_old_import_tables = True
-        args.do_import = True
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-        args.analyze_permanent_tables = True
-        args.create_param_info = True
-        args.create_partables = True
-        args.create_table_names = True
-        args.create_cart = True
-        args.drop_cache_tables = True
-
-    if args.do_all_import:
-        args.drop_old_import_tables = True
-        args.do_import = True
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-
-    if args.do_import_finalization:
-        args.copy_import_to_permanent_tables = True
-        args.drop_new_import_tables = True
-        args.analyze_permanent_tables = True
-        args.create_param_info = True
-        args.create_partables = True
-        args.create_table_names = True
-        args.create_cart = True
-        args.drop_cache_tables = True
-
-    if args.cleanup_aux_tables:
-        args.create_param_info = True
-        args.create_partables = True
-        args.create_table_names = True
-        args.create_cart = True
-        args.drop_cache_tables = True
+    expand_aggregate_options(args)
 
     ################################################################################
     # LOGGING INITIALIZATION
@@ -512,12 +1128,24 @@ def main() -> None:
         LOGNAME, limits={'info': args.log_info_limit, 'debug': args.log_debug_limit}
     )
     ctx = ImportContext(args=args, logger=logger)
+    if args.timing_json is not None:
+        # Registered rather than written in a finally block, because the run leaves
+        # through sys.exit from several places; atexit runs on every one of them.
+        atexit.register(_write_step_timings, args.timing_json, ctx, time.perf_counter())
 
     info_logfile = os.path.abspath(config.import_.log_file)
     debug_logfile = os.path.abspath(config.import_.debug_log_file)
 
-    info_handler = pdslogger.file_handler(info_logfile, level=logging.INFO, rotation='ymdhms')
-    debug_handler = pdslogger.file_handler(debug_logfile, level=logging.DEBUG, rotation='ymdhms')
+    # Several importers may start on one computer in the same second, so each names its
+    # logs after its computer and process as well.
+    suffix = f'{JOIN_LOG_SUFFIX}_{socket.gethostname()}_{os.getpid()}' if args.join else ''
+    info_handler = pdslogger.file_handler(
+        info_logfile, level=logging.INFO, rotation='ymdhms', suffix=suffix
+    )
+    debug_handler = pdslogger.file_handler(
+        debug_logfile, level=logging.DEBUG, rotation='ymdhms', suffix=suffix
+    )
+    ctx.log_path = info_handler.baseFilename
 
     logger.add_handler(info_handler)
     logger.add_handler(debug_handler)
@@ -531,19 +1159,70 @@ def main() -> None:
 
     warnings.showwarning = _make_warning_handler(ctx)
 
+    # First, so the log says how much of the computer the run may use before anything
+    # uses it.
+    parallelism = resolve_parallelism(config.import_, args.workers)
+    logger.log('info', parallelism.describe())
+    ctx.workers = parallelism.workers
+    ctx.index_workers = parallelism.index_workers
+    ctx.worker_rows = config.import_.worker_rows
+
     ################################################################################
     #
     # THE MAIN IMPORT LOOP
     #
     ################################################################################
 
-    if args.drop_permanent_tables != args.scorched_earth:
-        logger.log('fatal', '--drop-permanent-tables and --scorched-earth must be used together')
+    if args.scorched_earth and not args.yes:
+        logger.log(
+            'fatal', '--scorched-earth drops every OPUS table in the schema; give --yes to confirm'
+        )
         sys.exit(-1)
+    if args.yes and not args.scorched_earth:
+        logger.log('fatal', '--yes confirms --scorched-earth and is refused without it')
+        sys.exit(-1)
+    conflict = _join_conflicts(args)
+    if conflict:
+        logger.log('fatal', f'--join imports from the queue alone; it is refused with {conflict}')
+        sys.exit(-1)
+    if args.join:
+        signal.signal(signal.SIGINT, _interrupt_handler(ctx))
 
     our_schema_name = config.database.schema
     if args.override_db_schema:
         our_schema_name = args.override_db_schema
+
+    generation_command = _generation_command(args)
+    if generation_command is not None:
+        conflict = _generation_conflicts(args)
+        if conflict:
+            logger.log('fatal', f'{generation_command} runs alone; it is refused with {conflict}')
+            sys.exit(-1)
+
+    if args.check is not None:
+        conflict = _check_conflicts(args)
+        if conflict:
+            logger.log('fatal', f'--check runs alone; it is refused with {conflict}')
+            sys.exit(-1)
+        sys.exit(_run_check(config, our_schema_name, args.check, logger))
+
+    carry_over_from = args.carry_over_sessions_from
+    if carry_over_from is not None:
+        conflict = _carry_over_conflicts(args)
+        if conflict:
+            logger.log(
+                'fatal', f'--carry-over-sessions-from runs alone; it is refused with {conflict}'
+            )
+            sys.exit(-1)
+        # Emptying the target first would empty the source. A server with
+        # lower_case_table_names set treats names differing only in case as one.
+        if carry_over_from.lower() == our_schema_name.lower():
+            logger.log(
+                'fatal',
+                f'--carry-over-sessions-from {carry_over_from} names the schema it would '
+                'write into; name the schema being served',
+            )
+            sys.exit(-1)
 
     try:  # Top-level exception handling so we always log what's going on
         # Start the profiling
@@ -556,32 +1235,10 @@ def main() -> None:
             limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
         )
 
-        if not args.dont_use_shelves_only:
-            Pds3File.use_shelves_only()
-            Pds4File.use_shelves_only()
-            Pds3File.require_shelves(True)
-            # PDS4 asks the shelves first and falls back to the file system when no
-            # shelf covers a path. The production holdings have no PDS4 shelves at all,
-            # so today every PDS4 existence check takes that fallback and this line
-            # costs nothing; a tree that does have them -- one a test builds, or the
-            # production tree once it grows them -- gets the shelf-answered existence
-            # PDS3 has. Requiring shelves turns a missing one into an exception, so the
-            # line below waits until every PDS4 bundle in the holdings has one.
-            # Pds4File.require_shelves(True)
-        if args.override_pds3_data_dir:
-            Pds3File.preload(args.override_pds3_data_dir)
-        else:
-            Pds3File.preload(config.paths.pds3_holdings)
-        if args.override_pds4_data_dir:
-            Pds4File.preload(args.override_pds4_data_dir)
-        else:
-            Pds4File.preload(config.paths.pds4_holdings)
-
-        # We do this after the preload because we don't want to see all the preload
-        # debug messages.
-        if not args.no_log_pdsfile:
-            Pds3File.set_logger(import_util.NoDupLogger(logger))
-            Pds4File.set_logger(import_util.NoDupLogger(logger))
+        # The carry-over and the generation commands read no holdings, and the carry-over
+        # and the switch run while the web service is stopped.
+        if carry_over_from is None and generation_command is None:
+            _prepare_holdings(args, config, logger)
 
         try:
             ctx.db = importdb.get_db(
@@ -593,40 +1250,160 @@ def main() -> None:
                 config.database.password,
                 mult_form_types=GROUP_FORM_TYPES,
                 logger=logger,
-                import_prefix=config.import_.table_temp_prefix,
                 read_only=args.read_only,
+                bulk_load=config.import_.bulk_load,
+                scratch_dir=config.import_.scratch_dir,
+                transaction_rows=config.import_.transaction_rows,
             )
         except importdb.ImportDBError:
             sys.exit(-1)
 
         ctx.db.log_sql = args.log_sql
+        do_generation.load_generation_state(ctx)
 
-        # This MUST be done before the permanent tables are created, because there
-        # could be entries in the cart table that point at the permanent
-        # tables, and import could delete entries out of the permanent tables
-        # causing a foreign key violation.
-        # Note, however, that do_import_steps() might actually delete ALL permanent
-        # tables with --scorched-earth, which means our effort here will be wasted,
-        # so don't bother in that case.
-        if (args.drop_cache_tables or args.create_cart) and not args.drop_permanent_tables:
-            logger.open(
-                'Cleaning up OPUS/Django tables',
-                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
-            )
-
-            if args.create_cart:
-                do_cart.create_cart(ctx)
-            if args.drop_cache_tables:
-                do_django.drop_cache_tables(ctx)
-
+        # A generation command runs alone (_generation_conflicts). A refusal has its own
+        # exit status, so the deploy chain knows the command changed nothing.
+        if generation_command is not None:
+            try:
+                succeeded = _run_generation_command(ctx, generation_command)
+            except do_generation.GenerationRefusedError as e:
+                logger.log('fatal', str(e))
+                sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
+            if not succeeded:
+                sys.exit(-1)
             logger.close()
+            return
+
+        pending = ctx.pending_generation
+        if _registers_writer(args, ctx.generation_state):
+            try:
+                writer = do_generation.register_writer(
+                    ctx, sole=_writes_as_sole_writer(args, pending)
+                )
+            except do_generation.GenerationRefusedError as e:
+                logger.log('fatal', str(e))
+                sys.exit(-1)
+            ctx.writer = writer
+            # Registered rather than run in a finally block, since the run leaves through
+            # sys.exit from several places.
+            atexit.register(writer.exit)
+        # After the registration, which read the version row again under the generation
+        # lock and holds off every generation command from then on, so an abandon cannot
+        # come between this answer and the writes. An invocation that does not register
+        # has only the row it read as it started, which an abandon may have changed.
+        if args.require_pending_generation and ctx.writer is None:
+            logger.log(
+                'fatal',
+                '--require-pending-generation: this invocation does not register as a '
+                'writer of the schema, so nothing holds a generation command off while it '
+                'writes; it writes nothing',
+            )
+            sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
+        if args.require_pending_generation and ctx.pending_generation is None:
+            logger.log(
+                'fatal',
+                f'--require-pending-generation: "{our_schema_name}" has no pending '
+                'generation, so this invocation writes nothing',
+            )
+            sys.exit(do_generation.GENERATION_REFUSED_EXIT_STATUS)
+        state = ctx.generation_state
+        if pending is None and state is not None and _rebuilds_served(args):
+            unfinished = do_generation.unfinished_switch_problem(
+                ctx.db, state
+            ) or do_generation.unfinished_purge_problem(ctx.db, state)
+            if unfinished is not None:
+                logger.log('fatal', f'Refused: {unfinished}')
+                sys.exit(-1)
+
+        # The step runs alone (_carry_over_conflicts), so nothing below has work to do.
+        if carry_over_from is not None:
+            with ctx.timed('carry_over_sessions'):
+                carried = do_carry_over.carry_over_sessions(ctx, carry_over_from)
+            if not carried:
+                sys.exit(-1)
+
+        # The path an import takes is chosen before anything else writes, so an import
+        # refused for an interrupted finalization changes nothing. An invocation that
+        # erases the schema first chooses after the erase, in do_import_steps.
+        imports = args.do_import or args.join or args.register_bundles
+        if imports and not args.scorched_earth and not do_import.choose_import_path(ctx):
+            sys.exit(-1)
 
         if not do_import.do_import_steps(ctx):
             sys.exit(-1)
+        # Read again: --scorched-earth erased the version row, and its pending generation.
+        pending = ctx.pending_generation
 
-        # This MUST be done after the permanent tables are created, since they
-        # are used to determine what goes into the param_info table.
+        # Before the first finalization step, so a refused finalization changes nothing;
+        # after the bundles this invocation imports or deletes, which can finish the
+        # registry.
+        if args.finalize and not _registry_finished(ctx, '--finalize'):
+            sys.exit(-1)
+        if pending is not None and _rebuilds_pending(args):
+            do_generation.set_pending_state(ctx, PENDING_WRITING)
 
+        # The finishing steps that failed in this invocation: each returned False, or
+        # logged an error while it ran (_run_finishing_step). Any failure keeps it from
+        # marking the schema ready, and makes it exit with failure once its other steps
+        # have run, so opus_import_all, which runs each finishing step as its own
+        # invocation, stops before its --write-schema-version. --ignore-errors overrides
+        # both, for a debugging run.
+        failed_steps: list[str] = []
+
+        # The finalization group's sequence, which later steps extend in place: the keys,
+        # then the duplicate step, then the mult step, then the auxiliary tables, the cart
+        # and the cache tables, then ANALYZE. With a pending generation the mult step, the
+        # cart and the search tables' reset wait for the switch or the purge, and the
+        # auxiliary tables are left for the switch; a step added here says which it does:
+        # works on the pending generation, or runs at the switch
+        # (opus_import.steps.do_generation).
+        if args.create_indexes:
+            logger.open(
+                'Creating secondary keys',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            with ctx.timed('create_indexes'):
+                _run_finishing_step(
+                    logger, failed_steps, '--create-indexes', lambda: do_indexes.create_indexes(ctx)
+                )
+            logger.close()
+
+        # The duplicate step finds the copies through obs_general's opus_id key and
+        # deletes the surface geometry tables' rows by obs_general_id, both keys the
+        # step just built, so it waits for a run whose key builds succeed.
+        if args.finalize and '--create-indexes' not in failed_steps:
+            logger.open(
+                'Deleting duplicate OPUS IDs',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            with ctx.timed('duplicate_step'):
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    'the duplicate step of --finalize',
+                    lambda: do_duplicate_ids.delete_duplicate_opus_ids(ctx),
+                )
+            logger.close()
+
+        # After the duplicate step, whose deletions can leave a value unreferenced, and
+        # before the auxiliary tables, which read the mult rows. A pending generation
+        # leaves the values only retired rows use to the purge.
+        if args.finalize and pending is None:
+            logger.open(
+                'Finalizing the mult fields',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            with ctx.timed('finalize_mult'):
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    'the mult step of --finalize',
+                    lambda: do_finalize_mult.finalize_mult(ctx),
+                )
+            logger.close()
+
+        # After the import, since the imported tables are what determine what goes into
+        # the auxiliary tables.
         if args.create_param_info or args.create_partables or args.create_table_names:
             logger.open(
                 'Creating auxiliary tables',
@@ -634,44 +1411,133 @@ def main() -> None:
             )
 
             if args.create_param_info:
-                do_param_info.do_param_info(ctx)
+                with ctx.timed('create_param_info'):
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--create-param-info',
+                        lambda: do_param_info.do_param_info(ctx),
+                    )
             if args.create_partables:
-                do_partables.do_partables(ctx)
+                with ctx.timed('create_partables'):
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--create-partables',
+                        lambda: do_partables.do_partables(ctx),
+                    )
             if args.create_table_names:
-                do_table_names.do_table_names(ctx)
+                with ctx.timed('create_table_names'):
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--create-table-names',
+                        lambda: do_table_names.do_table_names(ctx),
+                    )
 
             logger.close()
+
+        # A pending generation leaves the served schema's cart and searches alone: the
+        # switch points the cart at it and resets the search tables.
+        if pending is not None and args.create_cart:
+            if not args.finalize:
+                import_util.log_error(
+                    ctx,
+                    '--create-cart empties the served cart, so it is refused with a pending '
+                    'generation',
+                )
+                failed_steps.append('--create-cart')
+            args.create_cart = False
+        if pending is not None and args.finalize:
+            args.reset_search_tables = False
+
+        # After the import, since the cart's foreign key needs obs_general.
+        if args.create_cart or args.reset_search_tables:
+            logger.open(
+                'Cleaning up OPUS/Django tables',
+                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
+            )
+            if args.create_cart:
+                with ctx.timed('create_cart'):
+                    _run_finishing_step(
+                        logger, failed_steps, '--create-cart', lambda: do_cart.create_cart(ctx)
+                    )
+            if args.reset_search_tables:
+                with ctx.timed('reset_search_tables'):
+                    _run_finishing_step(
+                        logger,
+                        failed_steps,
+                        '--reset-search-tables',
+                        lambda: do_django.reset_search_tables(ctx),
+                    )
+            logger.close()
+
+        # After the auxiliary tables, so that the statistics count every table's rows.
+        if args.analyze_tables:
+            import_util.log_info(ctx, 'Analyzing all tables')
+            with ctx.timed('analyze_tables'):
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    '--analyze-tables',
+                    lambda: do_import_tables.analyze_all_tables(ctx),
+                )
 
         if args.update_mult_info:
             logger.open(
-                'Updating preprogrammed mult tables',
+                'Updating the mult fields from the table schemas',
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
 
-            do_update_mult_info.update_mult_info(ctx)
+            with ctx.timed('update_mult_info'):
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    '--update-mult-info',
+                    lambda: do_update_mult_info.update_mult_info(ctx),
+                )
 
             logger.close()
 
-        if args.validate_perm:
-            do_validate.do_validate(ctx, 'perm')
+        # A pending generation is finalized once every step of --finalize succeeded.
+        if args.finalize and pending is not None and not failed_steps:
+            do_generation.set_pending_state(ctx, PENDING_FINALIZED)
 
-        if args.create_cart and ctx.try_cart_later:
-            logger.open(
-                'Trying to create cart table a second time',
-                limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
-            )
-
-            do_cart.create_cart(ctx)
-
-            logger.close()
+        if args.validate:
+            with ctx.timed('validate'):
+                _run_finishing_step(logger, failed_steps, '--validate', lambda: _validate(ctx))
 
         if args.import_dictionary:
             logger.open(
                 'Importing dictionary',
                 limits={'info': args.log_info_limit, 'debug': args.log_debug_limit},
             )
-            do_dictionary.do_dictionary(ctx)
+            with ctx.timed('import_dictionary'):
+                _run_finishing_step(
+                    logger,
+                    failed_steps,
+                    '--import-dictionary',
+                    lambda: do_dictionary.do_dictionary(ctx),
+                )
             logger.close()
+
+        failure_refuses = len(failed_steps) > 0 and not args.ignore_errors
+
+        # Last, after validation, because the row is what makes the schema servable.
+        if args.write_schema_version:
+            if failure_refuses:
+                import_util.log_error(
+                    ctx,
+                    f'{", ".join(failed_steps)} failed, so the schema is not marked ready; '
+                    '--ignore-errors marks it ready regardless',
+                )
+                sys.exit(-1)
+            if not _registry_finished(ctx, '--write-schema-version'):
+                sys.exit(-1)
+            with ctx.timed('write_schema_version'):
+                written = do_schema_version.write_schema_version(ctx)
+            if not written:
+                sys.exit(-1)
 
         if args.profile:
             pr.disable()
@@ -683,6 +1549,8 @@ def main() -> None:
             logger.info('Profile results:\n%s', s.getvalue())
 
         logger.close()
+        if failure_refuses:
+            sys.exit(-1)
 
     # This top-level handler logs the import failures that reach it, including an
     # ImportDBError raised from the pipeline. It catches Exception rather than

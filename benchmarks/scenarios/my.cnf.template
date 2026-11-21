@@ -1,0 +1,41 @@
+# The harness-owned MySQL server's configuration: the tuning baseline in
+# docs/dev_guide_benchmarks.rst. bench_server.py fills in the bracketed names; each sized
+# value's rule is stated beside it and in the guide's table.
+[mysqld]
+basedir = {basedir}
+datadir = {datadir}
+socket = {socket}
+# No TCP listener: everything the harness runs connects through the socket, which
+# only the account running the harness can reach.
+skip-networking
+mysqlx = OFF
+pid-file = {pid_file}
+log-error = {error_log}
+
+# No binary log. "log_bin = OFF" would name a log file OFF and turn logging on.
+skip-log-bin
+local_infile = ON
+
+# Statement digests long enough that OPUS's wide search statements stay distinct.
+# The second is capped by the first.
+max_digest_length = 4096
+performance_schema_max_digest_length = 4096
+
+# An exact cold start on every restart: no buffer pool dump or reload, and no reads
+# through the operating system's page cache.
+innodb_buffer_pool_load_at_startup = OFF
+innodb_buffer_pool_dump_at_shutdown = OFF
+innodb_flush_method = O_DIRECT
+
+# Sized from the memory budget in server.toml (rules in docs/dev_guide_benchmarks.rst).
+innodb_buffer_pool_size = {buffer_pool_size}
+innodb_buffer_pool_chunk_size = {buffer_pool_chunk_size}
+innodb_buffer_pool_instances = 1
+innodb_redo_log_capacity = {redo_log_capacity}
+innodb_io_capacity = {io_capacity}
+innodb_io_capacity_max = {io_capacity_max}
+
+# The documented defaults, stated so a result can be read without the server.
+sort_buffer_size = 262144
+tmp_table_size = 16777216
+temptable_max_ram = 1073741824

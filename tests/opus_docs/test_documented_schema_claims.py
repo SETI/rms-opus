@@ -14,15 +14,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from opus_import import import_util
+from opus_import.table_keys import TABLE_LEVEL_KEY_KINDS
 
 #: The schema files the chapter says are not tables. It also says which two of them
 #: are not even column lists.
 NOT_TABLES = {
     'param_info_ranges.json',
-    'mult_template.json',
     'obs_surface_geometry_target.json',
     'internal_def_product_types.json',
 }
@@ -64,15 +62,21 @@ def _defines_a_column(entry: dict[str, object]) -> bool:
 
 
 def _is_a_link(entry: dict[str, object]) -> bool:
-    """Say whether one schema entry is a constraint or a link rather than a column.
+    """Say whether one schema entry is a constraint, a key or a link, not a column.
 
     Parameters:
         entry: The schema entry.
 
     Returns:
-        True if the entry deliberately defines no column.
+        True if the entry deliberately defines no column: a constraint, a table-level
+        foreign, primary or unique key, or a link.
     """
-    return 'constraint' in entry or 'pi_referred_slug' in entry
+    return (
+        'constraint' in entry
+        or 'foreign_key' in entry
+        or any(name in entry for name in TABLE_LEVEL_KEY_KINDS)
+        or 'pi_referred_slug' in entry
+    )
 
 
 def test_tab_data_sources_exist_only_in_obs_files() -> None:
@@ -87,7 +91,7 @@ def test_tab_data_sources_exist_only_in_obs_files() -> None:
 
 
 def test_the_files_that_are_not_column_lists_are_exactly_these() -> None:
-    """Defends: "Four files are not tables", and the two-of-four split."""
+    """Defends: "Some files are not tables", and which two are not column lists."""
     not_a_list = set()
     names_no_columns = set()
     for path in _schema_files():
@@ -114,30 +118,3 @@ def test_every_other_schema_is_a_list_of_columns() -> None:
         assert data, path.name
         for entry in data:
             assert _defines_a_column(entry) or _is_a_link(entry), path.name
-
-
-@pytest.mark.parametrize('key', ['data_source_order', 'pi_units'])
-def test_the_keys_said_to_be_unread_are_present_and_unread(key: str) -> None:
-    """Defends the "Keys nothing reads" list.
-
-    Both halves matter: the chapter would be wrong if a key it names had been removed
-    from the schemas, and wrong in a more misleading way if something started reading
-    one. ``definition_results`` is deliberately not covered -- it is read as a computed
-    key, which is the blind spot the chapter states.
-
-    Parameters:
-        key: The schema key the chapter claims nothing reads.
-    """
-    assert any(key in path.read_text() for path in _schema_files()), (
-        f'{key} is no longer in any schema; the chapter should stop naming it'
-    )
-    source = _schema_dir().parents[1]
-    # Both quote styles: a reader spelled entry["pi_units"] would otherwise slip past
-    # this scan and leave the chapter claiming nothing reads the key.
-    literals = (f"'{key}'", f'"{key}"')
-    readers = [
-        str(path)
-        for path in source.rglob('*.py')
-        if any(literal in path.read_text() for literal in literals)
-    ]
-    assert not readers, f'{key} is now read by {readers}; the chapter is out of date'

@@ -5,8 +5,8 @@ Five unrelated groups of helper live here:
 * expanding the bundle descriptors given on the command line into bundle ids, and
   reading a PDS index table -- where a bad PDS3 label is reported and turned into a
   ``(None, None)`` result, while the PDS4 reader has no such handling and propagates;
-* naming things -- the ``obs_``/``mult_`` table for a mission, instrument or surface
-  geometry target, and the encoded and slug forms of a target name;
+* naming things -- the ``obs_`` table for a mission, instrument or surface geometry
+  target, the mult field of a column, and the encoded and slug forms of a target name;
 * reading the packaged ``table_schemas`` JSON that defines every OPUS table;
 * logging, as thin ``log_*`` wrappers over `opus_import.context.ImportLog` so a step can
   log without reaching through the context, plus `NoDupLogger` for the PdsFile warnings
@@ -37,7 +37,6 @@ import pdsfile
 import pdsparser
 import pdstable
 
-from opus_config import get_config
 from opus_import import config_data, config_targets, instruments
 
 if TYPE_CHECKING:
@@ -62,34 +61,60 @@ aliases are spelled separately so that neither package has to import the other.
 class MultOption(NamedTuple):
     """One entry of a column's ``mult_options`` list, named rather than positional.
 
-    A column whose schema carries ``mult_options`` has its ``mult_`` table pinned there
-    instead of being discovered from the data, and each entry is one row of that table.
-    The JSON holds a list, so a reader has to know what each position means; building
-    one of these from it is what turns that knowledge into something a checker and a
-    reader can both see, and an entry of the wrong length raises `TypeError` here rather
-    than being silently mis-assigned further on.
-
-    The ``aliases`` column every ``mult_`` table also has is deliberately absent: a
-    schema pins no aliases, and `opus_import.steps.do_import_mult` fills that column in
-    as None.
+    A column whose schema carries ``mult_options`` has its field's values pinned there
+    instead of being discovered from the data, and each entry is one ``mult`` row of
+    that field. The JSON holds a list, so a reader has to know what each position means;
+    building one of these from it is what turns that knowledge into something a checker
+    and a reader can both see, and an entry of the wrong length raises `TypeError` here
+    rather than being silently mis-assigned further on.
 
     Attributes:
         id: The row id the ``obs_`` column stores.
         value: The column value this row stands for, or None for the absent value.
         label: How the web application shows the value.
-        disp_order: The sort key, as text or as a number.
+        pin: The value's position in its field's list, an integer.
         display: ``'Y'`` to offer the value in the search form, ``'N'`` to hide it.
         grouping: The group the value belongs to in the search form, or None.
-        group_disp_order: The group's sort key, or None.
+        group_pin: The group's position among the field's groups, an integer, or None.
     """
 
     id: int
     value: str | None
     label: str
-    disp_order: str | int
+    pin: int
     display: str
     grouping: str | None
-    group_disp_order: str | None
+    group_pin: int | None
+
+
+def read_mult_option(entry: Sequence[Any]) -> MultOption:
+    """Read one ``mult_options`` entry, refusing an order element that is not an integer.
+
+    Parameters:
+        entry: The entry as the JSON holds it, ``[id, value, label, pin, display,
+            grouping, group_pin]``.
+
+    Returns:
+        The entry, named.
+
+    Raises:
+        TypeError: If the entry does not carry exactly seven values, or its ``pin`` is
+            not an integer, or its ``group_pin`` is neither an integer nor None. A string
+            such as ``"010"`` is refused rather than converted: the order is a number.
+    """
+    option = MultOption(*entry)
+    if not _is_int(option.pin):
+        raise TypeError(f'mult_options entry {list(entry)!r}: the pin must be an integer')
+    if option.group_pin is not None and not _is_int(option.group_pin):
+        raise TypeError(
+            f'mult_options entry {list(entry)!r}: the group pin must be an integer or null'
+        )
+    return option
+
+
+def _is_int(value: object) -> bool:
+    """Return whether a JSON value is an integer, which a boolean is not."""
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 # Data that ships inside the package, located through importlib.resources rather than
@@ -337,7 +362,7 @@ def log_accumulated_warnings(ctx: ImportContext, title: str) -> bool:
         for w in ctx.python_warning_list:
             log_error(ctx, '  ' + w)
         ctx.python_warning_list = []
-        ctx.import_has_bad_data = True
+        ctx.mark_bad_data()
         return True
     return False
 
@@ -462,9 +487,10 @@ def safe_pdstable_read_pds3(
         return None, None
 
     rows = table.dicts_by_row()
-    label = table.info.label.as_dict()
-
-    return rows, label
+    label = table.info.label
+    # pdstable returns a dictionary only for a PDS4 table; a PDS3 table's is a parsed label.
+    assert not isinstance(label, dict)
+    return rows, label.as_dict()
 
 
 def safe_column(row: IndexRow, column_name: str, idx: int | None = None) -> Any:
@@ -531,21 +557,29 @@ def table_name_obs_instrument(inst_name: str) -> str:
     return 'obs_instrument_' + inst_name.lower()
 
 
-def table_name_mult(table_name: str, field_name: str) -> str:
-    """Return the name of the ``mult_`` table holding one column's enumerated values.
+def mult_field_name(table_name: str, field_name: str, schema_entry: dict[str, Any]) -> str:
+    """Return the qualified name of the mult field holding one column's values.
+
+    Every group column's values are rows of the ``mult`` table, under the field this
+    name identifies in ``mult_field``.
 
     Parameters:
         table_name: The observation table the column belongs to.
         field_name: The column.
+        schema_entry: The column's schema entry. A ``mult_field`` key in it names the
+            field outright, so that several columns can share one.
 
     Returns:
-        The table name, such as ``'mult_obs_general_planet_id'``.
+        The entry's ``mult_field`` when it has one; otherwise ``<table>.<column>``,
+        lowercased, such as ``'obs_general.planet_id'``.
     """
-    return 'mult_' + table_name.lower() + '_' + field_name.lower()
+    if 'mult_field' in schema_entry:
+        return str(schema_entry['mult_field'])
+    return f'{table_name.lower()}.{field_name.lower()}'
 
 
 def encode_target_name(target_name: str) -> str:
-    """Return a target name in the form a surface geometry table name uses.
+    """Return a target name in the form a surface geometry category name uses.
 
     Parameters:
         target_name: The target name as a PDS label spells it.
@@ -562,7 +596,7 @@ def encode_target_name(target_name: str) -> str:
 
 
 def decode_target_name(target_name: str) -> str:
-    """Return the target name an encoded surface geometry table name was made from.
+    """Return the target name an encoded surface geometry category name was made from.
 
     Parameters:
         target_name: The encoded name.
@@ -577,7 +611,7 @@ def decode_target_name(target_name: str) -> str:
 
 
 def table_name_for_sfc_target(target_name: str) -> str:
-    """Return the encoded target name a surface geometry table is named for.
+    """Return the encoded target name a surface geometry category is named for.
 
     Parameters:
         target_name: The target name as a PDS label spells it.
@@ -631,16 +665,16 @@ def table_schema_files(pattern: str) -> list[Traversable]:
     )
 
 
-def read_schema_for_table(
-    ctx: ImportContext, table_name: str, replace: Sequence[tuple[str, str]] | None = None
-) -> TableSchema | None:
+def read_schema_for_table(ctx: ImportContext, table_name: str) -> TableSchema | None:
     """Read the packaged JSON schema that defines one OPUS table.
+
+    A surface geometry category, ``obs_surface_geometry__<target>``, reads as the
+    ``obs_surface_geometry_target`` template with the target's name in its labels and
+    slugs.
 
     Parameters:
         ctx: The import run's context, for the logger.
-        table_name: The table. An import prefix is stripped, and the name is lowercased.
-        replace: Text substitutions to apply to the schema before parsing it, as
-            ``(from, to)`` pairs.
+        table_name: The table or category, matched without regard to case.
 
     Returns:
         The column definitions in the order the schema lists them, or None if there is
@@ -650,9 +684,9 @@ def read_schema_for_table(
         json.JSONDecodeError: If the schema is not valid JSON. The table being
             read is logged first, since the parser's own message names no file.
     """
-    table_name = table_name.replace(get_config().import_.table_temp_prefix, '').lower()
+    table_name = table_name.lower()
+    replace: list[tuple[str, str]] = []
     if table_name.startswith('obs_surface_geometry__'):
-        assert not replace
         target_name = table_name.replace('obs_surface_geometry__', '')
         table_name = 'obs_surface_geometry_target'
         replace = [
@@ -664,9 +698,8 @@ def read_schema_for_table(
         return None
     contents = schema_file.read_text(encoding='utf-8')
     try:
-        if replace:
-            for r in replace:
-                contents = contents.replace(r[0], r[1])
+        for old, new in replace:
+            contents = contents.replace(old, new)
         schema: TableSchema = json.loads(contents)
         return schema
     except json.decoder.JSONDecodeError:
@@ -674,31 +707,43 @@ def read_schema_for_table(
         raise
 
 
-def find_max_table_id(ctx: ImportContext, table_name: str) -> Any:
-    """Return the largest row id a table holds in either namespace.
+def read_schema_for_existing_table(ctx: ImportContext, table_name: str) -> TableSchema | None:
+    """Read the schema an existing observation or mult table was created from.
 
     Parameters:
-        ctx: The import run's context, for the open database.
-        table_name: The table, without its namespace prefix.
+        ctx: The import run's context, for the logger.
+        table_name: The table's raw name, such as ``obs_instrument_coiss`` or
+            ``mult_field``.
 
     Returns:
-        The larger of the two namespaces' maxima, or -1 if the table exists in neither
-        or is empty in both.
+        The table's own schema; None for a table no packaged schema describes.
     """
-    assert ctx.db is not None
-    max1 = -1
-    max2 = -1
-    if ctx.db.table_exists('import', table_name):
-        max1 = ctx.db.find_column_max('import', table_name, 'id')
-    if ctx.db.table_exists('perm', table_name):
-        max2 = ctx.db.find_column_max('perm', table_name, 'id')
-    if max1 is None and max2 is None:
-        return -1
-    if max1 is None:
-        return max2
-    if max2 is None:
-        return max1
-    return max(max1, max2)
+    return read_schema_for_table(ctx, table_name)
+
+
+def next_table_id(ctx: ImportContext, table_name: str) -> Any:
+    """Hand out the next observation id, from the bundle's registered range.
+
+    ``obs_general`` is the only table that numbers its own rows; every other table keys
+    on ``obs_general_id``. A bundle's observations take its range's first id and those
+    after it, in the order they are computed.
+
+    Parameters:
+        ctx: The import run's context, for the bundle's id counter.
+        table_name: The table asking, which is ``obs_general``.
+
+    Returns:
+        The id, or, in a pool worker, the `opus_import.deferred.LocalId` the import's
+        process turns into it.
+
+    Raises:
+        opus_import.bundle_registry.BundleIdRangeError: If the bundle's range is used up.
+    """
+    if ctx.capture is not None:
+        return ctx.capture.next_id(table_name)
+    assert table_name == 'obs_general', table_name
+    assert ctx.bundle_ids is not None
+    return ctx.bundle_ids.take(1)
 
 
 ################################################################################
@@ -874,7 +919,7 @@ def log_debug(ctx: ImportContext, msg: str, *args: Any) -> None:
 
 
 def log_nonrepeating_error(ctx: ImportContext, msg: str) -> None:
-    """Log an error the first time this run produces it, and ignore it after that.
+    """Log an error the first time this run produces it, and mark bad data every time.
 
     Parameters:
         ctx: The import run's context.

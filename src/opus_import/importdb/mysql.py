@@ -9,6 +9,12 @@ the text. The DDL is the exception: `ImportDBMySQL.create_table` formats a colum
 default and its enum option list straight into the statement, which is safe only because
 those come from the table schemas packaged with `opus_import` and never from input.
 
+Observation rows are written by `ImportDBMySQL.bulk_load_rows`, which loads them from a
+scratch file with ``LOAD DATA LOCAL INFILE`` when the server allows it and checks the
+server's counts after every load, since such a load skips a duplicate key and turns a
+value it cannot store into a warning rather than failing. Where the server refuses local
+files, it writes ``INSERT`` statements instead, and the import log says which path ran.
+
 The driver is imported defensively, so that the module still imports without
 ``mysqlclient`` installed and a package-wide sweep -- Sphinx autodoc, or a test
 collection -- does not fail on it. An instance built without the driver forces itself
@@ -18,31 +24,261 @@ no tables and reads no rows; it is not a simulation anything can be driven throu
 
 from __future__ import annotations
 
+import contextlib
+import numbers
+import os
 import re
+import tempfile
+import time
 from typing import TYPE_CHECKING, Any
 
 try:
     import MySQLdb
+    import MySQLdb.cursors
 
     MYSQLDB_AVAILABLE = True
 except ImportError:
     MYSQLDB_AVAILABLE = False
 
+from opus_config.config import DEFAULT_TRANSACTION_ROWS
+from opus_import import generations, list_junctions
 from opus_import.importdb.super import (
+    CarriedOver,
     DBRow,
     ImportDBError,
     ImportDBSuper,
-    Namespace,
+    IndexStatement,
+    LoadGuard,
     ResultRow,
     SchemaColumn,
 )
+from opus_import.table_keys import (
+    KeyKind,
+    OnDelete,
+    TableKey,
+    create_time_keys,
+    declared_keys,
+    is_key_filtered_table,
+)
+from opus_support import ASCII_COLLATION
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Collection, Iterator, Sequence
 
     import pdslogger
 
 ERR_UNKNOWN_DATABASE = 1049
+
+#: The SQL type each fixed ``field_type`` of a table schema renders as. Two more forms
+#: are rendered by `create_table` itself: a width type (`MYSQL_WIDTH_FIELD_TYPE`), and
+#: ``enum``, whose values come from the column's ``field_enum_options``. A text column
+#: takes the schema's character set unless its ``field_charset`` names another
+#: (`MYSQL_CHARSET_SQL`).
+MYSQL_FIELD_TYPE_SQL: dict[str, str] = {
+    'int1': 'tinyint',
+    'int2': 'smallint',
+    'int3': 'mediumint',
+    'int4': 'int',
+    'int8': 'bigint',
+    'uint1': 'tinyint unsigned',
+    'uint2': 'smallint unsigned',
+    'uint3': 'mediumint unsigned',
+    'uint4': 'int unsigned',
+    'uint8': 'bigint unsigned',
+    'real4': 'float',
+    'real8': 'double',
+    'text': 'text',
+    'mult_list': 'JSON',
+    'json': 'JSON',
+    # A flag and a mult index both hold the id of a mult row, which is a SMALLINT
+    # UNSIGNED within its field (mult.json).
+    'flag_yesno': 'smallint unsigned',
+    'flag_onoff': 'smallint unsigned',
+    'mult_idx': 'smallint unsigned',
+    'datetime': 'datetime',
+    # A SHA-256 digest, stored as its bytes.
+    'binary32': 'binary(32)',
+}
+
+#: The rows `ImportDBMySQL.stream_select` asks the server for at a time.
+STREAM_FETCH_ROWS = 10_000
+
+#: The leaf pages InnoDB samples for a table's persistent statistics, set on every table
+#: `ImportDBMySQL.create_table` creates. The server's default of 20 pages estimates the
+#: row count of a table whose pages hold very different numbers of rows, such as
+#: ``obs_ring_geometry``, at anywhere from below to several times the true count, from
+#: one ``ANALYZE`` to the next, and the optimizer's choice of plan follows the estimate.
+#: A table with fewer leaf pages is read whole.
+STATS_SAMPLE_PAGES = 500
+
+#: A ``field_type`` that names a variable-width string and its most characters, such as
+#: ``varchar255``: the width is the group.
+MYSQL_WIDTH_FIELD_TYPE = re.compile(r'varchar([1-9][0-9]*)')
+
+#: The ``field_type`` of a text column whose values have no fixed most length.
+MYSQL_TEXT_FIELD_TYPE = 'text'
+
+#: What each ``field_charset`` a column may carry renders as. The column's values must
+#: all be in that character set: a value outside it fails the load that writes it. ASCII
+#: compares without case, as the schema's own collation does, and costs a byte a
+#: character where the schema's utf8mb4 may cost four.
+MYSQL_CHARSET_SQL: dict[str, str] = {
+    'ascii': f'CHARACTER SET ascii COLLATE {ASCII_COLLATION}',
+}
+
+#: The bytes one character of each ``field_charset`` may take; a column without one is
+#: utf8mb4, whose widest character is four bytes (`MYSQL_DEFAULT_CHARSET_BYTES`).
+MYSQL_CHARSET_BYTES: dict[str, int] = {'ascii': 1}
+
+#: The bytes one character of the schema's own character set, utf8mb4, may take.
+MYSQL_DEFAULT_CHARSET_BYTES = 4
+
+#: The ``field_type`` whose values a column lists in ``field_enum_options``.
+MYSQL_ENUM_FIELD_TYPE = 'enum'
+
+
+def _free_bytes(path: str) -> int | None:
+    """Return the bytes free to an unprivileged writer on a directory's filesystem.
+
+    Parameters:
+        path: The directory.
+
+    Returns:
+        The free bytes, or None when the path cannot be read from here.
+    """
+    try:
+        stat = os.statvfs(path)
+    except OSError:
+        return None
+    return stat.f_bavail * stat.f_frsize
+
+
+def is_renderable_field_type(field_type: str) -> bool:
+    """Return whether `ImportDBMySQL.create_table` can render a ``field_type``.
+
+    Parameters:
+        field_type: The value of a column's ``field_type``.
+
+    Returns:
+        True for a key of `MYSQL_FIELD_TYPE_SQL`, a `MYSQL_WIDTH_FIELD_TYPE` or
+        `MYSQL_ENUM_FIELD_TYPE`.
+    """
+    return (
+        field_type in MYSQL_FIELD_TYPE_SQL
+        or MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type) is not None
+        or field_type == MYSQL_ENUM_FIELD_TYPE
+    )
+
+
+def takes_charset(field_type: str) -> bool:
+    """Return whether a column of a ``field_type`` holds text, and so may name a charset.
+
+    Parameters:
+        field_type: The value of a column's ``field_type``.
+
+    Returns:
+        True for a `MYSQL_WIDTH_FIELD_TYPE` or `MYSQL_TEXT_FIELD_TYPE`.
+    """
+    return (
+        MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type) is not None
+        or field_type == MYSQL_TEXT_FIELD_TYPE
+    )
+
+
+#: The bytes one value of a fixed ``field_type`` takes in an index entry, for the space
+#: estimate of an index build (`ImportDBMySQL.key_space_bytes`). A width type takes up to
+#: its character set's widest character for each character (`MYSQL_CHARSET_BYTES`), and
+#: two more for its length; a type absent here cannot be indexed without a prefix and is
+#: estimated by `MYSQL_UNSIZED_KEY_BYTES`.
+MYSQL_KEY_BYTES: dict[str, int] = {
+    'int1': 1,
+    'int2': 2,
+    'int3': 3,
+    'int4': 4,
+    'int8': 8,
+    'uint1': 1,
+    'uint2': 2,
+    'uint3': 3,
+    'uint4': 4,
+    'uint8': 8,
+    'real4': 4,
+    'real8': 8,
+    'flag_yesno': 2,
+    'flag_onoff': 2,
+    'mult_idx': 2,
+    'datetime': 5,
+    'enum': 2,
+    'binary32': 32,
+}
+
+#: The index-entry bytes assumed for a column type `MYSQL_KEY_BYTES` does not size: the
+#: most an index key prefix may take under InnoDB's DYNAMIC row format.
+MYSQL_UNSIZED_KEY_BYTES = 3072
+
+#: The bytes an index entry carries beyond its key and the primary key, in the estimate
+#: ``rows x (key bytes + primary key bytes + 10) x 1.3``.
+MYSQL_INDEX_ENTRY_OVERHEAD = 10
+
+#: The factor the estimate allows for the sort's own overhead.
+MYSQL_INDEX_SORT_FACTOR = 1.3
+
+#: The host names that put the server on the computer running the import, where a
+#: directory on the server's host can be read from here.
+LOCAL_HOSTS = frozenset({'localhost', '127.0.0.1', '::1'})
+
+#: The largest ``innodb_ddl_buffer_size`` the server accepts.
+MYSQL_MAX_DDL_BUFFER_SIZE = 4_294_967_295
+
+#: The smallest ``innodb_ddl_buffer_size`` the server accepts.
+MYSQL_MIN_DDL_BUFFER_SIZE = 65_536
+
+#: The server's "lock wait timeout exceeded", which a statement fails with when it waited
+#: ``lock_wait_timeout`` seconds for a table another session holds.
+ERR_LOCK_WAIT_TIMEOUT = 1205
+
+#: The server's "deadlock found when trying to get lock", after which the transaction
+#: has been rolled back.
+ERR_DEADLOCK = 1213
+
+#: The errors after which a transaction may succeed if it is run again.
+ERRS_RETRYABLE = frozenset({ERR_DEADLOCK, ERR_LOCK_WAIT_TIMEOUT})
+
+#: The server's "duplicate entry for key".
+ERR_DUPLICATE_KEY = 1062
+
+#: ``INFORMATION_SCHEMA.TABLES``'s ``TABLE_TYPE`` of a view and of a base table.
+_VIEW_TABLE_TYPE = 'VIEW'
+_BASE_TABLE_TYPE = 'BASE TABLE'
+
+#: The errors that mean the server or the connection refuses ``LOAD DATA LOCAL INFILE``:
+#: the server's "not allowed" (1148) and "loading local data is disabled" (3948), and the
+#: client library's own refusal of the server's file request (2068).
+ERRS_LOCAL_INFILE_REFUSED = frozenset({1148, 2068, 3948})
+
+#: What the import log names as the bulk-load path, on a line starting
+#: `BULK_LOAD_PATH_PREFIX`.
+BULK_LOAD_PATH_FILE = 'LOAD DATA LOCAL INFILE'
+BULK_LOAD_PATH_INSERT = 'insert_rows packets'
+BULK_LOAD_PATH_PREFIX = 'Bulk load path: '
+
+# The counts the server reports after a LOAD DATA statement, as `Connection.info` returns
+# them: "Records: 3  Deleted: 0  Skipped: 0  Warnings: 0".
+_LOAD_INFO_RE = re.compile(
+    r'Records:\s*(?P<records>\d+)\s+Deleted:\s*\d+\s+Skipped:\s*(?P<skipped>\d+)\s+'
+    r'Warnings:\s*(?P<warnings>\d+)'
+)
+
+# The rows an UPDATE matched, as `Connection.info` reports them after the statement:
+# "Rows matched: 1  Changed: 0  Warnings: 0". An unchanged row counts as matched.
+_UPDATE_INFO_RE = re.compile(r'Rows matched:\s*(?P<matched>\d+)')
+
+# The characters LOAD DATA's default escape rules need escaped in a field: the escape
+# character itself, the field and line terminators, and the two control characters a
+# terminator scan could otherwise misread. Each becomes a backslash sequence the load
+# reads back as the original character.
+_LOAD_DATA_ESCAPES = str.maketrans(
+    {'\\': '\\\\', '\t': '\\t', '\n': '\\n', '\r': '\\r', '\0': '\\0'}
+)
 
 # The only identifier shape OPUS uses: table, column and schema names come from
 # the checked-in table schemas, from the configuration, and from bundle ids, and
@@ -52,6 +288,43 @@ ERR_UNKNOWN_DATABASE = 1049
 _IDENTIFIER_RE = re.compile(r'\A[A-Za-z0-9_]+\Z')
 
 
+def load_data_text(value: Any) -> str:
+    """Return one value as a field of the text ``LOAD DATA`` reads.
+
+    The text is the statement's default format: fields separated by tabs, rows ended
+    by newlines, ``\\N`` for NULL, and a backslash before each tab, newline, carriage
+    return, NUL or backslash in a value. A value is rendered the way `insert_rows` would
+    have sent it, so the two paths store the same thing: a float by its ``repr``, which
+    names the exact double; a boolean as ``1`` or ``0``, as the driver sends one; and
+    anything else, a JSON string included, as its text.
+
+    Parameters:
+        value: The value of one column of one row.
+
+    Returns:
+        The field's text, escaped.
+
+    Raises:
+        TypeError: If the value is bytes, which no column a load writes holds and which
+            the text has no faithful rendering for.
+    """
+    if value is None:
+        return '\\N'
+    if isinstance(value, bool):
+        return '1' if value else '0'
+    if isinstance(value, numbers.Integral):
+        return str(int(value))
+    if isinstance(value, float):
+        return float.__repr__(value)
+    if isinstance(value, (bytes, bytearray)):
+        raise TypeError(f'a bulk load cannot write bytes: {value!r}')
+    return str(value).translate(_LOAD_DATA_ESCAPES)
+
+
+class _LocalInfileRefusedError(Exception):
+    """Raised by a load the server or the connection refused to read a local file for."""
+
+
 class ImportDBMySQL(ImportDBSuper):
     """The import pipeline's database interface, rendered as MySQL.
 
@@ -59,6 +332,8 @@ class ImportDBMySQL(ImportDBSuper):
         default_engine: The storage engine every table is created with.
         mysql_version: The server's version string, or ``'Simulated'`` when the driver is
             absent.
+        bulk_load_path: How `bulk_load_rows` writes rows: `BULK_LOAD_PATH_FILE` or
+            `BULK_LOAD_PATH_INSERT`.
     """
 
     # Note that for MySQL, we ignore the db_name and only use the schema_name
@@ -70,33 +345,43 @@ class ImportDBMySQL(ImportDBSuper):
         db_user: str,
         db_password: str,
         mult_form_types: Sequence[str] | None = None,
-        import_prefix: str | None = None,
         logger: pdslogger.PdsLogger | None = None,
         read_only: bool = False,
+        bulk_load: bool = True,
+        scratch_dir: str | None = None,
+        transaction_rows: int = DEFAULT_TRANSACTION_ROWS,
     ) -> None:
         """Open the connection to a MySQL server, creating the schema if it is absent.
 
+        A read-only connection never creates the schema: an absent one is an error.
+
         The parameters are `ImportDBSuper`'s, and ``db_name`` is ignored: MySQL has no
-        level above the schema.
+        level above the schema. Once connected, the session is set up for the import's
+        writes (`_prepare_import_session`).
 
         Parameters:
             db_hostname: The MySQL server's host name.
             db_name: Unused.
             db_schema: The schema (MySQL database) holding the OPUS tables. It is
-                created if the server does not already have it.
+                created if the server does not already have it, unless ``read_only``.
             db_user: The user to connect as.
             db_password: That user's password.
-            mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
+            mult_form_types: The ``param_info`` form types whose columns hold mult ids,
                 or None for none of them.
-            import_prefix: The prefix distinguishing an import table from its permanent
-                counterpart, or None to make the two namespaces the same tables.
             logger: Where to report progress, statements and warnings, or None to report
                 nothing.
             read_only: True to log every mutating statement instead of executing it.
+            bulk_load: Whether `bulk_load_rows` may load from a scratch file. True also
+                lets the connection send local files.
+            scratch_dir: The directory the scratch files go in, or None for the system
+                temporary directory.
+            transaction_rows: The most rows one bulk load writes in one transaction.
 
         Raises:
             ImportDBError: If the server cannot be reached, the schema can be neither
-                used nor created, or the session's SQL mode cannot be set.
+                used nor created, the schema is absent on a read-only connection, or the
+                session's SQL mode cannot be set.
+            ValueError: If `transaction_rows` is less than 1, before anything connects.
         """
         super().__init__(
             db_hostname,
@@ -105,128 +390,212 @@ class ImportDBMySQL(ImportDBSuper):
             db_user,
             db_password,
             mult_form_types=mult_form_types,
-            import_prefix=import_prefix,
             logger=logger,
             read_only=read_only,
+            bulk_load=bulk_load,
+            scratch_dir=scratch_dir,
+            transaction_rows=transaction_rows,
         )
-        super()._enter('__init__')
+        self.bulk_load_path = BULK_LOAD_PATH_INSERT
+        self._ddl_buffer_bounds: tuple[int, int, int] | None = None
+        self._ddl_buffer_size: int | None = None
+        with self._operation('__init__'):
+            self._table_info_cache: dict[str, list[SchemaColumn]] = {}
 
-        self._table_info_cache: dict[tuple[Namespace, str], list[SchemaColumn]] = {}
-
-        if not MYSQLDB_AVAILABLE:
-            self.read_only = True
-            if self.logger:
-                self.logger.log(
-                    'warning',
-                    'Python package MySQLdb not available - simulating all ' + 'database accesses!',
-                )
-
-        self.default_engine = 'INNODB'
-
-        if not MYSQLDB_AVAILABLE:
-            self.conn = None
-            if self.logger:
-                self.logger.log(
-                    'info',
-                    f'[SIM] Connected to MySQL server "{self.db_hostname}" '
-                    + f'as "{self.db_user}"',
-                )
-        else:
-            try:
-                self.conn = MySQLdb.connect(
-                    host=self.db_hostname, user=self.db_user, passwd=self.db_password
-                )
-            except MySQLdb.Error as e:
+            if not MYSQLDB_AVAILABLE:
+                self.read_only = True
                 if self.logger:
                     self.logger.log(
-                        'fatal',
-                        'Unable to connect to MySQL server ' + f'"{self.db_hostname}": {e.args[1]}',
+                        'warning',
+                        'Python package MySQLdb not available - simulating all '
+                        + 'database accesses!',
                     )
-                raise ImportDBError(e) from e
 
-            if self.logger:
-                self.logger.log(
-                    'info',
-                    f'Connected to MySQL server "{self.db_hostname}" ' + f'as "{self.db_user}"',
-                )
+            self.default_engine = 'INNODB'
 
-            try:
-                cmd = f'USE {self.quote_identifier(self.db_schema)}'
-                self._execute(cmd)
-            except MySQLdb.Error as e:
-                err_code = e.args[0]
-                if err_code == ERR_UNKNOWN_DATABASE:
-                    try:
-                        cmd = f'CREATE DATABASE {self.quote_identifier(self.db_schema)}'
-                        self._execute(cmd)
-                    except MySQLdb.Error as create_err:
-                        if self.logger:
-                            self.logger.log(
-                                'fatal',
-                                f'Unable to create new database "{self.db_schema}"'
-                                + f': {create_err.args[1]}',
-                            )
-                        raise ImportDBError(create_err) from create_err
-                    if self.logger:
-                        self.logger.log('warning', f'  Created new database "{self.db_schema}"')
-
-                    try:
-                        cmd = f'USE {self.quote_identifier(self.db_schema)}'
-                        self._execute(cmd)
-                    except MySQLdb.Error as use_err:
-                        if self.logger:
-                            self.logger.log(
-                                'fatal',
-                                'Unable to use new database '
-                                + f'"{self.db_schema}": {use_err.args[1]}',
-                            )
-                        raise ImportDBError(use_err) from use_err
-                else:
+            if not MYSQLDB_AVAILABLE:
+                self.conn = None
+                if self.logger:
+                    self.logger.log(
+                        'info',
+                        f'[SIM] Connected to MySQL server "{self.db_hostname}" '
+                        + f'as "{self.db_user}"',
+                    )
+            else:
+                try:
+                    self.conn = MySQLdb.connect(
+                        host=self.db_hostname,
+                        user=self.db_user,
+                        passwd=self.db_password,
+                        local_infile=self.bulk_load,
+                    )
+                except MySQLdb.Error as e:
                     if self.logger:
                         self.logger.log(
                             'fatal',
-                            'Unable to use existing database ' + f'"{self.db_schema}": {e.args[1]}',
+                            'Unable to connect to MySQL server ' + f'"{self.db_hostname}": {e}',
                         )
                     raise ImportDBError(e) from e
 
-        if self.logger:
-            self.logger.log('info', f'  Using database "{self.db_schema}"')
+                if self.logger:
+                    self.logger.log(
+                        'info',
+                        f'Connected to MySQL server "{self.db_hostname}" ' + f'as "{self.db_user}"',
+                    )
 
-        # We keep a cached list of table names so we don't have to keep doing
-        # SQL queries - go ahead and populate it now
-        self._table_names: set[str] | None = None
-        self.table_names('all')
-        assert self._table_names is not None
+                try:
+                    cmd = f'USE {self.quote_identifier(self.db_schema)}'
+                    self._execute(cmd)
+                except MySQLdb.Error as e:
+                    err_code = e.args[0] if e.args else None
+                    if err_code == ERR_UNKNOWN_DATABASE and self.read_only:
+                        message = (
+                            f'Database "{self.db_schema}" does not exist, and a read-only '
+                            'run does not create it'
+                        )
+                        if self.logger:
+                            self.logger.log('fatal', message)
+                        raise ImportDBError(message) from e
+                    if err_code == ERR_UNKNOWN_DATABASE:
+                        try:
+                            cmd = f'CREATE DATABASE {self.quote_identifier(self.db_schema)}'
+                            self._execute(cmd)
+                        except MySQLdb.Error as create_err:
+                            if self.logger:
+                                self.logger.log(
+                                    'fatal',
+                                    f'Unable to create new database "{self.db_schema}"'
+                                    + f': {create_err}',
+                                )
+                            raise ImportDBError(create_err) from create_err
+                        if self.logger:
+                            self.logger.log('warning', f'  Created new database "{self.db_schema}"')
 
-        # A list of all the tables we've created so we know which ones we have
-        # to do post-processing on
-        self.tables_created = []
+                        try:
+                            cmd = f'USE {self.quote_identifier(self.db_schema)}'
+                            self._execute(cmd)
+                        except MySQLdb.Error as use_err:
+                            if self.logger:
+                                self.logger.log(
+                                    'fatal',
+                                    'Unable to use new database '
+                                    + f'"{self.db_schema}": {use_err}',
+                                )
+                            raise ImportDBError(use_err) from use_err
+                    else:
+                        if self.logger:
+                            self.logger.log(
+                                'fatal',
+                                'Unable to use existing database ' + f'"{self.db_schema}": {e}',
+                            )
+                        raise ImportDBError(e) from e
 
-        if not MYSQLDB_AVAILABLE:
-            self.mysql_version = 'Simulated'
-        else:
-            cmd = 'SELECT VERSION()'
-            res = self._execute_and_fetchall(cmd, '__init__')
-            self.mysql_version = res[0][0]
             if self.logger:
-                self.logger.log('info', f'  MySQL version: {self.mysql_version}')
+                self.logger.log('info', f'  Using database "{self.db_schema}"')
 
+            # We keep a cached list of table names so we don't have to keep doing
+            # SQL queries - go ahead and populate it now
+            self._table_names: set[str] | None = None
+            self.table_names('all')
+            assert self._table_names is not None
+
+            # A list of all the tables we've created so we know which ones we have
+            # to do post-processing on
+            self.tables_created = []
+
+            if not MYSQLDB_AVAILABLE:
+                self.mysql_version = 'Simulated'
+            else:
+                cmd = 'SELECT VERSION()'
+                res = self._execute_and_fetchall(cmd, '__init__')
+                self.mysql_version = res[0][0]
+                if self.logger:
+                    self.logger.log('info', f'  MySQL version: {self.mysql_version}')
+
+                try:
+                    cmd = (
+                        "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,"
+                        'ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,'
+                        'STRICT_ALL_TABLES'
+                    )
+                    if self.mysql_version[0] == '5':
+                        cmd += ',NO_AUTO_CREATE_USER'
+                    cmd += "'"
+                    self._execute(cmd)
+                except MySQLdb.Error as e:
+                    self._log_failure(f'Failed to set STRICT_ALL_TABLES mode: {e}')
+                    raise ImportDBError(e) from e
+
+                try:
+                    # Several import processes write one schema at once, so a locking
+                    # read locks only the rows it returns and takes no gap locks.
+                    self._execute('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED')
+                except MySQLdb.Error as e:
+                    self._log_failure(f'Failed to set the READ COMMITTED isolation level: {e}')
+                    raise ImportDBError(e) from e
+
+                self._prepare_import_session()
+
+    def _prepare_import_session(self) -> None:
+        """Choose the bulk-load path, and keep the import's writes out of the binary log.
+
+        Both depend on server settings an administrator controls, so each is changed
+        here where the account may and reported where it may not; neither stops the
+        import. Every line goes to the log at info level, since a warning would read as
+        a defect in the import rather than in the server's configuration. A read-only run
+        writes nothing, so it changes neither and writes `INSERT` statements it never
+        sends.
+        """
+        if self.read_only:
+            self._log_bulk_load_path('a read-only run')
+            return
+        local_infile, log_bin = self._execute_and_fetchall(
+            'SELECT @@GLOBAL.local_infile, @@GLOBAL.log_bin', '__init__'
+        )[0]
+        if not self.bulk_load:
+            self._log_bulk_load_path('[import] bulk_load is false')
+        elif local_infile:
+            self.bulk_load_path = BULK_LOAD_PATH_FILE
+            self._log_bulk_load_path()
+        else:
             try:
-                cmd = (
-                    "set sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,"
-                    'ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION,'
-                    'STRICT_ALL_TABLES'
+                self._execute('SET GLOBAL local_infile = ON')
+            except MySQLdb.Error as e:
+                self._log_bulk_load_path(
+                    'the server refuses local files and this account may not change that '
+                    f'({e}); an administrator can run "SET GLOBAL local_infile = ON", or set '
+                    "local_infile = ON in the server's configuration"
                 )
-                if self.mysql_version[0] == '5':
-                    cmd += ',NO_AUTO_CREATE_USER'
-                cmd += "'"
-                self._execute(cmd)
+            else:
+                if self.logger:
+                    self.logger.log('info', "  Turned on the server's local_infile")
+                self.bulk_load_path = BULK_LOAD_PATH_FILE
+                self._log_bulk_load_path()
+        if log_bin:
+            try:
+                self._execute('SET sql_log_bin = 0')
             except MySQLdb.Error as e:
                 if self.logger:
-                    self.logger.log('fatal', f'Failed to set STRICT_ALL_TABLES mode: {e.args[1]}')
-                raise ImportDBError(e) from e
+                    self.logger.log(
+                        'info',
+                        '  The server writes a binary log and this account may not turn it '
+                        f'off for the import ({e}); starting the server with --skip-log-bin, '
+                        'or granting the account SESSION_VARIABLES_ADMIN, saves writing '
+                        'every imported row to it',
+                    )
+            else:
+                if self.logger:
+                    self.logger.log('info', "  The import's writes skip the binary log")
 
-        super()._exit()
+    def _log_bulk_load_path(self, reason: str | None = None) -> None:
+        """Log which path `bulk_load_rows` writes rows by, on the line the harness reads.
+
+        Parameters:
+            reason: Why the path is `BULK_LOAD_PATH_INSERT`, or None for no reason.
+        """
+        if self.logger:
+            because = '' if reason is None else f' ({reason})'
+            self.logger.log('info', f'  {BULK_LOAD_PATH_PREFIX}{self.bulk_load_path}{because}')
 
     def _execute(
         self,
@@ -270,16 +639,21 @@ class ImportDBMySQL(ImportDBSuper):
         try:
             with self.conn.cursor() as cur:
                 self._execute(cmd, param_list, cur=cur)
-                self.conn.commit()
+                if not self._in_transaction:
+                    self.conn.commit()
                 rows: Sequence[ResultRow] = cur.fetchall()
                 return rows
         except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed in {func_name}: {e.args[1]}')
+            self._log_failure(f'Failed in {func_name}: {e}')
             raise ImportDBError(e) from e
 
     def quote_identifier(self, s: str) -> str:
         """Return `s` backtick-quoted for use as an identifier.
+
+        The import reads and writes ``obs_general``'s base table, so the name
+        ``obs_general`` is rendered as ``obs_general_rows``
+        (`opus_import.generations.physical_table_name`); no column or schema has that
+        name.
 
         Parameters:
             s: The table, column or schema name.
@@ -293,7 +667,7 @@ class ImportDBMySQL(ImportDBSuper):
         """
         if not isinstance(s, str) or not _IDENTIFIER_RE.match(s):
             raise ImportDBError(f'Unsafe SQL identifier: {s!r}')
-        return '`' + s + '`'
+        return '`' + generations.physical_table_name(s) + '`'
 
     def _quoted_column_list(self, column_names: Sequence[str]) -> str:
         """Return the column names quoted and comma-separated.
@@ -329,17 +703,14 @@ class ImportDBMySQL(ImportDBSuper):
         return ','.join(['%s'] * len(column_names))
 
     def table_names(
-        self, namespace: Namespace, prefix: str | list[str] | tuple[str, ...] | None = None
+        self, prefix: str | list[str] | tuple[str, ...] | None = None
     ) -> Collection[str]:
-        """Return the names of the tables in a namespace.
+        """Return the names of the tables in the schema.
 
         The names are read from the server once and cached, so a run that creates and
         drops tables through this instance never re-queries for them.
 
         Parameters:
-            namespace: The namespace to list. ``'import'`` and ``'perm'`` return raw
-                names, with the import prefix stripped; ``'all'`` returns the names as
-                the server spells them.
             prefix: One prefix, or several, that a name must start with; None for every
                 name.
 
@@ -347,52 +718,27 @@ class ImportDBMySQL(ImportDBSuper):
             The matching table names, sorted. That order is part of the contract, because
             a caller handing out row ids while iterating this would otherwise produce a
             different database on a different machine. Every path returns a new list.
-
-        Raises:
-            NotImplementedError: If the namespace is not one of the three.
         """
-        super()._enter('table_names')
-
-        if self._table_names is None:
-            cmd = """
+        with self._operation('table_names'):
+            if self._table_names is None:
+                cmd = """
 SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 `TABLE_TYPE`='BASE TABLE' AND `TABLE_SCHEMA`=%s"""
-            res = self._execute_and_fetchall(cmd, 'table_names', [self.db_schema])
-            # Note: SQL table names are case-insensitive on SOME OSes and this
-            # query returns them in whatever case SQL returns them in.
-            # But table_exists does a case-insensitive match.
-            self._table_names = {x[0] for x in res}
-            # if self.logger:
-            #     self.logger.log('debug',
-            #             f'  Current table names: {sorted(self._table_names)}')
-        super()._exit()
+                res = self._execute_and_fetchall(cmd, 'table_names', [self.db_schema])
+                # Note: SQL table names are case-insensitive on SOME OSes and this
+                # query returns them in whatever case SQL returns them in.
+                # But table_exists does a case-insensitive match.
+                self._table_names = {generations.logical_table_name(x[0]) for x in res}
+                # if self.logger:
+                #     self.logger.log('debug',
+                #             f'  Current table names: {sorted(self._table_names)}')
 
         # Sorted, because the cache is a set filled from a query with no ORDER BY, so
         # its iteration order depends on both the hash seed and the order the server
         # happened to return rows in. A caller that hands out row ids in this order --
         # `do_param_info` does -- would otherwise give the same database different ids on
         # different machines, which is a difference nothing else can explain.
-        #
-        # Sorted *after* the prefix comes off, not before: the prefix is matched without
-        # regard to case, so two tables can carry it in different spellings and stripping
-        # it would then undo an ordering established on the fuller names.
-        ret_names: Collection[str]
-        if namespace == 'all':
-            ret_names = sorted(self._table_names)
-        elif namespace == 'import':
-            ret_names = sorted(
-                self.convert_namespace_to_raw(namespace, x)
-                for x in self._table_names
-                if self._is_import_namespace(x)
-            )
-        elif namespace == 'perm':
-            ret_names = sorted(
-                self.convert_namespace_to_raw(namespace, x)
-                for x in self._table_names
-                if self._is_perm_namespace(x)
-            )
-        else:
-            raise NotImplementedError(namespace)
+        ret_names = sorted(self._table_names)
 
         if prefix is None:
             return ret_names
@@ -408,20 +754,26 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
 
         return [x for x in ret_names if x.startswith(prefix)]
 
-    def table_info(self, namespace: Namespace, raw_table_name: str) -> list[SchemaColumn]:
+    def forget_table_names(self) -> None:
+        """Read the table names from the server again, replacing the cached ones."""
+        self._table_names = None
+        self.table_names()
+
+    def table_info(self, table_name: str) -> list[SchemaColumn]:
         """Return the columns of a table as the server currently defines them.
 
         The answer is cached per table and discarded whenever a table is created or
         dropped through this instance.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Returns:
             One dictionary per column, in the table's column order, each carrying
             ``field_name``, ``field_default``, ``field_notnull`` and the OPUS
-            ``field_type`` the server's own type maps to. A table the server does not
+            ``field_type`` the server's own type maps to, and ``field_charset`` for a
+            text column in a character set of `MYSQL_CHARSET_SQL`, as `create_table`
+            would write the column. A table the server does not
             have produces no columns rather than an error. This is the cached list
             itself, so a caller that reorders or edits it changes what every later call
             returns.
@@ -429,136 +781,192 @@ SELECT `TABLE_NAME` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE
         Raises:
             NotImplementedError: If a column has a server type OPUS has no name for.
         """
-        cache_key = (namespace, raw_table_name)
-        if cache_key in self._table_info_cache:
-            return self._table_info_cache[cache_key]
-        super()._enter('table_info')
-
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
-        cmd = """
+        if table_name in self._table_info_cache:
+            return self._table_info_cache[table_name]
+        with self._operation('table_info'):
+            cmd = """
 SELECT `COLUMN_NAME`, `COLUMN_DEFAULT`, `IS_NULLABLE`, `DATA_TYPE`,
-`CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`
+`CHARACTER_MAXIMUM_LENGTH`, `COLUMN_TYPE`, `CHARACTER_SET_NAME`
 FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
 `TABLE_NAME`=%s ORDER BY `ORDINAL_POSITION`"""
-        rows = self._execute_and_fetchall(cmd, 'table_info', [self.db_schema, table_name])
+            rows = self._execute_and_fetchall(
+                cmd, 'table_info', [self.db_schema, generations.physical_table_name(table_name)]
+            )
 
-        column_list = []
+            column_list = []
 
-        for row in rows:
-            (column_name, column_default, is_nullable, data_type, char_len, column_type) = row
-            if data_type == 'tinyint':
-                field_type = 'int1'
-            elif data_type == 'smallint':
-                field_type = 'int2'
-            elif data_type == 'mediumint':
-                field_type = 'int3'
-            elif data_type == 'int':
-                field_type = 'int4'
-            elif data_type == 'bigint':
-                field_type = 'int8'
-            elif data_type == 'char':
-                field_type = f'char({char_len})'
-            elif data_type == 'float':
-                field_type = 'real4'
-            elif data_type == 'double':
-                field_type = 'real8'
-            elif data_type == 'enum':
-                field_type = 'enum'
-            elif data_type == 'json':
-                field_type = 'json'
-            elif data_type == 'timestamp':
-                field_type = 'timestamp'
-            elif data_type == 'text':
-                field_type = 'text'
-            elif data_type == 'mult_list':
-                field_type = 'mult_list'
-            else:
-                raise NotImplementedError(data_type)
-            if field_type.startswith('int') and column_type.find('unsigned') != -1:
-                field_type = 'u' + field_type
+            for row in rows:
+                (
+                    column_name,
+                    column_default,
+                    is_nullable,
+                    data_type,
+                    char_len,
+                    column_type,
+                    charset,
+                ) = row
+                if data_type == 'tinyint':
+                    field_type = 'int1'
+                elif data_type == 'smallint':
+                    field_type = 'int2'
+                elif data_type == 'mediumint':
+                    field_type = 'int3'
+                elif data_type == 'int':
+                    field_type = 'int4'
+                elif data_type == 'bigint':
+                    field_type = 'int8'
+                elif data_type == 'varchar':
+                    field_type = f'varchar{char_len}'
+                elif data_type == 'float':
+                    field_type = 'real4'
+                elif data_type == 'double':
+                    field_type = 'real8'
+                elif data_type == 'enum':
+                    field_type = 'enum'
+                elif data_type == 'json':
+                    field_type = 'json'
+                elif data_type == 'datetime':
+                    field_type = 'datetime'
+                elif data_type == 'binary' and char_len == 32:
+                    field_type = 'binary32'
+                elif data_type == 'text':
+                    field_type = 'text'
+                elif data_type == 'mult_list':
+                    field_type = 'mult_list'
+                else:
+                    raise NotImplementedError(data_type)
+                if field_type.startswith('int') and column_type.find('unsigned') != -1:
+                    field_type = 'u' + field_type
 
-            column_dict = {
-                'field_name': column_name,
-                'field_default': column_default,
-                'field_notnull': is_nullable == 'NO',
-                'field_type': field_type,
-            }
-            column_list.append(column_dict)
+                column_dict = {
+                    'field_name': column_name,
+                    'field_default': column_default,
+                    'field_notnull': is_nullable == 'NO',
+                    'field_type': field_type,
+                }
+                if charset in MYSQL_CHARSET_SQL:
+                    column_dict['field_charset'] = charset
+                column_list.append(column_dict)
 
-        super()._exit()
-        self._table_info_cache[cache_key] = column_list
+        self._table_info_cache[table_name] = column_list
         return column_list
 
-    def drop_table(
-        self, namespace: Namespace, raw_table_name: str, ignore_if_not_exists: bool = True
-    ) -> None:
+    def drop_table(self, table_name: str, ignore_if_not_exists: bool = True) -> None:
         """Delete the given table if it exists.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             ignore_if_not_exists: True to do nothing when the table is absent.
 
         Raises:
             ImportDBError: If the table is absent and ``ignore_if_not_exists`` is False,
                 or the server rejects the statement.
         """
-        super()._enter('drop_table')
-
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
-        # table_exists caches the table names, which we need below for read_only
-        if not self.table_exists(namespace, raw_table_name):
-            if ignore_if_not_exists:
-                if self.logger:
-                    self.logger.log('debug', f'drop_table "{table_name}" - no table found')
+        with self._operation('drop_table'):
+            # table_exists caches the table names, which we need below for read_only
+            if not self.table_exists(table_name):
+                if ignore_if_not_exists:
+                    if self.logger:
+                        self.logger.log('debug', f'drop_table "{table_name}" - no table found')
+                else:
+                    self._log_failure(f'Attempted to drop table "{table_name}" that doesn\'t exist')
+                    raise ImportDBError()
             else:
+                try:
+                    if table_name == generations.OBS_GENERAL_VIEW:
+                        cmd = self._drop_obs_general_statement()
+                    else:
+                        cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
+                    self._execute(cmd, mutates=True)
+                except MySQLdb.Error as e:
+                    self._log_failure(f'Failed in drop_table on "{table_name}": {e}')
+                    raise ImportDBError(e) from e
+
                 if self.logger:
-                    self.logger.log(
-                        'fatal', f'Attempted to drop table "{table_name}" that doesn\'t exist'
-                    )
-                raise ImportDBError()
-        else:
-            try:
-                cmd = f'DROP TABLE {self.quote_identifier(table_name)}'
+                    if self.read_only:
+                        self.logger.log('debug', f'[SIM] Dropped table "{table_name}"')
+                    else:
+                        self.logger.log('debug', f'Dropped table "{table_name}"')
+
+                # __init__ populates the cache and `forget_table_names` refills it at once,
+                # so it is a set from the moment the instance exists; the None is only the
+                # load-once sentinel.
+                assert self._table_names is not None
+                if table_name in self._table_names:
+                    self._table_names.remove(table_name)
+                else:
+                    assert table_name.lower() in self._table_names, table_name
+                    self._table_names.remove(table_name.lower())
+
+            self._table_info_cache.clear()
+
+    def rename_tables_atomically(
+        self,
+        renames: Sequence[tuple[str, str]],
+        *,
+        lock_wait_timeout_s: int,
+        attempts: int,
+    ) -> None:
+        """Rename several tables with one ``RENAME TABLE``, which MySQL applies atomically.
+
+        A foreign key follows the table it references through a rename, and a key name the
+        server generated from the old table name is renamed with it.
+
+        Each attempt runs with the session's ``lock_wait_timeout`` lowered to
+        ``lock_wait_timeout_s``, so a rename waiting behind a reader's transaction does not
+        in turn hold up every reader queued behind it for the server's default of a year.
+        A timed-out attempt is logged at info level and tried again; the session's own
+        value is restored afterwards.
+
+        Parameters:
+            renames: ``(from, to)`` table names, in the order they apply.
+            lock_wait_timeout_s: How long one attempt waits for the tables' locks.
+            attempts: How many times to try before the wait is a failure.
+
+        Raises:
+            ImportDBError: If the server rejects the statement, or every attempt timed out.
+            ValueError: If ``attempts`` is less than 1, before anything is changed.
+        """
+        if attempts < 1:
+            raise ValueError(f'attempts must be at least 1, not {attempts}')
+        with self._operation('rename_tables_atomically'):
+            q = self.quote_identifier
+            cmd = 'RENAME TABLE ' + ', '.join(f'{q(old)} TO {q(new)}' for old, new in renames)
+            if self.read_only:
                 self._execute(cmd, mutates=True)
-            except MySQLdb.Error as e:
                 if self.logger:
-                    self.logger.log('fatal', f'Failed in drop_table on "{table_name}": {e.args[1]}')
-                raise ImportDBError(e) from e
+                    self.logger.log('debug', f'[SIM] Renamed tables: {cmd}')
+                return
+
+            self._execute_waiting_for_locks(
+                cmd, 'RENAME TABLE', lock_wait_timeout_s=lock_wait_timeout_s, attempts=attempts
+            )
 
             if self.logger:
-                if self.read_only:
-                    self.logger.log('debug', f'[SIM] Dropped table "{table_name}"')
-                else:
-                    self.logger.log('debug', f'Dropped table "{table_name}"')
-
-            # __init__ populates the cache and nothing clears it, so it is a set from
-            # the moment the instance exists; the None is only the load-once sentinel.
+                self.logger.log('debug', f'Renamed tables: {cmd}')
             assert self._table_names is not None
-            if table_name in self._table_names:
-                self._table_names.remove(table_name)
-            else:
-                assert table_name.lower() in self._table_names, table_name
-                self._table_names.remove(table_name.lower())
-
-        self._table_info_cache.clear()
-
-        super()._exit()
+            for old, new in renames:
+                if old in self._table_names:
+                    self._table_names.remove(old)
+                else:
+                    self._table_names.remove(old.lower())
+                self._table_names.add(new)
+            self._table_info_cache.clear()
 
     def create_table(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         schema: Sequence[SchemaColumn],
         ignore_if_exists: bool = True,
     ) -> bool:
         """Create a new table from the given OPUS table schema.
 
+        The table carries every key its schema declares, except an observation or mult
+        table, which carries only the keys a load needs
+        (`opus_import.table_keys.create_time_keys`); finalization adds the rest.
+
         Parameters:
-            namespace: The namespace to create the table in.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             schema: The column definitions, as `opus_import.import_util` read them from
                 the packaged JSON schema. An entry carrying ``constraint`` contributes
                 that text instead of a column; one carrying ``pi_referred_slug``
@@ -566,240 +974,877 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
             ignore_if_exists: True to leave an existing table alone.
 
         Returns:
-            True if the table was created, False if it already existed and
-            ``ignore_if_exists`` was True.
+            True if the statement ran, False if this connection already knew the table
+            and ``ignore_if_exists`` was True. With ``ignore_if_exists`` the statement
+            leaves alone a table another process created meanwhile.
 
         Raises:
             ImportDBError: If the server rejects the statement.
             NotImplementedError: If a column has a ``field_type`` MySQL has no rendering
                 for.
         """
-        super()._enter('create_table')
+        with self._operation('create_table'):
+            if ignore_if_exists and self.table_exists(table_name):
+                if table_name == generations.OBS_GENERAL_VIEW and self._obs_general_type() is None:
+                    # The base table is there but not its view, as when the view's
+                    # statement failed after the table's: create it, as for a new table.
+                    self.create_obs_general_view(schema)
+                return False
 
-        if ignore_if_exists and self.table_exists(namespace, raw_table_name):
-            super()._exit()
-            return False
+            cmd = ''
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            for column in schema:
+                if 'pi_referred_slug' in column:
+                    continue
+                if 'field_name' not in column and 'constraint' not in column:
+                    # A table-level key, which the key clauses below render.
+                    continue
 
-        cmd = ''
-        key_cmd = ''
+                if cmd != '':
+                    cmd += ',\n'
 
-        for column in schema:
-            if 'pi_referred_slug' in column:
-                continue
+                if 'constraint' in column:
+                    cmd += '  ' + column['constraint'] + '\n'
+                    continue
 
-            if cmd != '':
-                cmd += ',\n'
+                field_name = column['field_name']
+                field_type = column['field_type']
 
-            if 'constraint' in column:
-                cmd += '  ' + column['constraint'] + '\n'
-                continue
-
-            field_name = column['field_name']
-            field_type = column['field_type']
-
-            cmd += f'  {self.quote_identifier(field_name)} '
-            if field_type == 'int1':
-                cmd += 'tinyint'
-            elif field_type == 'int2':
-                cmd += 'smallint'
-            elif field_type == 'int3':
-                cmd += 'mediumint'
-            elif field_type == 'int4':
-                cmd += 'int'
-            elif field_type == 'int8':
-                cmd += 'bigint'
-
-            elif field_type == 'uint1':
-                cmd += 'tinyint unsigned'
-            elif field_type == 'uint2':
-                cmd += 'smallint unsigned'
-            elif field_type == 'uint3':
-                cmd += 'mediumint unsigned'
-            elif field_type == 'uint4':
-                cmd += 'int unsigned'
-            elif field_type == 'uint8':
-                cmd += 'bigint unsigned'
-
-            elif field_type == 'real4':
-                cmd += 'float'
-            elif field_type == 'real8':
-                cmd += 'double'
-
-            elif field_type[:4] == 'char':
-                cmd += 'char(' + field_type[4:] + ')'
-            elif field_type[:7] == 'varchar':
-                cmd += 'varchar(' + field_type[7:] + ')'
-            elif field_type == 'text':
-                cmd += 'text'
-            elif field_type in ('mult_list', 'json'):
-                cmd += 'JSON'
-            elif field_type == 'enum':
-                enum_str = column.get('field_enum_options', None)
-                assert enum_str, (raw_table_name, column)
-                cmd += f'enum({enum_str})'
-            elif (
-                field_type == 'flag_yesno' or field_type == 'flag_onoff' or field_type == 'mult_idx'
-            ):
-                cmd += 'int unsigned'  # Index for mult table
-            elif field_type == 'timestamp':
-                cmd += 'timestamp'
-            elif field_type == 'datetime':
-                cmd += 'datetime'
-            else:
-                raise NotImplementedError(field_type)
-
-            field_default = column.get('field_default', 'NULL')
-            if field_default is None:
-                field_default = 'NULL'
-            if column.get('field_notnull', False):
-                cmd += ' NOT NULL'
-                if field_default == 'NULL':
-                    field_default = ''
-
-            if field_type == 'timestamp':
-                field_default = 'CURRENT_TIMESTAMP'
-
-            if field_default != '':
-                if (
-                    field_default != 'NULL'
-                    and field_default != 'CURRENT_TIMESTAMP'
-                    and not field_default.isdigit()
-                ):
-                    field_default = "'" + field_default + "'"
-                cmd += f' DEFAULT {field_default}'
-
-            if column.get('field_autoincrement', False):
-                cmd += ' AUTO_INCREMENT'
-
-            if field_type == 'timestamp':
-                cmd += ' ON UPDATE CURRENT_TIMESTAMP'
-
-            key_type = column.get('field_key', False)
-            foreign_key = column.get('field_key_foreign', False)
-            assert not foreign_key or key_type == 'foreign'
-            if key_type:
-                if key_cmd != '':
-                    key_cmd += ',\n'
-                if key_type == 'unique':
-                    quoted_field = self.quote_identifier(field_name)
-                    key_cmd += f'  UNIQUE KEY {quoted_field} ({quoted_field})'
-                elif key_type == 'primary':
-                    key_cmd += f'  PRIMARY KEY ({self.quote_identifier(field_name)})'
-                elif key_type == 'foreign':
-                    assert foreign_key
-                    key_cmd += f'  FOREIGN KEY ({self.quote_identifier(field_name)})'
-                    key_cmd += ' REFERENCES '
-                    f_table = self.convert_raw_to_namespace(namespace, foreign_key[0])
-                    key_cmd += self.quote_identifier(f_table)
-                    key_cmd += f'({self.quote_identifier(foreign_key[1])})'
-                    key_cmd += ' ON DELETE RESTRICT ON UPDATE CASCADE'
+                cmd += f'  {self.quote_identifier(field_name)} '
+                width_type = MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type)
+                if field_type in MYSQL_FIELD_TYPE_SQL:
+                    cmd += MYSQL_FIELD_TYPE_SQL[field_type]
+                elif width_type is not None:
+                    cmd += f'varchar({width_type[1]})'
+                elif field_type == MYSQL_ENUM_FIELD_TYPE:
+                    enum_str = column.get('field_enum_options', None)
+                    assert enum_str, (table_name, column)
+                    cmd += f'enum({enum_str})'
                 else:
-                    quoted_field = self.quote_identifier(field_name)
-                    key_cmd += f'  KEY {quoted_field} ({quoted_field})'
+                    raise NotImplementedError(field_type)
+                charset = column.get('field_charset')
+                if charset is not None:
+                    if charset not in MYSQL_CHARSET_SQL or not takes_charset(field_type):
+                        raise NotImplementedError(f'{field_type} {charset}')
+                    cmd += ' ' + MYSQL_CHARSET_SQL[charset]
 
-        if key_cmd != '':
-            cmd += ',\n' + key_cmd
-        cmd = f'CREATE TABLE {self.quote_identifier(table_name)} (\n' + cmd + '\n)'
-        cmd += f' ENGINE={self.default_engine}\n'
+                field_default = column.get('field_default', 'NULL')
+                if field_default is None:
+                    field_default = 'NULL'
+                if column.get('field_notnull', False):
+                    cmd += ' NOT NULL'
+                    if field_default == 'NULL':
+                        field_default = ''
 
-        try:
-            self._execute(cmd, mutates=True)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed to create table "{table_name}": {e.args[1]}')
-            raise ImportDBError(e) from e
+                if field_default != '':
+                    if field_default != 'NULL' and not field_default.removeprefix('-').isdigit():
+                        field_default = "'" + field_default + "'"
+                    cmd += f' DEFAULT {field_default}'
 
-        if self.logger:
-            if self.read_only:
-                self.logger.log('debug', f'[SIM] Created table "{table_name}"')
+                if column.get('field_autoincrement', False):
+                    cmd += ' AUTO_INCREMENT'
+
+                foreign_key = column.get('field_key_foreign', False)
+                assert not foreign_key or column.get('field_key') == 'foreign'
+
+            if is_key_filtered_table(table_name):
+                keys = create_time_keys(table_name, schema)
             else:
-                self.logger.log('debug', f'Created table "{table_name}"')
-                # Don't pretend the table has been created if it really hasn't
-                # because we might try to read from it later expecting it to
-                # really be there!
+                keys = declared_keys(schema)
+            key_cmd = ',\n'.join(f'  {self._create_key_clause(key)}' for key in keys)
+            if key_cmd != '':
+                cmd += ',\n' + key_cmd
+            # Another process importing into the schema may create the table between
+            # the check above and this statement, so leaving it alone is the server's
+            # decision, not the cache's.
+            if_not_exists = 'IF NOT EXISTS ' if ignore_if_exists else ''
+            cmd = (
+                f'CREATE TABLE {if_not_exists}{self.quote_identifier(table_name)} (\n' + cmd + '\n)'
+            )
+            cmd += f' ENGINE={self.default_engine} STATS_SAMPLE_PAGES={STATS_SAMPLE_PAGES}\n'
+
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to create table "{table_name}": {e}')
+                raise ImportDBError(e) from e
+
+            if self.logger:
+                if self.read_only:
+                    self.logger.log('debug', f'[SIM] Created table "{table_name}"')
+                else:
+                    self.logger.log('debug', f'Created table "{table_name}"')
+            if not self.read_only:
+                # A read-only run created nothing, so the cache does not claim it did:
+                # a later read of the table would expect it to be there.
                 assert self._table_names is not None
                 self._table_names.add(table_name)
 
-        self.tables_created.append(table_name)
-        self._table_info_cache.clear()
+            self.tables_created.append(table_name)
+            self._table_info_cache.clear()
 
-        super()._exit()
+        if table_name == generations.OBS_GENERAL_VIEW:
+            self.create_obs_general_view(schema)
         return True
 
-    def analyze_table(self, namespace: Namespace, raw_table_name: str) -> None:
-        """Analyze the given table. This recomputes key distribution.
+    def _execute_waiting_for_locks(
+        self, cmd: str, what: str, *, lock_wait_timeout_s: int, attempts: int
+    ) -> None:
+        """Run a DDL statement with a bounded wait for the locks it needs, retried.
+
+        Each attempt runs with the session's ``lock_wait_timeout`` lowered to
+        ``lock_wait_timeout_s``, so a statement waiting behind a reader's transaction does
+        not in turn hold up every reader queued behind it for the server's default of a
+        year. A timed-out attempt is logged at info level and tried again; the session's
+        own value is restored afterwards.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            cmd: The statement.
+            what: What the log and the failure call it.
+            lock_wait_timeout_s: How long one attempt waits for the locks.
+            attempts: How many times to try before the wait is a failure, at least 1.
+
+        Raises:
+            ImportDBError: If the server rejects the statement, or every attempt timed out.
+        """
+        previous = self._execute_and_fetchall('SELECT @@SESSION.lock_wait_timeout', what)[0][0]
+        self._set_lock_wait_timeout(lock_wait_timeout_s, what)
+        with self._restoring(lambda: self._set_lock_wait_timeout(previous, what)):
+            for attempt in range(1, attempts + 1):
+                try:
+                    self._execute(cmd, mutates=True)
+                    return
+                except MySQLdb.Error as e:
+                    timed_out = bool(e.args) and e.args[0] == ERR_LOCK_WAIT_TIMEOUT
+                    if timed_out and attempt < attempts:
+                        if self.logger:
+                            self.logger.log(
+                                'info',
+                                f'  {what} waited {lock_wait_timeout_s} s for a lock '
+                                f'(attempt {attempt} of {attempts}); trying again',
+                            )
+                        continue
+                    if timed_out:
+                        self._log_failure(
+                            f'{what} waited {lock_wait_timeout_s} s for a lock {attempts} '
+                            'times, each time behind a transaction reading the table; '
+                            f'nothing was changed: {e}'
+                        )
+                    else:
+                        self._log_failure(f'Failed in {what}: {e}')
+                    raise ImportDBError(e) from e
+
+    def _set_lock_wait_timeout(self, seconds: object, what: str) -> None:
+        """Set the session's ``lock_wait_timeout``.
+
+        Parameters:
+            seconds: The value, as the server reported it or a whole number of seconds.
+            what: What the failure calls the statement it is set for.
+
+        Raises:
+            ImportDBError: If the server rejects it.
+        """
+        try:
+            self._execute('SET SESSION lock_wait_timeout = %s', [seconds])
+        except MySQLdb.Error as e:
+            self._log_failure(f'Failed setting lock_wait_timeout for {what}: {e}')
+            raise ImportDBError(e) from e
+
+    def create_obs_general_view(
+        self,
+        schema: Sequence[SchemaColumn],
+        served: int | None = None,
+        *,
+        lock_wait_timeout_s: int | None = None,
+        attempts: int = 1,
+    ) -> None:
+        """Create, or re-create, ``obs_general`` as the view of the served generation.
+
+        While every row of ``obs_general_rows`` is in the served generation the view
+        selects every row, with no condition, so a statement that names it reads the
+        table exactly as it would read the table itself. While a generation is pending,
+        or retired rows wait for the purge, it selects the rows in the served generation,
+        which it names as a number (`opus_import.generations.in_generation_condition`
+        with the number in place of each placeholder).
+
+        Re-creating the view of a schema being served waits for every transaction that has
+        read it to end; ``lock_wait_timeout_s`` bounds each wait, as a swap's rename does
+        (`rename_tables_atomically`).
+
+        Parameters:
+            schema: ``obs_general``'s table schema, whose columns, less the generation
+                columns, the view lists.
+            served: The served generation, when the view must hide the rows of others;
+                None for a view of every row.
+            lock_wait_timeout_s: How long one attempt waits for the view's lock, or None
+                for the session's own wait, as for a view no request reads yet.
+            attempts: How many times to try before a bounded wait is a failure.
+
+        Raises:
+            ImportDBError: If the server rejects the statement, or every bounded attempt
+                timed out.
+            ValueError: If ``attempts`` is less than 1, before anything is changed.
+        """
+        if attempts < 1:
+            raise ValueError(f'attempts must be at least 1, not {attempts}')
+        with self._operation('create_obs_general_view'):
+            q = self.quote_identifier
+            columns = ', '.join(q(name) for name in generations.view_columns(schema))
+            # Every identifier is quoted by quote_identifier and the generation is an int;
+            # the view's own name is the one place obs_general is rendered as itself.
+            cmd = (
+                'CREATE OR REPLACE ALGORITHM=MERGE SQL SECURITY INVOKER VIEW '  # nosec B608
+                f'`{generations.OBS_GENERAL_VIEW}` AS SELECT {columns} '
+                f'FROM {q(generations.OBS_GENERAL_ROWS)}'
+            )
+            if served is not None:
+                condition = generations.in_generation_condition(q, generations.OBS_GENERAL_ROWS)
+                cmd += ' WHERE ' + condition.replace('%s', str(int(served)))
+            if lock_wait_timeout_s is not None and not self.read_only:
+                self._execute_waiting_for_locks(
+                    cmd,
+                    'CREATE VIEW obs_general',
+                    lock_wait_timeout_s=lock_wait_timeout_s,
+                    attempts=attempts,
+                )
+                return
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to create the view "obs_general": {e}')
+                raise ImportDBError(e) from e
+
+    def drop_obs_general_view(self) -> None:
+        """Drop the ``obs_general`` view, if the schema has it.
+
+        A schema of an earlier version, whose ``obs_general`` is a base table, keeps it:
+        `drop_table` drops that table in its turn.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        if self._obs_general_type() != _VIEW_TABLE_TYPE:
+            return
+        try:
+            self._execute(f'DROP VIEW `{generations.OBS_GENERAL_VIEW}`', mutates=True)
+        except MySQLdb.Error as e:
+            self._log_failure(f'Failed to drop the view "obs_general": {e}')
+            raise ImportDBError(e) from e
+
+    def _obs_general_type(self) -> str | None:
+        """Return what ``obs_general`` is: ``VIEW``, ``BASE TABLE``, or None when absent.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        cmd = (
+            'SELECT `TABLE_TYPE` FROM `INFORMATION_SCHEMA`.`TABLES` '
+            'WHERE `TABLE_SCHEMA`=%s AND `TABLE_NAME`=%s'
+        )
+        rows = self._execute_and_fetchall(
+            cmd, 'obs_general_type', [self.db_schema, generations.OBS_GENERAL_VIEW]
+        )
+        return None if not rows else str(rows[0][0])
+
+    def _drop_obs_general_statement(self) -> str:
+        """Drop the ``obs_general`` view, and return the statement that drops its table.
+
+        DROP TABLE refuses a view, and the view reads the table, so the view goes first.
+        In a schema of an earlier version ``obs_general`` is the base table itself, and the
+        statement drops it under that name.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        legacy = self._obs_general_type() == _BASE_TABLE_TYPE
+        self.drop_obs_general_view()
+        if legacy:
+            return f'DROP TABLE `{generations.OBS_GENERAL_VIEW}`'
+        return f'DROP TABLE {self.quote_identifier(generations.OBS_GENERAL_VIEW)}'
+
+    def _create_key_clause(self, key: TableKey) -> str:
+        """Return a key as a ``CREATE TABLE`` clause names it.
+
+        A plain or unique key is named after its first column, as the server would name
+        it, and a foreign key is left for the server to name.
+
+        Parameters:
+            key: The key.
+
+        Returns:
+            The clause.
+        """
+        q = self.quote_identifier
+        columns = ', '.join(q(column) for column in key.columns)
+        if key.kind == 'primary':
+            return f'PRIMARY KEY ({columns})'
+        if key.kind == 'foreign':
+            assert key.references is not None
+            table, referenced = key.references
+            referenced_columns = ', '.join(q(column) for column in referenced)
+            return (
+                f'FOREIGN KEY ({columns}) REFERENCES '
+                f'{q(table)}({referenced_columns}) '
+                f'ON DELETE {key.on_delete.upper()} ON UPDATE CASCADE'
+            )
+        prefix = 'UNIQUE KEY' if key.kind == 'unique' else 'KEY'
+        return f'{prefix} {q(key.columns[0])} ({columns})'
+
+    def add_keys_statement(self, table_name: str, keys: Sequence[TableKey]) -> str:
+        """Return one ``ALTER TABLE`` that adds plain, unique or primary keys to a table.
+
+        The keys are unnamed, so the server names each after its first column, as it
+        would have in ``CREATE TABLE``, or with a suffix where that name is taken.
+
+        Parameters:
+            table_name: The table.
+            keys: The keys to add; no foreign key.
+
+        Returns:
+            The statement.
+        """
+        q = self.quote_identifier
+        clauses = []
+        for key in keys:
+            assert key.kind != 'foreign', key
+            columns = ', '.join(q(column) for column in key.columns)
+            kind = {'primary': 'PRIMARY KEY', 'unique': 'UNIQUE KEY', 'key': 'KEY'}[key.kind]
+            clauses.append(f'ADD {kind} ({columns})')
+        return f'ALTER TABLE {q(table_name)} ' + ', '.join(clauses)
+
+    def add_foreign_key_statement(self, table_name: str, key: TableKey) -> str:
+        """Return one ``ALTER TABLE`` that adds a foreign key to a table.
+
+        Parameters:
+            table_name: The table.
+            key: The foreign key.
+
+        Returns:
+            The statement, rendered as ``CREATE TABLE`` renders the key.
+        """
+        clause = self._create_key_clause(key)
+        return f'ALTER TABLE {self.quote_identifier(table_name)} ADD {clause}'
+
+    def read_table_keys(self) -> dict[str, list[TableKey]]:
+        """Return the keys every table in the schema has, from ``information_schema``.
+
+        Plain, unique and primary keys come from ``STATISTICS``, and foreign keys from
+        ``KEY_COLUMN_USAGE`` joined to ``REFERENTIAL_CONSTRAINTS``; a ``FULLTEXT`` or
+        spatial index is not a key here and is left out.
+
+        Returns:
+            Each table's keys, keyed by table name (``obs_general`` for its base table,
+            and in what a foreign key references), plain, unique and primary keys
+            first, in the order the server lists them; a table with no key is absent.
+
+        Raises:
+            ImportDBError: If the server rejects a query.
+        """
+        index_rows = self._execute_and_fetchall(
+            """
+SELECT `TABLE_NAME`, `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME`, `INDEX_TYPE`
+FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA`=%s
+ORDER BY `TABLE_NAME`, `INDEX_NAME`, `SEQ_IN_INDEX`""",
+            'read_table_keys',
+            [self.db_schema],
+        )
+        foreign_rows = self._execute_and_fetchall(
+            """
+SELECT `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`COLUMN_NAME`,
+`k`.`REFERENCED_TABLE_NAME`, `k`.`REFERENCED_COLUMN_NAME`, `r`.`DELETE_RULE`
+FROM `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` `k`
+JOIN `INFORMATION_SCHEMA`.`REFERENTIAL_CONSTRAINTS` `r`
+ON `r`.`CONSTRAINT_SCHEMA`=`k`.`CONSTRAINT_SCHEMA`
+AND `r`.`CONSTRAINT_NAME`=`k`.`CONSTRAINT_NAME` AND `r`.`TABLE_NAME`=`k`.`TABLE_NAME`
+WHERE `k`.`TABLE_SCHEMA`=%s
+ORDER BY `k`.`TABLE_NAME`, `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`""",
+            'read_table_keys',
+            [self.db_schema],
+        )
+
+        indexes: dict[tuple[str, str], tuple[KeyKind, list[str]]] = {}
+        for table_name, index_name, non_unique, column_name, index_type in index_rows:
+            if index_type not in ('BTREE', 'HASH'):
+                continue
+            kind: KeyKind
+            if index_name == 'PRIMARY':
+                kind = 'primary'
+            elif int(non_unique) == 0:
+                kind = 'unique'
+            else:
+                kind = 'key'
+            table_name = generations.logical_table_name(table_name)
+            indexes.setdefault((table_name, index_name), (kind, []))[1].append(column_name)
+        foreign: dict[tuple[str, str], tuple[str, list[str], list[str], OnDelete]] = {}
+        for table_name, constraint_name, column_name, ref_table, ref_column, rule in foreign_rows:
+            on_delete: OnDelete = 'cascade' if rule == 'CASCADE' else 'restrict'
+            entry = foreign.setdefault(
+                (generations.logical_table_name(table_name), constraint_name),
+                (generations.logical_table_name(ref_table), [], [], on_delete),
+            )
+            entry[1].append(column_name)
+            entry[2].append(ref_column)
+
+        keys: dict[str, list[TableKey]] = {}
+        for (table_name, _index_name), (kind, columns) in indexes.items():
+            keys.setdefault(table_name, []).append(TableKey(kind, tuple(columns)))
+        for (table_name, _name), (ref_table, columns, ref_columns, on_delete) in foreign.items():
+            keys.setdefault(table_name, []).append(
+                TableKey('foreign', tuple(columns), (ref_table, tuple(ref_columns)), on_delete)
+            )
+        return keys
+
+    def key_space_bytes(
+        self,
+        table_name: str,
+        schema: Sequence[SchemaColumn],
+        key: TableKey,
+    ) -> int:
+        """Estimate the temporary space the server's sort needs to build one key.
+
+        The estimate is ``rows x (key bytes + primary key bytes + 10) x 1.3``, with the
+        rows the server's statistics count and each column's bytes from
+        `MYSQL_KEY_BYTES`.
+
+        Parameters:
+            table_name: The table.
+            schema: The table's schema, which gives its columns' types.
+            key: The key.
+
+        Returns:
+            The estimate, in bytes.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        res = self._execute_and_fetchall(
+            'SELECT `TABLE_ROWS` FROM `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=%s '
+            'AND `TABLE_NAME`=%s',
+            'key_space_bytes',
+            [self.db_schema, generations.physical_table_name(table_name)],
+        )
+        rows = int(res[0][0] or 0) if res else 0
+        columns_by_name = {
+            column['field_name']: column for column in schema if 'field_name' in column
+        }
+        primary = [k for k in declared_keys(schema) if k.kind == 'primary']
+        primary_columns = primary[0].columns if primary else ()
+
+        def width(columns: Sequence[str]) -> int:
+            """Return the index-entry bytes of some columns' values together."""
+            total = 0
+            for name in columns:
+                column = columns_by_name.get(name, {})
+                field_type = column.get('field_type', '')
+                width_type = MYSQL_WIDTH_FIELD_TYPE.fullmatch(field_type)
+                if field_type in MYSQL_KEY_BYTES:
+                    total += MYSQL_KEY_BYTES[field_type]
+                elif width_type is not None:
+                    char_bytes = MYSQL_CHARSET_BYTES.get(
+                        column.get('field_charset', ''), MYSQL_DEFAULT_CHARSET_BYTES
+                    )
+                    total += char_bytes * int(width_type[1]) + 2
+                else:
+                    total += MYSQL_UNSIZED_KEY_BYTES
+            return total
+
+        entry = width(key.columns) + width(primary_columns) + MYSQL_INDEX_ENTRY_OVERHEAD
+        return int(rows * entry * MYSQL_INDEX_SORT_FACTOR)
+
+    def index_space_budget(self, server_tmpdir: str | None) -> int | None:
+        """Return the temporary space the index builds running at once may hold together.
+
+        There is a budget only when the server shares this computer (its host is one of
+        `LOCAL_HOSTS`) and ``server_tmpdir`` is given and is a directory this process can
+        read the free space of: the budget is that free space, or the server's data
+        directory's when that is less and readable too. A path read on any other host
+        would be this computer's directory of that name, not the server's.
+
+        Parameters:
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None when none is configured.
+
+        Returns:
+            The budget in bytes, or None.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        if server_tmpdir is None or self.db_hostname not in LOCAL_HOSTS:
+            return None
+        free = _free_bytes(server_tmpdir)
+        if free is None:
+            return None
+        datadir = self._execute_and_fetchall('SELECT @@GLOBAL.datadir', 'index_space_budget')
+        if datadir:
+            datadir_free = _free_bytes(str(datadir[0][0]))
+            if datadir_free is not None:
+                free = min(free, datadir_free)
+        return free
+
+    def _prepare_index_session(self, workers: int, server_tmpdir: str | None) -> None:
+        """Bound this session's sort memory for index builds, and point its sorts at a directory.
+
+        Where the server has ``innodb_ddl_buffer_size``, what `_size_index_sort` sizes
+        each statement's buffer from is recorded: the session's value as the server sets
+        it, this connection's share of the sort memory -- a quarter of the buffer pool
+        divided by ``workers``, so the builds running at once hold at most a quarter of
+        the pool together -- and ``innodb_ddl_threads``, which is left at the server's
+        value. ``innodb_tmpdir`` is set only when ``server_tmpdir`` is given.
+
+        Parameters:
+            workers: How many connections build at once.
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None to leave the server's setting.
+
+        Raises:
+            ImportDBError: If the server refuses a setting.
+        """
+        if not MYSQLDB_AVAILABLE or self.read_only:
+            return
+        res = self._execute_and_fetchall(
+            "SHOW VARIABLES WHERE `Variable_name` IN ('innodb_ddl_buffer_size', "
+            "'innodb_ddl_threads', 'innodb_buffer_pool_size')",
+            '_prepare_index_session',
+        )
+        variables = {str(name): int(value) for name, value in res}
+        if 'innodb_ddl_buffer_size' in variables:
+            current = variables['innodb_ddl_buffer_size']
+            share = variables['innodb_buffer_pool_size'] // 4 // workers
+            threads = max(1, variables.get('innodb_ddl_threads', 1))
+            self._ddl_buffer_bounds = (current, share, threads)
+            self._ddl_buffer_size = current
+        if server_tmpdir is not None:
+            try:
+                self._execute('SET SESSION innodb_tmpdir = %s', [server_tmpdir])
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to prepare the session for index builds: {e}')
+                raise ImportDBError(e) from e
+
+    def _size_index_sort(self, sort_bytes: int, key_count: int) -> None:
+        """Size this session's ``innodb_ddl_buffer_size`` for the next index build.
+
+        The server holds a whole buffer for each index it is building at once -- every
+        index the statement adds, up to ``innodb_ddl_threads`` of them -- so the ceiling
+        is this connection's share divided by that many, and a buffer far larger than
+        the sort costs time on every index while saving none. The size is the estimate,
+        raised to the session's value as the server sets it, within that ceiling and the
+        server's limits on the variable. The session is changed only when the size
+        differs from its current one. Nothing is set on a server without the variable or
+        before the session was prepared.
+
+        Parameters:
+            sort_bytes: The estimated sort of the largest key the statement builds.
+            key_count: How many indexes the statement builds.
+
+        Raises:
+            ImportDBError: If the server refuses the setting.
+        """
+        if self._ddl_buffer_bounds is None:
+            return
+        current, share, threads = self._ddl_buffer_bounds
+        ceiling = share // max(1, min(key_count, threads))
+        ceiling = max(MYSQL_MIN_DDL_BUFFER_SIZE, min(MYSQL_MAX_DDL_BUFFER_SIZE, ceiling))
+        size = min(ceiling, max(current, sort_bytes))
+        if size == self._ddl_buffer_size:
+            return
+        try:
+            self._execute('SET SESSION innodb_ddl_buffer_size = %s', [size])
+        except MySQLdb.Error as e:
+            self._log_failure(f'Failed to size the sort for an index build: {e}')
+            raise ImportDBError(e) from e
+        self._ddl_buffer_size = size
+
+    def run_ddl(self, cmd: str) -> None:
+        """Run one statement that changes a table's definition.
+
+        Parameters:
+            cmd: The statement, which carries no parameters.
+
+        Raises:
+            ImportDBError: If the server rejects it.
+        """
+        with self._operation('run_ddl'):
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed in "{cmd}": {e}')
+                raise ImportDBError(e) from e
+            self._table_info_cache.clear()
+
+    def repoint_cart(self, generation: int) -> tuple[int, int]:
+        """Point every cart row at an observation of a generation, by OPUS id.
+
+        One transaction. A cart row whose observation is not in the generation is pointed
+        at the generation's row with the same ``opus_id``; one the generation has no row
+        for is deleted. A cart row already in the generation is left alone, so running it
+        again changes nothing.
+
+        Parameters:
+            generation: The generation the cart is to name.
+
+        Returns:
+            How many rows were pointed at another observation, and how many deleted.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        q = self.quote_identifier
+        cart, old, new = q('cart'), q('o'), q('n')
+        rows = q(generations.OBS_GENERAL_ROWS)
+        old_in = generations.in_generation_condition(q, 'o')
+        new_in = generations.in_generation_condition(q, 'n')
+        # Every identifier is quoted by quote_identifier; the values are parameters.
+        update = (
+            f'UPDATE {cart} AS {q("c")} '  # nosec B608
+            f'JOIN {rows} AS {old} ON {old}.{q("id")} = {q("c")}.{q("obs_general_id")} '
+            f'JOIN {rows} AS {new} ON {new}.{q("opus_id")} = {old}.{q("opus_id")} AND {new_in} '
+            f'SET {q("c")}.{q("obs_general_id")} = {new}.{q("id")} WHERE NOT ({old_in})'
+        )
+        delete = (
+            f'DELETE {q("c")} FROM {cart} AS {q("c")} '  # nosec B608
+            f'JOIN {rows} AS {old} ON {old}.{q("id")} = {q("c")}.{q("obs_general_id")} '
+            f'WHERE NOT ({old_in})'
+        )
+        with self._operation('repoint_cart'):
+            if not MYSQLDB_AVAILABLE or self.read_only:
+                self._execute(update, [generation] * 4, mutates=True)
+                self._execute(delete, [generation] * 2, mutates=True)
+                return 0, 0
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(update, [generation] * 4, cur=cur, mutates=True)
+                    pointed = int(cur.rowcount)
+                    self._execute(delete, [generation] * 2, cur=cur, mutates=True)
+                    deleted = int(cur.rowcount)
+                if not self._in_transaction:
+                    self.conn.commit()
+            except MySQLdb.Error as e:
+                if not self._in_transaction:
+                    self.conn.rollback()
+                self._log_failure(f'Failed to point the cart at generation {generation}: {e}')
+                raise ImportDBError(e) from e
+        return pointed, deleted
+
+    def carry_over_sessions(self, source_schema: str) -> CarriedOver:
+        """Replace this schema's sessions and cart rows with another schema's.
+
+        One transaction, committed at the end and rolled back on any failure, so a
+        failure leaves this schema's two tables as they were: the source's
+        ``django_session`` is read and its ``cart`` counted, so a source without them
+        fails before anything is written; then ``cart`` and ``django_session`` are
+        emptied with ``DELETE`` (``TRUNCATE`` would commit at once) and filled by two
+        ``INSERT ... SELECT`` statements. Only the sessions that own a cart row in the
+        source are copied, and only while unexpired: Django stores ``expire_date`` in
+        UTC, so a session is unexpired when it is later than ``UTC_TIMESTAMP()``. A cart
+        row is joined to this schema's ``obs_general`` by ``opus_id`` and to the sessions
+        just copied by its session, and is written with this schema's own values of
+        both, so the copy compares the two schemas' columns but never stores the
+        source's text in a column of another character set. Only the columns every
+        release's ``cart`` has are named.
+
+        Parameters:
+            source_schema: The schema to copy from, on the same server.
+
+        Returns:
+            The sessions and cart rows copied, and the cart rows the source held.
+
+        Raises:
+            ImportDBError: Before any statement, if the source's name is not a safe
+                identifier, if it names this schema (compared without regard to case, as a
+                server with ``lower_case_table_names`` set compares them), whose emptying
+                would empty the source, or if the connection is read-only or the MySQLdb
+                driver is not installed, so that nothing could be copied; or if the server
+                rejects a statement, for instance because the source lacks one of the
+                tables. Each is logged.
+        """
+        with self._operation('carry_over_sessions'):
+            try:
+                source = self.quote_identifier(source_schema)
+            except ImportDBError as e:
+                self._log_failure(
+                    f'Failed to carry sessions and carts over from {source_schema!r}: {e}'
+                )
+                raise
+            refusal = None
+            if source_schema.lower() == self.db_schema.lower():
+                refusal = f'{source} is the schema it would write into'
+            elif self.read_only:
+                refusal = 'the connection is read-only, so nothing would be copied'
+            elif not MYSQLDB_AVAILABLE:
+                refusal = 'the MySQLdb driver is not installed'
+            if refusal is not None:
+                message = f'Failed to carry sessions and carts over from {source}: {refusal}'
+                self._log_failure(message)
+                raise ImportDBError(message)
+            # Identifiers are validated by quote_identifier; the statements carry no values.
+            reads = (
+                f'SELECT 1 FROM {source}.`django_session` LIMIT 1',  # nosec B608
+                f'SELECT COUNT(*) FROM {source}.`cart`',  # nosec B608
+            )
+            writes = (
+                'DELETE FROM `cart`',
+                'DELETE FROM `django_session`',
+                'INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) '  # nosec B608
+                f'SELECT `session_key`, `session_data`, `expire_date` FROM {source}.`django_session` '
+                'WHERE `expire_date` > UTC_TIMESTAMP() '
+                f'AND `session_key` IN (SELECT `session_id` FROM {source}.`cart`)',
+                'INSERT INTO `cart` (`session_id`, `obs_general_id`, `opus_id`, `recycled`) '  # nosec B608
+                'SELECT `s`.`session_key`, `n`.`id`, `n`.`opus_id`, `c`.`recycled` '
+                f'FROM {source}.`cart` AS `c` '
+                'JOIN `obs_general` AS `n` ON `n`.`opus_id` = `c`.`opus_id` '
+                'JOIN `django_session` AS `s` ON `s`.`session_key` = `c`.`session_id`',
+            )
+            try:
+                with self.conn.cursor() as cur:
+                    for cmd in reads:
+                        self._execute(cmd, cur=cur)
+                        rows = cur.fetchall()
+                    source_cart_rows = rows[0][0]
+                    counts = []
+                    for cmd in writes:
+                        self._execute(cmd, cur=cur, mutates=True)
+                        counts.append(cur.rowcount)
+                self.conn.commit()
+            except MySQLdb.Error as e:
+                self._rollback()
+                self._log_failure(f'Failed to carry sessions and carts over from {source}: {e}')
+                raise ImportDBError(e) from e
+        return CarriedOver(
+            sessions=int(counts[2]),
+            cart_rows=int(counts[3]),
+            source_cart_rows=int(source_cart_rows),
+        )
+
+    def set_next_id(self, table_name: str, next_id: int) -> None:
+        """Make the next row a table's auto-increment key hands out take a given id.
+
+        Parameters:
+            table_name: The table, whose primary key is an auto-increment column.
+            next_id: The id the next row is given.
 
         Raises:
             ImportDBError: If the server rejects the statement.
         """
-        super()._enter('analyze_table')
+        self.run_ddl(
+            f'ALTER TABLE {self.quote_identifier(table_name)} AUTO_INCREMENT = {int(next_id)}'
+        )
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+    def add_foreign_keys(self, statements: Sequence[IndexStatement]) -> list[tuple[str, float]]:
+        """Add foreign keys one at a time, with ``foreign_key_checks`` off.
 
-        cmd = f'ANALYZE TABLE {self.quote_identifier(table_name)}'
+        With the checks off, ``ADD FOREIGN KEY`` is an in-place change that does not read
+        the rows already there; the import's validation counts orphans instead. The
+        session's checks are turned back on however the statements end.
 
+        Parameters:
+            statements: The statements, from `add_foreign_key_statement`.
+
+        Returns:
+            Each statement's label and seconds, in the order they ran.
+
+        Raises:
+            ImportDBError: If the server rejects a statement.
+        """
+        timed: list[tuple[str, float]] = []
+        if not statements:
+            return timed
+        with self.foreign_keys_unchecked():
+            for statement in statements:
+                started = time.perf_counter()
+                self.run_ddl(statement.sql)
+                timed.append((statement.label, time.perf_counter() - started))
+        return timed
+
+    def _set_foreign_key_checks(self, enabled: bool) -> None:
+        """Set the session's ``foreign_key_checks``.
+
+        Parameters:
+            enabled: True to check foreign keys, False not to.
+
+        Raises:
+            ImportDBError: If the server rejects it.
+        """
         try:
-            self._execute(cmd, mutates=True)
+            self._execute(f'SET SESSION foreign_key_checks = {1 if enabled else 0}')
         except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed to analyze table "{table_name}": {e.args[1]}')
+            self._log_failure(f'Failed setting foreign_key_checks: {e}')
             raise ImportDBError(e) from e
 
-        if self.logger:
-            if self.read_only:
-                self.logger.log('debug', f'[SIM] Analyzed table "{table_name}"')
-            else:
-                self.logger.log('debug', f'Analyzed table "{table_name}"')
+    def close(self) -> None:
+        """Close the connection; an instance without the driver has none to close."""
+        if self.conn is not None:
+            self.conn.close()
+            self.conn = None
 
-        super()._exit()
+    def socket_descriptor(self) -> int | None:
+        """Return the file descriptor of the connection's socket.
 
-    def insert_row(self, namespace: Namespace, raw_table_name: str, row: DBRow) -> None:
+        Returns:
+            The descriptor, or None when there is no open connection.
+        """
+        if self.conn is None:
+            return None
+        descriptor: int = self.conn.fileno()
+        return descriptor
+
+    def analyze_table(self, table_name: str) -> None:
+        """Analyze the given table. This recomputes key distribution.
+
+        Parameters:
+            table_name: The table.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        with self._operation('analyze_table'):
+            cmd = f'ANALYZE TABLE {self.quote_identifier(table_name)}'
+
+            try:
+                self._execute(cmd, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to analyze table "{table_name}": {e}')
+                raise ImportDBError(e) from e
+
+            if self.logger:
+                if self.read_only:
+                    self.logger.log('debug', f'[SIM] Analyzed table "{table_name}"')
+                else:
+                    self.logger.log('debug', f'Analyzed table "{table_name}"')
+
+    def insert_row(self, table_name: str, row: DBRow) -> None:
         """Insert one row.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to write, keyed by column name.
 
         Raises:
             ImportDBError: If the server rejects the statement.
         """
-        super()._enter('insert_row')
+        with self._operation('insert_row'):
+            sorted_column_names = sorted(row.keys())
+            param_list: list[Any] = []
+            placeholders = self._row_placeholders(row, sorted_column_names, param_list)
+            # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+            # every row value is a %s placeholder bound through param_list.
+            cmd = (
+                f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
+                f'({self._quoted_column_list(sorted_column_names)}) '
+                f'VALUES({placeholders})'
+            )
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            try:
+                self._execute(cmd, param_list, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to insert row into "{table_name}": {e}')
+                raise ImportDBError(e) from e
 
-        sorted_column_names = sorted(row.keys())
-        param_list: list[Any] = []
-        placeholders = self._row_placeholders(row, sorted_column_names, param_list)
-        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
-        # every row value is a %s placeholder bound through param_list.
-        cmd = (
-            f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
-            f'({self._quoted_column_list(sorted_column_names)}) '
-            f'VALUES({placeholders})'
-        )
-
-        try:
-            self._execute(cmd, param_list, mutates=True)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e.args[1]}')
-            raise ImportDBError(e) from e
-
-        super()._exit()
-
-    def insert_rows(self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]) -> None:
+    def insert_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
         """Insert multiple rows, a thousand at a time.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             rows: The rows to write. All rows must have the same columns; an empty
                 sequence writes nothing.
 
@@ -810,106 +1855,363 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         if len(rows) == 0:
             return
 
-        super()._enter('insert_rows')
+        with self._operation('insert_rows'):
+            packet_size = 1000  # Limit number of rows at a time - MySQL barfs
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            num_packets = ((len(rows) - 1) // packet_size) + 1
 
-        packet_size = 1000  # Limit number of rows at a time - MySQL barfs
+            for packet_num in range(num_packets):
+                start_row = packet_size * packet_num
+                end_row = min(len(rows), packet_size * (packet_num + 1))
 
-        num_packets = ((len(rows) - 1) // packet_size) + 1
+                sorted_column_names = sorted(rows[0].keys())
 
-        for packet_num in range(num_packets):
-            start_row = packet_size * packet_num
-            end_row = min(len(rows), packet_size * (packet_num + 1))
-
-            sorted_column_names = sorted(rows[0].keys())
-
-            param_list: list[Any] = []
-            value_tuples = []
-            for row in rows[start_row:end_row]:
-                assert sorted_column_names == sorted(row.keys()), (
-                    sorted_column_names,
-                    sorted(row.keys()),
-                )
-                placeholders = self._row_placeholders(row, sorted_column_names, param_list)
-                value_tuples.append(f'({placeholders})')
-
-            cmd = (
-                f'INSERT INTO {self.quote_identifier(table_name)} '
-                f'({self._quoted_column_list(sorted_column_names)}) VALUES' + ','.join(value_tuples)
-            )
-
-            try:
-                self._execute(cmd, param_list, mutates=True)
-            except MySQLdb.Error as e:
-                if self.logger:
-                    self.logger.log(
-                        'fatal', f'Failed to insert row into "{table_name}": {e.args[1]}'
+                param_list: list[Any] = []
+                value_tuples = []
+                for row in rows[start_row:end_row]:
+                    assert sorted_column_names == sorted(row.keys()), (
+                        sorted_column_names,
+                        sorted(row.keys()),
                     )
-                raise ImportDBError(e) from e
+                    placeholders = self._row_placeholders(row, sorted_column_names, param_list)
+                    value_tuples.append(f'({placeholders})')
 
-        super()._exit()
+                cmd = (
+                    f'INSERT INTO {self.quote_identifier(table_name)} '
+                    f'({self._quoted_column_list(sorted_column_names)}) VALUES'
+                    + ','.join(value_tuples)
+                )
+
+                try:
+                    self._execute(cmd, param_list, mutates=True)
+                except MySQLdb.Error as e:
+                    self._log_failure(f'Failed to insert row into "{table_name}": {e}')
+                    raise ImportDBError(e) from e
+
+    def bulk_load_rows(
+        self, table_name: str, rows: Sequence[DBRow], guard: LoadGuard | None = None
+    ) -> None:
+        """Write many rows with ``LOAD DATA LOCAL INFILE``, or as `insert_rows` does.
+
+        The rows go in chunks of at most `transaction_rows`. Each chunk is written to a
+        scratch file of its own, made by `tempfile.mkstemp` in `scratch_dir` so that two
+        imports sharing the directory never touch each other's file, then loaded and
+        committed as one transaction, and the file is deleted however the load ends.
+        Rows are written to the file one at a time from ``rows``, never copied into a
+        list of their own.
+
+        After each load the server's counts are checked (`_check_load`), and a chunk
+        that did not arrive whole and unchanged is rolled back and raised. Where the
+        server or the connection refuses local files, at the start of the run or at
+        this load, this chunk and every later one are written by `insert_rows`, and the
+        log says so.
+
+        With a guard, each chunk is one transaction on either path: the guard's
+        statements first, then the chunk's rows, then the guard's check, then the
+        commit, and a chunk the guard refuses is rolled back.
+
+        Parameters:
+            table_name: The table.
+            rows: The rows to write. Every row must have the same columns; an empty
+                sequence writes nothing.
+            guard: What each chunk's transaction runs first and checks last, or None.
+
+        Raises:
+            ImportDBError: If a load is refused for any other reason, or does not write
+                every row of its chunk unchanged.
+        """
+        if len(rows) == 0:
+            return
+        if guard is None and self.bulk_load_path != BULK_LOAD_PATH_FILE:
+            self.insert_rows(table_name, rows)
+            return
+        with self._operation('bulk_load_rows'):
+            column_names = sorted(rows[0].keys())
+            for start in range(0, len(rows), self.transaction_rows):
+                end = min(len(rows), start + self.transaction_rows)
+                if guard is not None:
+                    self._load_guarded_chunk(table_name, column_names, rows, start, end, guard)
+                    continue
+                try:
+                    self._load_chunk(table_name, column_names, rows, start, end)
+                except _LocalInfileRefusedError as e:
+                    self._refused_local_file(e)
+                    self.insert_rows(table_name, rows[start:])
+                    return
+
+    def _refused_local_file(self, error: Exception) -> None:
+        """Switch every later load to ``INSERT`` statements, and log why.
+
+        Parameters:
+            error: The server's or the connection's refusal.
+        """
+        self.bulk_load_path = BULK_LOAD_PATH_INSERT
+        self._log_bulk_load_path(f'the server refused a local file: {error}')
+
+    def _load_guarded_chunk(
+        self,
+        table_name: str,
+        column_names: Sequence[str],
+        rows: Sequence[DBRow],
+        start: int,
+        end: int,
+        guard: LoadGuard,
+    ) -> None:
+        """Write rows ``start`` to ``end`` as one transaction the guard opens and checks.
+
+        Parameters:
+            table_name: The table.
+            column_names: The columns, in the order a scratch file holds them.
+            rows: Every row of the load.
+            start: The first row of the chunk.
+            end: One past its last row.
+            guard: What the transaction runs first and checks last.
+
+        Raises:
+            ImportDBError: If the load fails or does not write every row unchanged.
+        """
+        with self.transaction():
+            guard.begin(self, table_name, end - start)
+            if self.bulk_load_path == BULK_LOAD_PATH_FILE:
+                try:
+                    self._load_chunk(table_name, column_names, rows, start, end)
+                except _LocalInfileRefusedError as e:
+                    # A refused statement leaves the transaction open, the guard's
+                    # statements in it, so the rows follow as INSERT statements.
+                    self._refused_local_file(e)
+                    self.insert_rows(table_name, rows[start:end])
+            else:
+                self.insert_rows(table_name, rows[start:end])
+            guard.confirm(self)
+        guard.committed()
+
+    def _load_chunk(
+        self,
+        table_name: str,
+        column_names: Sequence[str],
+        rows: Sequence[DBRow],
+        start: int,
+        end: int,
+    ) -> None:
+        """Write rows ``start`` to ``end`` to a scratch file and load it.
+
+        Parameters:
+            table_name: The table, as the server names it.
+            column_names: The columns, in the order the file holds them.
+            rows: Every row of the load.
+            start: The first row of the chunk.
+            end: One past its last row.
+
+        Raises:
+            ImportDBError: If the load fails or does not write every row unchanged.
+            _LocalInfileRefusedError: If the server or the connection refuses the file.
+        """
+        fd, path = tempfile.mkstemp(dir=self.scratch_dir, prefix=f'{table_name}_', suffix='.tsv')
+        try:
+            columns = set(column_names)
+            # newline='' writes each '\n' as itself on every platform, which is the line
+            # terminator the statement names.
+            with os.fdopen(fd, 'w', encoding='utf-8', newline='') as scratch:
+                for index in range(start, end):
+                    row = rows[index]
+                    assert row.keys() == columns, (column_names, sorted(row.keys()))
+                    scratch.write(
+                        '\t'.join(load_data_text(row[name]) for name in column_names) + '\n'
+                    )
+            self._load_file(table_name, column_names, path, end - start)
+        finally:
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(path)
+
+    def _load_file(
+        self, table_name: str, column_names: Sequence[str], path: str, row_count: int
+    ) -> None:
+        """Load one scratch file into a table as one transaction, and check the result.
+
+        Parameters:
+            table_name: The table, as the server names it.
+            column_names: The columns, in the order the file holds them.
+            path: The scratch file.
+            row_count: How many rows the file holds.
+
+        Inside `transaction` the load neither commits nor rolls back: the transaction
+        does.
+
+        Raises:
+            ImportDBError: If the load fails or does not write every row unchanged; the
+                transaction is rolled back first, unless `transaction` holds it.
+            _LocalInfileRefusedError: If the server or the connection refuses the file.
+        """
+        # The table and column names are validated by quote_identifier
+        # (^[A-Za-z0-9_]+$), and the file name travels as a parameter. CHARACTER SET is
+        # required: the statement reads the file in character_set_database and ignores
+        # SET NAMES. The FIELDS and LINES clauses are the statement's defaults, written
+        # out so the format `load_data_text` writes is stated beside the statement.
+        cmd = (
+            f'LOAD DATA LOCAL INFILE %s INTO TABLE {self.quote_identifier(table_name)} '
+            "CHARACTER SET utf8mb4 FIELDS TERMINATED BY '\\t' ESCAPED BY '\\\\' "
+            f"LINES TERMINATED BY '\\n' ({self._quoted_column_list(column_names)})"
+        )
+        try:
+            with self.conn.cursor() as cur:
+                self._execute(cmd, [path], cur=cur, mutates=True)
+                problem = self._check_load(cur, row_count)
+                if problem is not None:
+                    if not self._in_transaction:
+                        self.conn.rollback()
+                    self._log_failure(f'Bulk load into "{table_name}": {problem}')
+                    raise ImportDBError(f'Bulk load into "{table_name}": {problem}')
+                if not self._in_transaction:
+                    self.conn.commit()
+        except MySQLdb.Error as e:
+            if not self._in_transaction:
+                self.conn.rollback()
+            if e.args and e.args[0] in ERRS_LOCAL_INFILE_REFUSED:
+                raise _LocalInfileRefusedError(e) from e
+            self._log_failure(f'Failed to bulk load into "{table_name}": {e}')
+            raise ImportDBError(e) from e
+
+    def _check_load(self, cur: Any, row_count: int) -> str | None:
+        """Return what went wrong with the load just run on a cursor, or None.
+
+        ``LOAD DATA LOCAL`` behaves as though ``IGNORE`` were given, even under
+        ``STRICT_ALL_TABLES``: a row whose key is already present is skipped, and a value
+        the column cannot hold is converted with a warning. Neither raises, so the
+        server's counts for the statement are what show it. The counts belong to this
+        connection's last statement, so another connection loading at the same time
+        cannot change them.
+
+        Parameters:
+            cur: The cursor the load ran on.
+            row_count: How many rows the file held.
+
+        Returns:
+            None when the server read every row and skipped none, with no warnings;
+            otherwise the counts, and the first warning's text when there is one.
+        """
+        info = self.conn.info()
+        match = _LOAD_INFO_RE.search(info or '')
+        if match is None:
+            return f'the server reported no counts for the load ({info!r})'
+        records = int(match['records'])
+        skipped = int(match['skipped'])
+        warning_count = int(match['warnings'])
+        if records == row_count and skipped == 0 and warning_count == 0:
+            return None
+        problem = f'{records} rows read of {row_count}, {skipped} skipped, {warning_count} warnings'
+        if warning_count > 0:
+            self._execute('SHOW WARNINGS LIMIT 1', cur=cur)
+            first = cur.fetchone()
+            if first is not None:
+                problem += f'; the first: {first[2]}'
+        return problem
 
     def update_row(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         row: DBRow,
         where: str,
         where_params: Sequence[Any] | None = None,
-    ) -> None:
+    ) -> int:
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to assign, keyed by column name.
             where: The WHERE clause. Any value it compares against must be a `%s`
                 placeholder, never text.
             where_params: The parameters that clause's placeholders consume. They follow
                 the assigned values in the statement's parameter list.
 
+        Returns:
+            How many rows the clause matched, as the server reports after the statement,
+            changed or not; 0 when the statement is not executed.
+
         Raises:
             ImportDBError: If the server rejects the statement.
         """
-        super()._enter('insert_row')
+        with self._operation('insert_row'):
+            sorted_column_names = sorted(row.keys())
+            set_cmds = []
+            param_list: list[Any] = []
+            for column_name in sorted_column_names:
+                set_cmds.append(f'{self.quote_identifier(column_name)}=%s')
+                param_list.append(row[column_name])
+            # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$) and every
+            # row value is a %s placeholder bound through param_list. The caller's
+            # `where` fragment, however, is appended verbatim and is not validated:
+            # only the values inside it are bound. This method is for trusted callers.
+            cmd = (
+                f'UPDATE {self.quote_identifier(table_name)} SET '  # nosec B608
+                + ','.join(set_cmds)
+                + f' WHERE {where}'
+            )
+            param_list += list(where_params or [])
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            if not MYSQLDB_AVAILABLE or self.read_only:
+                self._execute(cmd, param_list, mutates=True)
+                return 0
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(cmd, param_list, cur=cur, mutates=True)
+                    # Read before the commit, which replaces the connection's report.
+                    match = _UPDATE_INFO_RE.search(self.conn.info() or '')
+                if not self._in_transaction:
+                    self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to update row in "{table_name}": {e}')
+                raise ImportDBError(e) from e
+            return int(match['matched']) if match is not None else 0
 
-        sorted_column_names = sorted(row.keys())
-        set_cmds = []
-        param_list: list[Any] = []
-        for column_name in sorted_column_names:
-            set_cmds.append(f'{self.quote_identifier(column_name)}=%s')
-            param_list.append(row[column_name])
-        # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$) and every
-        # row value is a %s placeholder bound through param_list. The caller's
-        # `where` fragment, however, is appended verbatim and is not validated:
-        # only the values inside it are bound. This method is for trusted callers.
+    def conditional_update(
+        self, table_name: str, row: DBRow, where: str, where_params: Sequence[Any]
+    ) -> int:
+        """Run an ``UPDATE`` whose WHERE clause is its condition, and count the rows changed.
+
+        Parameters:
+            table_name: The table.
+            row: The values to assign, keyed by column name.
+            where: The WHERE clause. Any value it compares against must be a `%s`
+                placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Returns:
+            The rows the server reports changed; -1 in a read-only run, which sends
+            nothing.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        q = self.quote_identifier
+        names = sorted(row.keys())
+        # Identifiers are validated by quote_identifier; the caller's `where` fragment
+        # is appended verbatim, and every value is bound.
         cmd = (
-            f'UPDATE {self.quote_identifier(table_name)} SET '  # nosec B608
-            + ','.join(set_cmds)
+            f'UPDATE {q(table_name)} SET '  # nosec B608
+            + ','.join(f'{q(name)}=%s' for name in names)
             + f' WHERE {where}'
         )
-        param_list += list(where_params or [])
+        params = [row[name] for name in names] + list(where_params)
+        if not MYSQLDB_AVAILABLE or self.read_only:
+            self._execute(cmd, params, mutates=True)
+            return -1
+        with self._operation('conditional_update'):
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(cmd, params, cur=cur, mutates=True)
+                    changed = int(cur.rowcount)
+                if not self._in_transaction:
+                    self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to update rows in "{table_name}": {e}')
+                raise ImportDBError(e) from e
+        return changed
 
-        try:
-            self._execute(cmd, param_list, mutates=True)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed to update row in "{table_name}": {e.args[1]}')
-            raise ImportDBError(e) from e
-
-        super()._exit()
-
-    def upsert_row(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, row: DBRow
-    ) -> None:
+    def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
         """Insert one row, or update it if its key is already present.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying the row. It is written on an insert and
                 never assigned on an update; a row of nothing but the key produces a
                 plain insert.
@@ -918,53 +2220,44 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         Raises:
             ImportDBError: If the server rejects the statement.
         """
-        super()._enter('upsert_row')
+        with self._operation('upsert_row'):
+            sorted_column_names = sorted(row.keys())
+            param_list: list[Any] = []
+            placeholders = self._row_placeholders(row, sorted_column_names, param_list)
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            assign_list = []
+            dup_param_list: list[Any] = []
+            for column_name in sorted_column_names:
+                if column_name != key_name:
+                    assign_list.append(f'{self.quote_identifier(column_name)}=%s')
+                    dup_param_list.append(row[column_name])
 
-        sorted_column_names = sorted(row.keys())
-        param_list: list[Any] = []
-        placeholders = self._row_placeholders(row, sorted_column_names, param_list)
+            # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
+            # every row value is a %s placeholder bound through param_list.
+            cmd = (
+                f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
+                f'({self._quoted_column_list(sorted_column_names)}) '
+                f'VALUES({placeholders})'
+            )
+            if assign_list:
+                # A row of nothing but the key has nothing to assign, and an empty
+                # assignment list is a syntax error. `upsert_rows` guards the same case.
+                # Its update clause needs a row alias and this one does not: a statement
+                # here carries a single row, so each new value is already at hand as a
+                # bound parameter.
+                cmd += ' ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
 
-        assign_list = []
-        dup_param_list: list[Any] = []
-        for column_name in sorted_column_names:
-            if column_name != key_name:
-                assign_list.append(f'{self.quote_identifier(column_name)}=%s')
-                dup_param_list.append(row[column_name])
+            try:
+                self._execute(cmd, param_list + dup_param_list, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to insert row into "{table_name}": {e}')
+                raise ImportDBError(e) from e
 
-        # Table and column names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$);
-        # every row value is a %s placeholder bound through param_list.
-        cmd = (
-            f'INSERT INTO {self.quote_identifier(table_name)} '  # nosec B608
-            f'({self._quoted_column_list(sorted_column_names)}) '
-            f'VALUES({placeholders})'
-        )
-        if assign_list:
-            # A row of nothing but the key has nothing to assign, and an empty
-            # assignment list is a syntax error. `upsert_rows` guards the same case.
-            # Its update clause needs a row alias and this one does not: a statement
-            # here carries a single row, so each new value is already at hand as a
-            # bound parameter.
-            cmd += ' ON DUPLICATE KEY UPDATE ' + ','.join(assign_list)
-
-        try:
-            self._execute(cmd, param_list + dup_param_list, mutates=True)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed to insert row into "{table_name}": {e.args[1]}')
-            raise ImportDBError(e) from e
-
-        super()._exit()
-
-    def upsert_rows(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, rows: Sequence[DBRow]
-    ) -> None:
+    def upsert_rows(self, table_name: str, key_name: str, rows: Sequence[DBRow]) -> None:
         """Insert or update multiple rows, a packet of rows per statement.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying a row. It is written on an insert and never
                 assigned on an update; rows of nothing but the key produce a plain
                 insert.
@@ -979,165 +2272,152 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         if len(rows) == 0:
             return
 
-        super()._enter('upsert_rows')
+        with self._operation('upsert_rows'):
+            # Group by column set so that every row in one statement contributes the
+            # same VALUES tuple. In practice all the rows of a mult table match.
+            groups: dict[tuple[str, ...], list[DBRow]] = {}
+            for row in rows:
+                groups.setdefault(tuple(sorted(row.keys())), []).append(row)
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            packet_size = 1000  # Limit number of rows at a time - MySQL barfs
 
-        # Group by column set so that every row in one statement contributes the
-        # same VALUES tuple. In practice all the rows of a mult table match.
-        groups: dict[tuple[str, ...], list[DBRow]] = {}
-        for row in rows:
-            groups.setdefault(tuple(sorted(row.keys())), []).append(row)
-
-        packet_size = 1000  # Limit number of rows at a time - MySQL barfs
-
-        for sorted_column_names, group_rows in groups.items():
-            quoted_columns = self._quoted_column_list(sorted_column_names)
-            # ON DUPLICATE KEY UPDATE has to name each row's new value indirectly,
-            # because one statement carries many rows. The row alias MySQL 8.0.19
-            # added is how: it names the row being inserted, so `new`.`col` is that
-            # row's value for that column. The alternative spelling, VALUES(col), is
-            # deprecated as of 8.0.20. The alias is what puts the server floor at
-            # 8.0.19, which README.md and the developer guide's prerequisites state.
-            # MySQL requires the row alias to differ from the table name, and a
-            # `perm`-namespace name is the raw one, so a table called `new` would
-            # produce a syntax error deep inside an import. No OPUS table is called
-            # that, but the schema is data rather than a guarantee, so the one
-            # colliding name is answered here instead of being assumed away.
-            # Compared case-insensitively: MySQL folds identifiers for this check
-            # even where the file system makes table names case-sensitive.
-            row_alias = self.quote_identifier('new_row' if table_name.lower() == 'new' else 'new')
-            assign_list = ','.join(
-                f'{self.quote_identifier(c)}={row_alias}.{self.quote_identifier(c)}'
-                for c in sorted_column_names
-                if c != key_name
-            )
-
-            num_packets = ((len(group_rows) - 1) // packet_size) + 1
-            for packet_num in range(num_packets):
-                start_row = packet_size * packet_num
-                end_row = min(len(group_rows), packet_size * (packet_num + 1))
-
-                value_tuples = []
-                param_list: list[Any] = []
-                for row in group_rows[start_row:end_row]:
-                    placeholders = self._row_placeholders(row, sorted_column_names, param_list)
-                    value_tuples.append(f'({placeholders})')
-
-                cmd = (
-                    f'INSERT INTO {self.quote_identifier(table_name)} '
-                    f'({quoted_columns}) VALUES' + ','.join(value_tuples)
+            for sorted_column_names, group_rows in groups.items():
+                quoted_columns = self._quoted_column_list(sorted_column_names)
+                # ON DUPLICATE KEY UPDATE has to name each row's new value indirectly,
+                # because one statement carries many rows. The row alias MySQL 8.0.19
+                # added is how: it names the row being inserted, so `new`.`col` is that
+                # row's value for that column. The alternative spelling, VALUES(col), is
+                # deprecated as of 8.0.20. The alias is what puts the server floor at
+                # 8.0.19, which README.md and the developer guide's prerequisites state.
+                # MySQL requires the row alias to differ from the table name, so a
+                # table called `new` would produce a syntax error deep inside an import.
+                # No OPUS table is called that, but the schema is data rather than a
+                # guarantee, so the one colliding name is answered here instead of being
+                # assumed away.
+                # Compared case-insensitively: MySQL folds identifiers for this check
+                # even where the file system makes table names case-sensitive.
+                row_alias = self.quote_identifier(
+                    'new_row' if table_name.lower() == 'new' else 'new'
                 )
-                if assign_list:
-                    # The alias is emitted only with the clause that reads it. A row
-                    # of nothing but the key has nothing to assign, and an alias with
-                    # no ON DUPLICATE KEY UPDATE after it would name a row nothing
-                    # refers to.
-                    cmd += f' AS {row_alias} ON DUPLICATE KEY UPDATE ' + assign_list
+                assign_list = ','.join(
+                    f'{self.quote_identifier(c)}={row_alias}.{self.quote_identifier(c)}'
+                    for c in sorted_column_names
+                    if c != key_name
+                )
 
-                try:
-                    self._execute(cmd, param_list, mutates=True)
-                except MySQLdb.Error as e:
-                    if self.logger:
-                        self.logger.log(
-                            'fatal', f'Failed to insert row into "{table_name}": {e.args[1]}'
-                        )
-                    raise ImportDBError(e) from e
+                num_packets = ((len(group_rows) - 1) // packet_size) + 1
+                for packet_num in range(num_packets):
+                    start_row = packet_size * packet_num
+                    end_row = min(len(group_rows), packet_size * (packet_num + 1))
 
-        super()._exit()
+                    value_tuples = []
+                    param_list: list[Any] = []
+                    for row in group_rows[start_row:end_row]:
+                        placeholders = self._row_placeholders(row, sorted_column_names, param_list)
+                        value_tuples.append(f'({placeholders})')
+
+                    cmd = (
+                        f'INSERT INTO {self.quote_identifier(table_name)} '
+                        f'({quoted_columns}) VALUES' + ','.join(value_tuples)
+                    )
+                    if assign_list:
+                        # The alias is emitted only with the clause that reads it. A row
+                        # of nothing but the key has nothing to assign, and an alias with
+                        # no ON DUPLICATE KEY UPDATE after it would name a row nothing
+                        # refers to.
+                        cmd += f' AS {row_alias} ON DUPLICATE KEY UPDATE ' + assign_list
+
+                    try:
+                        self._execute(cmd, param_list, mutates=True)
+                    except MySQLdb.Error as e:
+                        self._log_failure(f'Failed to insert row into "{table_name}": {e}')
+                        raise ImportDBError(e) from e
 
     def delete_rows(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         where: str | None = None,
         where_params: Sequence[Any] | None = None,
+        *,
+        all_rows: bool = False,
     ) -> None:
-        """Delete the rows a WHERE clause selects.
+        """Delete the rows a WHERE clause selects, or every row when asked to.
+
+        A missing WHERE clause is refused rather than read as "every row", so a caller
+        whose clause came out empty deletes nothing instead of the whole table.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
-            where: The WHERE clause, or None to delete every row. Any value it compares
-                against must be a `%s` placeholder, never text.
+            table_name: The table.
+            where: The WHERE clause. Any value it compares against must be a `%s`
+                placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
+            all_rows: True to delete every row; ``where`` must then be None.
 
         Raises:
-            ImportDBError: If the server rejects the statement.
+            ImportDBError: If there is a WHERE clause and ``all_rows`` is True, or neither,
+                or the server rejects the statement.
         """
-        super()._enter('delete_rows')
+        if bool(where) == all_rows:
+            raise ImportDBError(
+                f'delete_rows on "{table_name}" needs a WHERE clause or all_rows=True, and not both'
+            )
+        with self._operation('delete_rows'):
+            # The table name is validated by quote_identifier (^[A-Za-z0-9_]+$). The
+            # caller's `where` fragment is appended verbatim below and is not
+            # validated; only the values inside it are bound, through where_params.
+            # This method is for trusted callers.
+            cmd = f'DELETE FROM {self.quote_identifier(table_name)}'  # nosec B608
+            if where:
+                cmd += f' WHERE {where}'
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
+            try:
+                self._execute(cmd, list(where_params) if where_params else None, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to delete rows from "{table_name}": {e}')
+                raise ImportDBError(e) from e
 
-        # The table name is validated by quote_identifier (^[A-Za-z0-9_]+$). The
-        # caller's `where` fragment is appended verbatim below and is not
-        # validated; only the values inside it are bound, through where_params.
-        # This method is for trusted callers.
-        cmd = f'DELETE FROM {self.quote_identifier(table_name)}'  # nosec B608
-        if where:
-            cmd += f' WHERE {where}'
-
-        try:
-            self._execute(cmd, list(where_params) if where_params else None, mutates=True)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log('fatal', f'Failed to delete rows from "{table_name}": {e.args[1]}')
-            raise ImportDBError(e) from e
-
-        self._exit()
-
-    def copy_rows_between_namespaces(
+    def delete_joined_rows(
         self,
-        src_namespace: Namespace,
-        dest_namespace: Namespace,
-        raw_table_name: str,
-        where: str | None = None,
-        where_params: Sequence[Any] | None = None,
+        table_name: str,
+        join_column: str,
+        parent_table: str,
+        parent_column: str,
+        where: str,
+        where_params: Sequence[Any],
     ) -> None:
-        """Copy rows of one table from one namespace to the same table in another.
+        """Delete the rows of a table that join a parent row a WHERE clause selects.
 
-        Both tables must have the same columns in the same order, which they do because
-        both are created from the same OPUS table schema.
+        Renders ``DELETE c FROM <table> AS c JOIN <parent> AS p ON p.<parent_column> =
+        c.<join_column> WHERE <where>``.
 
         Parameters:
-            src_namespace: The namespace to read from.
-            dest_namespace: The namespace to write to.
-            raw_table_name: The table, without its namespace prefix.
-            where: The WHERE clause selecting the rows to copy, or None for every row.
-                Any value it compares against must be a `%s` placeholder, never text.
+            table_name: The table rows are deleted from.
+            join_column: Its column naming a parent row.
+            parent_table: The parent table.
+            parent_column: The parent's column `join_column` holds.
+            where: The WHERE clause selecting parent rows, over the parent's columns
+                qualified by `JOINED_PARENT_ALIAS`. Any value it compares against must be
+                a `%s` placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
 
         Raises:
             ImportDBError: If the server rejects the statement.
         """
-        super()._enter('copy_rows')
-
-        src_table_name = self.convert_raw_to_namespace(src_namespace, raw_table_name)
-        dest_table_name = self.convert_raw_to_namespace(dest_namespace, raw_table_name)
-
-        # Both table names are validated by quote_identifier (^[A-Za-z0-9_]+$).
-        # The caller's `where` fragment is appended verbatim below and is not
-        # validated; only the values inside it are bound, through where_params.
-        # This method is for trusted callers.
-        cmd = (
-            f'INSERT INTO {self.quote_identifier(dest_table_name)} SELECT * '  # nosec B608
-            f'FROM {self.quote_identifier(src_table_name)}'
-        )
-        if where:
-            cmd += f' WHERE {where}'
-
-        try:
-            self._execute(cmd, list(where_params) if where_params else None, mutates=True)
-        except MySQLdb.Error as e:
-            if self.logger:
-                self.logger.log(
-                    'fatal',
-                    f'Failed to copy rows from "{src_table_name}" to '
-                    f'"{dest_table_name}": {e.args[1]}',
-                )
-            raise ImportDBError(e) from e
-
-        self._exit()
+        q = self.quote_identifier
+        child, parent = q('c'), q(self.JOINED_PARENT_ALIAS)
+        with self._operation('delete_joined_rows'):
+            # Every identifier is validated by quote_identifier; the caller's `where`
+            # fragment is appended verbatim, and only its values are bound.
+            cmd = (
+                f'DELETE {child} FROM {q(table_name)} AS {child} '  # nosec B608
+                f'JOIN {q(parent_table)} AS {parent} '
+                f'ON {parent}.{q(parent_column)} = {child}.{q(join_column)} WHERE {where}'
+            )
+            try:
+                self._execute(cmd, list(where_params), mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to delete rows from "{table_name}": {e}')
+                raise ImportDBError(e) from e
 
     def general_select(
         self, cmd: str, param_list: Sequence[Any] | None = None
@@ -1156,18 +2436,117 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         Raises:
             ImportDBError: If the server rejects the query.
         """
-        super()._enter('cmd')
-
-        res = self._execute_and_fetchall('SELECT ' + cmd, 'general_select', param_list)
-        self._exit()
+        with self._operation('cmd'):
+            res = self._execute_and_fetchall('SELECT ' + cmd, 'general_select', param_list)
         return res
 
-    def find_column_max(self, namespace: Namespace, raw_table_name: str, column_name: str) -> Any:
+    def stream_select(
+        self, cmd: str, param_list: Sequence[Any] | None = None
+    ) -> Iterator[ResultRow]:
+        """Run `SELECT <cmd>` and yield its rows as the server sends them.
+
+        The query runs through an unbuffered server-side cursor, so a scan of a large
+        table never holds the whole result in memory. The connection carries nothing
+        else until the last row is read, so the caller reads every row before it issues
+        another statement.
+
+        Parameters:
+            cmd: Everything after the SELECT keyword, quoted and parameterized as
+                `general_select` requires.
+            param_list: The parameters its placeholders consume.
+
+        Yields:
+            One tuple per row, in the order the query named its columns; no rows at all
+            when the driver is absent.
+
+        Raises:
+            ImportDBError: If the server rejects the query or the read fails.
+        """
+        if not MYSQLDB_AVAILABLE:
+            return
+        with self._operation('stream_select'):
+            try:
+                with self.conn.cursor(MySQLdb.cursors.SSCursor) as cur:
+                    self._execute('SELECT ' + cmd, param_list, cur=cur)
+                    while True:
+                        rows = cur.fetchmany(STREAM_FETCH_ROWS)
+                        if not rows:
+                            break
+                        yield from rows
+                self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed in stream_select: {e}')
+                raise ImportDBError(e) from e
+
+    def list_junction_mismatches(
+        self,
+        table_name: str,
+        column: str,
+        junction: str,
+        observation_column: str,
+        first_id: int | None = None,
+    ) -> tuple[int, int | None]:
+        """Compare a ``mult_list`` column's lists with its junction table's rows.
+
+        Each list is read as rows by ``JSON_TABLE``. One anti-join finds the ids of a list
+        with no junction row, reading the junction table's primary key; the other finds
+        the junction rows whose observation's list lacks their id, reading the table by
+        its observation column. Both scan their whole table, or with `first_id` the range
+        of each table's key on its observation column from `first_id` up.
+
+        Parameters:
+            table_name: The table holding the column.
+            column: The ``mult_list`` column.
+            junction: Its junction table.
+            observation_column: The table's column holding the observation's
+                ``obs_general`` id, the key of its rows.
+            first_id: Compare only the observations whose ``obs_general`` id is at least
+                this, or every observation when None.
+
+        Returns:
+            How many observations disagree, and the least ``obs_general`` id among them,
+            or None when none does.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        q = self.quote_identifier
+        table, ids, rows, found = q('t'), q('j'), q('x'), q('d')
+        value, observation = q('v'), q(observation_column)
+        mult_id = q(list_junctions.JUNCTION_MULT_COLUMN)
+        linked = q(list_junctions.JUNCTION_OBSERVATION_COLUMN)
+        listed_from = f'{table}.{observation} >= %s AND ' if first_id is not None else ''
+        linked_from = f'{rows}.{linked} >= %s AND ' if first_id is not None else ''
+        # Every identifier is validated by quote_identifier; the only value is a parameter.
+        listed = (
+            f'{q(table_name)} AS {table}, JSON_TABLE({table}.{q(column)}, '
+            f"'$[*]' COLUMNS ({value} INT PATH '$')) AS {ids}"
+        )
+        unlinked = (
+            f'SELECT {table}.{observation} AS {q("obs")} FROM {listed} '  # nosec B608
+            f'WHERE {listed_from}NOT EXISTS (SELECT 1 FROM {q(junction)} AS {rows} '
+            f'WHERE {rows}.{mult_id} = {ids}.{value} AND {rows}.{linked} = {table}.{observation})'
+        )
+        unlisted = (
+            f'SELECT {rows}.{linked} FROM {q(junction)} AS {rows} '  # nosec B608
+            f'WHERE {linked_from}NOT EXISTS (SELECT 1 FROM {listed} '
+            f'WHERE {table}.{observation} = {rows}.{linked} AND {ids}.{value} = {rows}.{mult_id})'
+        )
+        statement = (
+            f'COUNT(DISTINCT {found}.{q("obs")}), MIN({found}.{q("obs")}) '  # nosec B608
+            f'FROM ({unlinked} UNION ALL {unlisted}) AS {found}'
+        )
+        if first_id is None:
+            ((count, first),) = self.general_select(statement)
+        else:
+            ((count, first),) = self.general_select(statement, [first_id, first_id])
+        return int(count), None if first is None else int(first)
+
+    def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             column_name: The column to take the maximum of.
 
         Returns:
@@ -1176,16 +2555,355 @@ FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`=%s AND
         Raises:
             ImportDBError: If the server rejects the query.
         """
-        super()._enter('find_column_max')
-
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
-        # Column and table names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$).
-        # This statement carries no values at all.
-        cmd = (
-            f'SELECT MAX({self.quote_identifier(column_name)}) '  # nosec B608
-            f'FROM {self.quote_identifier(table_name)}'
-        )
-        res = self._execute_and_fetchall(cmd, 'find_column_max')
-        self._exit()
+        with self._operation('find_column_max'):
+            # Column and table names are the only interpolations and identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$).
+            # This statement carries no values at all.
+            cmd = (
+                f'SELECT MAX({self.quote_identifier(column_name)}) '  # nosec B608
+                f'FROM {self.quote_identifier(table_name)}'
+            )
+            res = self._execute_and_fetchall(cmd, 'find_column_max')
         return res[0][0]
+
+    def _commit(self) -> None:
+        """Commit the connection's open transaction; nothing when the driver is absent.
+
+        Raises:
+            ImportDBError: If the server does not commit it, raised from the driver's
+                error, so that `ImportDBSuper.retrying` reads its code.
+        """
+        if MYSQLDB_AVAILABLE:
+            try:
+                self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed committing a transaction: {e}')
+                raise ImportDBError(e) from e
+
+    def _rollback(self) -> None:
+        """Roll back the connection's open transaction; nothing when the driver is absent.
+
+        Raises:
+            ImportDBError: If the server does not roll it back, raised from the driver's
+                error.
+        """
+        if MYSQLDB_AVAILABLE:
+            try:
+                self.conn.rollback()
+            except MySQLdb.Error as e:
+                raise ImportDBError(e) from e
+
+    @staticmethod
+    def _error_code(exc: BaseException) -> int | None:
+        """Return the server's error number behind a failure, or None.
+
+        Parameters:
+            exc: The driver's error, or an `ImportDBError` raised from one.
+
+        Returns:
+            The number, read from the driver's error or the one the failure was raised
+            from; None when neither is a driver error.
+        """
+        for candidate in (exc, exc.__cause__):
+            if MYSQLDB_AVAILABLE and isinstance(candidate, MySQLdb.Error):
+                code = candidate.args[0] if candidate.args else None
+                return code if isinstance(code, int) else None
+        return None
+
+    def is_retryable_error(self, exc: BaseException) -> bool:
+        """Return whether a failure is a deadlock (1213) or a lock wait timeout (1205).
+
+        Parameters:
+            exc: The driver's error, or an `ImportDBError` raised from one.
+
+        Returns:
+            True for either error.
+        """
+        return self._error_code(exc) in ERRS_RETRYABLE
+
+    def is_duplicate_key_error(self, exc: BaseException) -> bool:
+        """Return whether a failure is a duplicate primary or unique key (1062).
+
+        Parameters:
+            exc: The driver's error, or an `ImportDBError` raised from one.
+
+        Returns:
+            True for that error.
+        """
+        return self._error_code(exc) == ERR_DUPLICATE_KEY
+
+    @contextlib.contextmanager
+    def named_lock(self, name: str) -> Iterator[None]:
+        """Hold ``GET_LOCK(name)`` while the body runs, waiting for it as long as it takes.
+
+        Parameters:
+            name: The lock's name, at most 64 characters.
+
+        Yields:
+            Nothing; the body runs holding the lock, which ``RELEASE_LOCK`` frees
+            however the body ends. When the body raises, a release that fails as well is
+            not reported, so the body's failure is the one raised.
+
+        Raises:
+            ImportDBError: If the server does not grant the lock.
+        """
+        if not MYSQLDB_AVAILABLE or self.read_only:
+            yield
+            return
+        # A negative timeout waits without limit.
+        granted = self._execute_and_fetchall('SELECT GET_LOCK(%s, -1)', 'named_lock', [name])
+        if not granted or granted[0][0] != 1:
+            message = f'The server did not grant the lock "{name}" ({granted!r})'
+            self._log_failure(message)
+            raise ImportDBError(message)
+        try:
+            yield
+        except BaseException:
+            # The body's failure is the one to report: a release that fails too, on a
+            # connection the failure broke, must not replace it, and the server frees the
+            # lock when the connection closes.
+            with self.failures_expected(), contextlib.suppress(ImportDBError):
+                self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'named_lock', [name])
+            raise
+        self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'named_lock', [name])
+
+    def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
+        """Add one to a counter column with ``LAST_INSERT_ID(column + 1)``, and read it back.
+
+        ``LAST_INSERT_ID()`` returns the value this connection set, whatever other
+        connections do, so no ``MAX()`` is read under a lock.
+
+        Parameters:
+            table_name: The table.
+            column: The counter column.
+            key_column: The column identifying the row.
+            key: The row's key.
+
+        Returns:
+            The counter's new value. A read-only run logs the ``UPDATE`` instead of
+            sending it, and returns the stored value advanced by every addition the run
+            has made to that row.
+
+        Raises:
+            ImportDBError: If the server rejects a statement, or no row has the key.
+        """
+        q = self.quote_identifier
+        with self._operation('increment_counter'):
+            # Identifiers are validated by quote_identifier; the key is bound.
+            cmd = (
+                f'UPDATE {q(table_name)} SET {q(column)} = LAST_INSERT_ID({q(column)} + 1) '  # nosec B608
+                f'WHERE {q(key_column)} = %s'
+            )
+            if not MYSQLDB_AVAILABLE or self.read_only:
+                self._execute(cmd, [key], mutates=True)
+                return self._simulated_count(table_name, column, key_column, key)
+            try:
+                with self.conn.cursor() as cur:
+                    self._execute(cmd, [key], cur=cur, mutates=True)
+                    if cur.rowcount != 1:
+                        raise ImportDBError(
+                            f'"{table_name}" has no row whose {key_column} is {key!r} to count in'
+                        )
+                    self._execute('SELECT LAST_INSERT_ID()', cur=cur)
+                    value = cur.fetchall()[0][0]
+                if not self._in_transaction:
+                    self.conn.commit()
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to count in "{table_name}": {e}')
+                raise ImportDBError(e) from e
+        return int(value)
+
+    def insert_rows_keeping_existing(
+        self, table_name: str, key_name: str, rows: Sequence[DBRow]
+    ) -> None:
+        """Insert rows with ``ON DUPLICATE KEY UPDATE key = key``, a no-op on a stored row.
+
+        Parameters:
+            table_name: The table.
+            key_name: A column of the key a stored row may already hold; it is assigned
+                to itself.
+            rows: The rows, all with the same columns; none writes nothing.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        if len(rows) == 0:
+            return
+        q = self.quote_identifier
+        with self._operation('insert_rows_keeping_existing'):
+            sorted_column_names = sorted(rows[0].keys())
+            param_list: list[Any] = []
+            value_tuples = [
+                f'({self._row_placeholders(row, sorted_column_names, param_list)})' for row in rows
+            ]
+            # Identifiers are validated by quote_identifier; every value is bound.
+            cmd = (
+                f'INSERT INTO {q(table_name)} '  # nosec B608
+                f'({self._quoted_column_list(sorted_column_names)}) VALUES '
+                + ','.join(value_tuples)
+                + f' ON DUPLICATE KEY UPDATE {q(key_name)} = {q(key_name)}'
+            )
+            try:
+                self._execute(cmd, param_list, mutates=True)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to insert row into "{table_name}": {e}')
+                raise ImportDBError(e) from e
+
+    def lock_first_row(
+        self,
+        table_name: str,
+        column: str,
+        where: str,
+        where_params: Sequence[Any],
+        order_by: Sequence[str],
+    ) -> Any:
+        """Lock the first row with ``FOR UPDATE SKIP LOCKED`` and return one column of it.
+
+        Under ``READ COMMITTED``, when a key serves both the WHERE clause and the order,
+        the statement reads and locks only the row it returns.
+
+        Parameters:
+            table_name: The table.
+            column: The column to return.
+            where: The WHERE clause, with `%s` placeholders.
+            where_params: The values for those placeholders.
+            order_by: The columns to order by, each descending.
+
+        Returns:
+            The column's value in the row locked, or None.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        q = self.quote_identifier
+        ordering = ', '.join(f'{q(name)} DESC' for name in order_by)
+        # Identifiers are validated by quote_identifier; the caller's `where` fragment is
+        # appended verbatim, and only its values are bound.
+        cmd = (
+            f'SELECT {q(column)} FROM {q(table_name)} WHERE {where} '  # nosec B608
+            f'ORDER BY {ordering} LIMIT 1 FOR UPDATE SKIP LOCKED'
+        )
+        with self._operation('lock_first_row'):
+            rows = self._execute_and_fetchall(cmd, 'lock_first_row', list(where_params))
+        return rows[0][0] if rows else None
+
+    def lock_row(
+        self, table_name: str, columns: Sequence[str], where: str, where_params: Sequence[Any]
+    ) -> ResultRow | None:
+        """Lock one row with ``FOR UPDATE SKIP LOCKED`` and return its columns.
+
+        Parameters:
+            table_name: The table.
+            columns: The columns to return.
+            where: The WHERE clause, with `%s` placeholders, selecting at most one row.
+            where_params: The values for those placeholders.
+
+        Returns:
+            The row's columns, or None when no row is selected or another session holds
+            it.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        # Identifiers are validated by quote_identifier; the caller's `where` fragment is
+        # appended verbatim, and only its values are bound.
+        cmd = (
+            f'SELECT {self._quoted_column_list(columns)} FROM '  # nosec B608
+            f'{self.quote_identifier(table_name)} WHERE {where} FOR UPDATE SKIP LOCKED'
+        )
+        with self._operation('lock_row'):
+            rows = self._execute_and_fetchall(cmd, 'lock_row', list(where_params))
+        return tuple(rows[0]) if rows else None
+
+    def set_idle_timeout(self, seconds: int) -> None:
+        """Set the session's ``wait_timeout``, the idle seconds before the server closes it.
+
+        Parameters:
+            seconds: The timeout. ``interactive_timeout`` is left alone: the import does
+                not connect as an interactive client, so it does not apply.
+
+        Raises:
+            ImportDBError: If the server rejects the statement.
+        """
+        if not MYSQLDB_AVAILABLE:
+            return
+        with self._operation('set_idle_timeout'):
+            try:
+                # A session setting, not a change to commit: run without a commit.
+                with self.conn.cursor() as cur:
+                    self._execute('SET SESSION wait_timeout = %s', [seconds], cur=cur)
+            except MySQLdb.Error as e:
+                self._log_failure(f'Failed to set wait_timeout: {e}')
+                raise ImportDBError(e) from e
+
+    def last_insert_id(self) -> int:
+        """Return ``LAST_INSERT_ID()``, the key this connection's last insert generated.
+
+        Returns:
+            The key.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        rows = self._execute_and_fetchall('SELECT LAST_INSERT_ID()', 'last_insert_id')
+        return int(rows[0][0])
+
+    def try_named_lock(self, name: str) -> bool:
+        """Take ``GET_LOCK(name, 0)``, which does not wait.
+
+        Parameters:
+            name: The lock's name, at most 64 characters.
+
+        Returns:
+            True if the lock was granted.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        granted = self._execute_and_fetchall('SELECT GET_LOCK(%s, 0)', 'try_named_lock', [name])
+        return bool(granted) and granted[0][0] == 1
+
+    def release_named_lock(self, name: str) -> None:
+        """Free a lock `try_named_lock` took on this connection.
+
+        Parameters:
+            name: The lock's name.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        self._execute_and_fetchall('SELECT RELEASE_LOCK(%s)', 'release_named_lock', [name])
+
+    def holds_named_lock(self, name: str) -> bool:
+        """Return whether ``IS_USED_LOCK(name)`` is this connection's ``CONNECTION_ID()``.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            True if this connection holds the lock; False if it is free or another
+            connection holds it.
+
+        Raises:
+            ImportDBError: If the query fails, as it does once the connection is gone.
+        """
+        held = self._execute_and_fetchall(
+            'SELECT IS_USED_LOCK(%s) = CONNECTION_ID()', 'holds_named_lock', [name]
+        )
+        return bool(held) and held[0][0] == 1
+
+    def named_lock_holder(self, name: str) -> int | None:
+        """Return ``IS_USED_LOCK(name)``: the holding connection's id, or None when free.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            The id, or None.
+
+        Raises:
+            ImportDBError: If the server rejects the query.
+        """
+        holder = self._execute_and_fetchall('SELECT IS_USED_LOCK(%s)', 'named_lock_holder', [name])
+        if not holder or holder[0][0] is None:
+            return None
+        return int(holder[0][0])

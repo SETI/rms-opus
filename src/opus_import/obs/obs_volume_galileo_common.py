@@ -1,7 +1,7 @@
 """What every Galileo volume shares: its spacecraft clock format."""
 
 import opus_support
-from opus_import.obs.field_types import FloatField, MultFieldRet, StrField
+from opus_import.obs.field_types import FloatField, MultFieldRet
 from opus_import.obs.obs_common_pds3 import ObsCommonPDS3
 
 
@@ -22,12 +22,6 @@ class ObsVolumeGalileoCommon(ObsCommonPDS3):
     #############################################
     ### FIELD METHODS FOR obs_mission_galileo ###
     #############################################
-
-    def field_obs_mission_galileo_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_mission_galileo_bundle_id(self) -> StrField:
-        return self.bundle
 
     def field_obs_mission_galileo_orbit_number(self) -> MultFieldRet:
         raise NotImplementedError

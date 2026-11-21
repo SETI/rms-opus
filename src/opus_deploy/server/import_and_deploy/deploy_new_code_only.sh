@@ -6,10 +6,21 @@
 # is created by the import pipeline from the JSON table schemas that ship with the
 # release, so a release that changes one of them cannot read a database an earlier
 # release imported: columns it expects are missing, and columns it does not know
-# about are there. Nothing here can tell the two cases apart -- a database carries no
-# record of the release that wrote it -- so it is the operator's call, from the
-# release notes. When the schemas did change, the deploy is an import under the new
-# release (run_full_opus_import.sh) followed by deploy_new_code_and_database.sh.
+# about are there. The database records its schema version, and this refuses, before
+# anything is written, a release whose version differs (_check_schema_version.sh).
+# When the schemas did change, the deploy is an import under the new release
+# (run_full_opus_import.sh) followed by deploy_new_code_and_database.sh.
+#
+# By default it rebuilds the tables that describe the metadata (param_info, partables,
+# table_names and the dictionary) on the served database, each beside the live table and
+# swapped in, so a release that changed a label or a definition describes itself; it
+# refuses, before writing anything, while an incremental update's generation is pending
+# (opus_import --check rebuild). It runs no warm-up after the switch: the stored searches
+# and the database server's cache are as the release before left them. With
+# --no-database it writes nothing to the database at all, for a release that changes
+# neither the import nor the table schemas -- the web application, its templates and
+# static files, the docs. Whether a release is one of those is the operator's call,
+# from its release notes, as whether it changed the schema is.
 #
 # What this does not do, deliberately, is upgrade the running installation in place.
 # A pip upgrade rewrites the files a running Apache is serving from, and these very
@@ -22,16 +33,31 @@
 #
 set -e
 
+# The status opus_import --check exits with when the action would be refused
+# (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+GENERATION_REFUSED_STATUS=3
+
 echo "*** Starting code-only OPUS deploy ***"
 echo
 
-if [[ $# > 1 ]]; then
-    echo "Usage: deploy_new_code_only.sh [<version_spec>]"
+NO_DATABASE=false
+if [[ ${1:-} == --no-database ]]; then
+    NO_DATABASE=true
+    shift
+fi
+
+if [[ $# > 1 || ${1:-} == -* ]]; then
+    echo "Usage: deploy_new_code_only.sh [--no-database] [<version_spec>]"
     echo
+    echo "  --no-database   write nothing to the database: skip Django's migrations and"
+    echo "                  the rebuild of param_info, partables, table_names and the"
+    echo "                  dictionary. Only for a release that changes neither the"
+    echo "                  import nor the table schemas. It still checks the schema"
+    echo "                  version, and refuses if Django has a migration to apply."
     echo "  <version_spec>  a PEP 440 specifier appended to the distribution name,"
-    echo "                  for example '==3.23.0'. Omit it to install the newest"
-    echo "                  release. The deploy installs rms-opus from PyPI, so this"
-    echo "                  selects a release rather than a source revision."
+    echo "                  for example '==3.23.0', or '@' and a git branch, tag or"
+    echo "                  commit to install an unreleased revision, for example"
+    echo "                  '@main'. Omit it to install the newest release."
     exit 1
 fi
 
@@ -42,7 +68,19 @@ export IMPORT_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/
 export SCRIPT_DIR=`dirname ${IMPORT_SCRIPT_DIR}`
 export SECRETS_DIR=${SCRIPT_DIR}/secrets
 
+source ${IMPORT_SCRIPT_DIR}/_version_spec.sh
+if ! check_version_spec deploy_new_code_only.sh "${OPUS_VERSION_SPEC}"; then
+    exit 1
+fi
+
 source ${IMPORT_SCRIPT_DIR}/_read_deploy_env.sh
+# One deploy at a time: held from before the served schema is read until the promotion
+# is done, and released when this script exits.
+source ${IMPORT_SCRIPT_DIR}/_deploy_lock.sh
+if ! take_deploy_lock "${OPUS_DIR}/deploy.lock"; then
+    echo "*** ABORTING: nothing was changed ***"
+    exit 1
+fi
 source ${IMPORT_SCRIPT_DIR}/_activate_deploy_venv.sh
 source ${IMPORT_SCRIPT_DIR}/_chain_version.sh
 
@@ -82,26 +120,96 @@ echo "Database, unchanged: ${OPUS_DB_NAME}"
 echo "Staging into: ${INSTALL_DIR}"
 echo
 echo "This deploy assumes the new release does not change the database schema."
+if ${NO_DATABASE}; then
+    echo "--no-database: nothing will be written to ${OPUS_DB_NAME}."
+fi
 echo
 
-# Get sudo password input and cached, before anything long runs.
-sudo echo
+# Get sudo password input and cached, before anything long runs: the switch at the
+# end needs it. A password sudo does not accept ends the deploy here, saying so, rather
+# than at the switch.
+if ! sudo -v; then
+    echo "ERROR: sudo did not accept a password, and the switch at the end needs it."
+    echo "*** ABORTING: nothing was built or switched ***"
+    exit 1
+fi
 
 # Beside the running installation, which goes on serving until the switch.
 source ${IMPORT_SCRIPT_DIR}/_opus_setup_environment.sh
+
+# Before anything writes to the database: a release whose schema version differs from
+# the one the database records cannot read it.
+source ${IMPORT_SCRIPT_DIR}/_check_schema_version.sh
+if ! check_schema_version; then
+    echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+    exit 1
+fi
+
+# Before the migration, the first write. With a generation pending, the rebuild below
+# would leave param_info, partables and table_names for its switch while the dictionary
+# and the mult labels changed in place, so the release would describe itself with the
+# previous release's tables; a switch, a revert or a purge stopped part way is refused
+# the same way. The check logs its answer, which says why when it is refused.
+if ! ${NO_DATABASE}; then
+    STATUS=0
+    opus_import --check rebuild || STATUS=$?
+    if [[ ${STATUS} -eq ${GENERATION_REFUSED_STATUS} ]]; then
+        echo "ERROR: the description tables cannot be rebuilt now; the check above says why."
+        echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+        exit 1
+    fi
+    if [[ ${STATUS} -ne 0 ]]; then
+        echo "ERROR: cannot read the schema_version row of ${OPUS_DB_NAME}."
+        echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+        exit 1
+    fi
+fi
+
 pip install mod-wsgi
 
-# Django's own contrib tables. A no-op when there is nothing to apply, and the
-# reason it is not optional: this deploy installs the newest release by default, so
-# it can cross a Django version that adds a contrib migration, and without this the
-# session and auth tables would silently stay behind.
-opus_manage migrate
+if ${NO_DATABASE}; then
+    # Only reads. A release that crosses a Django version with a contrib migration
+    # needs that migration applied, which is a write, so it cannot take this path.
+    # --check exits non-zero for a pending migration and for a Django that cannot start;
+    # --plan prints "Planned operations:" only once it has read the migrations, which
+    # tells the two apart.
+    if ! migration_plan=$(opus_manage migrate --plan --check 2>&1); then
+        if grep -q '^Planned operations:' <<< "${migration_plan}"; then
+            echo "${migration_plan}"
+            echo "Django has a migration to apply, which --no-database would skip."
+            echo "Deploy this release without --no-database: deploy_new_code_only.sh"
+        else
+            echo "${migration_plan}"
+            echo "Cannot check Django's migrations; see the output above."
+        fi
+        echo "*** ABORTING: nothing was written to ${OPUS_DB_NAME} ***"
+        exit 1
+    fi
+else
+    # Django's own contrib tables. A no-op when there is nothing to apply, and the
+    # reason it is not optional: this deploy installs the newest release by default, so
+    # it can cross a Django version that adds a contrib migration, and without this the
+    # session and auth tables would silently stay behind.
+    opus_manage migrate
+fi
 opus_manage collectstatic --noinput
 
-# The tables that describe the metadata rather than hold it. They are rebuilt from
-# the release's own configuration, so a release that renamed a field or moved it
-# between categories describes itself correctly against the database it inherited.
-opus_import --create-param-info --create-partables --create-table-names --import-dictionary
+if ! ${NO_DATABASE}; then
+    # The tables that describe the metadata rather than hold it. They are rebuilt from
+    # the release's own configuration, so a release that renamed a field or moved it
+    # between categories describes itself correctly against the database it inherited.
+    # Each is built beside the live table and swapped in, so the running workers never
+    # find one missing or partly filled. --update-mult-info writes the release's
+    # mult_options and mult_overrides over the mult rows in place, so a release that
+    # renames a value shows the new label once the restarts below reload the workers;
+    # it changes no id, so the rebuilt partables, which hold ids, do not depend on it.
+    opus_import --create-param-info --create-partables --create-table-names --import-dictionary --update-mult-info
+fi
+
+# No warm-up after the switch: it takes minutes, and what it fills -- the stored search
+# results and the database server's cache of the rows they read -- this deploy leaves as
+# it was.
+export OPUS_WARM_SEARCH=false
 
 source ${IMPORT_SCRIPT_DIR}/_promote.sh
 

@@ -2,34 +2,21 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
+        "field_key": "primary",
         "field_notnull": true,
         "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "opus_id",
-        "field_type": "char50",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "opus_id"
-        ],
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "This is the secondary key linking the record to obs_general."
-    },
-    {
-        "field_name": "bundle_id",
-        "field_type": "char75",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The bundle_id is included here for ease of database manipulation only."
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
     },
     {
         "field_name": "orbit_number",
@@ -53,49 +40,49 @@
         "pi_tooltip": "",
         "mult_options": [
               [   0,  "0",    "0",    0, "Y", null, null],
-              [   1,  "1",   "G1", "010", "Y", null, null],
-              [   2,  "2",   "G2", "020", "Y", null, null],
-              [   3,  "3",   "C3", "030", "Y", null, null],
-              [   4,  "4",   "E4", "040", "Y", null, null],
-              [   5,  "5",   "J5", "050", "Y", null, null],
-              [   6,  "6",   "E6", "060", "Y", null, null],
-              [   7,  "7",   "G7", "070", "Y", null, null],
-              [   8,  "8",   "G8", "080", "Y", null, null],
-              [   9,  "9",   "C9", "090", "Y", null, null],
-              [  10, "10",  "C10", "100", "Y", null, null],
-              [  11, "11",  "E11", "110", "Y", null, null],
-              [  12, "12",  "E12", "120", "Y", null, null],
-              [  13, "13",  "E13", "130", "Y", null, null],
-              [  14, "14",  "E14", "140", "Y", null, null],
-              [  15, "15",  "E15", "150", "Y", null, null],
-              [  16, "16",  "E16", "160", "Y", null, null],
-              [  17, "17",  "E17", "170", "Y", null, null],
-              [  18, "18",  "E18", "180", "Y", null, null],
-              [  19, "19",  "E19", "190", "Y", null, null],
-              [  20, "20",  "C20", "200", "Y", null, null],
-              [  21, "21",  "C21", "210", "Y", null, null],
-              [  22, "22",  "C22", "220", "Y", null, null],
-              [  23, "23",  "C23", "230", "Y", null, null],
-              [  24, "24",  "I24", "240", "Y", null, null],
-              [  25, "25",  "I25", "250", "Y", null, null],
-              [  26, "26",  "E26", "260", "Y", null, null],
-              [  27, "27",  "I27", "270", "Y", null, null],
-              [  28, "28",  "G28", "280", "Y", null, null],
-              [  29, "29",  "G29", "290", "Y", null, null],
-              [  30, "30",  "C30", "300", "Y", null, null],
-              [  31, "31",  "I31", "310", "Y", null, null],
-              [  32, "32",  "I32", "320", "Y", null, null],
-              [  33, "33",  "I33", "330", "Y", null, null],
-              [  34, "34",  "A34", "340", "Y", null, null],
-              [  35, "35",  "J35", "350", "Y", null, null],
-              [  36, null,  "N/A", "360", "Y", null, null]
+              [   1,  "1",   "G1",    10, "Y", null, null],
+              [   2,  "2",   "G2",    20, "Y", null, null],
+              [   3,  "3",   "C3",    30, "Y", null, null],
+              [   4,  "4",   "E4",    40, "Y", null, null],
+              [   5,  "5",   "J5",    50, "Y", null, null],
+              [   6,  "6",   "E6",    60, "Y", null, null],
+              [   7,  "7",   "G7",    70, "Y", null, null],
+              [   8,  "8",   "G8",    80, "Y", null, null],
+              [   9,  "9",   "C9",    90, "Y", null, null],
+              [  10, "10",  "C10",   100, "Y", null, null],
+              [  11, "11",  "E11",   110, "Y", null, null],
+              [  12, "12",  "E12",   120, "Y", null, null],
+              [  13, "13",  "E13",   130, "Y", null, null],
+              [  14, "14",  "E14",   140, "Y", null, null],
+              [  15, "15",  "E15",   150, "Y", null, null],
+              [  16, "16",  "E16",   160, "Y", null, null],
+              [  17, "17",  "E17",   170, "Y", null, null],
+              [  18, "18",  "E18",   180, "Y", null, null],
+              [  19, "19",  "E19",   190, "Y", null, null],
+              [  20, "20",  "C20",   200, "Y", null, null],
+              [  21, "21",  "C21",   210, "Y", null, null],
+              [  22, "22",  "C22",   220, "Y", null, null],
+              [  23, "23",  "C23",   230, "Y", null, null],
+              [  24, "24",  "I24",   240, "Y", null, null],
+              [  25, "25",  "I25",   250, "Y", null, null],
+              [  26, "26",  "E26",   260, "Y", null, null],
+              [  27, "27",  "I27",   270, "Y", null, null],
+              [  28, "28",  "G28",   280, "Y", null, null],
+              [  29, "29",  "G29",   290, "Y", null, null],
+              [  30, "30",  "C30",   300, "Y", null, null],
+              [  31, "31",  "I31",   310, "Y", null, null],
+              [  32, "32",  "I32",   320, "Y", null, null],
+              [  33, "33",  "I33",   330, "Y", null, null],
+              [  34, "34",  "A34",   340, "Y", null, null],
+              [  35, "35",  "J35",   350, "Y", null, null],
+              [  36, null,  "N/A",   360, "Y", null, null]
           ]
     },
     {
         "field_name": "spacecraft_clock_count1",
         "field_type": "real8",
         "field_notnull": true,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 7e6,
@@ -123,7 +110,7 @@
         "field_name": "spacecraft_clock_count2",
         "field_type": "real8",
         "field_notnull": true,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "val_min": 0,
         "val_max": 7e6,
@@ -142,17 +129,5 @@
         "pi_slug": "GALILEOspacecraftclockcount2",
         "pi_sub_heading": null,
         "pi_tooltip": ""
-    },
-    {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": "MAX_ID"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

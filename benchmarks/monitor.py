@@ -1,0 +1,446 @@
+"""What the harness watches while an import invocation runs, and what it checks after.
+
+`InvocationMonitor` is the `import_tests.tools.build_run.StepObserver` the import
+benchmark hands to `build_run.perform_run`, and the one it wraps around each
+`build_run.run_pipeline_step` it makes itself, so every invocation is measured the same
+way at every scale: its wall-clock; its memory, sampled once a second from ``/proc``
+(each process's peak resident set, ``VmHWM``, and the peak over the samples of the
+import process tree's summed proportional set size, ``Pss``, which counts a page that
+forked workers share once rather than once per process); the server's checkpoint age,
+sampled on the same beat when the monitor is given a way to ask the server; its own
+``--timing-json`` step timings; and, after a bundle-import invocation, the check that
+the permanent ``obs_general`` holds rows for every bundle the invocation imports. Where
+``obs_general`` is a view of the rows of one import generation, the check reads its base
+table (`benchmarks.bench_server.obs_general_table`), and an import into a pending
+generation must have written rows of that generation.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import json
+import os
+import threading
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+import MySQLdb
+
+from benchmarks.bench_server import ADDED_GENERATION_COLUMN, obs_general_table, quote_identifier
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from benchmarks.bench_server import MysqlServer
+    from benchmarks.sides import Spelling
+    from import_tests.tools.build_run import StepResult
+
+#: Seconds between memory samples.
+SAMPLE_INTERVAL_S = 1.0
+
+
+class RunFailedError(Exception):
+    """Raised when an invocation fails or a check after it does; the run is not a result."""
+
+
+@dataclass
+class InvocationRecord:
+    """What one invocation did and what was measured while it ran.
+
+    Attributes:
+        name: The invocation's role in the run, as `benchmarks.sides.Spelling.role` names it.
+        arguments: Its command line after the interpreter.
+        wall_s: Its wall-clock seconds, from just before the process started to just
+            after it exited.
+        returncode: Its exit status.
+        peak_rss_kb: The largest ``VmHWM`` any process of its tree reached.
+        peak_tree_pss_kb: The largest summed ``Pss`` of its tree over the samples.
+        samples: How many memory samples were taken.
+        peak_checkpoint_age_bytes: The largest checkpoint age the server reached over
+            the samples, or None where it was not sampled or the server does not report
+            it (`checkpoint_age`).
+        timings: Its own step timings, from ``--timing-json``, or empty.
+        bundles: The bundles a bundle-import invocation imports, or empty.
+    """
+
+    name: str
+    arguments: tuple[str, ...]
+    wall_s: float = 0.0
+    returncode: int = 0
+    peak_rss_kb: int = 0
+    peak_tree_pss_kb: int = 0
+    samples: int = 0
+    peak_checkpoint_age_bytes: int | None = None
+    timings: dict[str, float] = field(default_factory=dict)
+    bundles: list[str] = field(default_factory=list)
+
+
+def read_kb(path: Path, key: str) -> int:
+    """Return one ``kB`` figure from a ``/proc`` file, or zero if it cannot be read.
+
+    Parameters:
+        path: ``/proc/<pid>/status`` or ``/proc/<pid>/smaps_rollup``.
+        key: The line's key, such as ``VmHWM``.
+
+    Returns:
+        The figure in kilobytes; zero when the process has gone or the line is absent.
+    """
+    with contextlib.suppress(OSError):
+        for line in path.read_text(encoding='ascii', errors='replace').splitlines():
+            if line.startswith(key + ':'):
+                return int(line.split()[1])
+    return 0
+
+
+def checkpoint_age(connection: Any) -> int | None:
+    """Return how far the server's redo log has run ahead of its last checkpoint.
+
+    The age is ``Innodb_redo_log_current_lsn`` less ``Innodb_redo_log_checkpoint_lsn``:
+    the redo the server has written whose pages are not yet flushed. When it nears the
+    redo log's capacity, the server stalls writes to flush, which is the sustained write
+    limit a long import can reach.
+
+    Parameters:
+        connection: An open connection to the server.
+
+    Returns:
+        The age in bytes, or None from a server older than 8.0.30, which reports neither
+        number.
+    """
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "SHOW GLOBAL STATUS WHERE Variable_name IN ('Innodb_redo_log_current_lsn', "
+            "'Innodb_redo_log_checkpoint_lsn')"
+        )
+        status = {str(name): int(value) for name, value in cursor.fetchall()}
+    finally:
+        cursor.close()
+    if len(status) < 2:
+        return None
+    return status['Innodb_redo_log_current_lsn'] - status['Innodb_redo_log_checkpoint_lsn']
+
+
+class _MemorySampler:
+    """Samples the memory of this process's children, once a second, on a thread.
+
+    Given a probe, it also samples the server's checkpoint age on the same beat.
+    """
+
+    def __init__(
+        self,
+        excluded: Callable[[], set[int]],
+        server_probe: Callable[[], int | None] | None = None,
+    ) -> None:
+        """Prepare to sample.
+
+        Parameters:
+            excluded: Returns the process ids not to count (the owned servers).
+            server_probe: Returns the server's checkpoint age, or None for no sample of
+                it; None for no probe.
+        """
+        self._excluded = excluded
+        self._server_probe = server_probe
+        self.peak_checkpoint_age_bytes: int | None = None
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._loop, daemon=True)
+        self._peak_hwm: dict[int, int] = {}
+        self.peak_tree_pss_kb = 0
+        self.samples = 0
+
+    def _sample(self) -> None:
+        """Take one sample of every child process not excluded."""
+        # psutil comes with the benchmarks extra only, so the unit tests, which run
+        # without it, can import this module.
+        import psutil
+
+        excluded = self._excluded()
+        try:
+            children = psutil.Process(os.getpid()).children(recursive=True)
+        except psutil.Error:
+            return
+        tree_pss = 0
+        for child in children:
+            if child.pid in excluded:
+                continue
+            proc = Path('/proc') / str(child.pid)
+            hwm = read_kb(proc / 'status', 'VmHWM')
+            if hwm > 0:
+                self._peak_hwm[child.pid] = max(self._peak_hwm.get(child.pid, 0), hwm)
+            tree_pss += read_kb(proc / 'smaps_rollup', 'Pss')
+        self.peak_tree_pss_kb = max(self.peak_tree_pss_kb, tree_pss)
+        self.samples += 1
+
+    def _loop(self) -> None:
+        """Sample until told to stop."""
+        while not self._stop.is_set():
+            # A process can exit between being listed and being read.
+            with contextlib.suppress(OSError):
+                self._sample()
+            self._sample_server()
+            self._stop.wait(SAMPLE_INTERVAL_S)
+
+    def _sample_server(self) -> None:
+        """Take one sample of the server's checkpoint age, if there is a probe."""
+        if self._server_probe is None:
+            return
+        # A sample the server cannot answer is a sample missed, not a failed run.
+        try:
+            age = self._server_probe()
+        except MySQLdb.Error:
+            return
+        if age is not None:
+            self.peak_checkpoint_age_bytes = max(self.peak_checkpoint_age_bytes or 0, age)
+
+    def start(self) -> None:
+        """Start sampling."""
+        self._thread.start()
+
+    def stop(self) -> int:
+        """Stop sampling.
+
+        Returns:
+            The largest ``VmHWM`` any sampled process reached, in kilobytes.
+        """
+        self._stop.set()
+        self._thread.join()
+        return max(self._peak_hwm.values(), default=0)
+
+
+class InvocationMonitor:
+    """Measures each invocation of an import run and checks each bundle import's result.
+
+    It implements `import_tests.tools.build_run.StepObserver`. An invocation that
+    exits non-zero, or a bundle import after which ``obs_general`` lacks a bundle,
+    raises `RunFailedError` from `step_finished`, which ends the run.
+    """
+
+    def __init__(
+        self,
+        *,
+        server: MysqlServer,
+        schema: str,
+        spelling: Spelling,
+        expand: Callable[[Sequence[str]], list[list[str]]],
+        timing_file: Path | None,
+        excluded_pids: Callable[[], set[int]],
+        status_connection: Callable[[], Any] | None = None,
+    ) -> None:
+        """Prepare to watch one run.
+
+        Parameters:
+            server: The owned server, which the check connects to.
+            schema: The schema the run imports into.
+            spelling: The side's spelling, which names each invocation by its role and
+                recognizes a bundle import.
+            expand: Expands invocations' descriptor groups into the bundles each
+                imports, with the side's own interpreter. Called once, with every
+                group the run will import, by `expand_groups` or else just before the
+                first bundle import starts its timing.
+            timing_file: The file each invocation's ``--timing-json`` writes, or None
+                where the side has no such option.
+            excluded_pids: Returns the process ids the memory figures leave out.
+            status_connection: Opens a connection to the server for the sampler to read
+                its checkpoint age through, one per invocation; None to sample memory
+                alone.
+        """
+        self._server = server
+        self._schema = schema
+        self._spelling = spelling
+        self._expand = expand
+        self._timing_file = timing_file
+        self._excluded_pids = excluded_pids
+        self._status_connection = status_connection
+        self._connection: Any = None
+        self._groups: list[str] = []
+        self._expanded: dict[str, list[str]] = {}
+        self._current: InvocationRecord | None = None
+        self._sampler: _MemorySampler | None = None
+        self._started = 0.0
+        self.records: list[InvocationRecord] = []
+        #: The import generation a bundle import writes, whose rows `check_bundles_landed`
+        #: looks for, or None to look for rows of any generation.
+        self.generation: int | None = None
+
+    def expect_groups(self, groups: Sequence[str]) -> None:
+        """Name every descriptor group the run's bundle imports will be given.
+
+        Parameters:
+            groups: Each bundle-import invocation's last argument, in order.
+        """
+        self._groups = list(groups)
+
+    def expand_groups(self) -> None:
+        """Expand every announced group now, so no invocation's timing includes it."""
+        if len(self._expanded) == 0 and len(self._groups) > 0:
+            self._expanded = dict(zip(self._groups, self._expand(self._groups), strict=True))
+
+    def bundles_of(self, group: str) -> list[str]:
+        """Return the bundles an announced descriptor group expands to.
+
+        Parameters:
+            group: One of the groups `expect_groups` named.
+
+        Returns:
+            Its bundles, less the ones the import skips; every announced group is expanded
+            first if it was not already.
+
+        Raises:
+            RunFailedError: If the group was not announced.
+        """
+        self.expand_groups()
+        if group not in self._expanded:
+            raise RunFailedError(f'the bundle group {group!r} was not announced')
+        return self._expanded[group]
+
+    def is_bundle_import(self, arguments: Sequence[str]) -> bool:
+        """Return whether an invocation imports bundles.
+
+        Parameters:
+            arguments: Its command line after the interpreter.
+
+        Returns:
+            True when it carries the side's bundle-import option.
+        """
+        return self._spelling.bundle_import in arguments
+
+    def step_started(self, arguments: Sequence[str]) -> None:
+        """Start timing and sampling an invocation.
+
+        Parameters:
+            arguments: Its command line after the interpreter.
+        """
+        record = InvocationRecord(name=self._spelling.role(arguments), arguments=tuple(arguments))
+        if self.is_bundle_import(arguments):
+            self.expand_groups()
+            if arguments[-1] not in self._expanded:
+                raise RunFailedError(f'the bundle group {arguments[-1]!r} was not announced')
+            record.bundles = self._expanded[arguments[-1]]
+        if self._timing_file is not None:
+            self._timing_file.unlink(missing_ok=True)
+        self._current = record
+        probe = None
+        if self._status_connection is not None:
+            # The sampler's thread is the only user of this connection while it runs.
+            connection = self._connection = self._status_connection()
+
+            def probe() -> int | None:
+                return checkpoint_age(connection)
+
+        self._sampler = _MemorySampler(self._excluded_pids, probe)
+        self._sampler.start()
+        self._started = time.perf_counter()
+
+    def step_finished(self, result: StepResult) -> None:
+        """Finish measuring an invocation, then check it.
+
+        Parameters:
+            result: What the invocation did.
+
+        Raises:
+            RunFailedError: If it exited non-zero, it was asked for its timings and wrote
+                none, or it imported bundles and ``obs_general`` has no row for one of
+                them.
+        """
+        wall = time.perf_counter() - self._started
+        record, sampler = self._current, self._sampler
+        assert record is not None
+        assert sampler is not None
+        record.peak_rss_kb = sampler.stop()
+        record.peak_tree_pss_kb = sampler.peak_tree_pss_kb
+        record.samples = sampler.samples
+        record.peak_checkpoint_age_bytes = sampler.peak_checkpoint_age_bytes
+        if self._connection is not None:
+            self._connection.close()
+            self._connection = None
+        record.wall_s = wall
+        record.returncode = result.returncode
+        if self._timing_file is not None and self._timing_file.exists():
+            record.timings = json.loads(self._timing_file.read_text(encoding='utf-8'))
+        self.records.append(record)
+        self._current = None
+        if result.returncode != 0:
+            raise RunFailedError(
+                f'`{record.name}` exited {result.returncode}:\n{result.stderr[-4000:]}'
+            )
+        asked = self._timing_file is not None and str(self._timing_file) in result.arguments
+        if asked and len(record.timings) == 0:
+            raise RunFailedError(f'`{record.name}` was asked for its timings and wrote none')
+        if self.is_bundle_import(result.arguments):
+            self.check_bundles_landed(record.bundles)
+
+    def check_bundles_landed(self, bundles: Sequence[str]) -> None:
+        """Check that the permanent ``obs_general`` holds a row for every bundle.
+
+        An invocation that imported into a namespace other than the permanent tables,
+        or into nothing, leaves them out, and its timing would measure work that a
+        served database never sees. The rows are looked for in the base table that holds
+        the observations (`obs_general_table`), and, when `generation` is set, among the
+        rows that generation added.
+
+        Parameters:
+            bundles: The bundles the invocation imports.
+
+        Raises:
+            RunFailedError: Naming every bundle with no row.
+        """
+        if len(bundles) == 0:
+            return
+        placeholders = ', '.join(['%s'] * len(bundles))
+        added = (
+            ''
+            if self.generation is None
+            else f' AND {quote_identifier(ADDED_GENERATION_COLUMN)} = %s'
+        )
+        parameters = (*bundles, *(() if self.generation is None else (self.generation,)))
+        with contextlib.closing(self._server.connect()) as connection:
+            try:
+                table = obs_general_table(connection, self._schema)
+                cursor = connection.cursor()
+                try:
+                    cursor.execute(
+                        f'SELECT DISTINCT bundle_id FROM {quote_identifier(self._schema)}.'  # nosec B608 - quoted identifiers, placeholders
+                        f'{quote_identifier(table)} WHERE bundle_id IN ({placeholders}){added}',
+                        parameters,
+                    )
+                    present = {str(row[0]) for row in cursor.fetchall()}
+                finally:
+                    cursor.close()
+            except MySQLdb.Error as err:
+                raise RunFailedError(
+                    f'cannot read the observations of {self._schema} after importing '
+                    f'{list(bundles)}: {err}'
+                ) from err
+        missing = [bundle for bundle in bundles if bundle not in present]
+        if len(missing) > 0:
+            where = '' if self.generation is None else f' in generation {self.generation}'
+            raise RunFailedError(
+                f'after importing {list(bundles)}, {self._schema}.{table} has no row{where} '
+                f'for {missing}: the invocation did not write the permanent tables'
+            )
+
+    def summary(self) -> dict[str, Any]:
+        """Return every invocation's record, for a run's details.
+
+        Returns:
+            One dictionary per invocation, in order.
+        """
+        return {
+            'invocations': [
+                {
+                    'name': record.name,
+                    'arguments': list(record.arguments),
+                    'wall_s': record.wall_s,
+                    'returncode': record.returncode,
+                    'peak_rss_kb': record.peak_rss_kb,
+                    'peak_tree_pss_kb': record.peak_tree_pss_kb,
+                    'samples': record.samples,
+                    'peak_checkpoint_age_bytes': record.peak_checkpoint_age_bytes,
+                    'timings': record.timings,
+                    'bundles': record.bundles,
+                }
+                for record in self.records
+            ]
+        }

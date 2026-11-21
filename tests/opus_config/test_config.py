@@ -6,6 +6,7 @@ both halves of that contract: what a valid file produces, and which invalid file
 refused with which message.
 """
 
+import os
 import re
 from collections.abc import Callable
 from dataclasses import FrozenInstanceError
@@ -16,9 +17,12 @@ import pytest
 from opus_config import (
     OPUS_CONFIG_ENV_VAR,
     ConfigError,
+    ImportConfig,
     config_path,
+    detected_cores,
     get_config,
     load_config,
+    resolve_parallelism,
 )
 
 #: A configuration holding every required key and no optional one, which is what the
@@ -183,7 +187,22 @@ def test_load_config_is_frozen(write_config: Callable[[str], Path]) -> None:
         ('django.fake_api_delays', None),
         ('django.fake_error404_probability', 0.0),
         ('django.fake_error500_probability', 0.0),
-        ('import_.table_temp_prefix', 'imp_'),
+        ('django.cache_location', '127.0.0.1:11211'),
+        ('django.conn_max_age', 300),
+        ('django.conn_health_checks', True),
+        ('django.search_build_timeout', 270),
+        ('django.search_results_max_rows', 50_000_000),
+        ('import_.bulk_load', True),
+        ('import_.scratch_dir', None),
+        ('import_.transaction_rows', 100_000),
+        ('import_.index_workers', 1),
+        ('import_.server_tmpdir', None),
+        ('import_.workers', 1),
+        ('import_.cpu_fraction', 0.75),
+        ('import_.worker_rows', 500),
+        ('import_.importers', 4),
+        ('import_.stall_warning_minutes', 30),
+        ('import_.status_interval_minutes', 5),
     ],
 )
 def test_load_config_defaults_every_optional_key(
@@ -205,6 +224,31 @@ def test_load_config_defaults_every_optional_key(
         ('django', 'log_api_calls', '"debug"', 'DEBUG'),
         ('django', 'fake_error404_probability', '0.25', 0.25),
         ('django', 'log_console_level', '"CRITICAL"', 'CRITICAL'),
+        ('django', 'cache_location', '"cache.example.org:21211"', 'cache.example.org:21211'),
+        (
+            'django',
+            'cache_location',
+            '"unix:/run/memcached/memcached.socket"',
+            'unix:/run/memcached/memcached.socket',
+        ),
+        ('django', 'conn_max_age', '0', 0),
+        ('django', 'conn_health_checks', 'false', False),
+        ('django', 'search_build_timeout', '60', 60),
+        ('django', 'search_results_max_rows', '1000', 1000),
+        ('import', 'bulk_load', 'false', False),
+        ('import', 'scratch_dir', '"/scratch/opus"', '/scratch/opus'),
+        ('import', 'transaction_rows', '5', 5),
+        ('import', 'index_workers', '3', 3),
+        ('import', 'index_workers', '"max"', 'max'),
+        ('import', 'server_tmpdir', '"/var/tmp/mysql_ddl"', '/var/tmp/mysql_ddl'),
+        ('import', 'workers', '4', 4),
+        ('import', 'workers', '"max"', 'max'),
+        ('import', 'cpu_fraction', '1', 1.0),
+        ('import', 'cpu_fraction', '0.5', 0.5),
+        ('import', 'worker_rows', '5', 5),
+        ('import', 'importers', '6', 6),
+        ('import', 'stall_warning_minutes', '10', 10),
+        ('import', 'status_interval_minutes', '1', 1),
     ],
 )
 def test_load_config_reads_an_optional_key_that_is_written(
@@ -212,7 +256,9 @@ def test_load_config_reads_an_optional_key_that_is_written(
 ) -> None:
     """Each optional key is honored when the file does supply it."""
     config = load_config(write_config(adding(table, key, written)))
-    assert getattr(getattr(config, table), key) == expected
+    # The [import] table's attribute carries a trailing underscore, `import` being a keyword.
+    attribute = 'import_' if table == 'import' else table
+    assert getattr(getattr(config, attribute), key) == expected
 
 
 @pytest.mark.parametrize(
@@ -297,6 +343,144 @@ def test_load_config_accepts_a_whole_number_probability(
             "[django] 'fake_error404_probability' must be a number, not str",
         ),
         (
+            adding('django', 'conn_max_age', '-1'),
+            "[django] 'conn_max_age' must be at least 0, not -1",
+        ),
+        (
+            adding('django', 'conn_max_age', '"300"'),
+            "[django] 'conn_max_age' must be a whole number, not str",
+        ),
+        (
+            adding('django', 'conn_max_age', 'true'),
+            "[django] 'conn_max_age' must be a whole number, not bool",
+        ),
+        (
+            adding('django', 'search_build_timeout', '0'),
+            "[django] 'search_build_timeout' must be at least 1, not 0",
+        ),
+        (
+            adding('django', 'search_results_max_rows', '-1'),
+            "[django] 'search_results_max_rows' must be at least 0, not -1",
+        ),
+        (
+            adding('import', 'transaction_rows', '0'),
+            "[import] 'transaction_rows' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'transaction_rows', '-5'),
+            "[import] 'transaction_rows' must be at least 1, not -5",
+        ),
+        (
+            adding('import', 'transaction_rows', '1.5'),
+            "[import] 'transaction_rows' must be a whole number, not float",
+        ),
+        (
+            adding('import', 'index_workers', '0'),
+            "[import] 'index_workers' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'index_workers', '"MAX"'),
+            "[import] 'index_workers' must be a whole number or \"max\", not 'MAX'",
+        ),
+        (
+            adding('import', 'index_workers', 'true'),
+            '[import] \'index_workers\' must be a whole number or "max", not bool',
+        ),
+        (
+            adding('import', 'workers', '0'),
+            "[import] 'workers' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'workers', '2.5'),
+            '[import] \'workers\' must be a whole number or "max", not float',
+        ),
+        (
+            adding('import', 'cpu_fraction', '0'),
+            "[import] 'cpu_fraction' must be greater than 0, not 0",
+        ),
+        (
+            adding('import', 'cpu_fraction', '1.5'),
+            "[import] 'cpu_fraction' must be at most 1, not 1.5",
+        ),
+        (
+            adding('import', 'worker_rows', '0'),
+            "[import] 'worker_rows' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'worker_rows', '2.5'),
+            "[import] 'worker_rows' must be a whole number, not float",
+        ),
+        (
+            adding('import', 'importers', '0'),
+            "[import] 'importers' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'stall_warning_minutes', '0'),
+            "[import] 'stall_warning_minutes' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'status_interval_minutes', '0'),
+            "[import] 'status_interval_minutes' must be at least 1, not 0",
+        ),
+        (
+            adding('import', 'server_tmpdir', 'false'),
+            "[import] 'server_tmpdir' must be a string, not bool",
+        ),
+        (
+            adding('import', 'bulk_load', '"yes"'),
+            "[import] 'bulk_load' must be true or false, not str",
+        ),
+        (
+            adding('import', 'scratch_dir', '5'),
+            "[import] 'scratch_dir' must be a string, not int",
+        ),
+        (
+            adding('django', 'conn_health_checks', '"yes"'),
+            "[django] 'conn_health_checks' must be true or false, not str",
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1"'),
+            '[django] \'cache_location\' must be "host:port" with a port from 1 to 65535, '
+            'or "unix:/path/to/socket", not \'127.0.0.1\'',
+        ),
+        (
+            adding('django', 'cache_location', '"unix:memcached.socket"'),
+            "[django] 'cache_location' must name a socket by its absolute path, "
+            "not 'unix:memcached.socket'",
+        ),
+        (
+            adding('django', 'cache_location', '"unix:"'),
+            "[django] 'cache_location' must name a socket by its absolute path",
+        ),
+        (
+            adding('django', 'cache_location', '"unix:/run/memcached/cache,blue.sock"'),
+            '[django] \'cache_location\' names one server, without "," or ";"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:11211;127.0.0.1:11212"'),
+            '[django] \'cache_location\' names one server, without "," or ";"',
+        ),
+        (
+            adding('django', 'cache_location', '":11211"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:memcached"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:65536"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:\u00b2"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
+            adding('django', 'cache_location', '"127.0.0.1:0"'),
+            '[django] \'cache_location\' must be "host:port"',
+        ),
+        (
             adding('database', 'hostname', '"localhost"'),
             "[database] has unknown key(s): 'hostname'",
         ),
@@ -323,6 +507,40 @@ def test_load_config_accepts_a_whole_number_probability(
         'delay-given-a-boolean',
         'probability-given-a-boolean',
         'probability-given-a-string',
+        'connection-lifetime-negative',
+        'connection-lifetime-given-a-string',
+        'connection-lifetime-given-a-boolean',
+        'search-build-timeout-zero',
+        'search-results-max-rows-negative',
+        'transaction-rows-zero',
+        'transaction-rows-negative',
+        'transaction-rows-not-whole',
+        'index-workers-zero',
+        'index-workers-max-misspelled',
+        'index-workers-given-a-boolean',
+        'workers-zero',
+        'workers-not-whole',
+        'cpu-fraction-zero',
+        'cpu-fraction-above-one',
+        'worker-rows-zero',
+        'worker-rows-not-whole',
+        'importers-zero',
+        'stall-warning-minutes-zero',
+        'status-interval-minutes-zero',
+        'server-tmpdir-not-a-string',
+        'bulk-load-given-a-string',
+        'scratch-dir-given-a-number',
+        'health-checks-given-a-string',
+        'cache-location-without-a-port',
+        'cache-location-socket-path-relative',
+        'cache-location-socket-path-empty',
+        'cache-location-socket-path-with-a-comma',
+        'cache-location-two-servers',
+        'cache-location-without-a-host',
+        'cache-location-port-not-a-number',
+        'cache-location-port-too-large',
+        'cache-location-port-not-ascii-digits',
+        'cache-location-port-zero',
         'one-unknown-key',
         'two-unknown-keys',
     ],
@@ -469,5 +687,115 @@ def test_the_ci_fixture_is_a_valid_configuration(ci_config_path: Path) -> None:
     """
     config = load_config(ci_config_path)
     assert config.database.schema == 'opus_ci_db'
-    assert config.import_.table_temp_prefix == 'imp_'
+    assert config.import_.bulk_load is True
     assert config.paths.static_root is None
+
+
+def _import_table(**keys: object) -> ImportConfig:
+    """Return an ``[import]`` table with the parallelism keys given and every other default."""
+    values: dict[str, object] = {
+        'log_file': 'import.log',
+        'debug_log_file': 'import_debug.log',
+        'bulk_load': True,
+        'scratch_dir': None,
+        'transaction_rows': 100_000,
+        'index_workers': 1,
+        'server_tmpdir': None,
+        'workers': 1,
+        'cpu_fraction': 0.75,
+        'worker_rows': 500,
+        'importers': 1,
+        'stall_warning_minutes': 30,
+        'status_interval_minutes': 5,
+    }
+    values.update(keys)
+    return ImportConfig(**values)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ('keys', 'detected', 'ceiling'),
+    [
+        ({}, 8, 6),
+        ({}, 1, 1),
+        ({}, 3, 2),
+        ({'cpu_fraction': 1.0}, 32, 32),
+        ({'cpu_fraction': 0.1}, 4, 1),
+    ],
+    ids=[
+        'three-quarters',
+        'one-core',
+        'rounds-down',
+        'whole-machine',
+        'floor-of-one',
+    ],
+)
+def test_the_ceiling_is_a_fraction_of_the_cores_and_never_zero(
+    keys: dict[str, object], detected: int, ceiling: int
+) -> None:
+    """``max(1, floor(C * cpu_fraction))``, with C the cores counted."""
+    resolved = resolve_parallelism(_import_table(**keys), detected=detected)
+    assert (resolved.ceiling, resolved.cores) == (ceiling, detected)
+    assert (resolved.workers, resolved.index_workers) == (1, 1)
+
+
+def test_max_asks_for_the_ceiling() -> None:
+    """Both counts accept ``"max"``, and resolve it to the ceiling."""
+    resolved = resolve_parallelism(_import_table(workers='max', index_workers='max'), detected=8)
+    assert (resolved.workers, resolved.index_workers) == (6, 6)
+
+
+def test_a_command_line_count_replaces_the_files() -> None:
+    """``--workers`` overrides ``[import] workers``, and is held to the same ceiling."""
+    config = _import_table(workers=2)
+    assert resolve_parallelism(config, 5, detected=8).workers == 5
+    assert resolve_parallelism(config, 'max', detected=8).workers == 6
+
+
+@pytest.mark.parametrize(
+    ('keys', 'override', 'counts', 'capped'),
+    [
+        ({'workers': 7}, None, (6, 1), ('[import] workers 7',)),
+        ({}, 7, (6, 1), ('--workers 7',)),
+        ({'index_workers': 7}, None, (1, 6), ('[import] index_workers 7',)),
+        (
+            {'workers': 24, 'index_workers': 9},
+            None,
+            (6, 6),
+            ('[import] workers 24', '[import] index_workers 9'),
+        ),
+    ],
+    ids=['workers', 'command-line', 'index-workers', 'both'],
+)
+def test_a_count_above_the_ceiling_is_lowered_to_it_and_named(
+    keys: dict[str, object],
+    override: int | None,
+    counts: tuple[int, int],
+    capped: tuple[str, ...],
+) -> None:
+    """No count takes more than the ceiling; each one lowered is named with its request."""
+    resolved = resolve_parallelism(_import_table(**keys), override, detected=8)
+    assert (resolved.workers, resolved.index_workers) == counts
+    assert resolved.capped == capped
+
+
+def test_the_parallelism_line_names_a_count_lowered_to_the_ceiling() -> None:
+    """The line ends by naming what was asked for, so the log shows the lowering."""
+    resolved = resolve_parallelism(_import_table(workers=24), detected=8)
+    assert resolved.describe() == (
+        'Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, '
+        'index_workers 1; capped at the ceiling: [import] workers 24'
+    )
+
+
+def test_the_parallelism_line_names_everything_it_was_worked_out_from() -> None:
+    """The line the import logs: the cores detected, the fraction, the ceiling, both counts."""
+    resolved = resolve_parallelism(_import_table(workers='max'), detected=8)
+    assert resolved.describe() == (
+        'Parallelism: 8 cores detected, cpu_fraction 0.75, ceiling 6; workers 6, index_workers 1'
+    )
+
+
+def test_the_detected_cores_are_the_ones_the_process_may_run_on() -> None:
+    """The affinity set where the platform has one, never fewer than one."""
+    expected = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else os.cpu_count()
+    assert detected_cores() == max(1, expected or 1)

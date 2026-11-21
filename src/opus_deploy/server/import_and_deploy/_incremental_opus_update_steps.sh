@@ -1,0 +1,279 @@
+# This file should only be used with "source"
+#
+# The steps of an incremental update, as functions, so that a test can run each one
+# without running the update.
+#
+# An incremental update writes the changed bundles into the served schema as a pending
+# import generation, which the site does not show until promote_generation.sh switches it
+# in. Each step is its own opus_import process, run against the schema that OPUS_CONFIG
+# names, and the first that fails, or that leaves an error in ERRORS.log, stops the update.
+#
+# Defines these functions and runs nothing, so a test can source it.
+#
+# print_update_usage
+#     Prints the usage line of the update's scripts.
+#
+# parse_update_arguments [<version_spec>] [--continue] [--drop <bundle>[,<bundle>...]]
+#         [<bundle> ...]
+#     Sets OPUS_VERSION_SPEC to the first argument when it begins with a PEP 440
+#     operator (= < > ! ~) or "@", and empty otherwise; UPDATE_CONTINUE to true when
+#     --continue is given, and false otherwise; UPDATE_BUNDLES to the bundles to import,
+#     the positional arguments split at commas; and UPDATE_DROPS to the bundles to drop,
+#     every --drop value split at commas, less any bundle UPDATE_BUNDLES names, since a
+#     bundle imported again already loses every row its earlier copy had. --drop may be
+#     given more than once; empty names, as from a doubled comma, are skipped. Prints the
+#     usage line and returns 1, setting nothing it would otherwise use, when an option is
+#     unknown, --drop has no value, a name split from a comma-separated argument begins
+#     with "-", a version spec comes after the first argument or is not one
+#     (is_version_spec, from _version_spec.sh, which the caller sources), or there is
+#     neither a bundle nor a --drop.
+#
+# update_invocations
+#     Prints the arguments of each opus_import invocation of the update, one invocation
+#     a line, in order: --begin-generation, unless UPDATE_CONTINUE is true, which writes
+#     into the generation an earlier update began; --delete-bundles and the bundles to
+#     drop, when there are any; --import and the bundles, when there are any; then
+#     --finalize, --validate and --write-schema-version. Every invocation after the begin
+#     carries --require-pending-generation, so that one finding no pending generation,
+#     after an --abandon-generation run between two of them, writes nothing rather than
+#     the served rows. The drops come first so that a descriptor the import expands to a
+#     dropped bundle imports it again rather than losing it. Reads UPDATE_CONTINUE,
+#     UPDATE_BUNDLES and UPDATE_DROPS.
+#
+# run_update_invocations <log directory>
+#     Runs each invocation update_invocations prints, as its own opus_import process, and
+#     after each one checks ERRORS.log in the log directory (check_update_error_log).
+#     Returns 0 when every invocation succeeded and logged no error. Otherwise prints
+#     ERRORS.log when there is one, and the invocations still to run, with the requeue a
+#     bundle a stopped import left importing needs, and returns 1, having run nothing
+#     after the one that failed. A failed --begin-generation began nothing, and a refused
+#     invocation found no pending generation, so after either nothing is left to
+#     continue.
+#
+# check_update_error_log <log directory>
+#     Returns 0 when ERRORS.log in the directory is absent or empty. Otherwise prints it
+#     and returns 1. Several import steps report a failure through the log and exit zero,
+#     so the log is the gate rather than the status, as in _opus_import_bundles.sh; the
+#     update gives each run a log directory of its own, so whatever the file holds was
+#     written by this run.
+#
+# served_schema_name <deployed opus.toml>
+#     Prints the schema the served installation's opus.toml names. Prints an error on
+#     standard error, so that a command substitution shows it, and returns 1 when the
+#     file is missing or names no schema. It reads the file by previous_db_name's rule,
+#     so _promote_steps.sh has to be sourced as well.
+#
+# deployed_release_spec <deployed directory>
+#     Prints the version spec of what the served installation runs, read from its own
+#     interpreter, which is what an update installs when given none: ==<release> for a
+#     release, and @<commit> for an installation pip built from a git ref, whose commit
+#     pip records (direct_url.json). Prints an error on standard error and returns 1 when
+#     the release cannot be read, or is a development build (a .dev or local version)
+#     with no recorded commit, which neither PyPI nor the repository can give again.
+
+print_update_usage() {
+    local usage="Usage: run_incremental_opus_update.sh [<version_spec>] [--continue]"
+    echo "${usage} [--drop <bundle>[,<bundle>...]] [<bundle> ...]"
+}
+
+parse_update_arguments() {
+    local version_spec=""
+    local continuing=false
+    local -a bundles=()
+    local -a drops=()
+    local -a names
+    local name bundle kept
+    if [[ ${1:-} == [=\<\>\!~@]* ]]; then
+        if ! is_version_spec "$1"; then
+            print_update_usage
+            return 1
+        fi
+        version_spec=$1
+        shift
+    fi
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --continue)
+                continuing=true
+                shift
+                ;;
+            --drop)
+                if [[ $# -lt 2 || -z $2 || $2 == -* ]]; then
+                    print_update_usage
+                    return 1
+                fi
+                IFS=, read -ra names <<< "$2"
+                for name in "${names[@]}"; do
+                    if [[ ${name} == -* ]]; then
+                        print_update_usage
+                        return 1
+                    fi
+                    if [[ -n ${name} ]]; then
+                        drops+=("${name}")
+                    fi
+                done
+                shift 2
+                ;;
+            -* | [=\<\>\!~@]*)
+                print_update_usage
+                return 1
+                ;;
+            *)
+                IFS=, read -ra names <<< "$1"
+                for name in "${names[@]}"; do
+                    if [[ ${name} == -* ]]; then
+                        print_update_usage
+                        return 1
+                    fi
+                    if [[ -n ${name} ]]; then
+                        bundles+=("${name}")
+                    fi
+                done
+                shift
+                ;;
+        esac
+    done
+    if [[ ${#bundles[@]} -eq 0 && ${#drops[@]} -eq 0 ]]; then
+        print_update_usage
+        return 1
+    fi
+    OPUS_VERSION_SPEC=${version_spec}
+    UPDATE_CONTINUE=${continuing}
+    UPDATE_BUNDLES=("${bundles[@]}")
+    UPDATE_DROPS=()
+    for name in "${drops[@]}"; do
+        kept=true
+        for bundle in "${bundles[@]}"; do
+            if [[ ${name} == "${bundle}" ]]; then
+                kept=false
+            fi
+        done
+        if ${kept}; then
+            UPDATE_DROPS+=("${name}")
+        fi
+    done
+    return 0
+}
+
+update_invocations() {
+    local pending=--require-pending-generation
+    if ! ${UPDATE_CONTINUE}; then
+        echo "--begin-generation"
+    fi
+    if [[ ${#UPDATE_DROPS[@]} -gt 0 ]]; then
+        echo "${pending} --delete-bundles ${UPDATE_DROPS[*]}"
+    fi
+    if [[ ${#UPDATE_BUNDLES[@]} -gt 0 ]]; then
+        echo "${pending} --import ${UPDATE_BUNDLES[*]}"
+    fi
+    echo "${pending} --finalize"
+    echo "${pending} --validate"
+    echo "${pending} --write-schema-version"
+}
+
+run_update_invocations() {
+    local log_dir=$1
+    # The status opus_import exits with when it refuses, having changed nothing
+    # (opus_import.steps.do_generation.GENERATION_REFUSED_EXIT_STATUS).
+    local refused=3
+    local -a invocations
+    local -a words
+    local index remaining status
+    mapfile -t invocations < <(update_invocations)
+    for index in "${!invocations[@]}"; do
+        read -ra words <<< "${invocations[index]}"
+        echo "** opus_import ${invocations[index]} **"
+        echo "Start time:" "$(date)"
+        status=0
+        opus_import "${words[@]}" || status=$?
+        if [[ ${status} -ne 0 ]]; then
+            if [[ -s ${log_dir}/ERRORS.log ]]; then
+                cat "${log_dir}/ERRORS.log"
+            fi
+        elif check_update_error_log "${log_dir}"; then
+            echo
+            continue
+        fi
+        echo
+        echo "ERROR: opus_import ${invocations[index]} failed or logged errors."
+        if [[ ${invocations[index]} == --begin-generation ]]; then
+            echo "       No generation was begun, and nothing was changed; the log says why."
+            return 1
+        fi
+        if [[ ${status} -eq ${refused} ]]; then
+            echo "       It wrote nothing: the database has no pending generation, so an"
+            echo "       --abandon-generation ran after the update began it; the log says why."
+            return 1
+        fi
+        echo "       The pending generation is not served. Either fix the cause and run"
+        echo "       the update again with --continue, which imports the bundles it names"
+        echo "       into this generation, or run what is left, from the installation this"
+        echo "       update built:"
+        for remaining in "${invocations[@]:index}"; do
+            echo "           opus_import ${remaining}"
+        done
+        echo "       A bundle a stopped import left importing is refused until"
+        echo "       opus_import --requeue <bundle>, from the same installation, returns it."
+        echo "       Or throw the pending generation away and start again:"
+        echo "           opus_import --abandon-generation"
+        return 1
+    done
+    return 0
+}
+
+check_update_error_log() {
+    local errors=$1/ERRORS.log
+    if [[ -s ${errors} ]]; then
+        echo "** THE UPDATE LOGGED ERRORS **"
+        echo
+        cat "${errors}"
+        return 1
+    fi
+    return 0
+}
+
+served_schema_name() {
+    local deployed_toml=$1
+    local served
+    # previous_db_name with no target prints whatever schema the file names.
+    served=$(previous_db_name "${deployed_toml}" "")
+    if [[ -z ${served} ]]; then
+        echo "ERROR: cannot read the served schema from ${deployed_toml}." >&2
+        echo "       Nothing is deployed, or its opus.toml names no schema." >&2
+        return 1
+    fi
+    echo "${served}"
+    return 0
+}
+
+deployed_release_spec() {
+    local deployed=$1
+    local release commit
+    # The release on the first line, and the commit a git install was built from, if
+    # any, on the second.
+    { read -r release; read -r commit; } < <("${deployed}/opus_venv/bin/python" -c '
+import importlib.metadata as m, json
+d = m.distribution("rms-opus")
+print(d.version)
+u = json.loads(d.read_text("direct_url.json") or "{}").get("vcs_info", {})
+print(u.get("commit_id", "") if u.get("vcs") == "git" else "")
+' 2> /dev/null) || true
+    if [[ -n ${commit:-} && ${commit} =~ ^[0-9a-f]+$ ]]; then
+        echo "@${commit}"
+        return 0
+    fi
+    if [[ -z ${release:-} ]]; then
+        echo "ERROR: cannot read the rms-opus release installed in ${deployed}." >&2
+        echo "       Give the update the version spec of what is being served." >&2
+        return 1
+    fi
+    if [[ ${release} == *+* || ${release} == *.dev* ]]; then
+        echo "ERROR: ${deployed} runs rms-opus ${release}," >&2
+        echo "       a development build that records no git commit to install again." >&2
+        echo "       Give the update the version spec of what is being served: its" >&2
+        echo "       release's specifier, or '@' and its branch, tag or commit." >&2
+        return 1
+    fi
+    echo "==${release}"
+    return 0
+}

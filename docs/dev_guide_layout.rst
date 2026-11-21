@@ -4,8 +4,8 @@ Repository Layout
 =================
 
 The importable distribution is everything under ``src/``. Everything else --
-``tests/``, ``import_tests/``, ``integration_tests/``, ``scripts/``, ``docs/``,
-``perf_test/`` and the root files -- is supporting code that is not installed, with two
+``tests/``, ``import_tests/``, ``integration_tests/``, ``benchmarks/``, ``scripts/``,
+``docs/``, ``perf_test/`` and the root files -- is supporting code that is not installed, with two
 deliberate exceptions: ``manage.py`` at the root is a development convenience, and the
 package data inside ``src/`` (table schemas, dictionary sources, templates, static
 assets) ships in the wheel because the code reads it at run time. How it is found
@@ -45,20 +45,38 @@ directory has a chapter of its own, it is named beside it.
     │   ├── opus_config/          # the TOML configuration loader, and the
     │   │                         #   opus.toml.template it writes out as
     │   │                         #   the opus_config_template command
-    │   ├── opus_support/         # unit, time, clock, angle and orbit conversions
+    │   ├── opus_support/         # unit, time, clock, angle and orbit conversions,
+    │   │                         #   and the server's string collation
     │   ├── opus_import/          # the import pipeline
     │   │   ├── cli.py, __main__.py       # the command-line surface
     │   │   ├── context.py                # the per-run context every step is handed
+    │   │   ├── deferred.py               # what a pool worker records in place of
+    │   │   │                             #   database calls and log writes
     │   │   ├── config_data.py            # which missions, instruments and bundles exist
     │   │   ├── config_bundle_info.py     # which obs class and index files a bundle uses
     │   │   ├── config_targets/           # target names, classes and aliases
     │   │   ├── instruments.py            # per-instrument label parsing helpers
     │   │   ├── import_util.py            # helpers shared by the steps and the obs classes
+    │   │   ├── mult_fields.py            # which columns hold mult ids, and field ids
+    │   │   ├── mult_rank.py              # the order a mult field's values are listed in
+    │   │   ├── list_junctions.py         # the junction tables of the mult_list columns
+    │   │   ├── import_all.py             # opus_import_all, the full-holdings sequence
+    │   │   ├── coordinator.py            # starts, tracks and recovers the importers
+    │   │   ├── bundle_registry.py        # the bundle registry: id ranges and states
+    │   │   ├── import_processes.py       # the importers' table, locks and status
+    │   │   ├── primary_index.py          # a bundle's primary index files and sizes
+    │   │   ├── schema_version.py         # the schema version this release serves
+    │   │   ├── generations.py            # import generations: rows served and hidden
+    │   │   ├── table_keys.py             # the keys a table schema declares
+    │   │   ├── table_swap.py             # rebuilding tables beside the live ones
+    │   │   ├── surface_geometry.py       # obs_surface_geometry_target's categories
+    │   │   ├── validation_queries.py     # the rows validation reads, and how
+    │   │   ├── import_fault.py           # named failure points for the recovery tests
     │   │   ├── importdb/                 # the SQL backend: super.py (the abstract base
     │   │   │                             #   both brands inherit), mysql.py, and the
     │   │   │                             #   unimplemented postgresql.py stub
     │   │   ├── obs/                      # the obs_* class hierarchy, one row per observation
-    │   │   ├── steps/                    # the do_* steps; four do_import_* modules are
+    │   │   ├── steps/                    # the do_* steps; the do_import_* modules are
     │   │   │                             #   internals of do_import, not steps
     │   │   ├── table_schemas/            # package data: the JSON that defines every OPUS table
     │   │   ├── dictionary_data/          # package data: contexts.csv, the dictionary's
@@ -71,6 +89,8 @@ directory has a chapter of its own, it is named beside it.
     │   │   │                             #   calls it
     │   │   ├── clear_django_cache.py     # a deployment helper, run as a module
     │   │   ├── apps/{search,results,metadata,ui,cart,help,paraminfo,tools}/
+    │   │   │                             # the Django apps; search/management/commands/
+    │   │   │                             #   holds the opus_manage commands OPUS adds
     │   │   ├── templates/                # package data: the project-level templates
     │   │   └── static/                   # package data: the JavaScript, CSS and images
     │   ├── opus_deploy/          # the server deploy chain, shipped so that a server
@@ -103,6 +123,10 @@ directory has a chapter of its own, it is named beside it.
     │   ├── test_api/             # the golden-response API suite
     │   ├── apps_db_tests/        # the per-app database tests
     │   └── test_db_data/, test_perf/
+    ├── benchmarks/               # the benchmark harness: import, database and web
+    │   │                         #   measurements on servers it starts itself
+    │   ├── scenarios/            # what is measured, and the owned servers' settings
+    │   └── scratch/              # each session's raw logs and captures; not committed
     ├── scripts/
     │   ├── run-all-checks.sh     # every check this repository gates on, in one command
     │   ├── read-docs.sh          # builds the docs with -W -n and opens the HTML index;
@@ -151,6 +175,8 @@ Which chapter covers what
      - :ref:`dev_guide_import_db`
    * - ``src/opus_import/context.py``, ``cli.py``, ``util/``
      - :ref:`dev_guide_import`, :ref:`dev_guide_import_running`
+   * - ``src/opus_import/import_all.py``, ``coordinator.py``, ``import_processes.py``
+     - :ref:`dev_guide_import_running`
    * - ``src/opus_import/table_schemas/``
      - :ref:`dev_guide_table_schemas`
    * - ``src/opus_import/dictionary_data/``
@@ -173,6 +199,8 @@ Which chapter covers what
      - :ref:`dev_guide_log_analyzer`
    * - ``tests/``, ``import_tests/``, ``integration_tests/``
      - :ref:`dev_guide_testing`, :ref:`dev_guide_import_fixture`
+   * - ``benchmarks/``
+     - :ref:`dev_guide_benchmarks`
    * - ``src/opus_deploy/``
      - :ref:`user_guide_deployment`
    * - ``.github/workflows/``

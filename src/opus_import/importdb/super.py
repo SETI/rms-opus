@@ -1,38 +1,40 @@
 """The database interface every import step runs through, independent of brand.
 
 `ImportDBSuper` defines the operations the pipeline needs -- creating and dropping
-tables, reading and writing rows, and copying a bundle from the import namespace to the
-permanent one -- and leaves the SQL to a subclass per database brand.
+tables, reading and writing rows, and building keys -- and leaves the SQL to a subclass
+per database brand.
 `opus_import.importdb.mysql` is the implemented one; every method here that a brand must
 supply raises `NotImplementedError`.
 
 Two behaviors are implemented here rather than per brand, because they are the same for
-any brand: `ImportDBSuper.convert_raw_to_namespace` and its inverse map a table's raw
-name to the namespace it is being used in, and the ``_enter``/``_exit`` pair collects the
-Python warnings a database operation emits so they are reported together with the
-statements that produced them.
+any brand: `ImportDBSuper.build_indexes` runs key builds for several tables at once over
+sibling connections, and `ImportDBSuper._operation` collects the Python warnings a
+database operation emits so they are reported together with the statements that
+produced them.
 """
 
 from __future__ import annotations
 
+import contextlib
+import os
+import threading
+import time
 import warnings
+import weakref
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Literal
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Protocol
+
+from opus_config.config import DEFAULT_TRANSACTION_ROWS
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Collection, Iterator, Mapping, Sequence
     from typing import TextIO
 
     import pdslogger
 
-Namespace = Literal['import', 'perm', 'all']
-"""Which set of tables an operation applies to.
-
-An import run writes to prefixed *import* tables and only copies them over the *perm*
-(permanent) tables the web application reads once the run has succeeded. ``'all'`` means
-both, and is accepted only where reading both makes sense. When no import prefix is
-configured the two namespaces are the same tables.
-"""
+    from opus_import.table_keys import TableKey
 
 DBRow = dict[str, Any]
 """One row to write, keyed by column name."""
@@ -57,15 +59,180 @@ handler makes the last two optional. Naming either shape would reject the other.
 """
 
 
+class LoadGuard(Protocol):
+    """What a bulk load runs in each chunk's transaction, around the chunk's rows.
+
+    An importer drawing bundles from the queue passes one to
+    `ImportDBSuper.bulk_load_rows`, so that a chunk commits only while the importer still
+    holds its bundle and its lock (`opus_import.import_processes.BundleGuard`).
+    """
+
+    def begin(self, db: ImportDBSuper, table_name: str, row_count: int) -> None:
+        """Run the chunk transaction's first statements, before its rows are written.
+
+        Parameters:
+            db: The connection the chunk is written on, inside its transaction.
+            table_name: The table the chunk goes into.
+            row_count: How many rows the chunk holds.
+        """
+
+    def confirm(self, db: ImportDBSuper) -> None:
+        """Check, after the rows are written and before the commit, that it may commit.
+
+        Parameters:
+            db: The connection the chunk is written on, inside its transaction.
+
+        Raises:
+            Exception: Any failure, which rolls the chunk back.
+        """
+
+    def committed(self) -> None:
+        """Hear that the chunk committed."""
+
+
+#: The seconds `ImportDBSuper.retrying` sleeps after each failed attempt but the last; one
+#: more attempt than there are sleeps is made in all.
+RETRY_SLEEPS = (0.5, 1.0, 2.0, 4.0)
+
+
+#: Every instance this process has created, so a forked pool worker can let go of the
+#: connections it inherited (`close_inherited_connections`).
+_OPEN_DATABASES: weakref.WeakSet[ImportDBSuper] = weakref.WeakSet()
+
+#: The instances a pool worker inherited, kept referenced for the worker's life so that
+#: no driver destructor ever runs in it.
+_INHERITED_DATABASES: list[ImportDBSuper] = []
+
+
+def close_inherited_connections() -> None:
+    """Let a forked pool worker go of every database connection it inherited.
+
+    Each connection's socket descriptor is closed with `os.close`, which sends nothing on
+    the socket, so the session the import's process holds is untouched; and the instance
+    is kept referenced for the rest of the worker's life, so the driver never sends its
+    quit message on a descriptor number the worker may since have reused. A worker that
+    kept the socket would keep the session alive after the import's process died.
+    """
+    for database in list(_OPEN_DATABASES):
+        try:
+            descriptor = database.socket_descriptor()
+        except NotImplementedError:
+            # A brand that is not implemented never connected.
+            descriptor = None
+        if descriptor is not None:
+            with contextlib.suppress(OSError):
+                os.close(descriptor)
+        _INHERITED_DATABASES.append(database)
+
+
 class ImportDBError(Exception):
     """Raised when a database operation fails; always aborts the import."""
+
+
+class RollbackError(ImportDBError):
+    """A failed transaction's rollback failed too, so the connection is in doubt.
+
+    The message names both failures, and the transaction's own is the exception this
+    one is raised from. `ImportDBSuper.retrying` never runs such a transaction again
+    and never treats it as a failure its caller expects.
+    """
+
+
+@dataclass(frozen=True)
+class IndexStatement:
+    """One statement that adds keys to one table, for `ImportDBSuper.build_indexes`.
+
+    Attributes:
+        sql: The statement.
+        label: What the statement adds, as the log and ``--timing-json`` name it.
+        space_bytes: The server's estimated temporary space for the sort the statement
+            runs, which a space budget counts against.
+        sort_bytes: The estimated sort of the largest key the statement builds, which
+            the connection sizes its sort memory to before running it; 0 for a statement
+            that builds no index.
+        key_count: How many indexes the statement builds, which the sort memory is
+            shared among; 0 for a statement that builds none.
+    """
+
+    sql: str
+    label: str
+    space_bytes: int
+    sort_bytes: int
+    key_count: int
+
+
+@dataclass(frozen=True)
+class CarriedOver:
+    """What `ImportDBSuper.carry_over_sessions` copied into the target schema.
+
+    Attributes:
+        sessions: The unexpired sessions that own a cart row, copied.
+        cart_rows: The cart rows copied.
+        source_cart_rows: The cart rows the source schema held, so that the ones not
+            copied (their observation or their session is not in the target) are
+            ``source_cart_rows - cart_rows``.
+    """
+
+    sessions: int
+    cart_rows: int
+    source_cart_rows: int
+
+    @property
+    def dropped_cart_rows(self) -> int:
+        """The source's cart rows that were not copied."""
+        return self.source_cart_rows - self.cart_rows
+
+
+class _SpaceBudget:
+    """Temporary space the index builds running at once share, in bytes.
+
+    A statement takes its estimate from the budget before it runs and returns it after,
+    waiting while the statements already running hold too much for it to fit. No
+    statement's estimate exceeds the whole budget, which the caller checks, so a waiting
+    statement always fits once the others finish.
+    """
+
+    def __init__(self, total: int | None) -> None:
+        """Start with the whole budget free.
+
+        Parameters:
+            total: The budget, or None for no budget, under which nothing waits.
+        """
+        self._total = total
+        self._free = total
+        self._condition = threading.Condition()
+
+    @contextlib.contextmanager
+    def held(self, space_bytes: int) -> Iterator[None]:
+        """Hold a statement's share of the budget while the body runs.
+
+        Parameters:
+            space_bytes: The statement's estimate.
+
+        Yields:
+            Nothing; the body runs holding the share.
+        """
+        if self._total is None:
+            yield
+            return
+        with self._condition:
+            assert self._free is not None
+            self._condition.wait_for(lambda: self._free is not None and self._free >= space_bytes)
+            self._free -= space_bytes
+        try:
+            yield
+        finally:
+            with self._condition:
+                assert self._free is not None
+                self._free += space_bytes
+                self._condition.notify_all()
 
 
 class ImportDBSuper:
     """The brand-independent half of the import pipeline's database interface.
 
     A subclass supplies the SQL for one database brand; this class holds the connection
-    parameters, the namespace mapping and the warning collection its methods share.
+    parameters and the warning collection its methods share.
     Instances are created through `opus_import.importdb.get_db` rather than directly.
 
     Attributes:
@@ -73,6 +240,12 @@ class ImportDBSuper:
             assigned here, because opening it is the subclass's job and there is no
             connection before that.
         log_sql: True to log every statement and its parameters at debug level.
+        bulk_load: Whether `bulk_load_rows` may load from a scratch file, as the
+            configuration's ``[import] bulk_load`` says. A brand that finds the server
+            refusing it writes ``INSERT`` statements instead.
+        scratch_dir: The directory the bulk load's scratch files go in, or None for the
+            system temporary directory.
+        transaction_rows: The most rows one bulk load writes in one transaction.
         tables_created: The tables created through this instance, in creation order,
             so a caller can post-process the ones an import run made. A read-only run
             records the tables it would have created.
@@ -82,6 +255,10 @@ class ImportDBSuper:
     # cannot name a brand's own connection type without depending on that brand.
     conn: Any
 
+    #: The alias `delete_joined_rows` gives the parent table, which its WHERE clause
+    #: qualifies the parent's columns by.
+    JOINED_PARENT_ALIAS = 'p'
+
     def __init__(
         self,
         db_hostname: str,
@@ -90,9 +267,11 @@ class ImportDBSuper:
         db_user: str,
         db_password: str,
         mult_form_types: Sequence[str] | None = None,
-        import_prefix: str | None = None,
         logger: pdslogger.PdsLogger | None = None,
         read_only: bool = False,
+        bulk_load: bool = True,
+        scratch_dir: str | None = None,
+        transaction_rows: int = DEFAULT_TRANSACTION_ROWS,
     ) -> None:
         """Record what a connection needs, without opening one.
 
@@ -103,16 +282,26 @@ class ImportDBSuper:
             db_schema: The schema (MySQL database) holding the OPUS tables.
             db_user: The user to connect as.
             db_password: That user's password.
-            mult_form_types: The ``param_info`` form types that have a ``mult_`` table,
+            mult_form_types: The ``param_info`` form types whose columns hold mult ids,
                 or None for none of them.
-            import_prefix: The prefix distinguishing an import table from its permanent
-                counterpart, or None to make the two namespaces the same tables.
             logger: Where to report progress, statements and warnings, or None to report
                 nothing. With None, the Python-warning collection below is also skipped,
                 since there would be nowhere to report the warnings.
             read_only: True to log every mutating statement instead of executing it.
                 Reads still run.
+            bulk_load: Whether `bulk_load_rows` may load from a scratch file.
+            scratch_dir: The directory the bulk load's scratch files go in, or None for
+                the system temporary directory.
+            transaction_rows: The most rows one bulk load writes in one transaction; at
+                least 1.
+
+        Raises:
+            ValueError: If `transaction_rows` is less than 1, which would make every bulk
+                load write nothing.
         """
+        if transaction_rows < 1:
+            raise ValueError(f'transaction_rows must be at least 1, not {transaction_rows}')
+        _OPEN_DATABASES.add(self)
         self.log_sql = False
 
         self.db_hostname = db_hostname
@@ -120,12 +309,23 @@ class ImportDBSuper:
         self.db_schema = db_schema
         self.db_user = db_user
         self.db_password = db_password
-        self.import_prefix = import_prefix
         self.logger = logger
         self.read_only = read_only
         self._mult_form_types = [] if mult_form_types is None else mult_form_types
+        self.bulk_load = bulk_load
+        self.scratch_dir = scratch_dir
+        self.transaction_rows = transaction_rows
 
         self.tables_created: list[str] = []
+
+        # True while `transaction` holds one open, so a statement does not commit itself.
+        self._in_transaction = False
+        # True while a failure is expected and handled by the caller, so a write method
+        # does not log it as fatal (`_log_failure`).
+        self._failures_expected = False
+        # A read-only run's counters, keyed by table, column and row key, holding each
+        # value as the run's additions would have left it (`_simulated_count`).
+        self._simulated_counters: dict[tuple[str, str, Any], int] = {}
 
         self._enter_stack: list[str] = []
         self._cmds_executed: list[str] = []
@@ -140,75 +340,6 @@ class ImportDBSuper:
         # as both the sentinel and the saved value.
         self._warning_handler_installed = False
 
-    def _is_import_namespace(self, table_name: str) -> bool:
-        """Return whether a table name carries the import prefix.
-
-        Parameters:
-            table_name: The table name as the database spells it.
-
-        Returns:
-            True if an import prefix is configured and the name starts with it, matched
-            without regard to case. False when no prefix is configured, because then no
-            table belongs to the import namespace alone.
-        """
-        if self.import_prefix is None:
-            return False
-        return table_name.lower().startswith(self.import_prefix.lower())
-
-    def _is_perm_namespace(self, table_name: str) -> bool:
-        """Return whether a table name lacks the import prefix.
-
-        Parameters:
-            table_name: The table name as the database spells it.
-
-        Returns:
-            True if no import prefix is configured, or the name does not start with it.
-        """
-        if self.import_prefix is None:
-            return True
-        return not table_name.lower().startswith(self.import_prefix.lower())
-
-    def convert_raw_to_namespace(self, namespace: Namespace, raw_table_name: str) -> str:
-        """Return the name a table has when it is used in the given namespace.
-
-        Parameters:
-            namespace: The namespace to name the table in.
-            raw_table_name: The table name without any namespace prefix.
-
-        Returns:
-            The prefixed name for ``'import'``, and the unchanged name otherwise or when
-            no import prefix is configured.
-        """
-        if self.import_prefix is None:
-            return raw_table_name
-        if namespace == 'import':
-            return self.import_prefix + raw_table_name
-        elif namespace == 'perm' or namespace == 'all':
-            return raw_table_name
-        raise NotImplementedError
-
-    def convert_namespace_to_raw(self, namespace: Namespace, table_name: str) -> str:
-        """Return a table's raw name, stripping the prefix the namespace added.
-
-        Parameters:
-            namespace: The namespace the name is currently in.
-            table_name: The name as the database spells it.
-
-        Returns:
-            The name with the import prefix removed for ``'import'``, and the unchanged
-            name otherwise or when no import prefix is configured.
-        """
-        if self.import_prefix is None:
-            return table_name
-        if namespace == 'import':
-            assert table_name.lower().startswith(self.import_prefix.lower())
-            return table_name.replace(self.import_prefix, '').replace(
-                self.import_prefix.lower(), ''
-            )
-        elif namespace == 'perm' or namespace == 'all':
-            return table_name
-        raise NotImplementedError
-
     def _execute(
         self,
         cmd: str,
@@ -217,6 +348,9 @@ class ImportDBSuper:
         mutates: bool = False,
     ) -> None:
         """Execute one statement, or log it and skip it in a read-only run.
+
+        Inside `transaction` a statement run without a cursor does not commit; the
+        transaction does.
 
         Parameters:
             cmd: The statement. Any value it compares against or writes must be a `%s`
@@ -250,7 +384,8 @@ class ImportDBSuper:
             else:
                 with self.conn.cursor() as cur:
                     cur.execute(cmd, param_list)
-                    self.conn.commit()
+                    if not self._in_transaction:
+                        self.conn.commit()
 
     def _execute_and_fetchall(
         self, cmd: str, func_name: str, param_list: Sequence[Any] | None = None
@@ -269,6 +404,409 @@ class ImportDBSuper:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::_execute_and_fetchall must be overridden')
+
+    def _log_failure(self, message: str) -> None:
+        """Log a failed statement as fatal, unless the caller expects and handles it.
+
+        Parameters:
+            message: What failed, and the server's error.
+        """
+        if self.logger and not self._failures_expected:
+            self.logger.log('fatal', message)
+
+    @contextlib.contextmanager
+    def failures_expected(self) -> Iterator[None]:
+        """Keep the write methods from logging a failure the caller handles itself.
+
+        A duplicate key the caller reads back, or a deadlock `retrying` runs again, is
+        not a failure of the import; the caller logs what it decides is one.
+
+        Yields:
+            Nothing; the body runs with fatal logging of failed statements off.
+        """
+        before = self._failures_expected
+        self._failures_expected = True
+        try:
+            yield
+        finally:
+            self._failures_expected = before
+
+    @contextlib.contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Run the body as one transaction: committed if it returns, rolled back if not.
+
+        Every statement the body runs through this instance's methods joins the
+        transaction instead of committing itself. A bulk load, which commits each chunk
+        itself, does not belong in one. Transactions do not nest.
+
+        Yields:
+            Nothing; the body runs inside the transaction.
+
+        Raises:
+            ImportDBError: If a transaction is already open.
+            RollbackError: If the body failed and rolling it back failed too; the
+                body's failure is the one it is raised from.
+        """
+        if self._in_transaction:
+            raise ImportDBError('A transaction is already open on this connection')
+        self._in_transaction = True
+        try:
+            yield
+        except BaseException as failure:
+            self._in_transaction = False
+            try:
+                self._rollback()
+            except Exception as rollback_failure:
+                raise RollbackError(
+                    f'Rolling back a failed transaction failed ({rollback_failure}); the '
+                    f'transaction failed with: {failure}'
+                ) from failure
+            raise
+        self._in_transaction = False
+        self._commit()
+
+    def _commit(self) -> None:
+        """Commit the connection's open transaction, if the driver is present."""
+        self.conn.commit()
+
+    def _rollback(self) -> None:
+        """Roll back the connection's open transaction, if the driver is present."""
+        self.conn.rollback()
+
+    def retrying[T](
+        self,
+        description: str,
+        body: Callable[[], T],
+        expected: Callable[[BaseException], bool] | None = None,
+    ) -> T:
+        """Run a transaction, running it again when the server reports a lock conflict.
+
+        Each attempt runs `body` inside `transaction`. An attempt that fails with an
+        error `is_retryable_error` accepts -- a deadlock, or a lock wait that timed out
+        -- is rolled back and run again after the next of `RETRY_SLEEPS`; the attempt
+        after the last sleep is the final one. Any other failure, or the final attempt's,
+        is logged as fatal with the last statement run and raised. An attempt whose
+        rollback failed (`RollbackError`) is always one of these.
+
+        Parameters:
+            description: What the transaction does, for the fatal message.
+            body: The transaction's statements. It may run more than once, so it reads
+                what it needs inside itself.
+            expected: Says whether a failure is one the caller handles, such as a
+                duplicate key it reads back; such a failure is raised without being
+                logged or retried. None expects none.
+
+        Returns:
+            What the successful attempt's `body` returned.
+
+        Raises:
+            ImportDBError: If an attempt fails with an error that is not retried, or
+                the final attempt fails.
+        """
+        attempts = len(RETRY_SLEEPS) + 1
+        attempt = 0
+        while True:
+            attempt += 1
+            try:
+                with self.failures_expected(), self.transaction():
+                    return body()
+            except ImportDBError as e:
+                rollback_failed = isinstance(e, RollbackError)
+                if not rollback_failed and expected is not None and expected(e):
+                    raise
+                if not rollback_failed and attempt < attempts and self.is_retryable_error(e):
+                    if self.logger:
+                        self.logger.log(
+                            'debug',
+                            f'{description}: attempt {attempt} of {attempts} met a lock '
+                            f'conflict ({e}); running it again',
+                        )
+                    time.sleep(RETRY_SLEEPS[attempt - 1])
+                    continue
+                statement = self._cmds_executed[-1] if self._cmds_executed else '(none)'
+                if self.logger:
+                    self.logger.log(
+                        'fatal',
+                        f'{description} failed on attempt {attempt} of {attempts}: {e}; '
+                        f'the statement: {statement}',
+                    )
+                raise
+
+    def is_retryable_error(self, exc: BaseException) -> bool:
+        """Return whether a failed transaction may succeed if it is run again.
+
+        Parameters:
+            exc: The failure, an `ImportDBError` or the driver's own error.
+
+        Returns:
+            True for a deadlock or a lock wait that timed out.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::is_retryable_error must be overridden')
+
+    def is_duplicate_key_error(self, exc: BaseException) -> bool:
+        """Return whether a failed insert met a row already holding one of its keys.
+
+        Parameters:
+            exc: The failure, an `ImportDBError` or the driver's own error.
+
+        Returns:
+            True for a duplicate primary or unique key.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::is_duplicate_key_error must be overridden')
+
+    def named_lock(self, name: str) -> contextlib.AbstractContextManager[None]:
+        """Hold a server-wide named lock while the body runs, waiting for it first.
+
+        The lock belongs to the connection, not to a transaction, so it survives the
+        commits the body makes, and the server frees it when the connection closes.
+
+        Parameters:
+            name: The lock's name, from `opus_import.importdb.lock_name`.
+
+        Returns:
+            A context manager the body runs inside, holding the lock.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::named_lock must be overridden')
+
+    def increment_counter(self, table_name: str, column: str, key_column: str, key: Any) -> int:
+        """Add one to a counter column of one row, and return the new value.
+
+        The statement locks only the counter's row, and only until the caller's
+        transaction ends; the caller runs it inside `retrying`.
+
+        Parameters:
+            table_name: The table.
+            column: The counter column.
+            key_column: The column identifying the row.
+            key: The row's key.
+
+        Returns:
+            The counter's value after the addition, as this connection set it. A
+            read-only run changes nothing, and returns the stored value advanced by
+            every addition the run has made to that row (`_simulated_count`).
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::increment_counter must be overridden')
+
+    def _simulated_count(self, table_name: str, column: str, key_column: str, key: Any) -> int:
+        """Advance a read-only run's copy of a counter, read from the row the first time.
+
+        Parameters:
+            table_name: The table.
+            column: The counter column.
+            key_column: The column identifying the row.
+            key: The row's key.
+
+        Returns:
+            The value the counter would hold had the run's additions been made.
+
+        Raises:
+            ImportDBError: If no row has the key.
+        """
+        counter = (table_name, column, key)
+        if counter not in self._simulated_counters:
+            rows = self.read_rows(
+                table_name, [column], f'{self.quote_identifier(key_column)}=%s', [key]
+            )
+            if len(rows) == 0:
+                raise ImportDBError(
+                    f'"{table_name}" has no row whose {key_column} is {key!r} to count in'
+                )
+            self._simulated_counters[counter] = int(rows[0][0])
+        self._simulated_counters[counter] += 1
+        return self._simulated_counters[counter]
+
+    def insert_rows_keeping_existing(
+        self, table_name: str, key_name: str, rows: Sequence[DBRow]
+    ) -> None:
+        """Insert rows, leaving alone any row whose key a stored row already holds.
+
+        Unlike an insert that ignores errors, a value a column cannot hold still fails.
+
+        Parameters:
+            table_name: The table.
+            key_name: A column of the key a stored row may already hold.
+            rows: The rows, all with the same columns; none writes nothing.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::insert_rows_keeping_existing must be overridden')
+
+    def lock_first_row(
+        self,
+        table_name: str,
+        column: str,
+        where: str,
+        where_params: Sequence[Any],
+        order_by: Sequence[str],
+    ) -> Any:
+        """Lock and return the first row a query selects that no other session has locked.
+
+        Rows another session holds are passed over rather than waited for. The lock lasts
+        until the caller's transaction ends, so this runs inside `transaction`.
+
+        Parameters:
+            table_name: The table.
+            column: The column to return.
+            where: The WHERE clause, with `%s` placeholders.
+            where_params: The values for those placeholders.
+            order_by: The columns to order by, each descending, so the first row is the
+                one with the highest values.
+
+        Returns:
+            The column's value in the row locked, or None when every selected row is
+            locked by another session or none is selected.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::lock_first_row must be overridden')
+
+    def lock_row(
+        self, table_name: str, columns: Sequence[str], where: str, where_params: Sequence[Any]
+    ) -> ResultRow | None:
+        """Lock one row unless another session holds it, and return its columns.
+
+        The lock lasts until the caller's transaction ends, so this runs inside
+        `transaction`. A row another session has locked is passed over, not waited for.
+
+        Parameters:
+            table_name: The table.
+            columns: The columns to return.
+            where: The WHERE clause, with `%s` placeholders, selecting at most one row.
+            where_params: The values for those placeholders.
+
+        Returns:
+            The row's columns, or None when no row is selected or another session holds
+            it.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::lock_row must be overridden')
+
+    def set_idle_timeout(self, seconds: int) -> None:
+        """Set how long the server keeps this connection open while it sends nothing.
+
+        Parameters:
+            seconds: The idle time after which the server closes the connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::set_idle_timeout must be overridden')
+
+    def last_insert_id(self) -> int:
+        """Return the automatic key this connection's last insert generated.
+
+        Returns:
+            The key.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::last_insert_id must be overridden')
+
+    def try_named_lock(self, name: str) -> bool:
+        """Take a server-wide named lock for this connection's life, without waiting.
+
+        Unlike `named_lock`, the lock is not released when a body ends: the server frees
+        it when this connection closes, however the process holding it ends.
+
+        Parameters:
+            name: The lock's name, from `opus_import.importdb.lock_name`.
+
+        Returns:
+            True if the lock was granted; False if another connection holds it.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::try_named_lock must be overridden')
+
+    def release_named_lock(self, name: str) -> None:
+        """Free a lock `try_named_lock` took on this connection.
+
+        Parameters:
+            name: The lock's name.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::release_named_lock must be overridden')
+
+    def create_obs_general_view(
+        self,
+        schema: Sequence[SchemaColumn],
+        served: int | None = None,
+        *,
+        lock_wait_timeout_s: int | None = None,
+        attempts: int = 1,
+    ) -> None:
+        """Create, or re-create, ``obs_general`` as the view of the served generation.
+
+        Parameters:
+            schema: ``obs_general``'s table schema.
+            served: The served generation, when the view must hide the rows of others;
+                None for a view of every row.
+            lock_wait_timeout_s: How long one attempt waits for the view's lock, which
+                every transaction that has read the view holds, or None for the
+                session's own wait.
+            attempts: How many times to try before a bounded wait is a failure.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::create_obs_general_view must be overridden')
+
+    def drop_obs_general_view(self) -> None:
+        """Drop the ``obs_general`` view, if the schema has it.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::drop_obs_general_view must be overridden')
+
+    def holds_named_lock(self, name: str) -> bool:
+        """Return whether this connection holds a named lock.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            True if this connection holds it; False if no connection or another does.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::holds_named_lock must be overridden')
+
+    def named_lock_holder(self, name: str) -> int | None:
+        """Return the server's id of the connection holding a named lock, or None.
+
+        Parameters:
+            name: The lock's name.
+
+        Returns:
+            The holding connection's id, which ``KILL`` takes; None when the lock is
+            free, which it is once its holder's connection has closed.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::named_lock_holder must be overridden')
 
     @staticmethod
     def _make_warning_handler(warning_list: list[str]) -> WarningHandler:
@@ -303,6 +841,25 @@ class ImportDBSuper:
             warning_list.append(str(message))
 
         return _warning_handler
+
+    @contextlib.contextmanager
+    def _operation(self, func_name: str) -> Iterator[None]:
+        """Run the body of a database operation between `_enter` and `_exit`.
+
+        `_exit` runs however the body ends, so an operation that raises still pops the
+        nesting stack and puts back the warning handler `_enter` installed.
+
+        Parameters:
+            func_name: The calling method's name.
+
+        Yields:
+            Nothing; the body runs inside.
+        """
+        self._enter(func_name)
+        try:
+            yield
+        finally:
+            self._exit()
 
     def _enter(self, func_name: str) -> None:
         """Begin a database operation, starting warning collection at the outermost one.
@@ -363,13 +920,429 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::quote_identifier must be overridden')
 
-    def table_names(
-        self, namespace: Namespace, prefix: str | list[str] | tuple[str, ...] | None = None
-    ) -> Collection[str]:
-        """Return the names of the tables in a namespace.
+    def open_sibling_connection(self) -> ImportDBSuper:
+        """Open a second connection to the same schema, configured as this one is.
+
+        The sibling has no logger: `_enter` and `_exit` swap the process-wide
+        `warnings.showwarning`, which is not safe to do from several threads at once, so
+        a sibling reports nothing and its caller logs on its behalf.
+
+        Returns:
+            A new instance of this brand, connected.
+
+        Raises:
+            ImportDBError: If the connection fails.
+        """
+        sibling = type(self)(
+            self.db_hostname,
+            self.db_name,
+            self.db_schema,
+            self.db_user,
+            self.db_password,
+            mult_form_types=self._mult_form_types,
+            logger=None,
+            read_only=self.read_only,
+            bulk_load=self.bulk_load,
+            scratch_dir=self.scratch_dir,
+            transaction_rows=self.transaction_rows,
+        )
+        return sibling
+
+    def build_indexes(
+        self,
+        table_to_statements: Mapping[str, Sequence[IndexStatement]],
+        *,
+        workers: int = 1,
+        server_tmpdir: str | None = None,
+        space_budget: int | None = None,
+        serial: bool = False,
+    ) -> dict[str, list[tuple[str, float]]]:
+        """Run statements that add keys, different tables at once across sibling connections.
+
+        Each table's statements run in order on one connection. Up to ``workers`` tables
+        build at once, each over a sibling connection of its own (`open_sibling_connection`),
+        unless ``serial`` asks for one table at a time on this connection. Every
+        connection is prepared for the builds first (`_prepare_index_session`), and sizes
+        its sort memory to each statement before running it (`_size_index_sort`). Under a
+        space budget a statement waits until its estimate fits beside the statements
+        already running. A failed statement stops its table's later statements; the
+        other tables finish, and the failures are raised together once every table is
+        done.
 
         Parameters:
-            namespace: The namespace to list.
+            table_to_statements: Each table's statements, keyed by table name. A table
+                with none is skipped.
+            workers: The most tables that build at once; at least 1.
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None to leave the server's setting.
+            space_budget: The temporary space, in bytes, the statements running at once
+                may hold together, or None for no budget. No statement's estimate may
+                exceed it.
+            serial: True to build one table at a time on this connection.
+
+        Returns:
+            Each table's statements, keyed by table, as ``(label, seconds)`` pairs in the
+            order they ran, the table's own logged duration being their sum.
+
+        Raises:
+            ImportDBError: If any statement failed, naming every failure.
+            ValueError: If ``workers`` is less than 1, or a statement's estimate exceeds
+                the budget, before anything runs.
+        """
+        if workers < 1:
+            raise ValueError(f'workers must be at least 1, not {workers}')
+        tables = [table for table in sorted(table_to_statements) if table_to_statements[table]]
+        if space_budget is not None:
+            for table in tables:
+                for statement in table_to_statements[table]:
+                    if statement.space_bytes > space_budget:
+                        raise ValueError(
+                            f'{table}: {statement.label} needs an estimated '
+                            f'{statement.space_bytes} bytes of temporary space, more than the '
+                            f'{space_budget} available'
+                        )
+        budget = _SpaceBudget(space_budget)
+        durations: dict[str, list[tuple[str, float]]] = {}
+        failures: list[str] = []
+
+        def build_table(db: ImportDBSuper, table: str) -> list[tuple[str, float]]:
+            """Run one table's statements in order on one connection.
+
+            Parameters:
+                db: The connection to run them on.
+                table: The table.
+
+            Returns:
+                Each statement's label and seconds.
+            """
+            timed: list[tuple[str, float]] = []
+            for statement in table_to_statements[table]:
+                with budget.held(statement.space_bytes):
+                    db._size_index_sort(statement.sort_bytes, statement.key_count)
+                    started = time.perf_counter()
+                    db.run_ddl(statement.sql)
+                    timed.append((statement.label, time.perf_counter() - started))
+            return timed
+
+        def report(table: str, timed: list[tuple[str, float]]) -> None:
+            """Record and log one finished table.
+
+            Parameters:
+                table: The table.
+                timed: Its statements' labels and seconds.
+            """
+            durations[table] = timed
+            if self.logger:
+                self.logger.log(
+                    'info', f'  Built keys on "{table}" in {sum(s for _, s in timed):.2f} s'
+                )
+
+        if serial or workers == 1:
+            self._prepare_index_session(1 if serial else workers, server_tmpdir)
+            for table in tables:
+                try:
+                    report(table, build_table(self, table))
+                except ImportDBError as e:
+                    failures.append(f'{table}: {e}')
+        else:
+            local = threading.local()
+            siblings: list[ImportDBSuper] = []
+            siblings_lock = threading.Lock()
+
+            def build_on_sibling(table: str) -> list[tuple[str, float]]:
+                """Run one table's statements on this thread's sibling connection.
+
+                Parameters:
+                    table: The table.
+
+                Returns:
+                    Each statement's label and seconds.
+                """
+                sibling = getattr(local, 'sibling', None)
+                if sibling is None:
+                    sibling = self.open_sibling_connection()
+                    try:
+                        sibling._prepare_index_session(workers, server_tmpdir)
+                    except BaseException:
+                        sibling.close()
+                        raise
+                    local.sibling = sibling
+                    with siblings_lock:
+                        siblings.append(sibling)
+                return build_table(sibling, table)
+
+            try:
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    futures = {pool.submit(build_on_sibling, table): table for table in tables}
+                    for future in as_completed(futures):
+                        table = futures[future]
+                        try:
+                            report(table, future.result())
+                        except ImportDBError as e:
+                            failures.append(f'{table}: {e}')
+            finally:
+                for sibling in siblings:
+                    sibling.close()
+        if failures:
+            message = 'Building keys failed: ' + '; '.join(sorted(failures))
+            if self.logger:
+                self.logger.log('fatal', message)
+            raise ImportDBError(message)
+        return durations
+
+    def _prepare_index_session(self, workers: int, server_tmpdir: str | None) -> None:
+        """Set this connection's session up for building indexes.
+
+        Parameters:
+            workers: How many connections build at once, which the server's sort memory
+                is divided among.
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None to leave the server's setting.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::_prepare_index_session must be overridden')
+
+    def _size_index_sort(self, sort_bytes: int, key_count: int) -> None:
+        """Size this connection's sort memory for the next statement that builds indexes.
+
+        Parameters:
+            sort_bytes: The estimated sort of the largest key the statement builds.
+            key_count: How many indexes the statement builds.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::_size_index_sort must be overridden')
+
+    @contextlib.contextmanager
+    def foreign_keys_unchecked(self) -> Iterator[None]:
+        """Turn this connection's foreign key checks off while the body runs.
+
+        The checks are turned back on however the body ends. With them off a write is not
+        checked against the foreign keys, and a delete cascades nothing.
+
+        Yields:
+            Nothing; the body runs with the checks off.
+        """
+        self._set_foreign_key_checks(False)
+        with self._restoring(lambda: self._set_foreign_key_checks(True)):
+            yield
+
+    @contextlib.contextmanager
+    def _restoring(self, restore: Callable[[], None]) -> Iterator[None]:
+        """Run the body, then put back what it changed, keeping the body's own failure.
+
+        When the body fails and the restore fails too, the body's failure is raised, with
+        the restore's noted on it, rather than replaced by it: what went wrong first is
+        what the caller and its retry need to see.
+
+        Parameters:
+            restore: What puts the session back.
+
+        Yields:
+            Nothing; the body runs before the restore.
+
+        Raises:
+            ImportDBError: If the body succeeded and the restore failed.
+        """
+        try:
+            yield
+        except BaseException as failure:
+            try:
+                restore()
+            except Exception as restore_failure:
+                failure.add_note(f'Putting the session back afterwards failed: {restore_failure}')
+            raise
+        restore()
+
+    def _set_foreign_key_checks(self, enabled: bool) -> None:
+        """Turn this connection's foreign key checks on or off.
+
+        Parameters:
+            enabled: True to check foreign keys, False not to.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::_set_foreign_key_checks must be overridden')
+
+    def run_ddl(self, cmd: str) -> None:
+        """Run one statement that changes a table's definition.
+
+        Parameters:
+            cmd: The statement, which carries no parameters.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::run_ddl must be overridden')
+
+    def repoint_cart(self, generation: int) -> tuple[int, int]:
+        """Point every cart row at an observation of a generation, by OPUS id.
+
+        Parameters:
+            generation: The generation the cart is to name.
+
+        Returns:
+            How many rows were pointed at another observation, and how many deleted.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::repoint_cart must be overridden')
+
+    def carry_over_sessions(self, source_schema: str) -> CarriedOver:
+        """Replace this schema's sessions and cart rows with another schema's.
+
+        One transaction: ``django_session`` and ``cart`` are emptied first, so running it
+        again gives the same result, and a failure leaves them as they were. The source's
+        unexpired sessions that own a cart row are copied, then each source cart row
+        whose observation (by OPUS ID) and session are both in this schema, with this
+        schema's ``obs_general_id``; a cart row's own id is not copied. A source that is
+        this schema is refused before anything is written, since emptying this schema's
+        tables would empty the source.
+
+        Parameters:
+            source_schema: The schema to copy from, on the same server; not this one.
+
+        Returns:
+            The sessions and cart rows copied, and the cart rows the source held.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::carry_over_sessions must be overridden')
+
+    def set_next_id(self, table_name: str, next_id: int) -> None:
+        """Make the next row a table's auto-increment key hands out take a given id.
+
+        Parameters:
+            table_name: The table, whose primary key is an auto-increment column.
+            next_id: The id the next row is given.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::set_next_id must be overridden')
+
+    def close(self) -> None:
+        """Close the connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::close must be overridden')
+
+    def socket_descriptor(self) -> int | None:
+        """Return the file descriptor of the connection's socket.
+
+        Returns:
+            The descriptor, or None when there is no open connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::socket_descriptor must be overridden')
+
+    def read_table_keys(self) -> dict[str, list[TableKey]]:
+        """Return the keys every table in the schema has, as the server reports them.
+
+        Returns:
+            Each table's keys, keyed by table name; a table with no key is absent.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::read_table_keys must be overridden')
+
+    def add_keys_statement(self, table_name: str, keys: Sequence[TableKey]) -> str:
+        """Return one statement that adds plain, unique or primary keys to a table.
+
+        Parameters:
+            table_name: The table.
+            keys: The keys to add; no foreign key.
+
+        Returns:
+            The statement.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::add_keys_statement must be overridden')
+
+    def add_foreign_key_statement(self, table_name: str, key: TableKey) -> str:
+        """Return one statement that adds a foreign key to a table.
+
+        Parameters:
+            table_name: The table.
+            key: The foreign key.
+
+        Returns:
+            The statement.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::add_foreign_key_statement must be overridden')
+
+    def add_foreign_keys(self, statements: Sequence[IndexStatement]) -> list[tuple[str, float]]:
+        """Add foreign keys one at a time, without checking the rows already there.
+
+        Parameters:
+            statements: The statements, from `add_foreign_key_statement`.
+
+        Returns:
+            Each statement's label and seconds, in the order they ran.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::add_foreign_keys must be overridden')
+
+    def key_space_bytes(
+        self,
+        table_name: str,
+        schema: Sequence[SchemaColumn],
+        key: TableKey,
+    ) -> int:
+        """Estimate the temporary space the server's sort needs to build one key.
+
+        Parameters:
+            table_name: The table.
+            schema: The table's schema, which gives its columns' widths.
+            key: The key.
+
+        Returns:
+            The estimate, in bytes.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::key_space_bytes must be overridden')
+
+    def index_space_budget(self, server_tmpdir: str | None) -> int | None:
+        """Return the temporary space the index builds running at once may hold together.
+
+        Parameters:
+            server_tmpdir: The directory on the database server's host its sorts write
+                to, or None when none is configured.
+
+        Returns:
+            The budget in bytes, or None when there is none to enforce.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::index_space_budget must be overridden')
+
+    def table_names(
+        self, prefix: str | list[str] | tuple[str, ...] | None = None
+    ) -> Collection[str]:
+        """Return the names of the tables in the schema.
+
+        Parameters:
             prefix: One prefix, or several, that a name must start with; None for every
                 name.
 
@@ -383,28 +1356,36 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::table_names must be overridden')
 
-    def table_exists(self, namespace: Namespace, table_name: str) -> bool:
-        """Return whether a table exists in a namespace.
+    def forget_table_names(self) -> None:
+        """Make the next `table_names` read the tables from the server again.
+
+        A brand may cache the names; another process can create a table after they were
+        read, which a cached read would not show.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::forget_table_names must be overridden')
+
+    def table_exists(self, table_name: str) -> bool:
+        """Return whether a table exists in the schema.
 
         Parameters:
-            namespace: The namespace to look in.
-            table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Returns:
             True if a table of that name exists, matched without regard to case, because
             table names are case-sensitive on some operating systems and not others.
         """
-        self._enter('table_exists')
-        table_names = [x.lower() for x in self.table_names(namespace)]
-        self._exit()
+        with self._operation('table_exists'):
+            table_names = [x.lower() for x in self.table_names()]
         return table_name.lower() in table_names
 
-    def table_info(self, namespace: Namespace, raw_table_name: str) -> list[SchemaColumn]:
+    def table_info(self, table_name: str) -> list[SchemaColumn]:
         """Return the columns of a table as the database currently defines them.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Returns:
             One dictionary per column, in the table's column order.
@@ -414,14 +1395,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::table_info must be overridden')
 
-    def drop_table(
-        self, namespace: Namespace, raw_table_name: str, ignore_if_not_exists: bool = True
-    ) -> None:
+    def drop_table(self, table_name: str, ignore_if_not_exists: bool = True) -> None:
         """Delete a table.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             ignore_if_not_exists: True to do nothing when the table is absent, False to
                 treat that as a failure.
 
@@ -430,18 +1408,40 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::drop_table must be overridden')
 
+    def rename_tables_atomically(
+        self,
+        renames: Sequence[tuple[str, str]],
+        *,
+        lock_wait_timeout_s: int,
+        attempts: int,
+    ) -> None:
+        """Rename several tables in one statement, which takes effect all at once or not at all.
+
+        A reader sees every table under its old name or every table under its new one,
+        never a mixture and never a moment with a name missing. The renames apply in
+        order, so a pair may name a table an earlier pair just freed.
+
+        Parameters:
+            renames: ``(from, to)`` table names, in the order they apply.
+            lock_wait_timeout_s: How long one attempt waits for the tables' locks, which
+                a reader's open transaction holds, before it gives up.
+            attempts: How many times to try before the wait is a failure.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::rename_tables_atomically must be overridden')
+
     def create_table(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         schema: Sequence[SchemaColumn],
         ignore_if_exists: bool = True,
     ) -> bool:
         """Create a table from an OPUS table schema.
 
         Parameters:
-            namespace: The namespace to create the table in.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             schema: The column definitions, as `opus_import.import_util` read them from
                 the packaged JSON schema.
             ignore_if_exists: True to leave an existing table alone, False to attempt the
@@ -456,12 +1456,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::create_table must be overridden')
 
-    def analyze_table(self, namespace: Namespace, raw_table_name: str) -> None:
+    def analyze_table(self, table_name: str) -> None:
         """Recompute a table's key distribution statistics.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
@@ -470,8 +1469,7 @@ class ImportDBSuper:
 
     def read_rows(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         column_names: Sequence[str],
         where: str | None = None,
         where_params: Sequence[Any] | None = None,
@@ -479,8 +1477,7 @@ class ImportDBSuper:
         """Return the given columns of the rows the WHERE clause selects.
 
         Parameters:
-            namespace: 'import', 'perm' or 'all'.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             column_names: The columns to read, quoted and validated here.
             where: The WHERE clause, or None for every row. Any value it
                 compares against must be a `%s` placeholder, never text.
@@ -489,32 +1486,27 @@ class ImportDBSuper:
         Returns:
             One tuple per row, with the values in ``column_names`` order.
         """
-        self._enter('read_rows')
+        with self._operation('read_rows'):
+            q = self.quote_identifier
+            columns = ','.join([q(c) for c in column_names])
 
-        table_name = self.convert_raw_to_namespace(namespace, raw_table_name)
-
-        q = self.quote_identifier
-        columns = ','.join([q(c) for c in column_names])
-
-        # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$). The
-        # caller's `where` fragment is appended verbatim below and is not
-        # validated; only the values inside it are bound, through where_params.
-        # This method is for trusted callers.
-        cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
-        if where:
-            cmd += f' WHERE {where}'
-        res = self._execute_and_fetchall(
-            cmd, 'read_rows', list(where_params) if where_params else None
-        )
-        self._exit()
+            # Identifiers are validated by quote_identifier (^[A-Za-z0-9_]+$). The
+            # caller's `where` fragment is appended verbatim below and is not
+            # validated; only the values inside it are bound, through where_params.
+            # This method is for trusted callers.
+            cmd = f'SELECT {columns} FROM {q(table_name)}'  # nosec B608
+            if where:
+                cmd += f' WHERE {where}'
+            res = self._execute_and_fetchall(
+                cmd, 'read_rows', list(where_params) if where_params else None
+            )
         return res
 
-    def insert_row(self, namespace: Namespace, raw_table_name: str, row: DBRow) -> None:
+    def insert_row(self, table_name: str, row: DBRow) -> None:
         """Insert one row.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to write, keyed by column name.
 
         Raises:
@@ -522,12 +1514,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::insert_row must be overridden')
 
-    def insert_rows(self, namespace: Namespace, raw_table_name: str, rows: Sequence[DBRow]) -> None:
+    def insert_rows(self, table_name: str, rows: Sequence[DBRow]) -> None:
         """Insert many rows.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             rows: The rows to write. Every row must have the same columns.
 
         Raises:
@@ -535,37 +1526,78 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::insert_rows must be overridden')
 
+    def bulk_load_rows(
+        self, table_name: str, rows: Sequence[DBRow], guard: LoadGuard | None = None
+    ) -> None:
+        """Write many rows the fastest way the server allows.
+
+        A brand loads them from a scratch file where the server accepts one, at most
+        `transaction_rows` rows to a transaction, and checks after each load that every
+        row arrived unchanged; otherwise it writes them as `insert_rows` does.
+
+        Parameters:
+            table_name: The table.
+            rows: The rows to write. Every row must have the same columns.
+            guard: What each chunk's transaction runs first and checks last, or None.
+                With a guard, every chunk is one transaction on either path, ``INSERT``
+                statements included, and a failure of the guard rolls the chunk back.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::bulk_load_rows must be overridden')
+
     def update_row(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         row: DBRow,
         where: str,
         where_params: Sequence[Any] | None = None,
-    ) -> None:
+    ) -> int:
         """Assign new values to the columns of the rows a WHERE clause selects.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             row: The values to assign, keyed by column name.
             where: The WHERE clause. Any value it compares against must be a `%s`
                 placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
+
+        Returns:
+            How many rows the WHERE clause matched, whether or not their values changed;
+            0 in a run that does not execute it.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::update_row must be overridden')
 
-    def upsert_row(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, row: DBRow
-    ) -> None:
+    def conditional_update(
+        self, table_name: str, row: DBRow, where: str, where_params: Sequence[Any]
+    ) -> int:
+        """Assign new values to the rows a WHERE clause selects, and count the rows changed.
+
+        Parameters:
+            table_name: The table.
+            row: The values to assign, keyed by column name.
+            where: The WHERE clause, the condition the change depends on. Any value it
+                compares against must be a `%s` placeholder, never text.
+            where_params: The parameters that clause's placeholders consume.
+
+        Returns:
+            How many rows the statement changed; 0 when no row met the condition. A
+            read-only run changes nothing and returns -1.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::conditional_update must be overridden')
+
+    def upsert_row(self, table_name: str, key_name: str, row: DBRow) -> None:
         """Insert one row, or update it if its key is already present.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying the row, which is written on an insert but
                 never assigned on an update.
             row: The values to write, keyed by column name.
@@ -575,14 +1607,11 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::upsert_row must be overridden')
 
-    def upsert_rows(
-        self, namespace: Namespace, raw_table_name: str, key_name: str, rows: Sequence[DBRow]
-    ) -> None:
+    def upsert_rows(self, table_name: str, key_name: str, rows: Sequence[DBRow]) -> None:
         """Insert many rows, updating each one whose key is already present.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             key_name: The column identifying a row, which is written on an insert but
                 never assigned on an update.
             rows: The rows to write. They need not share a column set.
@@ -594,47 +1623,56 @@ class ImportDBSuper:
 
     def delete_rows(
         self,
-        namespace: Namespace,
-        raw_table_name: str,
+        table_name: str,
         where: str | None = None,
         where_params: Sequence[Any] | None = None,
+        *,
+        all_rows: bool = False,
     ) -> None:
-        """Delete the rows a WHERE clause selects.
+        """Delete the rows a WHERE clause selects, or every row when asked to.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
-            where: The WHERE clause, or None to delete every row. Any value it compares
-                against must be a `%s` placeholder, never text.
+            table_name: The table.
+            where: The WHERE clause. Any value it compares against must be a `%s`
+                placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
+            all_rows: True to delete every row, which is the only way to; ``where`` must
+                then be None.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
         raise NotImplementedError('ImportDBSuper::delete_rows must be overridden')
 
-    def copy_rows_between_namespaces(
+    def delete_joined_rows(
         self,
-        src_namespace: Namespace,
-        dest_namespace: Namespace,
-        raw_table_name: str,
-        where: str | None = None,
-        where_params: Sequence[Any] | None = None,
+        table_name: str,
+        join_column: str,
+        parent_table: str,
+        parent_column: str,
+        where: str,
+        where_params: Sequence[Any],
     ) -> None:
-        """Copy rows of one table from one namespace to the same table in another.
+        """Delete the rows of a table that join a parent row a WHERE clause selects.
+
+        The rows go whose `join_column` equals the `parent_column` of a parent row the
+        clause selects; the parent rows stay.
 
         Parameters:
-            src_namespace: The namespace to read from.
-            dest_namespace: The namespace to write to.
-            raw_table_name: The table, without its namespace prefix.
-            where: The WHERE clause selecting the rows to copy, or None for every row.
-                Any value it compares against must be a `%s` placeholder, never text.
+            table_name: The table rows are deleted from.
+            join_column: Its column naming a parent row.
+            parent_table: The parent table.
+            parent_column: The parent's column `join_column` holds.
+            where: The WHERE clause selecting parent rows. It names the parent's columns
+                qualified by `JOINED_PARENT_ALIAS`, each part quoted by
+                `quote_identifier`; any value it compares against must be a `%s`
+                placeholder, never text.
             where_params: The parameters that clause's placeholders consume.
 
         Raises:
             NotImplementedError: Always; a brand subclass must override this.
         """
-        raise NotImplementedError('ImportDBSuper::copy_rows_between_namespaces must be overridden')
+        raise NotImplementedError('ImportDBSuper::delete_joined_rows must be overridden')
 
     def general_select(
         self, cmd: str, param_list: Sequence[Any] | None = None
@@ -653,12 +1691,60 @@ class ImportDBSuper:
         """
         raise NotImplementedError('ImportDBSuper::general_select must be overridden')
 
-    def find_column_max(self, namespace: Namespace, raw_table_name: str, column_name: str) -> Any:
+    def stream_select(
+        self, cmd: str, param_list: Sequence[Any] | None = None
+    ) -> Iterator[ResultRow]:
+        """Run a query the caller assembled and yield its rows as the server sends them.
+
+        Parameters:
+            cmd: Everything after the SELECT keyword.
+            param_list: The parameters that query's placeholders consume.
+
+        Yields:
+            One tuple per row, in the order the query named its columns. The caller
+            reads every row before it issues another statement on this connection.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::stream_select must be overridden')
+
+    def list_junction_mismatches(
+        self,
+        table_name: str,
+        column: str,
+        junction: str,
+        observation_column: str,
+        first_id: int | None = None,
+    ) -> tuple[int, int | None]:
+        """Compare a ``mult_list`` column's lists with its junction table's rows.
+
+        An observation disagrees when an id of its list has no junction row, or a junction
+        row names an id its list lacks (`opus_import.list_junctions`).
+
+        Parameters:
+            table_name: The table holding the column.
+            column: The ``mult_list`` column.
+            junction: Its junction table.
+            observation_column: The table's column holding the observation's
+                ``obs_general`` id.
+            first_id: Compare only the observations whose ``obs_general`` id is at least
+                this, or every observation when None.
+
+        Returns:
+            How many observations disagree, and the least ``obs_general`` id among them,
+            or None when none does.
+
+        Raises:
+            NotImplementedError: Always; a brand subclass must override this.
+        """
+        raise NotImplementedError('ImportDBSuper::list_junction_mismatches must be overridden')
+
+    def find_column_max(self, table_name: str, column_name: str) -> Any:
         """Return the largest value in a column.
 
         Parameters:
-            namespace: The namespace holding the table.
-            raw_table_name: The table, without its namespace prefix.
+            table_name: The table.
             column_name: The column to take the maximum of.
 
         Returns:

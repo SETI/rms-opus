@@ -32,11 +32,11 @@ back.
 
 from __future__ import annotations
 
+import copy
 import logging
 import os
 from typing import TYPE_CHECKING, Any, Literal
 
-from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
@@ -52,19 +52,18 @@ from opus_app.apps.cart.models import Cart
 from opus_app.apps.paraminfo.models import ParamInfo
 from opus_app.apps.results.views import get_triggered_tables
 from opus_app.apps.search.forms import SearchForm
-from opus_app.apps.search.models import ObsGeneral, TableNames
+from opus_app.apps.search.models import Mult, MultGroup, ObsGeneral, ObsPds, TableNames
 from opus_app.apps.search.views import (
     get_param_info_by_slug,
     is_single_column_range,
     url_to_search_params,
 )
+from opus_app.apps.tools import sql_builder
 from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
     cols_to_slug_list,
-    convert_ring_obs_id_to_opus_id,
     get_git_version,
-    get_mult_name,
     get_reqno,
     get_session_id,
     http400_bad_or_missing_reqno,
@@ -74,12 +73,13 @@ from opus_app.apps.tools.app_utils import (
     strip_numeric_suffix,
 )
 from opus_app.apps.tools.db_utils import lookup_pretty_value_for_mult
-from opus_app.apps.tools.dictionary import Definitions, get_def_for_tooltip
+from opus_app.apps.tools.dictionary import get_def_for_tooltip, get_definition
 from opus_app.apps.tools.file_utils import (
     get_displayed_browse_products,
     get_pds_preview_images,
     get_pds_products,
 )
+from opus_app.apps.tools.import_constants import displayed_table_names, mult_field_id
 from opus_support import (
     display_search_unit,
     display_unit_ever,
@@ -92,7 +92,6 @@ from opus_support import (
 )
 
 if TYPE_CHECKING:
-    from django.db.models import QuerySet
     from django.http import HttpRequest, HttpResponse
 
 log = logging.getLogger(__name__)
@@ -628,12 +627,12 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
         if param_qualified_name in selections:
             values = selections[param_qualified_name]
         # determine if this mult param has a grouping field (see doc/group_widgets.md for howto on grouping fields)
-        mult_param = get_mult_name(param_qualified_name)
-        model = apps.get_model('search', mult_param.title().replace('_', ''))
+        field_id = mult_field_id(param_qualified_name)
+        field_rows = Mult.objects.filter(field_id=field_id)
 
         if values is not None:
             # Make form choices case-insensitive
-            choices = [mult.label for mult in model.objects.filter(display='Y')]
+            choices = [mult.label for mult in field_rows.filter(display='Y')]
             new_values = []
             for val in values:
                 for choice in choices:  # pragma: no cover - loop should never complete
@@ -645,9 +644,9 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
         # For entries with "None" grouping value, we don't group them.
         # None grouping values will be displayed before grouping values
-        if list(model.objects.filter(grouping=None)):
+        if list(field_rows.filter(grouping=None)):
             form = SearchForm(form_vals, auto_id=auto_id, grouping=None).as_ul()
-            for count, mult in enumerate(model.objects.filter(display='Y').order_by('disp_order')):
+            for count, mult in enumerate(field_rows.filter(display='Y').order_by('disp_rank')):
                 tp_id = mult.label
                 # If there is any invalid characters for HTML class/id
                 # we will replace invalid characters in the mult options
@@ -663,8 +662,10 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 options.append((count, mult.label, mult_tooltip, tp_id))
 
         # Group the entries with the same grouping values.
-        # Different groups will be displayed based on group_disp_order
-        grouping_entries = model.objects.order_by('group_disp_order').distinct().values('grouping')
+        # The groups are displayed in the order of their rank, each once.
+        grouping_entries = (
+            MultGroup.objects.filter(field_id=field_id).order_by('group_rank').values('grouping')
+        )
         for entry in grouping_entries:
             options_of_a_group = []
             glabel = entry['grouping']
@@ -672,11 +673,11 @@ def api_get_widget(request: HttpRequest, **kwargs: str) -> HttpResponse:
             # `# pragma: no cover`, which must stay attached to that condition for
             # the integration coverage gate.
             if glabel is not None and glabel != 'NULL':  # noqa: SIM102
-                if model.objects.filter(grouping=glabel)[0:1]:  # pragma: no cover -
+                if field_rows.filter(grouping=glabel)[0:1]:  # pragma: no cover -
                     # There should always be at least one item under the grouping
                     form = _update_form_with_grouping(form, form_vals, glabel)
                     for count, mult in enumerate(
-                        model.objects.filter(grouping=glabel, display='Y').order_by('disp_order')
+                        field_rows.filter(grouping=glabel, display='Y').order_by('disp_rank')
                     ):
                         tp_id = mult.label
                         for ch in settings.INVALID_CLASS_CHAR:
@@ -793,7 +794,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
     opus_id = kwargs['opus_id']
 
     try:
-        obs_general = ObsGeneral.objects.get(opus_id=opus_id)
+        obs_general = ObsGeneral.objects.get(opus_id=sql_builder.ascii_comparable(opus_id))
     except ObjectDoesNotExist as err:
         # This OPUS ID isn't even in the database!
         raise Http404 from err
@@ -805,14 +806,19 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
         obs_general.instrument_id,
         False,
     )
-    filespec = obs_general.primary_filespec
+    # Every observation has an obs_pds row, which holds its primary filespec.
+    filespec = ObsPds.objects.values_list('primary_filespec', flat=True).get(
+        obs_general_id=obs_general.id
+    )
     selection = filespec.split('/')[-1].split('.')[0]
 
-    # See if this opus_id is in the cart
+    # See if this opus_id is in the cart. This lookup and the preview images' take the
+    # stored OPUS ID: the caller's may differ in case or accents, and one with accents
+    # cannot be compared with an ASCII column.
     in_cart = True
     try:
         session_id = get_session_id(request)
-        Cart.objects.get(opus_id=opus_id, session_id=session_id, recycled=0)
+        Cart.objects.get(opus_id=obs_general.opus_id, session_id=session_id, recycled=0)
     except ObjectDoesNotExist:
         in_cart = False
 
@@ -828,7 +834,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
 
     # The medium image is what's displayed on the Detail page
     # XXX This should be replaced with a viewset query and pixel size
-    preview_med_list = get_pds_preview_images(opus_id, None, 'med')
+    preview_med_list = get_pds_preview_images(obs_general.opus_id, None, 'med')
     if len(preview_med_list) != 1:  # pragma: no cover - data error
         log.error('Failed to find single med size image for "%r"', opus_id)
         preview_med_url = ''
@@ -836,7 +842,7 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
         preview_med_url = preview_med_list[0]['med_url']
 
     # The full-size image is provided in case the user clicks on the medium one
-    preview_full_list = get_pds_preview_images(opus_id, None, 'full')
+    preview_full_list = get_pds_preview_images(obs_general.opus_id, None, 'full')
     if len(preview_full_list) != 1:  # pragma: no cover - data error
         log.error('Failed to find single full size image for "%r"', opus_id)
         preview_full_url = ''
@@ -893,14 +899,9 @@ def api_init_detail_page(request: HttpRequest, **kwargs: str) -> HttpResponse:
                 fn = file_list[i].split('/')[-1]
                 file_list[i] = {'filename': fn, 'link': file_list[i]}
             product_info['files'] = file_list
-            try:
-                entry = Definitions.objects.get(
-                    context__name='OPUS_PRODUCT_TYPE', term=product_type[2]
-                )
-                product_info['tooltip'] = entry.definition
-            except Definitions.DoesNotExist:  # pragma: no cover - import error
+            product_info['tooltip'] = get_definition(product_type[2], 'OPUS_PRODUCT_TYPE')
+            if product_info['tooltip'] is None:  # pragma: no cover - import error
                 log.error('No tooltip definition for OPUS_PRODUCT_TYPE "%r"', product_type[2])
-                product_info['tooltip'] = None
             new_products[version][product_type[3]] = product_info
 
     context = {
@@ -1134,9 +1135,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
         handled_slugs.append(pi.slug + clause_num_str)
         if pi.old_slug:
             handled_slugs.append(pi.old_slug + clause_num_str)
-        if not pi_searchable.display and slug != 'ringobsid':
-            # Special exception for ringobsid - we don't have it marked
-            # searchable in param_info, but we want to allow it here
+        if not pi_searchable.display:
             msg = (
                 'Search field "'
                 + _escape_or_label_results(orig_slug, pi)
@@ -1249,23 +1248,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
             search1 = pi.slug
             if slug + clause_num_str in original_slugs:
                 search1_val = original_slugs[slug + clause_num_str]
-                # If we're searching for ringobsid, convert it to opusid and
-                # also convert the parameter to the new opusid format
-                if pi.slug == 'ringobsid':
-                    search1 = 'opusid'
-                    new_search1_val = convert_ring_obs_id_to_opus_id(
-                        search1_val, force_ring_obs_id_fmt=True
-                    )
-                    if not new_search1_val:
-                        msg = (
-                            'RING OBS ID "'
-                            + escape(search1_val)
-                            + '" not found; the ringobsid search term has been '
-                            + 'removed.'
-                        )
-                        msg_list.append(msg)
-                        continue
-                    search1_val = new_search1_val
 
         ### Handle qtypes ###
 
@@ -1321,9 +1303,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
                 + 'it has been ignored.'
             )
             msg_list.append(msg)
-
-        if qtype_slug == 'qtype-ringobsid':
-            qtype_slug = 'qtype-opusid'
 
         ### Handle units ###
 
@@ -1502,11 +1481,7 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
 
         # Make sure that if we have values to search, that the search widget
         # is also enabled.
-        if pi.slug == 'ringobsid':
-            # Note we already convert the ringobsid search parameter above
-            required_widgets_list.append('opusid')
-        else:
-            required_widgets_list.append(strip_numeric_suffix(pi.slug))
+        required_widgets_list.append(strip_numeric_suffix(pi.slug))
 
     # Sort all the clauses for each slug key in numerical order
     # If there are duplicate numbers, do it in syntactic order
@@ -1559,8 +1534,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     for col in cols.split(','):
         if col == '':
             continue
-        if col == 'ringobsid':
-            col = 'opusid'
         pi, desired_units = get_param_info_by_slug(
             col, 'col', allow_units_override=True, check_valid_units=False
         )
@@ -1632,8 +1605,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     for widget in widgets.split(','):
         if widget == '':
             continue
-        if widget == 'ringobsid':
-            widget = 'opusid'
         pi = get_param_info_by_slug(widget, 'widget')
         if not pi and widget[-1] == '1':
             pi = get_param_info_by_slug(strip_numeric_suffix(widget), 'widget')
@@ -1694,8 +1665,6 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     for order_num, order in enumerate(order_split):
         if order == '':
             continue
-        if order == 'ringobsid':
-            order = 'opusid'
         desc = False
         if order[0] == '-':
             desc = True
@@ -1855,37 +1824,18 @@ def api_normalize_url(request: HttpRequest) -> HttpResponse:
     ### DETAIL
     detail_val = None
     if original_slugs.get('detail'):
-        opus_id = convert_ring_obs_id_to_opus_id(original_slugs['detail'])
-        if not opus_id:
+        opus_id = original_slugs['detail']
+        try:
+            _ = ObsGeneral.objects.get(opus_id=sql_builder.ascii_comparable(opus_id))
+        except ObjectDoesNotExist:
             msg = (
-                'You appear to be using an obsolete RINGOBS_ID ('
-                + escape(original_slugs['detail'])
-                + '), but it could not be converted '
-                + 'to a new OPUS_ID. It has been ignored.'
+                'The OPUS_ID specified for the "detail" tab '
+                + 'was not found in the current database; '
+                + 'it has been ignored.'
             )
             msg_list.append(msg)
         else:
-            if opus_id != original_slugs['detail']:
-                msg = (
-                    'You appear to be using an obsolete RINGOBS_ID ('
-                    + escape(original_slugs['detail'])
-                    + ') instead of the equivalent new '
-                    + 'OPUS_ID ('
-                    + opus_id
-                    + '); it has been converted for you.'
-                )
-                msg_list.append(msg)
-            try:
-                _ = ObsGeneral.objects.get(opus_id=opus_id)
-            except ObjectDoesNotExist:
-                msg = (
-                    'The OPUS_ID specified for the "detail" tab '
-                    + 'was not found in the current database; '
-                    + 'it has been ignored.'
-                )
-                msg_list.append(msg)
-            else:
-                detail_val = opus_id
+            detail_val = opus_id
     if detail_val is None:
         detail_val = ''
     new_url_suffix_list.append(('detail', detail_val))
@@ -2037,7 +1987,7 @@ def _get_menu_labels(
         selections = None
 
     # get_triggered_tables answers None when it could not build the search's
-    # cache table, which the two queries below would then fail on.
+    # results, which the two queries below would then fail on.
     triggered_tables: list[str] | None
     if not selections:
         # Makes a copy of settings.BASE_TABLES
@@ -2052,16 +2002,19 @@ def _get_menu_labels(
     # Below, in the metadata selector, this also comes to hold the fake div made
     # from a dictionary, which is what the wider half of the declared type is
     # for; the two loops that follow run before that and see only rows.
-    divs: QuerySet[TableNames] | list[TableNames | dict[str, str | bool]]
-    # The misc ignore is for `table_name__in=triggered_tables`: get_triggered_tables
-    # can return None, which Django's filter would reject at run time. That is a
+    divs: list[TableNames] | list[TableNames | dict[str, str | bool]]
+    # The operator ignore is for `in triggered_tables`: get_triggered_tables can
+    # return None, which the membership test would reject at run time. That is a
     # real unchecked-None defect, and the marker stands in for it rather than
     # hiding it -- adding a guard here changes what an unresolvable slug answers,
-    # which is a decision about the API's error contract, not an annotation.
-    divs = TableNames.objects.filter(
-        display='Y',  # type: ignore[misc]
-        table_name__in=triggered_tables,
-    ).order_by('disp_order')
+    # which is a decision about the API's error contract, not an annotation. The
+    # rows are copied because the loops below set attributes on them, and the
+    # cached rows are shared by every request in the process.
+    divs = [
+        copy.copy(row)
+        for row in displayed_table_names()
+        if row.table_name in triggered_tables  # type: ignore[operator]
+    ]
     params = ParamInfo.objects.filter(
         **{filter_: 1, 'category_name__in': triggered_tables}
     ).order_by('disp_order')
@@ -2231,7 +2184,8 @@ def _get_menu_labels(
         else:
             search_div['collapsed'] = 'collapsed'
             search_div['show'] = ''
-        divs = [search_div, *list(divs)]
+        selector_divs: list[TableNames | dict[str, str | bool]] = [search_div, *divs]
+        divs = selector_divs
         menu_data.setdefault('search_fields', {})
         menu_data['search_fields']['has_sub_heading'] = False
         for p in search_slugs_info:

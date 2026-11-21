@@ -1,0 +1,454 @@
+"""The pool computes an index exactly as one process does, without a server.
+
+A stand-in row function exercises everything a real one does that a worker cannot do
+itself -- row ids, mult values, a ``mult_list`` column, surface geometry targets,
+log messages deduplicated and not, and a Python warning -- and the index is computed once
+in this process and once across a forked pool. Everything the import's process ends up
+holding must be the same either way.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import multiprocessing
+import os
+import signal
+import time
+import warnings
+from collections.abc import Iterator
+from dataclasses import dataclass, field
+from typing import Any
+
+import pytest
+
+from opus_import import bundle_registry, cli, deferred, import_util
+from opus_import.context import ImportContext
+from opus_import.deferred import Capture, DeferredJson, LocalId, MultRef
+from opus_import.mult_fields import MultFieldInfo
+from opus_import.steps import do_import_mult, do_import_pool
+
+from .conftest import make_context
+
+#: The mult column every stand-in observation fills.
+PLANET = {'field_name': 'planet', 'pi_form_type': 'GROUP'}
+
+#: The mult column of ``obs_surface_geometry_target``, whose field is the selector's.
+TARGET = {
+    'field_name': 'target_name',
+    'pi_form_type': 'GROUP',
+    'mult_field': 'obs_surface_geometry_name.target_name',
+}
+
+#: The schemas the pool looks a mult event's column up in.
+SCHEMAS = {
+    'obs_general': [{'field_name': 'id'}, PLANET],
+    'obs_surface_geometry_target': [{'field_name': 'obs_general_id'}, TARGET],
+}
+
+
+class _FakeDB:
+    """A stand-in holding the mult rows the import writes, and each field's id counter."""
+
+    def __init__(self) -> None:
+        """Start with no mult row and every counter before its first id."""
+        self.mult: list[dict[str, Any]] = []
+        self.last_id: dict[int, int] = {}
+
+    @staticmethod
+    def quote_identifier(name: str) -> str:
+        """Quote an identifier."""
+        return f'`{name}`'
+
+    @staticmethod
+    def read_rows(*_args: Any) -> list[Any]:
+        """Return no rows: the cache asks before any value is stored in a field."""
+        return []
+
+    def retrying(self, _description: str, body: Any, expected: Any = None) -> Any:
+        """Run the body once."""
+        return body()
+
+    def increment_counter(self, _table: str, _column: str, _key_column: str, key: int) -> int:
+        """Count on in a field."""
+        self.last_id[key] = self.last_id.get(key, -1) + 1
+        return self.last_id[key]
+
+    @contextlib.contextmanager
+    def failures_expected(self) -> Iterator[None]:
+        """Nothing to suppress."""
+        yield
+
+    @staticmethod
+    def is_duplicate_key_error(_exc: BaseException) -> bool:
+        """No insert here ever fails."""
+        return False
+
+    def insert_row(self, _table: str, row: dict[str, Any]) -> None:
+        """Record a mult row."""
+        self.mult.append(row)
+
+    def insert_rows_keeping_existing(self, *_args: Any) -> None:
+        """Write no group: the stand-in values have none they must keep."""
+
+
+#: The field ids the stand-in mult columns' values carry.
+MULT_FIELDS = {
+    'obs_general.planet': MultFieldInfo(1, pinned=False),
+    'obs_surface_geometry_name.target_name': MultFieldInfo(2, pinned=False),
+}
+
+
+#: The stand-in bundle's registered range: its ids start at 101.
+_RANGE = bundle_registry.BundleRange(1, 'TEST_0001', 10, 101, 1000, 'importing')
+
+
+def _pool_context() -> ImportContext:
+    """Return a context over the stand-in database, with the field ids read and the
+    bundle's ids counted from its range."""
+    ctx = make_context(db=_FakeDB())
+    ctx.mult_fields = dict(MULT_FIELDS)
+    ctx.bundle_ids = bundle_registry.BundleIds(_RANGE)
+    return ctx
+
+
+@dataclass
+class _Index:
+    """What the stand-in rows are computed from."""
+
+    obs_rows: list[int]
+    table_schemas: dict[str, Any] = field(default_factory=lambda: SCHEMAS)
+
+
+def _compute_row(
+    ctx: ImportContext, index: _Index, index_row_num: int, emit: do_import_pool.RowEmitter
+) -> None:
+    """Compute one stand-in observation through the pipeline's own id, mult and log calls."""
+    ctx.current_index_row_number = index_row_num + 1
+    ctx.current_primary_filespec = f'DATA/FILE_{index_row_num}.LBL'
+    general_id = import_util.next_table_id(ctx, 'obs_general')
+    planet = do_import_mult.update_mult_table(
+        ctx,
+        'obs_general',
+        'planet',
+        PLANET,
+        f'P{index_row_num % 4}',
+        f'Planet {index_row_num % 4}',
+        pin=index_row_num % 4,
+    )
+    if index_row_num % 5 == 0:
+        import_util.log_nonrepeating_warning(ctx, 'a fault every fifth row shares')
+    import_util.log_info(ctx, f'computed row {index_row_num}')
+    if index_row_num == 7:
+        warnings.warn('row seven warns', UserWarning, stacklevel=1)
+    emit(
+        'obs_general',
+        {'id': general_id, 'planet': planet, 'planets': deferred.json_list([planet, 'S RINGS'])},
+    )
+    if index_row_num % 3 == 0:
+        target_name = do_import_mult.update_mult_table(
+            ctx,
+            'obs_surface_geometry__mimas',
+            'target_name',
+            TARGET,
+            'MIMAS',
+            'Mimas',
+            group_pin=1,
+        )
+        emit(
+            'obs_surface_geometry__mimas',
+            {'obs_general_id': general_id, 'target_name': target_name},
+        )
+    emit('obs_files', {'obs_general_id': general_id, 'instrument_id': planet})
+
+
+def _run(
+    workers: int, worker_rows: int = 4, rows: int = 23
+) -> tuple[ImportContext, list[Any], bool]:
+    """Compute the stand-in index with the given pool, returning what the process holds."""
+    ctx = _pool_context()
+    ctx.current_bundle_id = 'TEST_0001'
+    ctx.workers = workers
+    ctx.worker_rows = worker_rows
+    emitted: list[Any] = []
+    with warnings.catch_warnings():
+        warnings.simplefilter('always')
+        warnings.filterwarnings(
+            'ignore', message=r'This process .* is multi-threaded', category=DeprecationWarning
+        )
+        warnings.showwarning = cli._make_warning_handler(ctx)
+        computed = do_import_pool.compute_index(
+            ctx,
+            _Index(list(range(rows))),
+            _compute_row,
+            lambda table, row: emitted.append((table, row)),
+            'TEST_0001_index.lbl',
+        )
+    return ctx, emitted, computed
+
+
+def test_a_pool_computes_what_one_process_computes() -> None:
+    """Rows, ids, mult ids, the log, and the warnings are the same with three workers."""
+    serial, serial_rows, serial_ok = _run(workers=1)
+    pooled, pooled_rows, pooled_ok = _run(workers=3)
+
+    assert serial_ok
+    assert pooled_ok
+    assert pooled_rows == serial_rows
+    assert pooled.logger.messages == serial.logger.messages
+    assert pooled.python_warning_list == serial.python_warning_list == ['row seven warns']
+    assert pooled.bundle_ids == serial.bundle_ids
+    assert pooled.mult_table_cache == serial.mult_table_cache
+    assert pooled.db.mult == serial.db.mult  # type: ignore[union-attr]
+    assert pooled.logged_import_warnings == serial.logged_import_warnings
+    assert pooled.capture is None
+
+
+def _warning_row(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
+    """Warn from one location on every row."""
+    warnings.warn('every row warns from here', UserWarning, stacklevel=1)
+    emit('obs_general', {'row': index_row_num})
+
+
+def test_a_warning_shown_once_per_location_is_shown_once_across_workers() -> None:
+    """Under the default filter, every worker sees the warning, and the import shows it once."""
+    recorded: dict[int, list[str]] = {}
+    for workers in (1, 3):
+        ctx = make_context()
+        ctx.workers = workers
+        ctx.worker_rows = 2
+        with warnings.catch_warnings():
+            warnings.simplefilter('default')
+            warnings.filterwarnings(
+                'ignore', message=r'This process .* is multi-threaded', category=DeprecationWarning
+            )
+            warnings.showwarning = cli._make_warning_handler(ctx)
+            assert do_import_pool.compute_index(
+                ctx, _Index(list(range(12))), _warning_row, lambda *_: None, 'TEST_0001_index.lbl'
+            )
+        recorded[workers] = ctx.python_warning_list
+    assert recorded[3] == recorded[1] == ['every row warns from here']
+
+
+def test_the_rows_are_computed_in_forked_workers() -> None:
+    """With more rows than one task covers, the rows come from several other processes."""
+
+    def which_process(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
+        # Long enough that one worker cannot take every task before the others start.
+        time.sleep(0.02)
+        emit('obs_general', {'pid': os.getpid()})
+
+    ctx = make_context()
+    ctx.workers = 3
+    ctx.worker_rows = 2
+    emitted: list[Any] = []
+    with _forking():
+        computed = do_import_pool.compute_index(
+            ctx,
+            _Index(list(range(40))),
+            which_process,
+            lambda table, row: emitted.append(row['pid']),
+            'TEST_0001_index.lbl',
+        )
+    assert computed
+    assert len(emitted) == 40
+    assert os.getpid() not in emitted
+    assert len(set(emitted)) > 1
+
+
+def test_a_worker_ignores_an_interrupt(signal_restored: None) -> None:
+    """A terminal's Ctrl-C reaches every process of its group; the import's process
+    decides what it means, and the pool survives it."""
+
+    def interrupted(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
+        if os.getpid() != parent:
+            os.kill(os.getpid(), signal.SIGINT)
+        emit('obs_general', {'row': index_row_num})
+
+    parent = os.getpid()
+    ctx = make_context()
+    ctx.workers = 2
+    ctx.worker_rows = 2
+    emitted: list[Any] = []
+    with _forking():
+        computed = do_import_pool.compute_index(
+            ctx,
+            _Index(list(range(8))),
+            interrupted,
+            lambda table, row: emitted.append(row['row']),
+            'TEST_0001_index.lbl',
+        )
+    assert computed
+    assert emitted == list(range(8))
+
+
+@pytest.fixture
+def signal_restored() -> Iterator[None]:
+    """Keep this process's SIGINT handler as it was, whatever a test does to it."""
+    before = signal.getsignal(signal.SIGINT)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, before)
+
+
+def test_the_replayed_rows_hold_real_ids_and_no_placeholder() -> None:
+    """Ids count on from the bundle's range; mult ids are the serial ones; lists are JSON."""
+    _ctx, rows, _ok = _run(workers=3)
+    general = [row for table, row in rows if table == 'obs_general']
+    assert [row['id'] for row in general] == list(range(101, 124))
+    assert [row['planet'] for row in general[:5]] == [0, 1, 2, 3, 0]
+    assert general[1]['planets'] == '[1, "S RINGS"]'
+    targets = [row for table, row in rows if table == 'obs_surface_geometry__mimas']
+    assert [row['obs_general_id'] for row in targets] == list(range(101, 124, 3))
+    assert {row['target_name'] for row in targets} == {0}
+    for _table, row in rows:
+        assert not any(deferred.is_deferred(value) for value in row.values())
+
+
+def test_a_worker_that_fails_abandons_the_index() -> None:
+    """The failure is logged, naming the rows of the failed task."""
+
+    def failing_row(ctx: ImportContext, index: _Index, index_row_num: int, emit: Any) -> None:
+        if ctx.capture is not None and index_row_num == 9:
+            raise RuntimeError('row nine breaks')
+        _compute_row(ctx, index, index_row_num, emit)
+
+    ctx = _pool_context()
+    ctx.current_bundle_id = 'TEST_0001'
+    ctx.workers = 2
+    ctx.worker_rows = 4
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        computed = do_import_pool.compute_index(
+            ctx, _Index(list(range(23))), failing_row, lambda *_: None, 'TEST_0001_index.lbl'
+        )
+
+    assert computed is False
+    (message,) = ctx.logger.messages_at('error')
+    assert message.startswith(
+        '[TEST_0001] A worker failed computing rows 9 to 12 of "TEST_0001_index.lbl": '
+        "RuntimeError('row nine breaks')"
+    )
+    assert ctx.import_has_bad_data is True
+
+
+def test_an_index_smaller_than_one_task_is_computed_in_this_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No pool is made for an index with fewer rows than one task covers."""
+    monkeypatch.setattr(do_import_pool, '_compute_in_pool', _no_pool)
+    ctx, rows, computed = _run(workers=3, worker_rows=50)
+    assert computed
+    assert len([row for row in rows if row[0] == 'obs_general']) == 23
+    assert ctx.logger.messages_at('error') == []
+
+
+def test_a_platform_without_fork_computes_in_this_process(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Workers need ``fork``; without it the index is computed here, and the log says why."""
+    monkeypatch.setattr(do_import_pool, '_compute_in_pool', _no_pool)
+    monkeypatch.setattr(multiprocessing, 'get_all_start_methods', lambda: ['spawn'])
+    ctx, _rows, computed = _run(workers=3)
+    assert computed
+    assert ctx.logger.messages_at('info')[0] == (
+        '[TEST_0001] workers 3 needs fork, which this platform lacks; computing in one process'
+    )
+
+
+def _drop_row(table_name: str, row: dict[str, Any]) -> None:
+    """Accept a replayed row and keep nothing."""
+
+
+@contextlib.contextmanager
+def _forking() -> Iterator[None]:
+    """Let this test fork a pool from a process that may have threads.
+
+    The test runner's worker processes have threads of their own, and forking one warns
+    that the child may deadlock. The import forks its pool before it starts any thread,
+    which the import suite's comparison of logs shows, so the warning here describes the
+    test runner rather than the code under test.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore', message=r'This process .* is multi-threaded', category=DeprecationWarning
+        )
+        yield
+
+
+def _no_pool(*_args: Any) -> bool:
+    """Stand in for the pool, failing the test if it is reached."""
+    raise AssertionError('a pool was made')
+
+
+def test_a_capturing_context_records_its_log_calls_instead_of_making_them() -> None:
+    """Every `ImportLog` method records, with the position, and changes nothing."""
+    ctx = make_context()
+    ctx.capture = Capture()
+    ctx.current_index_row_number = 4
+    ctx.current_primary_filespec = 'DATA/X.LBL'
+    ctx.log.error('bad %s', 'thing')
+    ctx.log.nonrepeating_error('once')
+    ctx.log.nonrepeating_warning('twice')
+    ctx.log.debug('quiet')
+
+    assert ctx.logger.messages == []
+    assert ctx.import_has_bad_data is False
+    assert ctx.logged_import_errors == set()
+    assert ctx.capture.events == [
+        ('log', 4, 'DATA/X.LBL', 'error', ('bad %s', 'thing')),
+        ('log', 4, 'DATA/X.LBL', 'nonrepeating_error', ('once',)),
+        ('log', 4, 'DATA/X.LBL', 'nonrepeating_warning', ('twice',)),
+        ('log', 4, 'DATA/X.LBL', 'debug', ('quiet',)),
+    ]
+
+
+def test_a_capture_numbers_ids_per_table_from_zero() -> None:
+    """A worker's ids are positions among its own task's ids for each table."""
+    capture = Capture()
+    assert [capture.next_id('a'), capture.next_id('b'), capture.next_id('a')] == [
+        LocalId('a', 0),
+        LocalId('b', 0),
+        LocalId('a', 1),
+    ]
+    assert capture.id_counts == {'a': 2, 'b': 1}
+
+
+def test_a_list_holding_a_placeholder_waits_to_become_json() -> None:
+    """A ``mult_list`` is JSON at once unless one of its values is still unknown."""
+    assert deferred.json_list([1, 'S RINGS']) == '[1, "S RINGS"]'
+    assert deferred.json_list([MultRef(0), 2]) == DeferredJson((MultRef(0), 2))
+
+
+class _Logger:
+    """A logger stand-in recording the calls replayed into it."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+
+    def warn(self, *args: Any, **kwargs: Any) -> None:
+        """Record a call."""
+        self.calls.append(('warn', args, kwargs))
+
+
+def test_a_replayed_pdsfile_log_call_reaches_the_class_logger_it_was_made_on() -> None:
+    """The call goes to the logger of the class whose logger the worker called."""
+    logger = _Logger()
+    ctx = make_context()
+    events: list[tuple[Any, ...]] = [
+        ('pdsfile', 3, 'DATA/X.LBL', 'some.Rules', 'warn', ('Missing', 'path'), {})
+    ]
+    do_import_pool._replay(
+        ctx,
+        (events, {}),
+        do_import_pool._ColumnLookup(SCHEMAS),
+        {'some.Rules': (object, logger)},
+        _drop_row,
+    )
+    assert logger.calls == [('warn', ('Missing', 'path'), {})]
+    assert (ctx.current_index_row_number, ctx.current_primary_filespec) == (3, 'DATA/X.LBL')
+
+
+def test_a_surface_geometry_categorys_mult_column_is_found_in_its_table() -> None:
+    """A row computed under a body's category has ``obs_surface_geometry_target``'s columns."""
+    columns = do_import_pool._ColumnLookup(SCHEMAS)
+    assert columns.find('obs_surface_geometry__mimas', 'target_name') is TARGET
+    assert columns.find('obs_general', 'planet') is PLANET

@@ -1,11 +1,13 @@
 # Keep recorded data out of review, so that review reaches the code.
 #
-# Three directories hold generated data rather than written code: the mini-holdings
-# fixture is real PDS archive metadata subsetted by a recorder, and the goldens are a
-# serialized database, both rewritten wholesale by `python -m
-# import_tests.tools.make_mini_holdings` and `... make_mini_goldens`. Nobody edits them by
-# hand and there is nothing in them to review -- what makes them trustworthy is the two
-# generators and the assertions, which are code and are reviewed.
+# Four directories hold generated data rather than written code: the mini-holdings
+# fixture is real PDS archive metadata subsetted by a recorder, and the import goldens are
+# a serialized database, both rewritten wholesale by `python -m
+# import_tests.tools.make_mini_holdings` and `... make_mini_goldens`; the recorded API
+# responses are what a running server answered, written by
+# `integration_tests/test_api/create_test_results.py`. Nobody edits them by hand and there
+# is nothing in them to review -- what makes them trustworthy is the generators and the
+# assertions, which are code and are reviewed.
 #
 # Left in, they do active harm. A regeneration touches hundreds of files at once and
 # buries the handful of real code changes beside them, and CodeRabbit skips any pull
@@ -30,3 +32,4 @@ reviews:
     - "!tests/fixtures/mini_holdings/**"
     - "!import_tests/goldens/**"
     - "!import_tests/fixtures/**"
+    - "!integration_tests/test_api/responses/**"

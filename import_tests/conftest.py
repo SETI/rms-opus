@@ -26,6 +26,25 @@ if TYPE_CHECKING:
 
     from import_tests.tools.golden_io import DatabaseCredentials
 
+#: The main run's ``[import] transaction_rows``. No table of the fixture reaches the
+#: default's 100,000 rows, so a small value is what makes every load in the run split
+#: across several transactions; the goldens are then the check that splitting changes
+#: nothing. Prime, so chunk boundaries fall at different places in different tables.
+MAIN_RUN_TRANSACTION_ROWS = 7
+
+#: The main run's ``[import] workers`` and ``index_workers``: the ceiling, so the goldens
+#: are taken over the pool of workers computing observations and the path that builds
+#: several tables' indexes at once, rather than the defaults' one process and one table.
+MAIN_RUN_WORKERS = 'max'
+
+#: The main run's ``[import] worker_rows``. The fixture's indexes are a few dozen rows, so
+#: at the default's 500 every index would fall back to computing in one process; a small
+#: value splits each across several tasks.
+MAIN_RUN_WORKER_ROWS = 5
+
+#: The schema-name suffix of the session that writes with ``INSERT`` statements.
+INSERT_PATH_CASE = 'insert_path'
+
 
 @pytest.fixture(scope='session')
 def db_credentials() -> DatabaseCredentials:
@@ -78,13 +97,56 @@ def main_run(
 ) -> build_run.ImportRun:
     """Import the whole fixture once, and hand every test the finished run.
 
+    Its loads are split into `MAIN_RUN_TRANSACTION_ROWS`-row transactions, its
+    observations are computed by `MAIN_RUN_WORKERS` workers in `MAIN_RUN_WORKER_ROWS`-row
+    tasks, and its finalization builds indexes over as many connections.
+
     Returns:
         The completed run, whose logs and schema the assertions read.
     """
     schema = fixture_layout.schema_name(os.getpid())
     created_schemas.append(schema)
     root = tmp_path_factory.mktemp('mini_holdings_main')
-    return build_run.perform_run(root, schema, db_credentials)
+    return build_run.perform_run(
+        root,
+        schema,
+        db_credentials,
+        extra_import={
+            'transaction_rows': MAIN_RUN_TRANSACTION_ROWS,
+            'workers': MAIN_RUN_WORKERS,
+            'index_workers': MAIN_RUN_WORKERS,
+            'worker_rows': MAIN_RUN_WORKER_ROWS,
+        },
+    )
+
+
+@pytest.fixture(scope='session')
+def insert_path_run(
+    tmp_path_factory: pytest.TempPathFactory,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    subprocess_coverage: None,
+) -> build_run.ImportRun:
+    """Import one bundle with ``[import] bulk_load = false``.
+
+    That is the path an import takes when the server refuses local files, and the only
+    run that exercises it on a server that accepts them.
+
+    Returns:
+        The completed run, in a schema and a log directory of its own.
+    """
+    root = tmp_path_factory.mktemp('mini_holdings_insert_path')
+    bundle = negative_cases.bundle_for_class(negative_cases.DUPLICATE_ID_INSTRUMENT_CLASS)
+    schema = fixture_layout.schema_name(os.getpid(), INSERT_PATH_CASE)
+    created_schemas.append(schema)
+    return build_run.perform_run(
+        root,
+        schema,
+        db_credentials,
+        bundle_groups=[[bundle]],
+        extra_import={'bulk_load': False},
+        finalize=False,
+    )
 
 
 @pytest.fixture(scope='session')
@@ -94,12 +156,11 @@ def duplicate_id_run(
     created_schemas: list[str],
     subprocess_coverage: None,
 ) -> build_run.ImportRun:
-    """Import one volume twice in a single invocation, under the duplicate-id check.
+    """Import one volume twice in a single invocation, into an empty schema.
 
-    One invocation is what makes this a duplicate: the import tables are dropped once
-    per invocation, so a second volume in the same invocation sees the first volume's
-    rows and finds its own OPUS ids already there. That is the situation the flag exists
-    for, and importing the same volume twice produces it for every observation.
+    Each import of the volume first deletes the volume from the observation tables; the
+    run is what shows that the second import replaces the first rather than loading a
+    second copy beside it.
 
     Returns:
         The completed run, in a schema and a log directory of its own.
@@ -113,7 +174,6 @@ def duplicate_id_run(
         schema,
         db_credentials,
         bundle_groups=[[bundle, bundle]],
-        extra_import_args=['--import-check-duplicate-id'],
         finalize=False,
     )
 
@@ -128,7 +188,7 @@ def ignore_errors_run(
     """Import a fixture whose index names a target OPUS does not know.
 
     Returns:
-        A run of the one perturbed bundle under ``--import-ignore-errors``, in a schema
+        A run of the one perturbed bundle under ``--ignore-errors``, in a schema
         and a log directory of its own.
     """
     root = tmp_path_factory.mktemp('mini_holdings_ignore_errors')
@@ -142,6 +202,29 @@ def ignore_errors_run(
         db_credentials,
         overlay=overlay,
         bundle_groups=[[recipe.bundle]],
-        extra_import_args=['--import-ignore-errors'],
+        extra_import_args=['--ignore-errors'],
         finalize=False,
+    )
+
+
+@pytest.fixture(scope='session')
+def new_target_run(
+    tmp_path_factory: pytest.TempPathFactory,
+    db_credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    subprocess_coverage: None,
+) -> build_run.ImportRun:
+    """Import a fixture whose surface geometry names a body the fixture has none of.
+
+    Returns:
+        A run of the one perturbed bundle, finalized and validated, in a schema and a log
+        directory of its own.
+    """
+    root = tmp_path_factory.mktemp('mini_holdings_new_target')
+    recipe = negative_cases.load_recipe(negative_cases.NEW_TARGET_CASE)
+    overlay = negative_cases.build_overlay(recipe, root / 'overlay')
+    schema = fixture_layout.schema_name(os.getpid(), negative_cases.NEW_TARGET_CASE)
+    created_schemas.append(schema)
+    return build_run.perform_run(
+        root / 'run', schema, db_credentials, overlay=overlay, bundle_groups=[[recipe.bundle]]
     )

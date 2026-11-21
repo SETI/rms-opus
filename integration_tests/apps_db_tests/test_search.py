@@ -22,6 +22,7 @@ from django.db import connection
 from django.http import Http404, QueryDict
 from django.test import RequestFactory
 
+from opus_app.apps.search.models import Mult, ObsGeneral
 from opus_app.apps.search.views import (
     api_normalize_input,
     api_string_search_choices,
@@ -32,21 +33,31 @@ from opus_app.apps.search.views import (
     set_user_search_number,
     url_to_search_params,
 )
+from opus_app.apps.tools.import_constants import mult_field_id
 
 from ._broken_requests import request_without_get, request_without_meta
+
+
+def _mult_id(param_qualified_name: str, value: str) -> int:
+    """Return the id of a mult field's row holding a value.
+
+    A field without ``mult_options`` numbers its values as the importers meet them, and
+    importers running at once meet them in no fixed order, so a test reads such an id
+    rather than writing it down.
+    """
+    return Mult.objects.get(field_id=mult_field_id(param_qualified_name), value=value).id
 
 
 class SearchTests(TestCase):
     """Search-URL parsing, and the SQL each kind of search clause builds."""
 
     def _empty_user_searches(self) -> None:
-        """Delete every recorded search and the cache tables they created.
+        """Delete every stored search and its results.
 
-        A search records itself in `user_searches` and materializes its results into a
-        `cache_<number>` table named after that row, so leaving either behind would let
-        one test answer another's query. The count is checked first because the common
-        case is an already-empty table, and the counter is reset because the cache table
-        name is derived from it.
+        A search records itself in `user_searches` and its results in `search_results`,
+        so leaving either behind would let one test answer another's query. The count is
+        checked first because the common case is an already-empty table, and the counter
+        is reset because the tests expect the first search registered to be number 1.
 
         It also empties the Django cache and builds the request factory these tests
         call the views with, because `setUp` calls this instead of doing either.
@@ -56,13 +67,9 @@ class SearchTests(TestCase):
         cursor.execute(sql)
         results = cursor.fetchall()
         if int(results[0][0]) != 0:
+            cursor.execute('DELETE FROM search_results')
             cursor.execute('DELETE FROM user_searches')
             cursor.execute('ALTER TABLE user_searches AUTO_INCREMENT = 1')
-            cursor.execute('SHOW TABLES LIKE %s', ['cache_%'])
-            for row in cursor:  # pragma: no cover - may never be cache_ tables
-                q = 'DROP TABLE ' + row[0]
-                print(q)
-                cursor.execute(q)
         cache.clear()
         self.factory = RequestFactory()
 
@@ -73,8 +80,8 @@ class SearchTests(TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also calls `_empty_user_searches`, which clears the rows and cache tables a
-        search leaves behind and builds this suite's request factory.
+        It also calls `_empty_user_searches`, which clears the rows a search leaves
+        behind and builds this suite's request factory.
         """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -3668,12 +3675,14 @@ class SearchTests(TestCase):
         print(sql)
         print(params)
         expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `obs_mission_cassini` ON `obs_general`.`id`=`obs_mission_cassini`.`obs_general_id` WHERE (`obs_general`.`planet_id` IN (%s)) AND (`obs_instrument_coiss`.`camera` IN (%s)) AND (`obs_mission_cassini`.`rev_no` IN (%s,%s))'
-        expected_params = [4, 0, 2, 4]
+        expected_params = [
+            4,
+            0,
+            _mult_id('obs_mission_cassini.rev_no', '00A'),
+            _mult_id('obs_mission_cassini.rev_no', '00C'),
+        ]
         print(expected)
         print(expected_params)
-        print(
-            'NOTE: This test requires one of COISS or COVIMS to be imported before COUVIS due to a bad observation name in COUVIS!'
-        )
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
 
@@ -3759,8 +3768,8 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult_obs_instrument_coiss_data_conversion_type` ON `obs_instrument_coiss`.`data_conversion_type`=`mult_obs_instrument_coiss_data_conversion_type`.`id` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `mult_obs_instrument_coiss_data_conversion_type`.`label` ASC'
-        expected_params = [20]
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `obs_instrument_coiss` ON `obs_general`.`id`=`obs_instrument_coiss`.`obs_general_id` LEFT JOIN `mult` AS `mult_obs_instrument_coiss_data_conversion_type` ON `mult_obs_instrument_coiss_data_conversion_type`.`field_id` = %s AND `mult_obs_instrument_coiss_data_conversion_type`.`id`=`obs_instrument_coiss`.`data_conversion_type` WHERE `obs_general`.`observation_duration` >= %s ORDER BY `mult_obs_instrument_coiss_data_conversion_type`.`label` ASC'
+        expected_params = [mult_field_id('obs_instrument_coiss.data_conversion_type'), 20]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -3786,8 +3795,8 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s)'
-        expected_params = ['1']
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE EXISTS (SELECT 1 FROM `obs_general_target_name` WHERE `obs_general_target_name`.`obs_general_id`=`obs_general`.`id` AND `obs_general_target_name`.`mult_id` IN (%s))'
+        expected_params = [_mult_id('obs_general.target_name', 'SATURN')]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -3800,8 +3809,11 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE JSON_CONTAINS(`obs_general`.`target_name`,%s) OR JSON_CONTAINS(`obs_general`.`target_name`,%s)'
-        expected_params = ['1', '19']
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` WHERE EXISTS (SELECT 1 FROM `obs_general_target_name` WHERE `obs_general_target_name`.`obs_general_id`=`obs_general`.`id` AND `obs_general_target_name`.`mult_id` IN (%s,%s))'
+        expected_params = [
+            _mult_id('obs_general.target_name', 'SATURN'),
+            _mult_id('obs_general.target_name', 'JUPITER'),
+        ]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
@@ -3814,12 +3826,37 @@ class SearchTests(TestCase):
         sql, params = construct_query_string(selections, extras)
         print(sql)
         print(params)
-        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `mult_obs_general_target_name` ON JSON_EXTRACT(`obs_general`.`target_name`, "$[0]")=`mult_obs_general_target_name`.`id` ORDER BY `mult_obs_general_target_name`.`label` ASC'
-        expected_params: list[Any] = []
+        expected = 'SELECT `obs_general`.`id` FROM `obs_general` LEFT JOIN `mult` AS `mult_obs_general_target_name` ON `mult_obs_general_target_name`.`field_id` = %s AND `mult_obs_general_target_name`.`id`=JSON_EXTRACT(`obs_general`.`target_name`, "$[0]") ORDER BY `mult_obs_general_target_name`.`label` ASC'
+        expected_params: list[Any] = [mult_field_id('obs_general.target_name')]
         print(expected)
         print(expected_params)
         self.assertEqual(sql, expected)
         self.assertEqual(params, expected_params)
+
+    def test__results_sorted_by_a_mult_column_follow_its_labels_not_its_ranks(self) -> None:
+        "[test_search.py] construct_query_string: a mult sort is by label text"
+        # The planet field's ranks follow its pins (Venus, Earth, Mars, ...), which is
+        # not the alphabetical order of its labels, so the two orders tell apart.
+        planets = Mult.objects.filter(field_id=mult_field_id('obs_general.planet_id'))
+        by_rank = [row.label for row in planets.order_by('disp_rank')]
+        self.assertNotEqual(by_rank, sorted(by_rank, key=str.casefold))
+
+        sql, params = construct_query_string({}, {'order': (['obs_general.planet_id'], [False])})
+        assert sql is not None
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            ids = [row[0] for row in cursor.fetchall()]
+        label_of = {row.id: row.label for row in planets}
+        planet_of = dict(ObsGeneral.objects.filter(id__in=ids).values_list('id', 'planet_id'))
+        labels = [label_of[planet_of[obs_id]] for obs_id in ids]
+        self.assertGreater(len(set(labels)), 1)
+        self.assertEqual(labels, sorted(labels, key=str.casefold))
+
+    def test__the_server_runs_djangos_connection_at_read_committed(self) -> None:
+        "[test_search.py] the search build's isolation level, as the server reports it"
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT @@transaction_isolation')
+            self.assertEqual(cursor.fetchone()[0], 'READ-COMMITTED')
 
         #####################################################
         ######### set_user_search_number UNIT TESTS #########
@@ -3832,8 +3869,8 @@ class SearchTests(TestCase):
         num1 = set_user_search_number(selections, extras)
         extras = {'qtypes': {}, 'units': {}, 'order': ([], [])}
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_qtype_str(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype string"
@@ -3853,8 +3890,8 @@ class SearchTests(TestCase):
             'order': (['obs_pds.bundle_id'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_qtype_num_1(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype numeric 1"
@@ -3874,8 +3911,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_qtype_num_2(self) -> None:
         "[test_search.py] set_user_search_number: dead qtype numeric 2"
@@ -3895,8 +3932,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_unit_num_1(self) -> None:
         "[test_search.py] set_user_search_number: dead unit numeric 1"
@@ -3916,8 +3953,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_dead_unit_num_2(self) -> None:
         "[test_search.py] set_user_search_number: dead unit numeric 2"
@@ -3937,8 +3974,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (1, False))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 1)
 
     def test__set_user_search_number_qtype_num_1(self) -> None:
         "[test_search.py] set_user_search_number: qtype numeric 1"
@@ -3956,8 +3993,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)
 
     def test__set_user_search_number_qtype_num_2(self) -> None:
         "[test_search.py] set_user_search_number: qtype numeric 2"
@@ -3975,8 +4012,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)
 
     def test__set_user_search_number_unit_num_1(self) -> None:
         "[test_search.py] set_user_search_number: unit numeric 1"
@@ -3994,8 +4031,8 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)
 
     def test__set_user_search_number_unit_num_2(self) -> None:
         "[test_search.py] set_user_search_number: unit numeric 2"
@@ -4013,5 +4050,5 @@ class SearchTests(TestCase):
             'order': (['obs_general.time1'], [False]),
         }
         num2 = set_user_search_number(selections, extras)
-        self.assertEqual(num1, (1, True))
-        self.assertEqual(num2, (2, True))
+        self.assertEqual(num1, 1)
+        self.assertEqual(num2, 2)

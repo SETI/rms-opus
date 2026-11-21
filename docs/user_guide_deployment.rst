@@ -3,11 +3,12 @@
 Deployment and Operations
 =========================
 
-:ref:`user_guide_installation` brings a server up from nothing with the deploy scripts,
-and :ref:`user_guide_web_server` puts a web server in front of it. This chapter is the
-running of it afterwards: what a deploy actually does, how a release is deployed onto a
-running site, the two things that always have to happen when a database changes, the
-runbook for replacing one, and the cron jobs that keep the log reports current.
+:ref:`user_guide_installation` describes bringing a server up from nothing with the deploy
+scripts, and :ref:`user_guide_web_server` describes putting a web server in front of it.
+This chapter describes running it afterwards: what a deploy actually does, how a release
+is deployed onto a running site, the two things that always have to happen when a
+database changes, the runbook for replacing one, and the cron jobs that keep the stored
+searches bounded and the log reports current.
 
 The scripts are the same ones the installation chapter wrote out with
 ``opus_deploy_scripts``, in the deploy directory beside their ``secrets/deploy.env``.
@@ -35,6 +36,7 @@ in place, and two symbolic links say which installation is which:
         wsgi.py                   # symlink into opus_venv/.../site-packages/opus_app/
     /opt/opus/deployed  -> staged/<database>_<timestamp>   # what the web server serves
     /opt/opus/import    -> staged/<database>_<timestamp>   # what an import is using
+    /opt/opus/deploy.lock                                  # held by the deploy running
 
 That shape is what makes a deploy safe to run against a live site, and it follows from
 one fact about OPUS: **a release that changes the table schemas cannot read a database
@@ -49,7 +51,11 @@ built alongside the running one and touching nothing it uses; the deploy that sw
 it moves the ``deployed`` symlink with a single rename, empties the shared cache, and
 restarts the workers. A failure before that moment leaves the site serving exactly what it
 was serving, and the previous installation is still on disk afterwards, so going back is
-another switch rather than a rebuild.
+another switch rather than a rebuild. Sessions and carts are rows of the database, so a
+deploy that switches to a new database carries them over while the workers are stopped
+(:ref:`user_guide_deployment_carry_over`), and every deploy ends by asking the site for
+the landing page and the common searches once, so the first visitors find them ready
+(:ref:`user_guide_deployment_warm_search`).
 
 Underneath the installation root the deploy chain also expects, or creates, these
 directories: ``staged/`` for the installations above, ``opus_logs/`` for the web
@@ -89,6 +95,12 @@ being served is still the right one::
     cd /opt/opus/deploy
     ./import_and_deploy/deploy_new_code_only.sh ==<release>
 
+When the release changes neither the import nor the table schemas -- only the web
+application, its templates and static files, or the documentation -- ``--no-database``
+deploys it without writing to the database at all::
+
+    ./import_and_deploy/deploy_new_code_only.sh --no-database ==<release>
+
 When it does change them, the database has to be rebuilt under the new release first, and
 the two commands are the same pair as steps 4 and 5 of the installation chapter::
 
@@ -105,8 +117,15 @@ one is published in between.
 
 Either way the installation being replaced stays under ``staged/``, so going back is
 moving the ``deployed`` symlink onto it and restarting -- there is nothing to rebuild.
-Old installations are removed by hand, when the one after them has been trusted for a
-while.
+Going back by hand skips the carry-over, so the sessions and carts made since the deploy
+stay behind in the newer database; redeploying the previous database with
+``deploy_new_code_and_database.sh <previous database> ==<previous release>`` carries them
+back when that release can carry sessions over (:ref:`user_guide_deployment_carry_over`).
+The version specifier names the release that imported the previous database: left off,
+the newest release is installed, and the schema version check
+(:ref:`user_guide_deployment_schema_version`) refuses the database when that release
+carries another schema version. Old installations are removed by hand, when the one
+after them has been trusted for a while.
 
 The scripts
 -----------
@@ -116,28 +135,65 @@ The scripts
     that changes the table schemas. It builds a new installation under ``staged/``
     naming that database -- virtual environment, ``pip install``, generated
     ``opus.toml``, ``wsgi.py`` symlink -- creates the application's own tables
-    (``opus_manage migrate``), gathers the static files and rebuilds the dictionary and
-    the auxiliary tables, and only then switches: the ``deployed`` symlink is moved onto
-    it, the cache service is restarted, and the workers are started again. They are
-    stopped for the switch alone, not for the build. Which units those are comes from
-    ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
+    (``opus_manage migrate``), gathers the static files, reloads the dictionary and empties
+    the search tables of any searches made while the staged installation was being tried
+    out, flushing the shared cache with them
+    (``opus_import --import-dictionary --reset-search-tables``), and only then switches.
+    The import already finalized the database, so nothing else is rebuilt: the workers
+    are stopped, the sessions and carts are carried over from the database being served
+    (:ref:`user_guide_deployment_carry_over`), the ``deployed`` symlink is moved onto the
+    new installation, the cache service is restarted, the workers are started again, and
+    the common searches are warmed (:ref:`user_guide_deployment_warm_search`). The workers
+    are stopped only for the carry-over and the switch, not while the new installation is
+    being prepared.
+    Which units those are comes from ``OPUS_WEB_SERVICE`` and ``OPUS_CACHE_SERVICE``.
 
-``deploy_new_code_only.sh [<version spec>]``
+``deploy_new_code_only.sh [--no-database] [<version spec>]``
     **Only for a release that does not change the database schema** -- a bug-fix release
     against the database already being served. It reads the database name out of the
     installation currently deployed, builds a new installation at the new release naming
     that same database, runs the same migration, static-file and description-table steps,
-    and switches to it the same way. It does not upgrade anything in place.
+    and switches to it the same way. It runs no warm-up after the switch: the database
+    keeps its stored searches, and the database server its cache of the rows they read,
+    so there is nothing to warm (:ref:`user_guide_deployment_warm_search`). It refuses,
+    before writing anything, while an incremental update's generation is pending
+    (``opus_import --check rebuild``). The database does not change, so there is nothing
+    to carry over. It leaves the
+    search tables alone, so the searches users have made are still stored after the
+    release; a release that changes either search table's columns changes the schema
+    version, and is deployed with ``deploy_new_code_and_database.sh``.
 
-    Whether a release changed the schemas is the operator's call, from the release notes:
-    a database carries no record of the release that wrote it, so nothing here can tell
-    the two cases apart. When they did change, the deploy is an import under the new
-    release followed by ``deploy_new_code_and_database.sh``.
+    The description-table step rebuilds ``param_info``, ``partables``, ``table_names`` and
+    the dictionary from the new release, so a release that changed a label, a tooltip or
+    a category describes itself. Each table is built beside the live one and swapped in
+    with one atomic rename, so the workers still serving the old release never find one
+    missing or partly filled. The same step runs ``opus_import --update-mult-info``,
+    which writes the release's ``mult_options`` and ``mult_overrides`` over the ``mult``
+    rows in place, so a release that renamed a checkbox value shows the label it gives once
+    the switch has restarted the workers (:ref:`user_guide_deployment_rename_mult_value`).
+    It changes no id, so no observation row is touched.
+
+    ``--no-database`` writes nothing to the database: it skips Django's migrations and
+    the description-table step, ``--update-mult-info`` with it, and the pending-generation
+    check, which only that step needs; it still installs the release, collects its static files and switches to it. It is for a release that
+    changes neither the import nor the table schemas -- the web application, its
+    templates and static files, the documentation. Whether a release is one of those is
+    your call, from its release notes, as whether it changed the schema is. It still
+    makes the schema version check, which only reads, and it refuses a release for which
+    Django has a migration to apply (``opus_manage migrate --plan --check``), naming the
+    plain code-only deploy as the one to run, so a release that crosses a Django version
+    with a new contrib migration cannot skip it unnoticed. A Django that cannot start is
+    refused too, with its own output.
+
+    The database records its schema version, and the script refuses, before writing
+    anything, a release whose version differs (:ref:`user_guide_deployment_schema_version`).
+    When the schemas did change, the deploy is an import under the new release followed
+    by ``deploy_new_code_and_database.sh``.
 
 ``update_deploy_scripts.sh [<version spec>]``
-    Brings this copy of the chain up to a release: it upgrades ``rms-opus`` in
-    ``OPUS_DEPLOY_VENV`` and rewrites the scripts from it. **The first command of every
-    upgrade**, before either deploy script.
+    Brings this copy of the chain up to a release, or to a git revision: it upgrades
+    ``rms-opus`` in ``OPUS_DEPLOY_VENV`` and rewrites the scripts from it. **The first
+    command of every upgrade**, before either deploy script.
 
     It rewrites the file it is running from, which is safe because
     ``opus_deploy_scripts`` replaces each file by renaming a new one over it rather than
@@ -154,7 +210,10 @@ The scripts
     release being deployed rather than under whatever is serving, and the result is an
     installation a deploy can switch to. The import itself is ``opus_import_all``, the
     installed command, so the order the bundle sets are imported in comes from the
-    release rather than from these scripts.
+    release rather than from these scripts. It registers every bundle, imports them
+    with the importers ``[import] importers`` and ``workers`` ask for (one, by default,
+    since ``workers`` defaults to 1),
+    and finishes the database; the database is new, so it erases nothing.
 
     What happens to the database afterwards is what ``deploy.env`` asked for: with
     ``OPUS_DB_DUMP_DIR`` empty the import ends when the database is built, which is
@@ -167,16 +226,290 @@ The scripts
     ``rms-opus`` separately, so leaving it off the second is how a release ends up
     serving a database another release built.
 
-The optional argument of all three is a **PEP 440 version specifier** appended to the
-distribution name -- ``==<release>`` for a particular release, omitted for the newest.
+``run_incremental_opus_update.sh [<version_spec>] [--continue] [--drop <bundle>[,<bundle>...]] [<bundle> ...]``
+    **Updates bundles of the database being served**, without a full import: each
+    ``<bundle>`` is imported, replacing the copy the database holds or adding one it
+    lacks, and each bundle ``--drop`` names is removed. A bundle named both ways is
+    imported. At least one bundle or ``--drop`` is required; without either it prints
+    its usage line and exits non-zero, having run nothing. The update is written into
+    the served database as a pending **generation**, which the site does not show until
+    ``promote_generation.sh`` switches it in
+    (:ref:`user_guide_deployment_incremental_update`).
+
+    ``--continue`` writes into the pending generation an earlier update began instead of
+    beginning one: it runs every command below but ``--begin-generation``. It serves two
+    purposes. One is to **break an update into several commands** on purpose: the first
+    names some of the bundles and begins the generation, and each later one, given
+    ``--continue``, adds more bundles or drops to the same generation, which none of them
+    shows until ``promote_generation.sh`` switches it in. The other is to **go on with an
+    update that stopped part way**, once its cause is fixed, naming again the bundles it
+    named. Before writing anything it asks, with ``opus_import --check
+    continue``, whether the served database has a pending generation that no
+    ``opus_import`` is still writing, and aborts before writing the database when it has
+    not: an import with no pending generation would write the rows the site serves. The
+    installation it built and its log directory remain.
+
+    It builds an installation of the release under ``staged/`` naming the served
+    database, with a log directory of its own, and runs these against it, each as its
+    own process, stopping at the first that fails or writes to ``ERRORS.log``::
+
+        opus_import --begin-generation                       # unless --continue is given
+        opus_import --require-pending-generation --delete-bundles <bundle> ...
+                                                             # when --drop names any
+        opus_import --require-pending-generation --import <bundle> ...
+                                                             # when bundles are named
+        opus_import --require-pending-generation --finalize
+        opus_import --require-pending-generation --validate
+        opus_import --require-pending-generation --write-schema-version
+
+    ``--require-pending-generation`` makes a command that finds no pending generation --
+    after an ``opus_import --abandon-generation`` run between two of them -- write
+    nothing, rather than the rows the site serves; the update then stops, saying so.
+
+    Then it dumps the database and loads it onto a second server as
+    ``run_full_opus_import.sh`` does, under a new name, when ``deploy.env`` asks for that.
+    It runs detached, mails the log to ``OPUS_IMPORT_MAIL_TO`` if that names anyone, and
+    holds the deploy lock until it ends. Without a version spec it installs what is being
+    served, read from the deployed installation: its release, or, for an installation
+    built from a git revision, the commit pip recorded it was built from. It aborts before
+    changing anything when the installation is a development build with no recorded
+    commit, which neither PyPI nor the repository can give again.
+
+``promote_generation.sh [--revert]``
+    **Switches the pending generation in.** It first asks, with ``opus_import --check
+    switch``, whether the switch would be refused, and stops nothing when it would. It
+    then stops the web service, runs
+    ``opus_import --switch-generation`` from the deployed installation, restarts the cache
+    service, starts the web service, and warms the common searches
+    (:ref:`user_guide_deployment_warm_search`). **If the switch fails, the web service
+    stays stopped**, since starting it on a half-switched database would serve one
+    generation's description tables, carts and caches against the other's rows. Running
+    ``promote_generation.sh`` again completes the switch, and ``promote_generation.sh
+    --revert`` goes back. With ``--revert`` it asks ``opus_import --check revert`` and runs
+    ``opus_import --revert-generation`` the same way, which serves the previous generation again, and starts the web service only
+    when that succeeds. It holds the deploy lock throughout.
+
+The optional ``<version spec>`` of each is a **PEP 440 version specifier** appended to the
+distribution name -- ``==<release>`` for a particular release, omitted for the newest, or,
+for ``run_incremental_opus_update.sh``, for what is being served -- or **"@" and a git
+branch, tag or commit**, which installs that revision of the rms-opus repository instead
+of a release (:ref:`user_guide_deployment_revision`). Each script refuses anything else
+before it runs anything.
+
+**One deploy runs at a time.** Each deploy script takes an exclusive ``flock`` on
+``deploy.lock`` in ``OPUS_DIR`` right after reading ``deploy.env``, before it reads which
+database is being served, and holds it until the switch is done. A deploy started while
+another holds it stops at once, having changed nothing, with::
+
+    ERROR: another deploy holds /opt/opus/deploy.lock; wait for it to finish.
+
+Otherwise a deploy that switched while another was building would leave the other
+carrying sessions and carts over from a database that had stopped being served, and the
+two would move the ``deployed`` symlink in turn. The lock goes with the deploy's shell, so
+a deploy that failed or was interrupted leaves nothing to remove.
+``run_full_opus_import.sh`` does not take it: an import builds beside the served
+installation, and runs while deploys come and go. ``run_incremental_opus_update.sh``
+takes it, before it reads the served database, and holds it until the update ends, copy
+included, because the update writes the database being served: a code-only deploy
+rebuilds description tables the update also builds, a switch changes the generation it is
+writing, and either would spoil the dump that ends it. ``promote_generation.sh`` takes it
+too, since it changes what is served.
+
+**A refused sudo is said, never silent.** Both deploy scripts ask for the ``sudo``
+password with ``sudo -v`` before anything long runs, so the switch at the end finds it
+cached; a password ``sudo`` does not accept ends the deploy there, with nothing built or
+switched. Every service action of a promotion, and of ``promote_generation.sh``, is
+checked, and a failed one names the ``systemctl`` command and its status: a failed stop
+changes nothing; a failed start after a step that changed nothing says the site is down;
+a failed start after the switch is made ends the script with the site down on the new
+installation or generation, naming the command that starts it; a failed cache restart is
+a warning, and the deploy goes on.
 
 ``database/`` holds ``dump_db.sh`` and ``load_db.sh``, which copy a finished database to
 a second server: the first writes ``<database>.sql`` into ``OPUS_DB_DUMP_DIR`` from
-``OPUS_DB_HOST``, the second loads it into ``OPUS_PEER_DB_HOST``. Neither knows the name
-of any machine. ``run_full_opus_import.sh`` runs the first at the end of an import when
-``OPUS_DB_DUMP_DIR`` names a directory and the second as well when there is a peer, and
+``OPUS_DB_HOST``, or ``<dump name>.sql`` when a second name is given
+(``dump_db.sh <database> <dump name>``); the second loads a dump into
+``OPUS_PEER_DB_HOST``, under a second name when one is given
+(``load_db.sh <dumped database> <new database>``) and under the dump's name otherwise, and
+refuses a database that is already there. Neither knows the name of any machine. Both run
+scripts, ``run_full_opus_import.sh`` and ``run_incremental_opus_update.sh``, end with
+them, by the same ``deploy.env`` variables: the first when ``OPUS_DB_DUMP_DIR`` names a
+directory, and the second as well when there is a peer. A full import dumps and loads its
+new database under its own name; an update dumps the served database under a new name,
+which its log gives, so a dump taken of the served database before the update is left as
+it was, and loads it under that name. The dump is one consistent snapshot that takes no table
+locks (``mysqldump --single-transaction``), so a database being served is dumped whole
+while the site goes on writing carts and searches to it.
 ``scripts/import/clone_database.sh`` in the repository copies one database to another on
 the same server.
+
+.. _user_guide_deployment_checks:
+
+Asking before acting
+~~~~~~~~~~~~~~~~~~~~
+
+``opus_import --check <action>`` says whether an action would be refused, reading the
+database ``OPUS_CONFIG`` names on a read-only connection and writing nothing. The deploy
+scripts ask it before they act, and an operator can ask it the same way, from the
+installation that would act:
+
+.. code-block:: bash
+
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import --check switch
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Action
+     - What it asks
+   * - ``serve``
+     - Whether this release would serve the database: the schema version check below.
+   * - ``switch``
+     - Whether ``opus_import --switch-generation`` would be refused: no generation ready
+       to switch, another generation command running, an ``opus_import`` still writing
+       the generation, or a purge or a rebuild that stopped part way.
+   * - ``revert``
+     - Whether ``opus_import --revert-generation`` would be refused, for the same reasons
+       and when no switch can be reverted.
+   * - ``continue``
+     - Whether an update could write into the pending generation without beginning one:
+       refused when no generation is pending, another generation command is running, or
+       an ``opus_import`` is still writing it.
+   * - ``rebuild``
+     - Whether the served description tables could be rebuilt in place, as
+       ``deploy_new_code_only.sh`` rebuilds them: refused while a generation is pending,
+       another generation command is running, or a switch, a revert or a purge stopped
+       part way.
+
+It exits 0 when the action would run, and 3 when it would be refused, having logged why
+on a line beginning ``--check <action>: refused:``. Any other status means the database
+could not be read. The answer is logged as information, so a refusal leaves nothing in
+``ERRORS.log``. ``--check`` runs alone: it is refused with any other step.
+
+.. _user_guide_deployment_schema_version:
+
+The schema version check
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+A finished database records which generation of the table schemas imported it, in a
+one-row ``schema_version`` table holding a version and a state. The import's last step,
+``opus_import --write-schema-version``, writes it: ``opus_import_all`` runs it after
+validation, and only when validation logged no error, so a database
+``run_full_opus_import.sh`` built cleanly has it. Each release carries
+its own version, and the web application serves a database only when the row holds that
+version in the ``ready`` state. For any other database it answers every request with a
+503 whose text names the remedy.
+
+Both deploy scripts make the same check right after building the new installation,
+with the new installation's ``opus_import --check serve``, which only reads, before
+``opus_manage`` or any other ``opus_import`` touches the database, and stop there when it
+fails. Nothing has been written to the database at that point, and the installation
+being served is untouched:
+
+* **No row**: no release finished the database. Re-import it under the release. If this
+  release imported it and only the finishing steps are missing, run them against it:
+  ``opus_import --finalize``, ``--import-dictionary`` and ``--validate``, then
+  ``--write-schema-version``. ``--finalize`` adds the indexes and keeps one copy of
+  each observation two bundles share, which a database stamped without it would lack.
+* **Another version**: a different release imported it. Re-import it under this release
+  and deploy it with ``deploy_new_code_and_database.sh``.
+* **A state other than** ``ready``: an append is still writing to it, or stopped part
+  way. Finish it, ending with ``opus_import --write-schema-version``
+  (:ref:`user_guide_deployment_adding_bundles`).
+
+``--write-schema-version`` never changes a version a database already records, so a
+release cannot claim a database another release imported.
+
+.. _user_guide_deployment_carry_over:
+
+Sessions and carts across a deploy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A user's session and cart are rows of the database being served, in ``django_session``
+and ``cart``. A new database starts with both empty, so ``deploy_new_code_and_database.sh``
+copies them across. It reads the database being served from the deployed installation's
+``opus.toml``, prints it as ``Sessions and carts carried over from:``, and, once the
+workers have stopped and before the switch, runs this against the new database::
+
+    opus_import --carry-over-sessions-from <database being served>
+
+In one transaction, it empties the new database's two tables, copies every session that
+has not expired and owns a cart row, and copies each cart row of those sessions whose
+observation the new database holds, matched by OPUS ID. A failure rolls all of it back.
+The log says how many sessions and cart rows it copied, and how many cart rows it dropped
+because their session had expired or their observation is not in the new database.
+
+A session without a cart is not copied. OPUS keeps nothing else in a session that a
+visitor would miss: a marker that the session exists, and the running total that caps
+one session's downloads, which starts again. A staff member signed in to Django's admin
+signs in again. The served database holds such a session for every caller of the public
+API that sends no cookie, so copying them would lengthen the time the site is down.
+
+* **A first deploy**, with no deployed installation, carries nothing; nor does a redeploy
+  of the database already being served. ``deploy_new_code_only.sh`` keeps the database, so
+  it has nothing to carry.
+* **If the carry-over fails**, the workers are started again on the installation that was
+  serving, nothing has switched, and the deploy exits with failure. The deploy first reads
+  the release's ``opus_import --help`` to learn whether it has the option; if that fails,
+  the deploy stops the same way.
+* **A release without the option**, such as an older one being deployed again, cannot
+  carry sessions over: its ``opus_import --help`` succeeds and lists no
+  ``--carry-over-sessions-from``. The deploy warns, leaves the sessions and carts where
+  they are, and switches.
+* **Going back by moving the** ``deployed`` **symlink by hand** skips the carry-over, so
+  the sessions and carts made since the deploy stay in the newer database. Redeploying
+  the previous database with ``deploy_new_code_and_database.sh <previous database>
+  ==<previous release>``, naming the release that imported it, carries them back, since
+  the step empties its target first and so runs in either direction, but only when that
+  release has ``--carry-over-sessions-from``.
+
+``--carry-over-sessions-from`` refuses to run with any other step, and refuses a database
+that is the one it would write into, before it changes anything.
+
+.. _user_guide_deployment_warm_search:
+
+Warming the common searches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every visitor's first search is the empty one, and most next choose one planet, mission or
+instrument. A search's results are built in the database the first time anyone asks for
+it, the rows it read are then in the database server's memory, and its answers are
+cached in memcached. A new database has no search built and none of its rows in memory, a
+switched-in generation's rows are new, and both deploys restart memcached. So
+``deploy_new_code_and_database.sh`` and ``promote_generation.sh`` run this once the
+workers are started again, and it takes minutes. ``deploy_new_code_only.sh`` does not: the
+database it goes on serving keeps its searches, and the server its memory of them::
+
+    opus_manage warm_search
+
+It asks the site's own API, over HTTP, for what those searches show: for the empty
+search, its result count and first page, the default widgets and the menu, and its counts
+for every mult field, so that opening any mult widget is a cache hit; then, for one search
+per value of each common field -- each planet, mission and instrument, among others -- the
+same count, first page, default widgets and menu. The fields come from ``api/fields.json``
+and the values from the empty search's counts, so they are always the database's own. It
+prints each request's status and time, and the total. The site is already serving while it runs.
+
+* **It asks the site at its public URL**, the configuration's ``public_url`` under
+  ``/opus/``, so the server has to be able to reach that address. ``--url`` names another,
+  such as ``http://localhost/opus/``; the host it names must be in ``allowed_hosts``.
+* **Several requests are in flight at once**, as many as ``--parallel`` says
+  (``opus_manage warm_search --help`` gives the default), so they reach several of the web
+  server's workers. The empty search's count is asked for
+  alone first, since its other requests read the results it builds, and each common
+  search's requests run in order, its count first.
+* **A failure is a warning**, not a failed deploy: the site serves, and the first visitors'
+  requests build the searches instead.
+* **A search's built results are in the database**, so they are found whatever the cache
+  holds; on Django's per-process cache, without memcached, only the cached answers are
+  lost.
+* ``deploy_new_code_only.sh --no-database`` skips it, since its requests store searches
+  and a session as visitors' do.
+
+Run it by hand after anything else that empties the cache, such as the steps in
+:ref:`user_guide_deployment_after_import`.
 
 .. _user_guide_deployment_config:
 
@@ -240,44 +573,49 @@ Two things that always have to happen
 
 After **anything** that changes the database, and both are easy to forget:
 
-**1. The shared Django cache has to be emptied**, because it holds result counts, mult
-counts, range endpoints and product-type lists keyed by a search that now means something
-else::
+**1. The shared Django cache has to be emptied**, because it holds each search's number
+and answers computed from the old data: mult counts, range endpoints and product-type
+lists::
 
     OPUS_CONFIG=/opt/opus/deployed/opus.toml \
         /opt/opus/deployed/opus_venv/bin/python -m opus_app.clear_django_cache
 
 That module configures the cache backend and calls ``clear()``, and does nothing else.
 Restarting the cache service has the same effect, and is what a deploy does -- the unit
-``OPUS_CACHE_SERVICE`` names.
+``OPUS_CACHE_SERVICE`` names. Without memcached there is no shared cache: the command
+succeeds but empties nothing the workers use, because each worker keeps its cache in its
+own memory. Step 2 empties those.
 
-**2. Every worker process has to be restarted**, because some caches are module-level
-dictionaries private to a process -- the ``param_info`` lookup in
-:mod:`opus_app.apps.search.views` and the mult-label lookup in
-:mod:`opus_app.apps.tools.db_utils`. **Nothing running outside a worker can reach those**,
-``clear_django_cache`` included, so restarting the application is the only thing that
-clears them. See :ref:`dev_guide_webapp_caching`.
+**2. Every worker process has to be restarted**, because each one keeps its own copy of
+the tables only an import changes -- ``param_info``, ``table_names``, ``partables``,
+``definitions``, ``mult_field`` and ``mult`` -- and, without memcached, its own cache.
+**Nothing running outside a worker can reach those**, ``clear_django_cache`` included, so
+restarting the application is the only thing that clears them. See
+:ref:`dev_guide_webapp_caching`.
 
 .. _user_guide_deployment_runbook:
 
 The import runbook
 ------------------
 
-A production import is long -- hours to days for the full holdings -- and it replaces
-what users see, so it is done deliberately.
+A production import of the full holdings is long, and longer the fewer importers and
+workers it is given (``OPUS_IMPORT_IMPORTERS`` and ``OPUS_IMPORT_WORKERS`` in
+``deploy.env``; :ref:`user_guide_installation_full_import` gives a measured run). It
+replaces what users see, so it is done deliberately.
 
 1. **Import into a new database, under an installation of the release being deployed.**
    ``run_full_opus_import.sh`` does both: a new installation under ``staged/``, a
    database named for the moment it started, and ``import`` pointed at the installation
    doing the work. Neither the database being served nor the installation serving it is
    touched, which is what makes every step after this one reversible.
-2. **Read the error log.** The import's own exit status is not the whole story:
-   ``--validate-perm`` and the dictionary import both report through the log rather than
-   through the status, so an automated run gates on ``ERRORS.log`` being empty.
-   :ref:`dev_guide_import_verifying` is the full check.
-3. **Compare the new database against the one being served.** Both are named before
-   anything is erased: ``opus_import_all`` names the one it is about to build, and the
-   one being served is the ``schema`` line of ``deployed/opus.toml``. Neither prints row
+2. **Read the error log.** The import exits with failure, before the schema is marked
+   ready, when a bundle fails or a finishing step -- the finalization, the dictionary,
+   the validation -- reports a failure or logs an error, and ``ERRORS.log`` says why. An
+   automated run gates on ``ERRORS.log`` being empty all the same, which catches an
+   error logged anywhere. :ref:`dev_guide_import_verifying` is the full check.
+3. **Compare the new database against the one being served.** The new one is named by
+   the installation ``import`` points at (``basename "$(readlink /opt/opus/import)"``),
+   and the one being served is the ``schema`` line of ``deployed/opus.toml``. Neither prints row
    counts; comparing those is a separate query you run yourself.
 4. **Exercise the new database before switching the public site to it.** The staged
    installation is a complete OPUS pointed at it, and naming its own ``opus.toml`` is
@@ -297,8 +635,324 @@ what users see, so it is done deliberately.
    under ``staged/``, and going back to it is moving the same symlink.
 
 **An import can be resumed rather than restarted.** The per-step options let a run redo
-only the part that failed, and the import tables survive a failure precisely so that this
-is possible -- see :ref:`dev_guide_import_two_namespaces`.
+only the part that failed: every import deletes each bundle before it writes it, so a
+failed bundle is imported again by naming it, and an interrupted
+``opus_import --finalize`` is completed by running it again -- see
+:ref:`dev_guide_import_write_paths`.
+
+.. _user_guide_deployment_adding_bundles:
+
+Adding bundles to a database that is not being served
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A finished database the public site is not serving -- the one a full import has just
+built, before the switch -- can take more bundles, or fresh copies of ones it holds,
+without being imported again from the start. Run ``opus_import`` from the installation
+that built it, with that installation's own configuration, which names the database::
+
+    # Each command runs only if the one before it succeeded.
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --import COISS_2115 &&
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --finalize &&
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --validate &&
+    OPUS_CONFIG=/opt/opus/import/opus.toml \
+        /opt/opus/import/opus_venv/bin/opus_import --write-schema-version
+
+Because the database already holds this release's schema version, the import is an
+**append**: each named bundle is deleted from the database and loaded again, or added if
+the database did not hold it. The first command marks the database ``appending``, and
+from then until ``--write-schema-version`` marks it ``ready`` again, both deploy scripts
+refuse it and a web application that starts on it answers every request with a 503
+(:ref:`user_guide_deployment_schema_version`). A web server already serving the database
+checks only once, as it starts, so it would go on serving the half-changed tables --
+which is why this is done only to a database nothing is being served from.
+``opus_import --delete-bundles`` marks a finished database ``appending`` in the same
+way. ``--finalize`` drops and re-creates the ``cart`` table empty, so every cart the
+database holds is lost, not only entries for the appended bundles; a database that has
+never been served holds none. Read ``ERRORS.log`` afterwards, as for any
+import. A database another release imported is refused rather than appended to, and is
+re-imported under this one instead.
+
+**A bundle that fails has to be dealt with before the database can be finished.** The
+import records every bundle it takes on, and one whose import fails or logs an error is
+recorded as failed: ``--finalize`` and ``--write-schema-version`` both refuse, naming
+it, and the database stays ``appending``. Either import it again -- the next
+``opus_import --import`` takes up every failed or pending bundle before the ones it
+names -- or remove it with ``opus_import --delete-bundles <bundle>``, which deletes its
+rows and its record. Then run the three closing commands again. A bundle left
+``importing`` by an import that was killed is taken up only after
+``opus_import --requeue <bundle>`` returns it.
+
+**A bundle imported again keeps its observations' ids.** Two bundles can hold the same
+observation -- a calibrated bundle and its raw counterpart -- and the finished database
+keeps the copy from the bundle that was registered later, which on a full import is the
+later one in import order. Importing a bundle again does not change which copy that is,
+so bundles that share observations are deleted and imported again together.
+
+To change the bundles of the database being served, use the incremental update instead
+(:ref:`user_guide_deployment_incremental_update`).
+
+.. _user_guide_deployment_incremental_update:
+
+Updating bundles of the database being served
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A bundle that changed, a bundle new to the holdings, or a bundle that has to go is
+written into the database being served, without a full import and without a second
+database. The update is a new **generation** of the database: the site goes on showing
+the generation it showed before while the update imports, and switches to the new one
+only when you switch it in. The steps, from the deploy directory::
+
+    ./import_and_deploy/run_incremental_opus_update.sh COISS_2115 --drop COISS_2001
+    #    ... wait for the mail; read the log and ERRORS.log ...
+    ./import_and_deploy/promote_generation.sh
+    #    ... check the site ...
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import --purge-generations
+
+1. **Update.** ``run_incremental_opus_update.sh`` imports the bundles it names and drops
+   the ones ``--drop`` names, in a pending generation the site does not show, under the
+   release being served unless given a version specifier. It builds and installs its own
+   installation first. Its first command, ``opus_import --begin-generation``, then
+   refuses, writing nothing, while a pending generation exists or while the last switch
+   has not been purged. With ``--continue`` it writes into the pending generation
+   instead, and stops before writing the database when there is none
+   (``opus_import --check continue``). An update can be broken into several runs this
+   way: the first begins the generation, each later one, given ``--continue``, adds
+   bundles or drops to it, and the generation is checked and promoted once, after the
+   last.
+2. **Check.** Read its log, and ``ERRORS.log`` in the log directory it names. It stops at
+   the first command that fails or logs an error, before the generation is marked ready
+   to switch, and its log names the commands left to run. Once the cause is fixed, run
+   the update again with ``--continue`` and the same bundles, or run those commands from
+   the installation the update built, or throw the generation away (below). An import
+   stopped while it held a bundle -- killed, or the server restarted -- leaves that
+   bundle ``importing``, and the next import refuses it until ``opus_import --requeue
+   <bundle>``, run from the installation the update built, returns it to the queue.
+3. **Promote.** ``promote_generation.sh`` first asks whether the switch would run
+   (``opus_import --check switch``), and stops nothing when it would be refused: no generation ready to switch, another
+   generation command running, an ``opus_import`` still writing the update, a purge
+   that stopped part way, which ``opus_import --purge-generations`` finishes, or a rebuild
+   of the served auxiliary tables, such as a code deploy's, that stopped part way, which
+   running the rebuild again finishes. It then
+   stops the web service, switches the generation in, restarts the cache service, starts
+   the web service and warms the common searches. The site is down only for the switch.
+   If the switch fails the web service stays stopped: run ``promote_generation.sh``
+   again, which completes the switch, or ``promote_generation.sh --revert``, which undoes
+   the steps of the switch that ran. A switch refused after the stop changed nothing, and
+   the web service is started again when it was serving before.
+4. **Purge.** Once the site has been checked, ``opus_import --purge-generations`` deletes
+   the rows the switch replaced, while the site serves. Until it runs, the switch can be
+   undone; once it starts, it cannot. If it stops part way, run it again, which
+   finishes it; until then the revert, the switch, a new update and a code deploy's
+   rebuild of the auxiliary tables are refused.
+
+**Undoing an update.** Before the purge, switch back and then throw the update away::
+
+    ./import_and_deploy/promote_generation.sh --revert
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import --abandon-generation
+
+``promote_generation.sh --revert`` stops the web service, serves the previous generation
+again, and starts the web service only when that succeeds; the reverted update is left
+pending, so ``promote_generation.sh`` switches it in again. An update that failed, or one
+not yet switched in, is thrown away with the ``--abandon-generation`` command alone. After
+a switch that stopped part way it is refused, as is the purge after a revert that stopped
+part way, until ``promote_generation.sh`` or ``promote_generation.sh --revert`` has
+finished what was begun: either would delete rows the carts were already pointed at.
+
+**Deploy no code while a generation is pending.** A code-only deploy rebuilds the
+auxiliary tables, and with a generation pending it would leave them for the switch rather
+than serving them, so ``deploy_new_code_only.sh`` refuses, before writing anything, unless
+given ``--no-database``; promote or abandon the update first.
+
+**Take a dump first when no second server holds a copy.** The update writes the database
+being served, so a copy is the way back from anything the generation commands cannot
+undo. With ``OPUS_DB_DUMP_DIR`` set::
+
+    ./database/dump_db.sh <the database being served>
+
+The update's own dump at its end is written under the new name its log gives, so it
+leaves this one as it was.
+
+**A second server receives the update as a new database.** With ``OPUS_PEER_DB_HOST`` set,
+the update ends by dumping the whole updated database and loading it onto that server
+under a new name, which its log gives; the database that server serves is never written.
+Nothing serves the loaded database there, so the switch needs no stop, and the purge
+follows it at once: the way back on that server is the database it was serving, not a
+revert, and until the purge the loaded database holds both generations' rows and serves
+through the view's condition. On that server::
+
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import \
+        --override-db-schema <that database> --switch-generation
+    OPUS_CONFIG=/opt/opus/deployed/opus.toml \
+        /opt/opus/deployed/opus_venv/bin/opus_import \
+        --override-db-schema <that database> --purge-generations
+    ./import_and_deploy/deploy_new_code_and_database.sh <that database> ==<release>
+
+The deploy carries the sessions and carts over from the database that server was serving
+(:ref:`user_guide_deployment_carry_over`).
+
+**A bundle imported again by an update takes a new place in the import order**, after every
+bundle the database holds, so where it shares an observation with a bundle the update
+leaves alone, its copy is the one kept. When the other copy has to win, do a full import.
+
+.. _user_guide_deployment_several_importers:
+
+Sharing a full import between processes or computers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``opus_import_all`` divides the import among **importers**, processes that each take
+the largest bundle no other has taken, import it, and take the next, until none is left.
+``--workers`` is the total of worker processes on the computer and ``--importers`` how
+many importers share them; ``[import] workers`` and ``[import] importers`` give the
+defaults, 1 and 4. The importers are capped at the total of workers, so the defaults
+start one importer of one worker. A total above the ceiling, ``[import] cpu_fraction`` of
+the computer's cores, is lowered to it, and the run's first line names it. Six importers
+of four workers each, for one, need a ceiling of at least 24, which 30 cores give at a
+``cpu_fraction`` of 0.8::
+
+    OPUS_CONFIG=<config> opus_import_all --override-db-schema <database> --importers 6 --workers 24
+
+Adding ``--dry-run`` prints the division and each importer's command without running
+anything. The first line of the run states the cores, the fraction, the ceiling and the
+workers per importer. On a terminal it shows a table of the running importers and the
+totals; under ``nohup`` it writes a line per finished bundle and the totals every
+``[import] status_interval_minutes``. ``OPUS_CONFIG=<config> opus_import_all --status
+--override-db-schema <database>`` prints the same table from any computer.
+
+An importer that dies (killed, or out of memory) on the computer it runs on is noticed
+within seconds: its bundle's rows are deleted, the bundle goes back to the queue, and
+another importer is started in its place. One whose computer loses power or its network
+is noticed only when the database server gives up on its connection, about two hours
+later with Linux's default keepalive settings; running ``KILL <id>`` on the server,
+with the ``<id>`` that ``SELECT IS_USED_LOCK('<lock>')`` returns for the lock the
+importer's log names, frees it at once. A bundle whose importer dies twice is marked
+failed instead. A failed bundle stops the run before the database is finished, naming
+the bundle and its importer's log; after the fix, ``opus_import_all --requeue <bundle>`` and running
+``opus_import_all`` again import only what is left. Ctrl-C once (or ``kill -INT`` under
+``nohup``) lets every importer finish its bundle and stops; twice returns their bundles
+to the queue at once, and pressing it again does not interrupt that. Either way the
+database is left unfinished, and running the same command again resumes. The reason a
+run stops, with each failed bundle's importer log, is printed as it exits and written
+to ``opus_import_all_<time>.log`` in ``[paths] import_log_dir``. A bundle an importer
+of ``opus_import_all`` held is returned to the queue by the coordinator, or by
+``opus_import_all --status --recover``, once its importer is gone; ``--requeue``
+refuses it.
+
+Another computer can join a running import: with a configuration naming the same
+database server, database and holdings, ``opus_import_all --join --override-db-schema
+<database> --importers <M> --workers <N>`` starts importers there under that computer's
+own ceiling, adding ``--sets COISS,COVIMS`` on a computer that holds only those bundle
+sets. It never registers or finishes anything, starts importers only while there are
+bundles they may claim, and can stop at any time; the first computer waits for its
+importers before finishing. The database is the same whatever
+the number of importers, apart from how a checkbox value new to the import is numbered
+and, where bundles disagree about a value's spelling or label, which one is kept.
+
+.. _user_guide_deployment_rename_mult_value:
+
+Renaming a checkbox value
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A checkbox value's label, whether it is offered, its group and its place in the list
+are stored in its ``mult`` row, beside the id the observations hold
+(:ref:`dev_guide_database_schema_mult`). None of them is part of an observation, so they
+change without an import:
+
+1. **Edit the column's table schema.** For a column whose values the import discovers,
+   add an entry to its ``mult_overrides`` naming the stored ``value`` and the
+   ``label`` to show -- or ``display``, ``grouping`` or ``pin`` -- or change the entry
+   already there. For a column whose schema lists its values in ``mult_options``, change that
+   list's entry instead, keeping its id and its value: only the label, the pin, the
+   display flag and the group of an entry change in place. :ref:`dev_guide_table_schemas`
+   gives both formats.
+2. **Release** the change (:ref:`user_guide_deployment_releasing`).
+3. **Deploy it** with ``deploy_new_code_only.sh ==<release>``. Its database step runs
+   ``opus_import --update-mult-info``, which writes the schemas' ``mult_options`` and
+   ``mult_overrides`` over the stored ``mult`` rows and ranks the changed fields again.
+   Ids and values never change, so no observation row is touched. If a ``mult_options``
+   entry gives a stored id another value, or a stored value another id, the step writes
+   nothing, logs each such entry in ``ERRORS.log``, and exits with failure, which stops
+   the deploy. The switch at the end restarts the cache service and the web service, and
+   the restarted workers read the label.
+
+``deploy_new_code_only.sh --no-database`` skips the database step, so it renames
+nothing. A database a full import built already carries the overrides, because
+finalization applies them, so a release deployed with ``deploy_new_code_and_database.sh``
+needs no extra step.
+
+.. _user_guide_deployment_prune:
+
+Pruning stored searches
+-----------------------
+
+The web application stores every search a user makes: one row in ``user_searches``, and
+the search's results, one row per matching observation, in ``search_results``. The first
+request for a search stores its results and every later request reads them, so
+``search_results`` grows with every new search and no request removes anything from it.
+``opus_manage prune`` is what bounds it::
+
+    opus_manage prune [--max-rows ROWS] [--unused-days DAYS] [--dry-run]
+
+It needs ``OPUS_CONFIG``, like every other OPUS program. It first reports the state of the
+table (below), and then removes, in this order and only as much as it must:
+
+1. **The results of the searches the previous prune removed.** A request that read a
+   search just before the prune removed it may still be reading its results, so they
+   stay until the next run.
+2. **Searches, least recently used first**, until the searches left hold no more than
+   ``--max-rows`` rows of ``search_results``, and in any case every search nobody has
+   used for ``--unused-days`` days. A search whose results a request is storing at that
+   moment, or one used since the prune read when it was last used, is left alone, and
+   counted as skipped.
+3. **Expired sessions**, through Django's own ``clearsessions``.
+4. **Cart rows whose session no longer exists.**
+
+Removing a search costs nothing but speed: the next request for it runs the search and
+stores its results again. A search's last use is recorded at most once a day, so a search
+in daily use always has a recent stamp: it is never removed for going unused, and it is
+among the last removed to bring the table down to ``--max-rows``.
+
+**What every run reports**, before it changes anything: the rows ``search_results``
+holds, how many of them belong to searches an earlier prune removed, the number of
+searches, the table's data and index bytes and the bytes per row they come to, and how
+many searches and rows this run removes and keeps. Then it reports what it removed, one
+line per kind.
+
+``--max-rows ROWS``
+    The rows the searches left may hold. The table also holds, until the next run, the
+    results of the searches this run removed. Default: the configuration's
+    ``[django] search_results_max_rows``, which is ``50000000`` when the file does not
+    set it (:ref:`user_guide_installation_configuring`). It must be at least 0.
+
+``--unused-days DAYS``
+    Remove every search unused for this many days, however few rows the table holds.
+    Default ``30``. It must be at least 1.
+
+``--dry-run``
+    Print the report and change nothing.
+
+**Sizing** ``--max-rows``. Decide how much disk ``search_results`` may take, and divide it
+by the bytes per row ``opus_manage prune --dry-run`` reports on the server itself; that is
+the figure to give ``search_results_max_rows`` or ``--max-rows``. Deleting rows does not
+shrink the table's file on disk, but InnoDB reuses the pages the deleted rows freed, so a
+prune run regularly keeps the table near the size its row limit implies rather than
+letting it grow.
+
+**Schedule it hourly**, from the crontab of the account ``OPUS_USER`` names, through the
+``deployed`` symlink so that it follows each deploy, under ``flock`` so that a run still
+going an hour later is not joined by the next::
+
+    0 * * * *  flock -n /opt/opus/opus_logs/prune.lock env OPUS_CONFIG=/opt/opus/deployed/opus.toml /opt/opus/deployed/opus_venv/bin/opus_manage prune >> /opt/opus/opus_logs/prune.log 2>&1
+
+**Nothing in the deploy scripts runs it or installs that line**: each installation adds it
+to its own crontab, as it does the log analyzer's jobs below. A database replaced by
+``deploy_new_code_and_database.sh`` starts with empty search tables, and a code-only
+deploy keeps them as they are, so neither needs a prune of its own.
 
 .. _user_guide_deployment_log_analyzer:
 
@@ -346,8 +1000,33 @@ against Test PyPI and runs only on demand. :ref:`dev_guide_environment` describe
 and the ``Package`` job that exercises the whole release path except the upload itself on
 every push.
 
-A deploy then installs that release by version specifier, which is why the deploy scripts
-take a PEP 440 specifier rather than a branch name.
+A deploy then installs that release by version specifier. A revision with no release is
+deployed by naming it instead (:ref:`user_guide_deployment_revision`).
+
+.. _user_guide_deployment_revision:
+
+Deploying a revision with no release
+------------------------------------
+
+A branch under review, or any commit, is deployed with the same commands as a release,
+giving ``@<branch, tag or commit>`` where a release's ``==<release>`` would go. pip builds
+the distribution from a clone of the repository, so the server needs ``git`` and access to
+GitHub, and the installation reports a development version. On a test server, an import
+of a revision and a deploy of its database, and then an incremental update::
+
+    cd /opt/opus/deploy
+    ./import_and_deploy/update_deploy_scripts.sh @<branch, tag or commit>
+    ./import_and_deploy/run_full_opus_import.sh @<branch, tag or commit>
+    #    ... read the log, check ERRORS.log ...
+    ./import_and_deploy/deploy_new_code_and_database.sh <database> @<branch, tag or commit>
+    ./import_and_deploy/run_incremental_opus_update.sh COISS_2001
+    ./import_and_deploy/promote_generation.sh
+
+The first command matters as it does for a release: the chain is part of the
+distribution, and a revision's deploy steps are its own. A branch moves, so each command
+installs whatever commit it names at the time; give a commit instead when the commands
+must agree. The incremental update needs no spec: given none, it installs the commit the
+served installation was built from, which pip records.
 
 Operating checklist
 -------------------
@@ -360,15 +1039,27 @@ Operating checklist
      - What to do
    * - Deploy a new release, same database
      - ``deploy_new_code_only.sh ==<version>``
+   * - Deploy a release that touches neither the import nor the schemas
+     - ``deploy_new_code_only.sh --no-database ==<version>``
    * - Deploy a new database
      - ``run_full_opus_import.sh``, verify, then
        ``deploy_new_code_and_database.sh <name>``
+   * - Update, add, or drop bundles of the served database
+     - ``run_incremental_opus_update.sh``, verify, ``promote_generation.sh``, then
+       ``opus_import --purge-generations``. Take a dump with ``dump_db.sh`` first when no
+       second server holds a copy; with ``OPUS_PEER_DB_HOST`` set, the second server
+       receives the updated database under a new name
+       (:ref:`user_guide_deployment_incremental_update`).
    * - Change a credential or a path
      - Edit ``deploy.env``, then run a deploy. Never edit ``opus.toml`` on a Ring-Moon
        Systems Node server.
-   * - Change a field label or a tooltip
-     - Edit the table schema, re-run ``--update-mult-info`` or ``--import-dictionary``,
-       clear the cache and restart the workers.
+   * - Change a field label, a tooltip or a checkbox value's label
+     - Edit the table schema, release, then ``deploy_new_code_only.sh ==<version>``,
+       which rebuilds the description tables and runs ``--update-mult-info``
+       (:ref:`user_guide_deployment_rename_mult_value`).
+   * - ``search_results`` is growing
+     - The hourly ``opus_manage prune`` cron job
+       (:ref:`user_guide_deployment_prune`). It is per-installation and is not deployed.
    * - Reports look stale
      - The log-analyzer cron jobs. They are per-installation and are not deployed.
    * - Results look stale

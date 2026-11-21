@@ -16,15 +16,27 @@ argument.
 
 from __future__ import annotations
 
+import contextlib
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from opus_config.config import DEFAULT_INDEX_WORKERS, DEFAULT_WORKER_ROWS, DEFAULT_WORKERS
+from opus_import.generations import FIRST_GENERATION
+
 if TYPE_CHECKING:
     import argparse
+    from collections.abc import Iterator
 
     import pdslogger
 
+    from opus_import.bundle_registry import BundleIds, BundleRange
+    from opus_import.deferred import Capture
+    from opus_import.generations import GenerationState
+    from opus_import.import_processes import BundleGuard, ImporterLock
     from opus_import.importdb.super import ImportDBSuper
+    from opus_import.mult_fields import MultFieldInfo
+    from opus_import.steps.do_import_mult import MultFieldCache
 
 
 class ImportLog:
@@ -35,6 +47,11 @@ class ImportLog:
     produced it. The ``nonrepeating_`` methods log a given message only once per run,
     which is what keeps a fault shared by every row of an index out of the log a hundred
     thousand times.
+
+    While the context is capturing (`ImportContext.capture`, in a pool worker), every
+    method records its call and the position instead, deduplicating nothing and marking
+    nothing, and the import's process replays the call where the serial loop would have
+    made it.
 
     Instances are created by `ImportContext`; the pipeline reaches this class only as
     ``ctx.log``.
@@ -67,6 +84,22 @@ class ImportLog:
             ret = '[' + ret + '] '
         return ret
 
+    def _recorded(self, method: str, args: tuple[Any, ...]) -> bool:
+        """Record a call on the context's capture, if it has one.
+
+        Parameters:
+            method: The name of the method called.
+            args: Its arguments.
+
+        Returns:
+            True if the call was recorded, and so is not to be carried out.
+        """
+        ctx = self._ctx
+        if ctx.capture is None:
+            return False
+        ctx.capture.log((ctx.current_index_row_number, ctx.current_primary_filespec), method, args)
+        return True
+
     def error(self, msg: str, *args: Any) -> None:
         """Log a message at error level and mark the import as having produced bad data.
 
@@ -74,8 +107,10 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('error', (msg, *args)):
+            return
         self._ctx.logger.log('error', self._position() + msg, *args)
-        self._ctx.import_has_bad_data = True
+        self._ctx.mark_bad_data()
 
     def warning(self, msg: str, *args: Any) -> None:
         """Log a message at warning level.
@@ -84,6 +119,8 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('warning', (msg, *args)):
+            return
         self._ctx.logger.log('warning', self._position() + msg, *args)
 
     def info(self, msg: str, *args: Any) -> None:
@@ -93,6 +130,8 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('info', (msg, *args)):
+            return
         self._ctx.logger.log('info', self._position() + msg, *args)
 
     def debug(self, msg: str, *args: Any) -> None:
@@ -102,18 +141,27 @@ class ImportLog:
             msg: The message, position-prefixed before it is logged.
             args: Further arguments passed to the underlying logger.
         """
+        if self._recorded('debug', (msg, *args)):
+            return
         self._ctx.logger.log('debug', self._position() + msg, *args)
 
     def nonrepeating_error(self, msg: str) -> None:
-        """Log an error the first time this run produces it, and ignore it after that.
+        """Log an error the first time this run produces it, and mark bad data every time.
+
+        Every call marks the bundle being imported as having errors, so a later bundle
+        that repeats an earlier bundle's error is recorded failed too.
 
         Parameters:
             msg: The message. Two calls with equal messages log once, even though their
                 position prefixes differ.
         """
-        if msg not in self._ctx.logged_import_errors:
-            self._ctx.logged_import_errors.append(msg)
-            self.error(msg)
+        if self._recorded('nonrepeating_error', (msg,)):
+            return
+        if msg in self._ctx.logged_import_errors:
+            self._ctx.mark_bad_data()
+            return
+        self._ctx.logged_import_errors.add(msg)
+        self.error(msg)
 
     def nonrepeating_warning(self, msg: str) -> None:
         """Log a warning the first time this run produces it, and ignore it after that.
@@ -122,8 +170,10 @@ class ImportLog:
             msg: The message. Two calls with equal messages log once, even though their
                 position prefixes differ.
         """
+        if self._recorded('nonrepeating_warning', (msg,)):
+            return
         if msg not in self._ctx.logged_import_warnings:
-            self._ctx.logged_import_warnings.append(msg)
+            self._ctx.logged_import_warnings.add(msg)
             self.warning(msg)
 
     def unknown_target_name(self, target_name: str) -> None:
@@ -161,26 +211,63 @@ class ImportContext:
         logged_import_warnings: Messages `ImportLog.nonrepeating_warning` has already
             logged.
         import_has_bad_data: True once the run has produced data not worth keeping. The
-            run aborts on it unless ``--import-ignore-errors`` was given. Every `log`
-            error sets it, and a few sites outside `log` set it directly; but it is not
-            a complete record of the run's errors, because several steps log failures
-            straight to `logger` and leave it alone.
-        max_table_id_cache: The highest row id seen per table, so ids can be handed out
-            without querying the database for each one. Cleared for each bundle.
+            run aborts on it unless ``--ignore-errors`` was given. Every `log` error sets
+            it, and a few sites outside `log` set it through `mark_bad_data`; but it is
+            not a complete record of the run's errors, because several steps log
+            failures straight to `logger` and leave it alone.
+        bundle_has_errors: True once the bundle being imported has logged an error,
+            set with `import_has_bad_data` and cleared at the start of each bundle; it
+            decides whether the bundle registry records the bundle ``failed``.
+        bundle_ids: The observation ids the bundle being imported hands out, from its
+            registered range (`opus_import.bundle_registry.BundleIds`), or None outside
+            a bundle.
+        planned_ranges: The registry rows a read-only run's registration planned and,
+            being read-only, did not write, keyed by bundle, so the run imports a new
+            bundle, or a pending generation's new copy of a live one, from the range it
+            would have registered.
         current_bundle_id: The bundle being imported, or None outside a bundle.
         current_index_row_number: The 1-based index row being imported, or None.
         current_primary_filespec: The primary filespec of the observation being imported,
             or None. It is unknown for part of each row, because some bundles take it
             from the supplemental index.
-        try_cart_later: True when creating the cart table failed because the permanent
-            tables did not exist yet, so it is worth one more attempt after the import.
-        mult_table_cache: Each mult table read or created during this bundle, keyed by
-            table name. Cleared for each bundle.
-        created_import_mult_tables: The import mult tables created empty and not yet
-            written out. A table in here has no rows worth reading, so the permanent
-            table is read instead. Cleared once per run, not once per bundle.
-        modified_mult_tables: The mult tables this bundle added values to, and which
-            therefore have to be written back. Cleared for each bundle.
+        mult_fields: Every mult field's ``mult_field`` row, keyed by qualified name, once
+            `opus_import.mult_fields.ensure_mult_fields` has read them; None before.
+        mult_table_cache: Each mult field read during this bundle, keyed by qualified
+            name: its rows and a dictionary from value to row
+            (`opus_import.steps.do_import_mult.MultFieldCache`). Cleared for each bundle.
+        step_timings: Wall-clock seconds per step the run has timed with `timed`,
+            keyed by step name, which is what ``--timing-json`` writes out.
+        import_path: The path an invocation that imports bundles takes, once
+            `opus_import.steps.do_import.choose_import_path` has chosen it from the
+            target schema's state, or None before.
+        workers: How many processes compute an index's observations; 1 is this
+            process, with no pool. `opus_import.cli` sets it from the resolved
+            parallelism.
+        worker_rows: The index rows one worker task covers.
+        index_workers: How many tables finalization builds indexes on at once.
+        capture: The record a pool worker keeps in place of database calls and log
+            writes (`opus_import.deferred`), or None in the import's own process.
+        importer: This process's row and lock as an importer drawing from the queue
+            (`opus_import.import_processes.ImporterLock`), or None for a plain import.
+        writer: This process's row and lock as a registered writer of the schema
+            (`opus_import.steps.do_generation.register_writer`), or None when it is not
+            registered. A queue importer that is registered imports under this row.
+        load_guard: What each chunk of the bundle being imported runs in its
+            transaction (`opus_import.import_processes.BundleGuard`), or None outside a
+            bundle.
+        log_path: The run's information log, which an importer records in
+            ``import_process``; None until `opus_import.cli` opens it.
+        interrupts: How many interrupts (SIGINT) an importer has received: after the
+            first it claims nothing new, and the second aborts its bundle.
+        queue_entered: Whether a queue importer has begun recording itself in
+            ``import_process``; until then it holds nothing, and a second interrupt
+            stops it wherever it lands.
+        generation_state: The schema's ``schema_version`` row as `opus_import.cli` read
+            it when the run opened the database
+            (`opus_import.generations.GenerationState`), or None when it has none.
+        import_generation: The generation the observation rows this run writes are
+            added in: the pending generation, if any, otherwise the served one, and
+            `opus_import.generations.FIRST_GENERATION` for a schema with no version row.
     """
 
     args: argparse.Namespace
@@ -188,24 +275,72 @@ class ImportContext:
     db: ImportDBSuper | None = None
 
     python_warning_list: list[str] = field(default_factory=list)
-    logged_import_errors: list[str] = field(default_factory=list)
-    logged_import_warnings: list[str] = field(default_factory=list)
+    logged_import_errors: set[str] = field(default_factory=set)
+    logged_import_warnings: set[str] = field(default_factory=set)
     import_has_bad_data: bool = False
+    bundle_has_errors: bool = False
 
-    max_table_id_cache: dict[str, int] = field(default_factory=dict)
+    bundle_ids: BundleIds | None = None
+    planned_ranges: dict[str, BundleRange] = field(default_factory=dict)
 
     current_bundle_id: str | None = None
     current_index_row_number: int | None = None
     current_primary_filespec: str | None = None
 
-    try_cart_later: bool = False
+    mult_fields: dict[str, MultFieldInfo] | None = None
+    mult_table_cache: dict[str, MultFieldCache] = field(default_factory=dict)
 
-    mult_table_cache: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
-    created_import_mult_tables: set[str] = field(default_factory=set)
-    modified_mult_tables: set[str] = field(default_factory=set)
+    step_timings: dict[str, float] = field(default_factory=dict)
+
+    import_path: str | None = None
+
+    workers: int = DEFAULT_WORKERS
+    worker_rows: int = DEFAULT_WORKER_ROWS
+    index_workers: int = DEFAULT_INDEX_WORKERS
+    capture: Capture | None = None
+    importer: ImporterLock | None = None
+    writer: ImporterLock | None = None
+    load_guard: BundleGuard | None = None
+    log_path: str | None = None
+    interrupts: int = 0
+    queue_entered: bool = False
+    generation_state: GenerationState | None = None
+    import_generation: int = FIRST_GENERATION
 
     log: ImportLog = field(init=False)
 
     def __post_init__(self) -> None:
         """Bind this context's `ImportLog`."""
         self.log = ImportLog(self)
+
+    def mark_bad_data(self) -> None:
+        """Record that the run, and the bundle it is importing, produced an error."""
+        self.import_has_bad_data = True
+        self.bundle_has_errors = True
+
+    @property
+    def pending_generation(self) -> int | None:
+        """The generation an update is writing, or None when the schema has none."""
+        state = self.generation_state
+        return None if state is None else state.pending
+
+    @contextlib.contextmanager
+    def timed(self, step: str) -> Iterator[None]:
+        """Time the enclosed block and record it in `step_timings` under a step name.
+
+        The time is recorded when the block exits, whether it returns or raises, so a
+        step that failed still shows how long it ran. A step timed twice in one run
+        accumulates: its entry is the sum of the two.
+
+        Parameters:
+            step: The name the time is recorded under.
+
+        Yields:
+            Nothing; the block runs inside the timing.
+        """
+        started = time.perf_counter()
+        try:
+            yield
+        finally:
+            elapsed = time.perf_counter() - started
+            self.step_timings[step] = self.step_timings.get(step, 0.0) + elapsed

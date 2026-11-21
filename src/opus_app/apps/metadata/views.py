@@ -33,23 +33,20 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, connection
-from django.db.models import Max, Min
+from django.db import connection
 from django.http import Http404, HttpResponseServerError
 from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 
 from opus_app.apps.cart.models import Cart
 from opus_app.apps.paraminfo.models import ParamInfo
-from opus_app.apps.search.models import TableNames
 from opus_app.apps.search.views import (
     get_param_info_by_slug,
-    get_user_query_table,
-    search_cache_join_condition,
+    get_search_id,
+    get_search_results,
+    search_results_join_condition,
     set_user_search_number,
     url_to_search_params,
 )
@@ -58,7 +55,6 @@ from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
     csv_response,
-    get_mult_name,
     get_reqno,
     http400_bad_collapse,
     http400_bad_or_missing_reqno,
@@ -73,6 +69,9 @@ from opus_app.apps.tools.app_utils import (
     json_response,
     strip_numeric_suffix,
 )
+from opus_app.apps.tools.db_utils import resolve_category, unserved_observations_exist
+from opus_app.apps.tools.import_constants import get_table_name, mult_table
+from opus_import import list_junctions
 from opus_support import (
     format_unit_value,
     get_default_unit,
@@ -295,83 +294,81 @@ def api_get_mult_counts(
     if param_qualified_name in selections:
         del selections[param_qualified_name]
 
-    cache_num, _cache_new_flag = set_user_search_number(selections, extras)
-    if cache_num is None:  # pragma: no cover - database error
+    search_number = set_user_search_number(selections, extras)
+    if search_number is None:  # pragma: no cover - database error
         log.error(
-            'api_get_mult_counts: Failed to create user_selections entry'
+            'api_get_mult_counts: Failed to register the search'
             + ' for *** Selections %r *** Extras %r',
             str(selections),
             str(extras),
         )
         return HttpResponseServerError(http500_database_error(request))
 
-    # Note we don't actually care here if the cache table even exists, because
-    # if it's in the cache, it must exist, and if it's not in the cache, it
-    # will be created if necessary by get_user_query_table below.
+    # The search only needs registering for the key: its results are built below,
+    # by get_search_id, if the counts are not cached.
     cache_key = (
         settings.CACHE_SERVER_PREFIX
         + settings.CACHE_KEY_PREFIX
         + ':mults_'
         + param_qualified_name
         + ':'
-        + str(cache_num)
+        + str(search_number)
     )
 
     cached_val = cache.get(cache_key)
     if cached_val is not None:
         mults = cached_val
     else:
-        mult_name = get_mult_name(param_qualified_name)
         try:
-            mult_model = apps.get_model('search', mult_name.title().replace('_', ''))
+            mult_rows = mult_table(param_qualified_name).rows
         except LookupError:  # pragma: no cover - configuration error
-            log.exception(
-                'api_get_mult_counts: Could not get_model for %r',
-                mult_name.title().replace('_', ''),
-            )
+            log.exception('api_get_mult_counts: No mult field %r', param_qualified_name)
             return HttpResponseServerError(http500_internal_error(request))
 
         try:
-            table_model = apps.get_model('search', table_name.title().replace('_', ''))
+            category = resolve_category(table_name)
         except LookupError:  # pragma: no cover - configuration error
-            log.exception(
-                'api_get_mult_counts: Could not get_model for %r',
-                table_name.title().replace('_', ''),
-            )
+            log.exception('api_get_mult_counts: Could not get_model for category %r', table_name)
             return HttpResponseServerError(http500_internal_error(request))
+        table_model = category.model
 
         cursor = connection.cursor()
 
         # The database column, not the model field name: the two differ for a
         # field declared with db_column.
-        param_column = sql_builder.column(
-            table_model._meta.get_field(param_info.name).column, table_name
-        )
+        param_column_name = table_model._meta.get_field(param_info.name).column
 
         select = sql_builder.Select()
+        source: sql_builder.TableSource
         if param_info.form_type == 'MULTIGROUP':
-            # This extracts the list of mult ids from the JSON list and creates a new
-            # column with them that is then summarized by count.
-            counted_column = sql_builder.column('_mult_val_', table_name)
-            select.add_column(counted_column)
-            select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
-            select.add_from(table_name).add_join(
-                'INNER',
-                sql_builder.JSONTable(
-                    source_column=param_column, value_column='_mult_val_', alias=table_name
-                ),
-            )
+            # The column holds a list of ids, and its junction table one row per id of
+            # each observation's list, so the counts group the junction table's rows.
+            counted_table = list_junctions.junction_table(table_name, param_column_name)
+            counted_column = sql_builder.column(list_junctions.JUNCTION_MULT_COLUMN, counted_table)
+            source = counted_table
         else:
-            counted_column = param_column
-            select.add_column(counted_column)
-            select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
-            select.add_from(table_name)
+            counted_table = table_name
+            counted_column = sql_builder.column(param_column_name, table_name)
+            source = category.source
+            if category.is_selector:
+                # The selector counts every row of its table by the primary key's first
+                # column. Left to itself the server groups by reading the primary key,
+                # which is the whole table; every other key of the table starts with the
+                # same column and holds the primary key, so it covers the count in a
+                # fraction of the pages.
+                source = sql_builder.AliasedTable(
+                    category.table, category.alias, ignore_for_group_by=('PRIMARY',)
+                )
+            category.restrict(select)
+        select.add_column(counted_column)
+        select.add_column(sql_builder.count_star(), alias=param_info.name + '__count')
+        counted_source = select.add_from(source)
 
-        user_table = get_user_query_table(selections, extras, api_code=api_code)
+        search_id = get_search_id(selections, extras, api_code=api_code)
 
-        if selections and not user_table:  # pragma: no cover - database corruption
+        if selections and search_id is None:  # pragma: no cover - database corruption
             log.error(
-                'api_get_mult_counts: has selections but no user_table '
+                'api_get_mult_counts: has selections but no search results '
                 + 'found *** Selections %r *** Extras %r',
                 str(selections),
                 str(extras),
@@ -379,11 +376,15 @@ def api_get_mult_counts(
             return HttpResponseServerError(http500_search_cache_failed(request))
 
         if selections:
-            # selections are constrained so join in the user_table
-            # The check above returned already if the search produced no table.
-            assert user_table is not None
-            select.add_from(user_table)
-            select.add_where(search_cache_join_condition(table_name, user_table))
+            # selections are constrained so join in the search's results
+            # The check above returned already if the search could not be built.
+            assert search_id is not None
+            select.add_from(sql_builder.search_results_source(search_id))
+            select.add_where(search_results_join_condition(counted_table))
+        elif counted_table != sql_builder.OBS_GENERAL_TABLE and unserved_observations_exist():
+            # Every served observation: a child table's rows are kept to them while a
+            # generation the schema does not serve has rows there too.
+            counted_source.append_join(sql_builder.served_observations_join(counted_table))
 
         select.add_group_by(counted_column)
 
@@ -396,19 +397,17 @@ def api_get_mult_counts(
         mult_result_list = []
         for row in results:
             mult_id = row[0]
-            try:
-                mult = mult_model.objects.get(id=mult_id)
-                mult_disp_order = mult.disp_order
-                mult_label = mult.label
-            except ObjectDoesNotExist:  # pragma: no cover - import error
-                log.exception(
-                    'api_get_mult_counts: Could not find mult entry ' + 'for mult_model %r id %r',
-                    str(mult_model),
+            mult = mult_rows.get(int(mult_id)) if mult_id is not None else None
+            if mult is None:  # pragma: no cover - import error
+                log.error(
+                    'api_get_mult_counts: Could not find mult entry for %r id %r',
+                    param_qualified_name,
                     str(mult_id),
                 )
                 return HttpResponseServerError(http500_internal_error(request))
 
-            mult_result_list.append((mult_disp_order, (mult_label, row[1])))
+            mult_result_list.append((mult.disp_rank, (mult.label, row[1])))
+        # The rank is an integer, unique within the field, so the sort is total.
         mult_result_list.sort()
 
         mults = {}  # info to return
@@ -553,13 +552,11 @@ def api_get_range_endpoints(
     (form_type, form_type_format, form_type_unit_id) = parse_form_type(param_info.form_type)
     table_name = param_info.category_name
     try:
-        table_model = apps.get_model('search', table_name.title().replace('_', ''))
+        category = resolve_category(table_name)
     except LookupError:  # pragma: no cover - configuration error
-        log.exception(
-            'api_get_range_endpoints: Could not get_model for %r',
-            table_name.title().replace('_', ''),
-        )
+        log.exception('api_get_range_endpoints: Could not get_model for category %r', table_name)
         return HttpResponseServerError(http500_internal_error(request))
+    table_model = category.model
 
     param_no_num = strip_numeric_suffix(param_name)
     param1 = param_no_num + '1'
@@ -591,18 +588,17 @@ def api_get_range_endpoints(
     ]:
         if to_remove in selections:
             del selections[to_remove]
+    search_id = None
     if selections:
-        user_table = get_user_query_table(selections, extras, api_code=api_code)
-        if user_table is None:  # pragma: no cover - database corruption
+        search_id = get_search_id(selections, extras, api_code=api_code)
+        if search_id is None:  # pragma: no cover - database corruption
             log.error(
-                'api_get_range_endpoints: Count not retrieve query table'
+                'api_get_range_endpoints: Could not build the search results'
                 + ' for *** Selections %r *** Extras %r',
                 str(selections),
                 str(extras),
             )
             return HttpResponseServerError(http500_search_cache_failed(request))
-    else:
-        user_table = None
 
     # Is this result already cached?
     cache_key = (
@@ -613,69 +609,55 @@ def api_get_range_endpoints(
         + ':units:'
         + str(units)
     )
-    if user_table:
-        cache_num, _cache_new_flag = set_user_search_number(selections, extras)
-        if cache_num is None:  # pragma: no cover - database error
-            log.error(
-                'api_get_range_endpoints: Failed to create cache table '
-                + 'for *** Selections %r *** Extras %r',
-                str(selections),
-                str(extras),
-            )
-            raise Http404
-        # We're guaranteed the table actually exists here, since
-        # get_user_query_table has already returned for the same search.
-        cache_key += ':' + str(cache_num)
+    if search_id is not None:
+        cache_key += ':' + str(search_id)
 
     range_endpoints = cache.get(cache_key)
     if range_endpoints is None:
-        # We didn't find a cache entry, so calculate the endpoints
-        if selections:
-            # There are selections, so tie the query to user_table. The cache
-            # table has no model, so this cross-join and its condition cannot be
-            # expressed through the ORM and are built as raw SQL instead.
-            # The block above returned already if the search produced no table.
-            assert user_table is not None
-            cache_join = search_cache_join_condition(table_name, user_table)
-            # The database column, not the model field name: the two differ for a
-            # field declared with db_column, and the ORM path below names fields.
-            min_column = sql_builder.column(table_model._meta.get_field(param1).column, table_name)
-            max_column = sql_builder.column(table_model._meta.get_field(param2).column, table_name)
+        # We didn't find a cache entry, so calculate the endpoints. The database column,
+        # not the model field name: the two differ for a field declared with db_column.
+        min_column = sql_builder.column(table_model._meta.get_field(param1).column, table_name)
+        max_column = sql_builder.column(table_model._meta.get_field(param2).column, table_name)
 
-            endpoints_select = sql_builder.Select()
-            endpoints_select.add_column(sql_builder.min_of(min_column))
-            endpoints_select.add_column(sql_builder.max_of(max_column))
-            endpoints_select.add_from(table_name)
-            endpoints_select.add_from(user_table)
-            endpoints_select.add_where(cache_join)
+        endpoints_select = sql_builder.Select()
+        endpoints_select.add_column(sql_builder.min_of(min_column))
+        endpoints_select.add_column(sql_builder.max_of(max_column))
+        nulls_select = sql_builder.Select()
+        nulls_select.add_column(sql_builder.count_star())
+        # No selections: every served observation's row, which a child table reaches
+        # through the view while an unserved generation has rows there too.
+        join_served = (
+            not selections
+            and table_name != sql_builder.OBS_GENERAL_TABLE
+            and unserved_observations_exist()
+        )
+        for select in (endpoints_select, nulls_select):
+            category_source = select.add_from(category.source)
+            if selections:
+                # There are selections, so tie the query to the search's results. The
+                # block above returned already if the search could not be built.
+                assert search_id is not None
+                select.add_from(sql_builder.search_results_source(search_id))
+                select.add_where(search_results_join_condition(table_name))
+            elif join_served:
+                category_source.append_join(sql_builder.served_observations_join(table_name))
+            # A surface geometry body's category is the body's rows of a table every
+            # body shares, so each statement keeps to them.
+            category.restrict(select)
+        nulls_select.add_where(sql_builder.is_null(min_column))
+        nulls_select.add_where(sql_builder.is_null(max_column))
 
-            nulls_select = sql_builder.Select()
-            nulls_select.add_column(sql_builder.count_star())
-            nulls_select.add_from(table_name)
-            nulls_select.add_from(user_table)
-            nulls_select.add_where(cache_join)
-            nulls_select.add_where(sql_builder.is_null(min_column))
-            nulls_select.add_where(sql_builder.is_null(max_column))
+        cursor = connection.cursor()
+        sql, params = endpoints_select.build()
+        log.debug('RANGE ENDPOINTS SQL: %r *** PARAMS %r', sql, str(params))
+        cursor.execute(sql, params)
+        (endpoint_min, endpoint_max) = cursor.fetchone()
+        range_endpoints = {'min': endpoint_min, 'max': endpoint_max}
 
-            cursor = connection.cursor()
-            sql, params = endpoints_select.build()
-            log.debug('RANGE ENDPOINTS SQL: %r *** PARAMS %r', sql, str(params))
-            cursor.execute(sql, params)
-            (endpoint_min, endpoint_max) = cursor.fetchone()
-            range_endpoints = {'min': endpoint_min, 'max': endpoint_max}
-
-            sql, params = nulls_select.build()
-            log.debug('RANGE ENDPOINTS NULLS SQL: %r *** PARAMS %r', sql, str(params))
-            cursor.execute(sql, params)
-            range_endpoints['nulls'] = cursor.fetchone()[0]
-        else:
-            # There are no selections, so hit the whole table
-            results = table_model.objects
-            range_endpoints = results.all().aggregate(min=Min(param1), max=Max(param2))
-            # For a single-column range param1 and param2 are the same column, so
-            # this is one condition rather than two.
-            null_filter = {f'{param1}__isnull': True, f'{param2}__isnull': True}
-            range_endpoints['nulls'] = results.all().filter(**null_filter).count()
+        sql, params = nulls_select.build()
+        log.debug('RANGE ENDPOINTS NULLS SQL: %r *** PARAMS %r', sql, str(params))
+        cursor.execute(sql, params)
+        range_endpoints['nulls'] = cursor.fetchone()[0]
 
         # The returned range endpoints are converted to the destination
         # unit
@@ -830,18 +812,20 @@ def api_get_fields(request: HttpRequest, fmt: str, slug: str | None = None) -> H
 # in cart/views.py
 def get_result_count_helper(
     request: HttpRequest, api_code: int
-) -> tuple[int | None, str | None, HttpResponse | None]:
+) -> tuple[int | None, int | None, HttpResponse | None]:
     """Count the observations a search matches.
+
+    The count is the one the search's build stored in ``user_searches``.
 
     Parameters:
         request: The request whose query string describes the search.
         api_code: The API call number to log the search under.
 
     Returns:
-        The number of matching observations, the name of the cache table holding
-        the search results, and an error response. On success the error response
-        is None; when the search could not be run, the count and the table name
-        are None instead and the caller is expected to return the error response.
+        The number of matching observations, the search's ``user_searches`` id, and
+        an error response. On success the error response is None; when the search
+        could not be run, the count and the id are None instead and the caller is
+        expected to return the error response.
 
     Raises:
         Http400Error: If the search parameters cannot be parsed.
@@ -856,36 +840,16 @@ def get_result_count_helper(
     # url_to_search_params returns both of them or neither.
     assert extras is not None
 
-    table = get_user_query_table(selections, extras, api_code=api_code)
-
-    if not table:  # pragma: no cover - internal or database failure
+    search = get_search_results(selections, extras, api_code=api_code)
+    if search is None:  # pragma: no cover - internal or database failure
         log.error(
-            'get_result_count_helper: Could not find/create query table ' + 'for request %r',
+            'get_result_count_helper: Could not build the search results ' + 'for request %r',
             str(request.GET),
         )
         ret = HttpResponseServerError(http500_search_cache_failed(request))
         return None, None, ret
 
-    cache_key = settings.CACHE_SERVER_PREFIX + settings.CACHE_KEY_PREFIX + ':resultcount:' + table
-    count = cache.get(cache_key)
-    if count is None:
-        cursor = connection.cursor()
-        sql = sql_builder.count_rows(table)
-        try:
-            cursor.execute(sql)
-            count = cursor.fetchone()[0]
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception(
-                'get_result_count_helper: SQL query failed for ' + 'request %r: SQL "%r"',
-                str(request.GET),
-                sql,
-            )
-            ret = HttpResponseServerError(http500_database_error(request))
-            return None, None, ret
-
-        cache.set(cache_key, count)
-
-    return count, table, None
+    return search.result_count, search.search_id, None
 
 
 def get_cart_count(session_id: str | None) -> tuple[int, int]:
@@ -970,7 +934,7 @@ def get_fields_info(
             # Internal use only
             continue
 
-        table_name = TableNames.objects.get(table_name=f.category_name)
+        table_name = get_table_name(f.category_name)
         cat = table_name.label
         if collapse and cat.find('Surface Geometry Constraints') != -1:
             cat = cat.replace('Saturn', '<TARGET>')

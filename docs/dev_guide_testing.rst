@@ -26,6 +26,10 @@ itself:
 The second and third are asked for by name. That is what keeps the everyday ``pytest``
 fast and offline.
 
+Measuring how fast the import and the web application are is not a test suite: it is
+the benchmark harness under ``benchmarks/``, which :ref:`dev_guide_benchmarks` describes.
+Its own code is unit-tested under ``tests/benchmarks/`` like everything else.
+
 .. _dev_guide_testing_opus_config:
 
 What every run needs first
@@ -89,6 +93,9 @@ variables.
 Only the host, user and password are taken from that file; the schema it names is never
 touched. Each run creates schemas named ``opus_import_test_<pid>`` and drops every one of
 them when the session ends, pass or fail, so nothing is left on the server to clean up.
+The account therefore needs every privilege on the schemas named
+``opus_import_test_%``: it creates and drops them, and in them creates, alters and drops
+tables and views (``obs_general`` is a view), and reads and writes their rows.
 
 There is no third source, and no guessing between the two. With ``OPUS_CONFIG`` pointing
 at ``tests/fixtures/opus_ci.toml`` -- which is what ``scripts/run-all-checks.sh`` sets
@@ -101,9 +108,73 @@ It runs serially: the run is one long import followed by fast assertions, so ``-
 nothing, and a session-scoped fixture under xdist would run the import once per worker
 into the same schema.
 
-That plain form is the everyday one -- about two minutes, no coverage, with the three
+**The import counts the cores of the machine a session runs on**, and the main run's
+``workers = "max"`` and ``index_workers = "max"`` resolve to the ceiling they give; the
+goldens do not depend on the count. A session that asks for a fixed count asks for no
+more than a four-core machine's ceiling, 3, so it is never lowered on a GitHub-hosted
+runner. The main run computes its observations in a pool at that ceiling, in tasks of 5
+index rows so that the fixture's small indexes split across several workers, and builds
+its keys over as many connections; a session that sets no ``workers`` of its own, as the
+negative cases do not, computes in one process (:ref:`dev_guide_import_fixture`).
+
+.. _dev_guide_testing_faults:
+
+``OPUS_IMPORT_FAULT`` is set by the suite itself, in the environment of an
+``opus_import`` process it starts, to make the import fail on purpose at a named point
+and prove it recovers. Its form is ``<site>:<argument>``
+(:mod:`opus_import.import_fault`); the import reads it only at the sites that ask for it,
+and each site decides what its argument selects. The sites are:
+
+``swap_in``
+    Between the fill of a rebuilt table and the rename that swaps it in; its argument is
+    a table. ``swap_in:definitions`` stops the dictionary's swap.
+
+``log_error``
+    Inside one bundle's import; its argument is a bundle. ``log_error:COISS_2002`` logs
+    one error while that bundle is imported and carries on, so the bundle ends ``failed``
+    in the bundle registry without the import raising
+    (:ref:`dev_guide_import_steps_registry`).
+
+``stall_worker``
+    At the start of every task a pool worker computes; its argument is a number of
+    seconds. ``stall_worker:600`` holds each worker asleep, so a test can find the pool's
+    processes alive and kill the import under them
+    (:ref:`dev_guide_import_steps_do_import_pool`).
+
+``fail_worker``
+    In the pool worker task holding one index row; its argument is the row, numbered
+    from zero. ``fail_worker:12`` fails that task; the import's process meets the failure
+    when it reaches the task in index order, having replayed and loaded the tasks before
+    it, so a test can see that the failed index leaves none of its rows.
+
+The three ``hold_`` sites take a file's path as their argument. An importer waits at
+the site until the file is removed or
+:data:`~opus_import.import_processes.HOLD_LIMIT_SECONDS` pass, whichever comes first, so
+a test holds importers there however slowly the computer runs, as long as it removes the
+file within that limit; an importer that reaches the site after the file is gone does not
+wait.
+
+``hold_after_claim``
+    After a queue importer's claim of a bundle commits, before it imports the bundle.
+    ``hold_after_claim:<path>`` lets a test start several ``opus_import --join``
+    processes and know that they hold bundles at the same time
+    (:ref:`dev_guide_import_steps_do_import`).
+
+``hold_after_chunk``
+    After the first chunk of each bundle's rows commits. ``hold_after_chunk:<path>``
+    holds an import mid-bundle, so a test can kill an importer or its lock connection
+    there.
+
+``hold_before_lock``
+    Between an importer's ``import_process`` insert and its lock.
+    ``hold_before_lock:<path>`` lets a test read the importers' table while the row is
+    written and not yet committed, for as long as its reads take.
+
+Never set it outside a test.
+
+That plain form is the everyday one -- no coverage, with the three
 executed-functions tests skipping because the report they read is not there. Measuring
-coverage costs about two and a half times that and takes two commands;
+coverage takes two commands, and under Python 3.12 several times as long;
 :ref:`dev_guide_import_fixture` gives both and says when each is wanted.
 
 .. _running-the-integration-suites:
@@ -126,9 +197,9 @@ are terabytes on a machine at the Ring-Moon Systems Node; without them there is 
 database to run against. A developer working elsewhere runs the other two suites, and
 :ref:`dev_guide_import_fixture` is what covers the import pipeline for them.
 
-It runs **serially**, deliberately: every test shares one database, and one of them drops
-the ``cache_*`` tables between tests, so ``-n`` would have workers pulling the ground out
-from under each other.
+It runs **serially**, deliberately: every test shares one database, and some of them
+empty ``user_searches`` and ``search_results`` between tests, so ``-n`` would have workers
+pulling the ground out from under each other.
 
 Three markers describe what a test reaches for, and ``--strict-markers`` is on, so every
 one of them is declared in ``pyproject.toml``:
@@ -172,10 +243,13 @@ By hand
    It prints the schema it is about to erase and asks for confirmation before doing
    anything, which is the check that keeps it off a database you meant to keep. It then
    imports a fixed list of bundle sets -- Cassini ISS, UVIS, VIMS and CIRS, Galileo,
-   Voyager, Hubble, New Horizons, and the occultation sets -- and finishes with
-   ``--cleanup-aux-tables``, ``--import-dictionary``, ``manage.py migrate`` and
-   ``--validate-perm``. Read ``ERRORS.log`` afterwards rather than trusting the exit
-   status: several import steps report failure through the log and still exit zero.
+   Voyager, Hubble, New Horizons, and the occultation sets -- through
+   ``opus_import_all``, with ``[import] importers`` importers at once, which finishes
+   the database, and then runs ``manage.py migrate``. Options of ``opus_import_all``
+   given to the script are passed on: ``--workers 24 --importers 6`` divides 24 workers
+   among six importers. Read ``ERRORS.log`` afterwards
+   rather than trusting the exit status: several import steps report failure through
+   the log and still exit zero.
 
 3. **Run the suite**::
 
@@ -212,6 +286,10 @@ is not in the repository. It sets ``OPUS_DB_USER`` and ``OPUS_DB_PASSWORD``, ``T
 (where the per-run directories go) and ``PDS_HOLDINGS_ROOT`` (the directory holding
 ``holdings`` and ``pds4-holdings``). Every script that needs one of them exits rather than
 continue if it is missing.
+
+The ``opus.toml`` the chain writes asks for ``workers = "max"`` and
+``index_workers = "max"``, so the import computes and builds keys at the ceiling of the
+cores it counts on the machine running it.
 
 Two coverage configurations
 ---------------------------
@@ -291,8 +369,8 @@ other two suites need a server or a database, so neither is in a default run.
 
 ``--import-tests`` adds the import suite to whatever else is running -- on its own, to the
 full run; alongside another ``--*`` flag, to that selection. It is opt-in because it is the
-one check that needs a reachable MySQL server, and because it takes about two minutes
-against the eighteen seconds everything else costs. It uses the bare form, without
+one check that needs a reachable MySQL server, and because it is the slowest check by
+far. It uses the bare form, without
 coverage, and finds its server itself, from ``OPUS_TEST_DB_HOST``, ``OPUS_TEST_DB_USER``
 and ``OPUS_TEST_DB_PASSWORD`` or, with none of those set, from the ``OPUS_CONFIG`` file --
 which this script points at ``tests/fixtures/opus_ci.toml`` unless you exported one, and

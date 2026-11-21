@@ -10,6 +10,7 @@ from django.http import Http404, QueryDict
 from django.test import RequestFactory
 
 from opus_app.apps.results.views import (
+    NULL_RESULT,
     api_get_categories_for_opus_id,
     api_get_categories_for_search,
     api_get_data,
@@ -21,7 +22,9 @@ from opus_app.apps.results.views import (
     api_get_metadata,
     api_get_product_types_for_opus_id,
     api_get_product_types_for_search,
+    get_search_results_chunk,
     get_triggered_tables,
+    page_preview_json,
 )
 from opus_app.apps.search.views import url_to_search_params
 
@@ -32,24 +35,20 @@ class ResultsTests(TestCase):
     """The results views, and which tables a given search has to join against."""
 
     def _empty_user_searches(self) -> None:
-        """Delete every recorded search and the cache tables they created.
+        """Delete every stored search and its results.
 
-        A search records itself in `user_searches` and materializes its results into a
-        `cache_<number>` table named after that row, so leaving either behind would let
-        one test answer another's query. The counter is reset too, because the table
-        name is derived from it and the tests assert on whole responses.
+        A search records itself in `user_searches` and its results in `search_results`,
+        so leaving either behind would let one test answer another's query. The counter
+        is reset too, because the cache keys and the tests' expectations name searches
+        by their ids.
 
         It also empties the Django cache and builds the request factory these tests
         call the views with, because `setUp` calls this instead of doing either.
         """
         cursor = connection.cursor()
+        cursor.execute('DELETE FROM search_results')
         cursor.execute('DELETE FROM user_searches')
         cursor.execute('ALTER TABLE user_searches AUTO_INCREMENT = 1')
-        cursor.execute('SHOW TABLES LIKE %s', ['cache_%'])
-        for row in cursor:
-            q = 'DROP TABLE ' + row[0]
-            print(q)
-            cursor.execute(q)
         cache.clear()
         self.factory = RequestFactory()
 
@@ -60,8 +59,8 @@ class ResultsTests(TestCase):
         so every suite resets them; a suite that did not would see its own API calls
         fail at random.
 
-        It also calls `_empty_user_searches`, which clears the rows and cache tables a
-        search leaves behind and builds this suite's request factory.
+        It also calls `_empty_user_searches`, which clears the rows a search leaves
+        behind and builds this suite's request factory.
         """
         settings.OPUS_FAKE_API_DELAYS = 0
         settings.OPUS_FAKE_SERVER_ERROR404_PROBABILITY = 0
@@ -73,8 +72,8 @@ class ResultsTests(TestCase):
     def tearDown(self) -> None:
         """Empty the user-search table again, and restore logging.
 
-        Clearing it on the way out as well as on the way in is what keeps the cache
-        tables a test created from reaching whatever runs next.
+        Clearing it on the way out as well as on the way in is what keeps the searches
+        a test stored from reaching whatever runs next.
         """
         self._empty_user_searches()
         logging.disable(logging.NOTSET)
@@ -99,9 +98,22 @@ class ResultsTests(TestCase):
         ):
             api_get_data_and_images(request)
 
-            ###########################################
-            ######### api_get_data UNIT TESTS #########
-            ###########################################
+    def test__get_search_results_chunk_null_join_reads_as_no_preview(self) -> None:
+        "[test_results.py] get_search_results_chunk: a NULL join reads as no preview"
+        # A Cassini observation has no Voyager ISS row, so the LEFT JOIN reads NULL, as
+        # it does for an observation without an obs_preview row.
+        request = self.factory.get('/api/data.json?volumeid=COISS_2002&__sessionid=test')
+        (_page_no, _start, _limit, page, _order, _aux, error) = get_search_results_chunk(
+            request, cols='opusid,VGISSscanmode', limit=1
+        )
+        self.assertIsNone(error)
+        assert page is not None
+        self.assertEqual(page[0][1], NULL_RESULT)
+        self.assertIsNone(page_preview_json(page[0][1]))
+
+        ###########################################
+        ######### api_get_data UNIT TESTS #########
+        ###########################################
 
     def test__api_get_data_no_meta(self) -> None:
         "[test_results.py] api_get_data: no META"

@@ -56,7 +56,10 @@ def read_obs_files(credentials: DatabaseCredentials, schema: str) -> dict[str, s
         The root-prefixed paths each bundle's rows name.
     """
     rows = golden_io.query(
-        credentials, schema, 'SELECT bundle_id, pds_version, logical_path FROM obs_files'
+        credentials,
+        schema,
+        'SELECT g.bundle_id, f.pds_version, f.logical_path FROM obs_files f '
+        'JOIN obs_general g ON g.id = f.obs_general_id',
     )
     per_bundle: dict[str, set[str]] = {}
     for bundle_id, pds_version, logical_path in rows:

@@ -15,9 +15,8 @@ here as a golden that does not exist, and one it stops writing as a golden nothi
 produced.
 
 The re-import assertions at the end carry a normalization of their own, and say so where
-they make it: importing a bundle a second time renumbers that bundle's rows, because ids
-are handed out from the highest already present and the old rows are deleted only
-afterwards.
+they make it: importing a bundle a second time renumbers that bundle's rows, because they
+are deleted and loaded again, and ids are handed out from the highest present.
 """
 
 from __future__ import annotations
@@ -28,16 +27,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from import_tests.tools import build_run, fixture_layout, golden_io, holdings_survey, run_logs
+from import_tests.tools import build_run, fixture_layout, golden_io, run_logs
 
 if TYPE_CHECKING:
     from import_tests.tools.build_run import ImportRun
     from import_tests.tools.golden_io import DatabaseCredentials
-
-#: The registered type whose fixture volume is imported a second time. Imaging carries
-#: the widest set of tables of any single volume, so re-importing it exercises the update
-#: half of the most upserts for one bundle's worth of work.
-REIMPORT_INSTRUMENT_CLASS = 'ObsVolumeCOISS12xxx'
 
 #: The tables the goldens cover, read at collection time so each one is its own test and
 #: a failure names the table rather than the suite.
@@ -105,27 +99,6 @@ def _unified_diff(table: str, expected: str, actual: str) -> str:
         remaining = len(lines) - DIFF_LINE_LIMIT
         lines = [*lines[:DIFF_LINE_LIMIT], f'... and {remaining} more difference lines']
     return '\n'.join(lines)
-
-
-def reimport_bundle_id(run: ImportRun) -> str:
-    """Return the fixture bundle imported a second time.
-
-    Parameters:
-        run: The completed run.
-
-    Returns:
-        The bundle id representing `REIMPORT_INSTRUMENT_CLASS`.
-
-    Raises:
-        ValueError: If the fixture carries no bundle for that type.
-    """
-    for entry in holdings_survey.registry_entries():
-        if entry.instrument_class_name != REIMPORT_INSTRUMENT_CLASS:
-            continue
-        for bundle in run.bundles:
-            if re.fullmatch(entry.pattern, bundle):
-                return bundle
-    raise ValueError(f'The fixture carries no bundle for {REIMPORT_INSTRUMENT_CLASS}')
 
 
 @pytest.fixture(scope='session')
@@ -296,15 +269,16 @@ def reimport(
 ) -> tuple[list[str], list[str]]:
     """Import one fixture volume a second time, and split the tables around it.
 
-    This is not a determinism check -- the import is deterministic by design. It is the
-    only thing in the suite that runs the update half of every upsert, which is the
-    documented re-import operational mode and where the row alias in the generated SQL
-    lives.
+    The finished schema has a version row, so this is an append, followed by the
+    invocations that finalize the schema and mark it ready again. This is not a
+    determinism check -- the import is deterministic by design. It is what runs the update
+    half of every upsert on the main run's schema, which is the documented re-import
+    operational mode and where the row alias in the generated SQL lives.
 
     It mutates the finished database, so it is deliberately the last thing this module
     does: the golden comparisons above are defined before it and run before it.
 
-    The invocation's own status is checked here rather than left to the assertions below,
+    The invocations' own statuses are checked here rather than left to the assertions below,
     because a re-import that died on startup leaves the database exactly as the first
     import left it -- and all three of those assertions pass on a database nothing
     touched. This fixture is the only place that can tell "unchanged because the update
@@ -315,11 +289,13 @@ def reimport(
         them, each sorted.
 
     Raises:
-        AssertionError: If the re-import invocation exited non-zero or logged an error.
+        AssertionError: If an invocation exited non-zero or logged an error.
     """
-    bundle = reimport_bundle_id(main_run)
-    step = build_run.reimport_bundle(main_run, bundle, db_credentials)
-    assert step.returncode == 0, f'the re-import exited {step.returncode}: {step.stderr[-2000:]}'
+    bundle = build_run.reimport_bundle_id(main_run)
+    for step in build_run.reimport_bundle(main_run, bundle, db_credentials):
+        assert step.returncode == 0, (
+            f'{" ".join(step.arguments)} exited {step.returncode}: {step.stderr[-2000:]}'
+        )
     errors_log = build_run.reimport_paths(main_run).errors_log
     assert errors_log.is_file(), f'the re-import wrote no log to {errors_log}'
     errors = run_logs.distinct(run_logs.read_messages(errors_log))
@@ -336,10 +312,9 @@ def test_reimport_leaves_the_rest_of_the_database_untouched(
     """Every table holding none of that bundle's rows is byte-identical to its golden.
 
     That is every mult table, and every table the finalization and dictionary steps write
-    that carries no bundle of its own. The mult tables are where the upsert lands, so this is the assertion that
-    says the update half of the upsert reproduced what the insert half wrote, ids
-    included: a second write of a value the table already holds updates its row rather
-    than adding a second one under a new id.
+    that carries no bundle of its own. The mult tables say the re-import found every
+    value the field held rather than adding a second row under a new id, and the other
+    tables that the update half of each upsert reproduced what the insert half wrote.
     """
     _holding, untouched = reimport
     differences = {}
@@ -358,11 +333,10 @@ def test_reimport_rewrites_the_bundles_rows_unchanged(
 ) -> None:
     """Every table holding that bundle's rows still holds exactly the same rows.
 
-    Not the same *ids*: the pipeline hands out row ids from the largest already present
-    and deletes the bundle's old rows only afterwards, so a re-imported bundle is
-    renumbered above everything else in the table by construction. Nothing else may
-    move -- no row gained, lost, or given a different value -- which is what comparing
-    with `golden_io.without_surrogate_ids` asks.
+    Not the same *ids*: the pipeline deletes the bundle's rows and loads them again,
+    handing out row ids from the largest present, so a re-imported bundle is renumbered
+    by construction. Nothing else may move -- no row gained, lost, or given a different
+    value -- which is what comparing with `golden_io.without_surrogate_ids` asks.
     """
     holding, _untouched = reimport
     differences = {}

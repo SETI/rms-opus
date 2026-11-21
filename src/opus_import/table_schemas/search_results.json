@@ -1,0 +1,32 @@
+[
+    {
+        "field_name": "search_id",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comment": "The user_searches row whose results this row is one of."
+    },
+    {
+        "field_name": "sort_order",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comment": "The row's position in its search's order, numbered from 1 with no gaps."
+    },
+    {
+        "field_name": "obs_general_id",
+        "field_type": "uint4",
+        "field_notnull": true,
+        "comment": "The obs_general row of the observation."
+    },
+    {
+        "primary_key": [
+            "search_id",
+            "sort_order"
+        ]
+    },
+    {
+        "unique": [
+            "search_id",
+            "obs_general_id"
+        ]
+    }
+]

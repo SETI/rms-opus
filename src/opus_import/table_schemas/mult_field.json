@@ -1,0 +1,37 @@
+[
+    {
+        "field_name": "field_id",
+        "field_type": "uint2",
+        "field_notnull": true,
+        "comment": "The field's number, which every mult and mult_group row of the field carries."
+    },
+    {
+        "field_name": "qualified_name",
+        "field_type": "varchar100",
+        "field_notnull": true,
+        "comment": "The field's <table>.<column> name, or the name its column's mult_field key gives."
+    },
+    {
+        "field_name": "pinned",
+        "field_type": "int1",
+        "field_notnull": true,
+        "comment": "1 when the column's schema lists the field's values in mult_options, 0 otherwise."
+    },
+    {
+        "field_name": "last_id",
+        "field_type": "int4",
+        "field_default": "-1",
+        "field_notnull": true,
+        "comment": "The highest id handed out in the field, or -1 before the first; never lowered."
+    },
+    {
+        "primary_key": [
+            "field_id"
+        ]
+    },
+    {
+        "unique": [
+            "qualified_name"
+        ]
+    }
+]

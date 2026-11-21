@@ -11,9 +11,10 @@
 # one of the Ring-Moon Systems Node's servers, the banner naming the database currently
 # being served,
 # and nohup, so that a run measured in days survives the terminal it was started
-# from. `opus_import_all --yes` below is answering the confirmation this script has
-# already taken; the command would otherwise ask again, under nohup, where nobody
-# could answer.
+# from. `opus_import_all --scorched-earth` erases every OPUS table in the schema before
+# the import, and `--yes` answers the erase confirmation `--scorched-earth` asks for,
+# which this script has already taken; the command would otherwise ask again, under
+# nohup, where nobody could answer.
 #
 # Run from anywhere, with rms-opus installed in the active environment and
 # OPUS_CONFIG naming the configuration file. The import runs under nohup, so a
@@ -63,4 +64,4 @@ if [ "$yn" != "YES" ]; then
     exit 1
 fi
 echo "Running import with nohup - check nohup.out for status"
-nohup opus_import_all --yes --override-db-schema "$1" "${@:2}" &
+nohup opus_import_all --scorched-earth --yes --override-db-schema "$1" "${@:2}" &

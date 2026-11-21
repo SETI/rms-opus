@@ -19,6 +19,7 @@ import datetime
 import functools
 import importlib.metadata
 import inspect
+import itertools
 import json
 import logging
 import random
@@ -30,8 +31,6 @@ from urllib.parse import quote
 from django.conf import settings
 from django.core.exceptions import (
     BadRequest,
-    MultipleObjectsReturned,
-    ObjectDoesNotExist,
     PermissionDenied,
     SuspiciousOperation,
 )
@@ -39,7 +38,7 @@ from django.http import Http404, HttpResponse, HttpResponseServerError
 from django.template import loader
 from django.utils.html import escape
 
-from opus_app.apps.search.models import ObsGeneral
+from opus_app.apps.cart.models import Cart
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -161,7 +160,9 @@ def get_session_id(request: HttpRequest) -> str | None:
     """Get the current session id, or create one if none available.
 
     The caller can override the sessionid (only for internal testing
-    purposes) by specifying the __sessionid=<S> parameter.
+    purposes) by specifying the __sessionid=<S> parameter. The cart stores it in an
+    ASCII column of a fixed width, so a value that is not ASCII or is longer than that
+    is refused before any query compares it.
 
     Parameters:
         request: The request whose session is wanted.
@@ -169,10 +170,17 @@ def get_session_id(request: HttpRequest) -> str | None:
     Returns:
         The session id. It is None only where Django could not create a session
         key at all.
+
+    Raises:
+        Http400Error: If ``__sessionid`` is not ASCII or is longer than ``cart.session_id``.
     """
     session_id = None
     if request.GET is not None:  # pragma: no cover - only happens with real web browser
         session_id = request.GET.get('__sessionid', None)
+    max_length = Cart._meta.get_field('session_id').max_length
+    assert max_length is not None
+    if session_id is not None and (not session_id.isascii() or len(session_id) > max_length):
+        raise Http400Error(http400_bad_session_id(request))
     if session_id is None:  # pragma: no cover - only happens with real web browser
         if not request.session.get('has_session'):
             request.session['has_session'] = True
@@ -203,7 +211,10 @@ def get_reqno(request: HttpRequest) -> int | None:
     return reqno
 
 
-_API_CALL_NUMBER = 0
+# Each API call's number comes from one counter. A worker's threads share it, and
+# next() on an itertools.count is a single step the GIL does not interrupt, so no two
+# concurrent calls are given the same number.
+_API_CALL_NUMBERS = itertools.count(1)
 _API_START_TIMES: dict[int, float] = {}
 
 
@@ -241,13 +252,12 @@ def enter_api_call(
         The API call number, which the matching `exit_api_call` is given so the
         two lines can be paired and the call timed.
     """
-    global _API_CALL_NUMBER
-    _API_CALL_NUMBER += 1
+    call_number = next(_API_CALL_NUMBERS)
     # Guarded here as well as inside the helper: building this line means
     # json.dumps of the whole query string, which is not worth doing to throw
     # away.
     if settings.OPUS_LOG_API_CALLS:  # pragma: no cover - internal debugging
-        s = 'API ' + str(_API_CALL_NUMBER) + ' '
+        s = 'API ' + str(call_number) + ' '
         if request and request.path:
             s += request.path
         if kwargs:
@@ -255,8 +265,8 @@ def enter_api_call(
         if request and request.GET:
             s += ' ' + json.dumps(request.GET, sort_keys=True, indent=4, separators=(',', ': '))
         _log_api_call_line(s)
-    _API_START_TIMES[_API_CALL_NUMBER] = time.time()
-    return _API_CALL_NUMBER
+    _API_START_TIMES[call_number] = time.time()
+    return call_number
 
 
 def exit_api_call(api_code: int, ret: Any) -> None:
@@ -514,56 +524,18 @@ def api_view(handler: Callable[..., HttpResponse]) -> Callable[..., HttpResponse
 ################################################################################
 
 
-def is_old_format_ring_obs_id(s: str) -> bool:
-    """Return True if the string is a valid old-format ringobsid.
+def mult_alias(param_qualified_name: str) -> str:
+    """Return the alias a statement joins the ``mult`` table under for one mult field.
 
-    Parameters:
-        s: The identifier to test.
-
-    Returns:
-        True if it has the shape of an old-format ringobsid.
-    """
-    return len(s) > 2 and (s[0] == '_' or s[1] == '_')
-
-
-def convert_ring_obs_id_to_opus_id(
-    ring_obs_id: str, force_ring_obs_id_fmt: bool = False
-) -> str | None:
-    """Given an old-format ringobsid, return the new opusid.
-
-    Parameters:
-        ring_obs_id: The identifier to convert.
-        force_ring_obs_id_fmt: Treat the argument as a ringobsid even when it
-            does not look like one.
-
-    Returns:
-        The opusid, the argument unchanged when it is not an old-format
-        ringobsid, or None when no observation has that ringobsid.
-    """
-    if not force_ring_obs_id_fmt and not is_old_format_ring_obs_id(ring_obs_id):
-        return ring_obs_id
-    try:
-        return ObsGeneral.objects.get(ring_obs_id=ring_obs_id).opus_id
-    except ObjectDoesNotExist:
-        log.error('No matching RING_OBS_ID for %r', ring_obs_id)
-        return None
-    except MultipleObjectsReturned:  # pragma: no cover - import error
-        log.exception('More than one matching RING_OBS_ID for %r', ring_obs_id)
-        first = ObsGeneral.objects.filter(ring_obs_id=ring_obs_id).first()
-        # Reached only from MultipleObjectsReturned, so the queryset has at
-        # least two rows and .first() cannot be None.
-        assert first is not None
-        return first.opus_id
-
-
-def get_mult_name(param_qualified_name: str) -> str:
-    """Returns mult widget foreign key table name.
+    A statement that reads several mult columns joins ``mult`` once for each
+    (`opus_app.apps.tools.sql_builder.mult_join`), so each join needs a name of its own.
 
     Parameters:
         param_qualified_name: The field's `<table>.<column>` name.
 
     Returns:
-        The name of the ``mult_`` table holding that field's values.
+        ``mult_`` and the name with its period replaced by an underscore, such as
+        ``mult_obs_general_planet_id``.
     """
     return 'mult_' + '_'.join(param_qualified_name.split('.'))
 
@@ -623,6 +595,11 @@ def http404_no_request(s: HttpRequest | str | None) -> str:
 def http400_bad_or_missing_reqno(r: HttpRequest | str | None) -> str:
     """The reqno parameter is absent or is not a non-negative integer."""
     return f'Internal error (Bad or missing reqno) for {_request_path(r)}'
+
+
+def http400_bad_session_id(r: HttpRequest | str | None) -> str:
+    """The __sessionid parameter is not ASCII or is longer than a session key may be."""
+    return f'Internal error (Bad __sessionid) for {_request_path(r)}'
 
 
 def http400_missing_opus_id(r: HttpRequest | str | None) -> str:
@@ -695,11 +672,6 @@ def http400_unknown_units(units: object, slug: object, r: HttpRequest | str | No
     return f'Unknown units "{units}" for metadata field "{slug}" for {_request_path(r)}'
 
 
-def http404_unknown_ring_obs_id(ringobsid: object, r: HttpRequest | str | None) -> str:
-    """The old-format ringobsid in the URL path names no observation."""
-    return f'Unknown RINGOBSID "{ringobsid}" for {_request_path(r)}'
-
-
 def http404_unknown_opus_id(opusid: object, r: HttpRequest | str | None) -> str:
     """The OPUS ID in the URL path names no observation."""
     return f'Unknown OPUSID "{opusid}" for {_request_path(r)}'
@@ -745,7 +717,7 @@ def wrap_http500_string(s: str) -> str:
 def http500_search_cache_failed(
     r: HttpRequest | str | None,
 ) -> str:  # pragma: no cover - database error
-    """The search cache table could not be found or created."""
+    """A search's results could not be built."""
     return wrap_http500_string(f'Internal database error for {_request_path(r)}')
 
 

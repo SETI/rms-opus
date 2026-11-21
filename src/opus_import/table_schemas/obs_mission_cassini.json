@@ -2,46 +2,26 @@
     {
         "field_name": "obs_general_id",
         "field_type": "uint4",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "id"
-        ],
+        "field_key": "primary",
         "field_notnull": true,
         "data_source": "OBS_GENERAL_ID",
         "comments": "This is the primary (surrogate) key linking the record to obs_general."
     },
     {
-        "field_name": "opus_id",
-        "field_type": "char50",
-        "field_key": "foreign",
-        "field_key_foreign": [
-            "obs_general",
-            "opus_id"
-        ],
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "This is the secondary key linking the record to obs_general."
-    },
-    {
-        "field_name": "bundle_id",
-        "field_type": "char75",
-        "field_key": true,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The bundle_id is included here for ease of database manipulation only."
-    },
-    {
-        "field_name": "instrument_id",
-        "field_type": "char60",
-        "field_key": false,
-        "field_notnull": true,
-        "data_source": "COMPUTE",
-        "comments": "The instrument_id is included here for ease of database manipulation only."
+        "foreign_key": {
+            "columns": [
+                "obs_general_id"
+            ],
+            "references": [
+                "obs_general",
+                "id"
+            ]
+        }
     },
     {
         "field_name": "obs_name",
-        "field_type": "char30",
+        "field_type": "varchar30",
+        "field_charset": "ascii",
         "field_notnull": true,
         "field_key": true,
         "data_source": "COMPUTE",
@@ -66,9 +46,9 @@
     },
     {
         "field_name": "rev_no",
-        "field_type": "char3",
+        "field_type": "varchar3",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
@@ -91,7 +71,7 @@
         "field_name": "rev_no_int",
         "field_type": "int4",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
@@ -137,7 +117,7 @@
     {
         "field_name": "prime_inst_id",
         "field_type": "mult_idx",
-        "field_key": true,
+        "field_key": false,
         "field_notnull": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
@@ -157,13 +137,13 @@
         "pi_tooltip": "",
         "comments": "",
         "mult_options": [
-              [   0,  "CIRS",    "CIRS", "010", "Y", null, null],
-              [   1,   "ISS",     "ISS", "020", "Y", null, null],
-              [   2,   "RSS",     "RSS", "030", "Y", null, null],
-              [   3,  "UVIS",    "UVIS", "040", "Y", null, null],
-              [   4,  "VIMS",    "VIMS", "050", "Y", null, null],
-              [   5, "OTHER",   "Other", "060", "Y", null, null],
-              [   6,   "UNK", "Unknown", "070", "Y", null, null]
+              [   0,  "CIRS",    "CIRS",    10, "Y", null, null],
+              [   1,   "ISS",     "ISS",    20, "Y", null, null],
+              [   2,   "RSS",     "RSS",    30, "Y", null, null],
+              [   3,  "UVIS",    "UVIS",    40, "Y", null, null],
+              [   4,  "VIMS",    "VIMS",    50, "Y", null, null],
+              [   5, "OTHER",   "Other",    60, "Y", null, null],
+              [   6,   "UNK", "Unknown",    70, "Y", null, null]
           ]
     },
     {
@@ -276,7 +256,7 @@
         "field_name": "cassini_target_code",
         "field_type": "mult_idx",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
@@ -318,7 +298,8 @@
     },
     {
         "field_name": "activity_name",
-        "field_type": "char9",
+        "field_type": "varchar9",
+        "field_charset": "ascii",
         "field_key": true,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
@@ -341,7 +322,7 @@
         "field_name": "mission_phase_name",
         "field_type": "mult_idx",
         "field_default": null,
-        "field_key": true,
+        "field_key": false,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
         "pi_dict_context": "CASSINI",
@@ -359,30 +340,31 @@
         "pi_tooltip": null,
         "comments": "Definition is from COISS label",
         "mult_options": [
-            [   0, "INTERPLANETARY CRUISE",    "Interplanetary Cruise",    "000", "Y", null, null],
-            [   1, "VENUS 1 ENCOUNTER",        "Venus 1 Encounter",        "010", "Y", null, null],
-            [   2, "VENUS 2 ENCOUNTER",        "Venus 2 Encounter",        "020", "Y", null, null],
-            [   3, "EARTH ENCOUNTER",          "Earth Encounter",          "030", "Y", null, null],
-            [   4, "OUTER CRUISE",             "Outer Cruise",             "040", "Y", null, null],
-            [   5, "JUPITER ENCOUNTER",        "Jupiter Encounter",        "050", "Y", null, null],
-            [   6, "SCIENCE CRUISE",           "Science Cruise",           "060", "Y", null, null],
-            [   7, "APPROACH SCIENCE",         "Approach Science",         "070", "Y", null, null],
-            [   8, "PHOEBE ENCOUNTER",         "Phoebe Encounter",         "080", "Y", null, null],
-            [   9, "TOUR PRE-HUYGENS",         "Tour Pre-Huygens",         "090", "Y", null, null],
-            [  10, "SATURN ORBIT INSERTION",   "Saturn Orbit Insertion",   "100", "Y", null, null],
-            [  11, "TITAN A ENCOUNTER",        "Titan A Encounter",        "110", "Y", null, null],
-            [  12, "TITAN B ENCOUNTER",        "Titan B Encounter",        "120", "Y", null, null],
-            [  13, "HUYGENS PROBE SEPARATION", "Huygens Probe Separation", "130", "Y", null, null],
-            [  14, "HUYGENS DESCENT",          "Huygens Descent",          "140", "Y", null, null],
-            [  15, "TITAN C HUYGENS",          "Titan C Huygens",          "150", "Y", null, null],
-            [  16, "TOUR (PRIME MISSION)",     "Tour (Prime Mission)",     "160", "Y", null, null],
-            [  17, "EQUINOX MISSION (XM)",     "Equinox Mission (XM)",     "170", "Y", null, null],
-            [  18, "SOLSTICE MISSION (XXM)",   "Solstice Mission (XXM)",   "180", "Y", null, null]
+            [   0, "INTERPLANETARY CRUISE",    "Interplanetary Cruise",        0, "Y", null, null],
+            [   1, "VENUS 1 ENCOUNTER",        "Venus 1 Encounter",           10, "Y", null, null],
+            [   2, "VENUS 2 ENCOUNTER",        "Venus 2 Encounter",           20, "Y", null, null],
+            [   3, "EARTH ENCOUNTER",          "Earth Encounter",             30, "Y", null, null],
+            [   4, "OUTER CRUISE",             "Outer Cruise",                40, "Y", null, null],
+            [   5, "JUPITER ENCOUNTER",        "Jupiter Encounter",           50, "Y", null, null],
+            [   6, "SCIENCE CRUISE",           "Science Cruise",              60, "Y", null, null],
+            [   7, "APPROACH SCIENCE",         "Approach Science",            70, "Y", null, null],
+            [   8, "PHOEBE ENCOUNTER",         "Phoebe Encounter",            80, "Y", null, null],
+            [   9, "TOUR PRE-HUYGENS",         "Tour Pre-Huygens",            90, "Y", null, null],
+            [  10, "SATURN ORBIT INSERTION",   "Saturn Orbit Insertion",     100, "Y", null, null],
+            [  11, "TITAN A ENCOUNTER",        "Titan A Encounter",          110, "Y", null, null],
+            [  12, "TITAN B ENCOUNTER",        "Titan B Encounter",          120, "Y", null, null],
+            [  13, "HUYGENS PROBE SEPARATION", "Huygens Probe Separation",   130, "Y", null, null],
+            [  14, "HUYGENS DESCENT",          "Huygens Descent",            140, "Y", null, null],
+            [  15, "TITAN C HUYGENS",          "Titan C Huygens",            150, "Y", null, null],
+            [  16, "TOUR (PRIME MISSION)",     "Tour (Prime Mission)",       160, "Y", null, null],
+            [  17, "EQUINOX MISSION (XM)",     "Equinox Mission (XM)",       170, "Y", null, null],
+            [  18, "SOLSTICE MISSION (XXM)",   "Solstice Mission (XXM)",     180, "Y", null, null]
         ]
   },
     {
         "field_name": "sequence_id",
-        "field_type": "char4",
+        "field_type": "varchar4",
+        "field_charset": "ascii",
         "field_default": null,
         "data_source": "COMPUTE",
         "pi_category_name": "obs_mission_cassini",
@@ -400,17 +382,5 @@
         "pi_sub_heading": null,
         "pi_tooltip": null,
         "comments": "Definition is from COISS label"
-    },
-    {
-        "field_name": "id",
-        "field_type": "uint4",
-        "field_key": "primary",
-        "field_notnull": true,
-        "data_source": "MAX_ID"
-    },
-    {
-        "field_name": "timestamp",
-        "field_type": "timestamp",
-        "field_notnull": true
     }
 ]

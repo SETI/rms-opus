@@ -11,7 +11,6 @@
 #    Format: __api/data.(?P<fmt>csv)
 #
 #    Format: [__]api/metadata/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
-#    Format: api/metadata_v2/(?P<opus_id>[-\w]+).(?P<fmt>json|html|csv)
 #
 #    Format: api/images/(?P<size>thumb|small|med|full).(?P<fmt>json|html|csv)
 #    Format: api/images.(json|html|csv)
@@ -42,11 +41,9 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import time
 from typing import TYPE_CHECKING, Any, Literal
 
-from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, connection
@@ -56,15 +53,16 @@ from django.views.decorators.cache import never_cache
 
 from opus_app.apps.metadata.views import get_cart_count, get_result_count_helper
 from opus_app.apps.paraminfo.models import ParamInfo
-from opus_app.apps.search.models import Partables, TableNames
+from opus_app.apps.search.models import TableNames
 from opus_app.apps.search.views import (
     add_mult_table_joins,
     add_obs_table_joins,
     create_order_by_terms,
     get_param_info_by_slug,
-    get_user_query_table,
+    get_search_id,
     parse_order_slug,
-    search_cache_join_condition,
+    search_results_join_condition,
+    selector_label,
     url_to_search_params,
 )
 from opus_app.apps.tools import sql_builder
@@ -72,10 +70,8 @@ from opus_app.apps.tools.app_utils import (
     Http400Error,
     api_view,
     cols_to_slug_list,
-    convert_ring_obs_id_to_opus_id,
     csv_response,
     download_filename,
-    get_mult_name,
     get_reqno,
     get_session_id,
     http400_bad_limit,
@@ -90,19 +86,30 @@ from opus_app.apps.tools.app_utils import (
     http404_no_request,
     http404_unknown_format,
     http404_unknown_opus_id,
-    http404_unknown_ring_obs_id,
     http500_database_error,
     http500_internal_error,
     http500_search_cache_failed,
     json_response,
+    mult_alias,
 )
 from opus_app.apps.tools.db_utils import (
     lookup_pretty_value_for_mult,
     lookup_pretty_value_for_mult_list,
+    observation_has_body,
     query_table_for_opus_id,
+    resolve_category,
+    unserved_observations_exist,
 )
 from opus_app.apps.tools.file_utils import get_pds_preview_images, get_pds_products
-from opus_support import format_unit_value, parse_form_type
+from opus_app.apps.tools.import_constants import (
+    collates_as_key,
+    displayed_table_names,
+    mult_table,
+    partables,
+    table_names,
+    table_names_collate_as_keys,
+)
+from opus_support import collation_key, format_unit_value, parse_form_type
 
 if TYPE_CHECKING:
     from collections.abc import Collection
@@ -125,12 +132,35 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+#: What `get_search_results_chunk` gives, in a row, in place of a value its query read as
+#: NULL, such as a column of a LEFT JOINed table that has no row for the observation.
+NULL_RESULT = 'N/A'
+
 
 ################################################################################
 #
 # API INTERFACES
 #
 ################################################################################
+
+
+def page_preview_json(value: str) -> Any:
+    """Return one observation's preview images as a page of results read them.
+
+    A page LEFT JOINs ``obs_preview``, so an observation without a row reads NULL, which
+    `get_search_results_chunk` delivers as `NULL_RESULT`. That is returned as None, for
+    which `get_pds_preview_images` gives the not-found placeholder, as it does on the
+    Detail page.
+
+    Parameters:
+        value: The page's ``**previewimages`` column for the observation, as
+            `get_search_results_chunk` delivers it: the view set as JSON text, or
+            `NULL_RESULT`.
+
+    Returns:
+        The decoded view set, or None for `NULL_RESULT`.
+    """
+    return None if value == NULL_RESULT else json.loads(value)
 
 
 @never_cache
@@ -211,7 +241,7 @@ def api_get_data_and_images(request: HttpRequest, *, api_code: int) -> HttpRespo
     assert page is not None
     assert aux is not None
 
-    preview_jsons = [json.loads(x[-1]) for x in page]
+    preview_jsons = [page_preview_json(x[-1]) for x in page]
     opus_ids = aux['opus_ids']
     image_list = get_pds_preview_images(opus_ids, preview_jsons, ['thumb', 'small', 'med', 'full'])
 
@@ -513,8 +543,7 @@ def get_metadata(
         request: The request being served. `?cols=` limits the result to particular
             columns and `?cats=` limits it to particular categories; when both are
             given `?cols=` is used and `?cats=` is ignored.
-        opus_id: The observation to describe. An old-format ringobsid is converted
-            to an OPUS ID first.
+        opus_id: The observation to describe.
         fmt: The format to return: `'json'`, `'html'`, or `'csv'`.
         internal: Return the HTML the Details tab needs rather than the HTML the
             public endpoint returns. It affects the `'html'` format only.
@@ -537,15 +566,6 @@ def get_metadata(
 
     if not opus_id:  # pragma: no cover - configuration error
         raise Http400Error(http400_missing_opus_id(request))
-
-    # Backwards compatibility
-    orig_opus_id = opus_id
-    # The conversion returns None for a ringobsid that names no observation, and
-    # the next line turns that into an HTTP 404, so opus_id is a string everywhere
-    # the rest of this function reads it.
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)  # type: ignore[assignment]
-    if not opus_id:
-        raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
 
     cols: str | Literal[False] = request.GET.get('cols', False)
     if cols or cols == '':
@@ -584,18 +604,37 @@ def get_metadata(
         all_tables = []
     elif not cats:
         # Find all the tables (categories) this observation belongs to
-        all_tables = TableNames.objects.filter(display='Y').order_by('disp_order')
+        all_tables = list(displayed_table_names())
     else:
         # Uniquify
         cat_list = list(set(cats.split(',')))
-        # Restrict tables to those found in cats
-        all_tables = (
-            TableNames.objects.filter(label__in=cat_list, display='Y')
-            | TableNames.objects.filter(table_name__in=cat_list, display='Y')
-        ).order_by('disp_order')
+        # Restrict tables to those found in cats, by label or by name
+        cat_keys = {collation_key(cat) for cat in cat_list}
+        all_tables = [
+            row
+            for row in displayed_table_names()
+            if collation_key(row.label) in cat_keys or collation_key(row.table_name) in cat_keys
+        ]
+        if (
+            len(all_tables) != len(cat_list)
+            or not table_names_collate_as_keys()
+            or not all(collates_as_key(cat) for cat in cat_list)
+        ):
+            # The server's collation decides a name the copy does not match, and every
+            # name when a requested name or a table's label or name could compare
+            # differently there.
+            all_tables = list(
+                (
+                    TableNames.objects.filter(label__in=cat_list, display='Y')
+                    | TableNames.objects.filter(table_name__in=cat_list, display='Y')
+                ).order_by('disp_order')
+            )
         if len(all_tables) != len(cat_list):
             log.error('get_metadata: Unknown category name in "%r"', cats)
             raise Http400Error(http400_unknown_category(request))
+
+    # The bodies the observation has rows of, per table the bodies' categories share
+    targets: dict[str, frozenset[int]] = {}
 
     # Now find all params and their values in each of these tables
     for table in all_tables:
@@ -634,6 +673,13 @@ def get_metadata(
             data_all_info[table_label] = all_info
 
             try:
+                category = resolve_category(table_name)
+                # A body's category is asked about only when the observation has rows
+                # of the body, which one query per shared table answers.
+                if category.target_name is not None and not observation_has_body(
+                    category, opus_id, targets
+                ):
+                    continue
                 results = query_table_for_opus_id(table_name, opus_id)
             except LookupError:  # pragma: no cover - configuration error
                 log.exception(
@@ -870,7 +916,6 @@ def _api_get_images(
         request,
         cols='opusid,**previewimages',
         return_opusids=True,
-        return_ringobsids=True,
         api_code=api_code,
     )
     if error is not None:
@@ -880,7 +925,7 @@ def _api_get_images(
     assert page is not None
     assert aux is not None
 
-    preview_jsons = [json.loads(x[1]) for x in page]
+    preview_jsons = [page_preview_json(x[1]) for x in page]
     opus_ids = aux['opus_ids']
     if size is None:
         image_list = get_pds_preview_images(opus_ids, preview_jsons, ignore_missing=True)
@@ -889,12 +934,6 @@ def _api_get_images(
 
     if not image_list:
         log.error('_api_get_images: No image found for: %r', str(opus_ids[:50]))
-
-    # Backwards compatibility
-    ring_obs_ids = aux['ring_obs_ids']
-    ring_obs_id_dict: dict[str, str] = {}
-    for i in range(len(opus_ids)):
-        ring_obs_id_dict[opus_ids[i]] = ring_obs_ids[i]
 
     for image in image_list:
         if size is not None:
@@ -930,8 +969,6 @@ def _api_get_images(
             image['path'] = path
             image['img'] = img
             image[size] = img
-
-        image['ring_obs_id'] = ring_obs_id_dict[image['opus_id']]
 
     data: dict[str, Any] = {}
     if include_search:
@@ -1010,11 +1047,6 @@ def api_get_files(
 
     opus_ids: list[str] = []
     if opus_id:
-        # Backwards compatibility
-        orig_opus_id = opus_id
-        opus_id = convert_ring_obs_id_to_opus_id(opus_id)
-        if not opus_id:
-            raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
         opus_ids = [opus_id]
     else:
         # No opus_id passed, get files from search results
@@ -1086,35 +1118,29 @@ def api_get_categories_for_opus_id(request: HttpRequest, opus_id: str) -> HttpRe
     if not opus_id:  # pragma: no cover - configuration error
         raise Http400Error(http400_missing_opus_id(request))
 
-    # Backwards compatibility
-    orig_opus_id = opus_id
-    # The conversion returns None for a ringobsid that names no observation, and
-    # the next line turns that into an HTTP 404, so opus_id is a string everywhere
-    # the rest of this function reads it.
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)  # type: ignore[assignment]
-    if not opus_id:
-        raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
-
     all_categories: list[dict[str, Any]] = []
-    table_info = TableNames.objects.all().values('table_name', 'label').order_by('disp_order')
-
-    for tbl in table_info:
-        table_name = tbl['table_name']
+    # The bodies the observation has rows of, per table the bodies' categories share
+    targets: dict[str, frozenset[int]] = {}
+    for tbl in table_names():
+        table_name = tbl.table_name
         if table_name == 'obs_surface_geometry_name':
             # obs_surface_geometry_name is not a data table
             # It's only used to select targets, not to hold data, so remove it
             continue
 
         try:
-            results = query_table_for_opus_id(table_name, opus_id)
+            category = resolve_category(table_name)
+            if category.target_name is not None:
+                found = observation_has_body(category, opus_id, targets)
+            else:
+                found = query_table_for_opus_id(table_name, opus_id).exists()
         except LookupError:  # pragma: no cover - configuration error
             log.exception(
                 'api_get_categories_for_opus_id: Unable to find ' + 'table %r', table_name
             )
             continue
-        opus_id_rows = results.values('opus_id')
-        if opus_id_rows:
-            cat = {'table_name': table_name, 'label': tbl['label']}
+        if found:
+            cat = {'table_name': table_name, 'label': tbl.label}
             all_categories.append(cat)
 
     return json_response(all_categories)
@@ -1150,8 +1176,8 @@ def api_get_categories_for_search(request: HttpRequest, *, api_code: int) -> Htt
     if not selections:
         triggered_tables = settings.BASE_TABLES[:]  # Copy
     else:
-        # get_triggered_tables returns None when the search's cache table cannot
-        # be created, and nothing here checks for it: that None reaches the
+        # get_triggered_tables returns None when the search's results cannot be
+        # built, and nothing here checks for it: that None reaches the
         # membership test below and raises TypeError. The fault is recorded here
         # rather than cast away by widening the declaration.
         triggered_tables = get_triggered_tables(
@@ -1168,13 +1194,13 @@ def api_get_categories_for_search(request: HttpRequest, *, api_code: int) -> Htt
         # obs_surface_geometry_name should always be in the triggered list
         triggered_tables.remove('obs_surface_geometry_name')
 
-    labels = (
-        TableNames.objects.filter(table_name__in=triggered_tables)
-        .values('table_name', 'label')
-        .order_by('disp_order')
-    )
+    labels = [
+        {'table_name': row.table_name, 'label': row.label}
+        for row in table_names()
+        if row.table_name in triggered_tables
+    ]
 
-    return json_response(list(labels))
+    return json_response(labels)
 
 
 @never_cache
@@ -1194,21 +1220,16 @@ def api_get_product_types_for_opus_id(request: HttpRequest, opus_id: str) -> Htt
     if not opus_id:  # pragma: no cover - configuration error
         raise Http400Error(http400_missing_opus_id(request))
 
-    # Backwards compatibility
-    orig_opus_id = opus_id
-    # The conversion returns None for a ringobsid that names no observation, and
-    # the next line turns that into an HTTP 404, so opus_id is a string everywhere
-    # the rest of this function reads it.
-    opus_id = convert_ring_obs_id_to_opus_id(opus_id)  # type: ignore[assignment]
-    if not opus_id:
-        raise Http404(http404_unknown_ring_obs_id(orig_opus_id, request))
-
     cursor = connection.cursor()
 
-    select, _from_source = _product_types_select()
+    select, from_source = _product_types_select()
+    # The served observation's files: an unserved generation may hold the same OPUS ID.
+    _join_served_observations(select, from_source)
     select.add_where(
         sql_builder.binary_op(
-            sql_builder.column('opus_id', 'obs_files'), '=', sql_builder.value(opus_id)
+            sql_builder.column('opus_id', 'obs_files'),
+            '=',
+            sql_builder.value(sql_builder.ascii_comparable(opus_id)),
         )
     )
 
@@ -1258,10 +1279,10 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
     # url_to_search_params returns both of these or neither.
     assert extras is not None
 
-    user_query_table = get_user_query_table(selections, extras, api_code)
-    if not user_query_table:  # pragma: no cover - internal or database failure
+    search_id = get_search_id(selections, extras, api_code)
+    if search_id is None:  # pragma: no cover - internal or database failure
         log.error(
-            'api_get_product_types_for_search: get_user_query_table '
+            'api_get_product_types_for_search: get_search_id '
             + 'failed *** Selections %r *** Extras %r',
             str(selections),
             str(extras),
@@ -1272,7 +1293,7 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
         settings.CACHE_SERVER_PREFIX
         + settings.CACHE_KEY_PREFIX
         + ':product_types:'
-        + user_query_table
+        + str(search_id)
     )
     # This cache holds the responses this endpoint built earlier.
     cached_val: HttpResponse | None = cache.get(cache_key)
@@ -1285,12 +1306,16 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
     if selections:
         from_source.add_join(
             'INNER',
-            user_query_table,
+            sql_builder.search_results_source(search_id),
             sql_builder.columns_equal(
                 sql_builder.column('obs_general_id', 'obs_files'),
-                sql_builder.column('id', user_query_table),
+                sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS),
             ),
         )
+    else:
+        # Every served observation's files, read through the view while an unserved
+        # generation has rows in obs_files too.
+        _join_served_observations(select, from_source)
 
     sql, values = select.build()
     log.debug('get_product_types_for_search SQL: %r %r', sql, values)
@@ -1321,7 +1346,11 @@ def api_get_product_types_for_search(request: HttpRequest, *, api_code: int) -> 
 ################################################################################
 
 
-def _results_column_select(column_names: list[str]) -> sql_builder.Select:
+def _results_column_select(
+    column_names: list[str],
+    selector_columns: dict[int, tuple[str, str]],
+    selections: dict[str, Any] | None,
+) -> sql_builder.Select:
     """Return a Select over the requested "table.column" names, in order.
 
     The result rows are unpacked positionally by the caller, so the column order
@@ -1329,9 +1358,22 @@ def _results_column_select(column_names: list[str]) -> sql_builder.Select:
 
     Parameters:
         column_names: The columns to select, each written `<table>.<column>`.
+        selector_columns: The positions in `column_names` that name a selector field,
+            each with its category and field, which are selected as
+            `opus_app.apps.search.views.selector_label` rather than as a column.
+        selections: The search's constraints, or None for the cart, which
+            `selector_label` reads.
+
+    Returns:
+        A Select with one column per name in `column_names`, in that order, and no FROM
+        clause; the caller adds the tables and joins the columns read.
     """
     select = sql_builder.Select()
-    for qualified_name in column_names:
+    for position, qualified_name in enumerate(column_names):
+        if position in selector_columns:
+            category_name, field_name = selector_columns[position]
+            select.add_column(selector_label(category_name, field_name, selections))
+            continue
         table_name, _, column_name = qualified_name.partition('.')
         select.add_column(sql_builder.column(column_name, table_name))
     return select
@@ -1345,19 +1387,47 @@ def _product_types_select() -> tuple[sql_builder.Select, sql_builder.FromSource]
     only in how they narrow the rows down.
     """
     select = sql_builder.Select(distinct=True)
-    for column_name in (
-        'category',
-        'short_name',
-        'full_name',
-        'version_number',
-        'version_name',
-        'sort_order',
-    ):
+    for column_name in _PRODUCT_TYPE_COLUMNS:
         select.add_column(sql_builder.column(column_name, 'obs_files'))
     from_source = select.add_from('obs_files')
     select.add_order_by(sql_builder.column('sort_order', 'obs_files'))
     select.add_order_by(sql_builder.column('version_number', 'obs_files'), descending=True)
     return select, from_source
+
+
+#: The product type columns, in the order the product_types endpoints select them.
+_PRODUCT_TYPE_COLUMNS = (
+    'category',
+    'short_name',
+    'full_name',
+    'version_number',
+    'version_name',
+    'sort_order',
+)
+
+
+def _join_served_observations(
+    select: sql_builder.Select, from_source: sql_builder.FromSource
+) -> None:
+    """Keep a product_types statement to the served observations' files, in its order.
+
+    The join is hung only while an unserved generation has rows in ``obs_files``
+    (`unserved_observations_exist`); otherwise the statement is left as it is.
+
+    The server sorts a ``DISTINCT`` over one table by every selected column after the
+    ``ORDER BY``'s, and one over a join by the ``ORDER BY``'s alone, so with the join the
+    ties the two columns leave are broken here as the one-table statement breaks them.
+
+    Parameters:
+        select: The statement `_product_types_select` returned.
+        from_source: Its ``obs_files`` source.
+    """
+    if not unserved_observations_exist():
+        return
+    from_source.append_join(sql_builder.served_observations_join('obs_files'))
+    for column_name in _PRODUCT_TYPE_COLUMNS:
+        if column_name not in ('sort_order', 'version_number'):
+            select.add_order_by(sql_builder.column(column_name, 'obs_files'))
 
 
 def get_search_results_chunk_error_handler(error: tuple[int, str]) -> HttpResponse:
@@ -1393,7 +1463,6 @@ def get_search_results_chunk(
     opus_id: str | None = None,
     start_obs: int | None = None,
     return_opusids: bool = False,
-    return_ringobsids: bool = False,
     return_cart_states: bool = False,
     api_code: int | None = None,
 ) -> SearchResultsChunk:
@@ -1420,8 +1489,6 @@ def get_search_results_chunk(
             1-based observation number instead.
         return_opusids: Include `'opus_ids'` in the returned aux dict. This is a
             list of opus_ids 1:1 with the returned data.
-        return_ringobsids: Include `'ring_obs_ids'` in the returned aux dict, the
-            same way.
         return_cart_states: Include `'cart_states'` in the returned aux dict. This
             is a list 1:1 with the returned data holding, for each observation,
             False when it is not in this session's cart, `'recycle'` when it is in
@@ -1433,7 +1500,8 @@ def get_search_results_chunk(
         `page_no` is set when the page was asked for by page number and `start_obs`
         when it was asked for by observation number; the other one is None. `limit`
         is the maximum number of results that could be returned, `results` holds one
-        list of column values per observation, `all_order` is the sort order that
+        list of column values per observation, with `NULL_RESULT` for each value the
+        query read as NULL, `all_order` is the sort order that
         was used, including a trailing opus_id if necessary, and `aux_dict` holds
         whatever the `return_` arguments asked for. When something goes wrong all
         six of those are None and `error` is a `(response_code, string)` pair to be
@@ -1487,6 +1555,9 @@ def get_search_results_chunk(
 
     form_type_formats: list[tuple[ParamInfo, str | None, str | None, str | None, str | None]] = []
     column_names: list[str] = []
+    # The positions of the selector fields among the columns: an observation can have
+    # several of a selector's rows, so each is one value (selector_label), not a join.
+    selector_columns: dict[int, tuple[str, str]] = {}
     tables: set[str] = set()
     mult_tables: set[tuple[str, bool, str, str]] = set()
     for slug in cols_to_slug_list(cols):
@@ -1504,14 +1575,21 @@ def get_search_results_chunk(
             # This isn't needed for correctness, just cleanliness.
             table = 'obs_general'
             column = 'obs_general.opus_id'
-        tables.add(table)
         (form_type, form_type_format, form_type_unit_id) = parse_form_type(pi.form_type)
+        if form_type in settings.MULT_FORM_TYPES and resolve_category(table).is_selector:
+            selector_columns[len(column_names)] = (table, pi.name)
+            column_names.append(column)
+            form_type_formats.append(
+                (pi, form_type, form_type_format, form_type_unit_id, desired_units)
+            )
+            continue
+        tables.add(table)
         if form_type in settings.MULT_FORM_TYPES and form_type != 'MULTIGROUP':
-            # For a mult field, we will have to join in the mult table
-            # and put the mult column here
-            mult_table = get_mult_name(pi.param_qualified_name())
-            mult_tables.add((mult_table, False, table, pi.name))
-            column_names.append(mult_table + '.label')
+            # For a mult field, we will have to join in its mult rows
+            # and put their label here
+            alias = mult_alias(pi.param_qualified_name())
+            mult_tables.add((alias, False, table, pi.name))
+            column_names.append(alias + '.label')
         else:
             # For a non-mult column or a MULTIGROUP mult. In the latter case we don't want
             # to return the .label because it's a JSON list of multiple IDs. So just
@@ -1523,10 +1601,6 @@ def get_search_results_chunk(
 
     added_extra_columns = 0
     tables.add('obs_general')  # We must have obs_general since it owns the ids
-    if return_ringobsids and 'obs_general.ring_obs_id' not in column_names:  # pragma: no cover -
-        # this should not normally be a request field, but could be
-        column_names.append('obs_general.ring_obs_id')
-        added_extra_columns += 1  # So we know to strip it off later
     if return_cart_states:
         column_names.append('cart.opus_id')
         column_names.append('cart.recycled')
@@ -1592,8 +1666,6 @@ def get_search_results_chunk(
         log.error('get_search_results_chunk: Bad offset %r', str(offset))
         return error_return(400, http400_bad_offset(offset, request))
 
-    temp_table_name: str | None = None
-    drop_temp_table = False
     if not use_cart:
         # This is for a search query
 
@@ -1618,50 +1690,18 @@ def get_search_results_chunk(
         # url_to_search_params returns both of these or neither.
         assert extras is not None
 
-        user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-        if not user_query_table:  # pragma: no cover -
+        search_id = get_search_id(selections, extras, api_code=api_code)
+        if search_id is None:  # pragma: no cover -
             # internal or database failure
             log.error(
-                'get_search_results_chunk: get_user_query_table failed '
+                'get_search_results_chunk: get_search_id failed '
                 + '*** Selections %r *** Extras %r',
                 str(selections),
                 str(extras),
             )
             return error_return(500, http500_search_cache_failed(request))
 
-        # First we create a temporary table that contains only those ids
-        # in the limit window that we care about (if there's a limit window).
-        # Then we use that temporary table (or the original cache table) to
-        # extract data from all our data tables.
-        drop_temp_table = True
-        pid_sfx = str(os.getpid())
-        time1 = time.time()
-        time_sfx = (f'{time1:.6f}').replace('.', '_')
-        temp_table_name = 'temp_' + user_query_table
-        temp_table_name += '_' + pid_sfx + '_' + time_sfx
-        temp_select = sql_builder.Select()
-        temp_select.add_column(sql_builder.column('sort_order'))
-        temp_select.add_column(sql_builder.column('id'))
-        temp_select.add_from(user_query_table)
-        temp_select.add_order_by(sql_builder.column('sort_order'))
-        temp_select.limit(limit)
-        temp_select.offset(offset)
-        temp_sql, temp_params = sql_builder.create_table_as_select(
-            temp_table_name, temp_select, temporary=True
-        )
-        # This SELECT has no WHERE, so it carries no parameters. Assert that
-        # rather than discarding the list, so a condition added here later
-        # cannot lose its values silently.
-        assert not temp_params
-        cursor = connection.cursor()
-        try:
-            cursor.execute(temp_sql)
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception('get_search_results_chunk: "%r" failed', temp_sql)
-            return error_return(500, http500_database_error(request))
-        log.debug('get_search_results_chunk SQL (%.2f secs): %r', time.time() - time1, temp_sql)
-
-        select = _results_column_select(column_names)
+        select = _results_column_select(column_names, selector_columns, selections)
         from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
@@ -1672,20 +1712,30 @@ def get_search_results_chunk(
         # PYTHONHASHSEED. The join order carries no meaning either way.
         add_obs_table_joins(from_source, sorted(tables))
 
-        # Now JOIN in all the mult_ tables.
-        for _mult_table, is_multigroup, _table, _field_name in mult_tables:
+        # Now JOIN mult once for each mult column.
+        for _alias, is_multigroup, _table, _field_name in mult_tables:
             # We can't have a MULTIGROUP here because those fields are simply
             # added as columns above to be mapped later
             assert not is_multigroup
         add_mult_table_joins(from_source, sorted(mult_tables))
 
-        # But the cache table is an INNER JOIN because we only want opus_ids
-        # that appear in the cache table to cause result rows
+        # But the search's results are an INNER JOIN because we only want opus_ids
+        # that appear in them to cause result rows. Their sort_order is each
+        # observation's position in the search's order, counting 1, 2, 3, ... with
+        # no gaps (ROW_NUMBER() assigns it when the results are stored), so the page
+        # is a range of sort_order values, which the primary key reads directly.
         from_source.add_join(
             'INNER',
-            temp_table_name,
-            sql_builder.columns_equal(
-                sql_builder.column('id', 'obs_general'), sql_builder.column('id', temp_table_name)
+            sql_builder.search_results_source(search_id),
+            sql_builder.join_exprs(
+                [
+                    sql_builder.columns_equal(
+                        sql_builder.column('id', 'obs_general'),
+                        sql_builder.column('id', sql_builder.SEARCH_RESULTS_ALIAS),
+                    ),
+                    sql_builder.sort_order_range(sql_builder.SEARCH_RESULTS_ALIAS, offset, limit),
+                ],
+                'AND',
             ),
         )
 
@@ -1710,7 +1760,7 @@ def get_search_results_chunk(
                 ),
             )
 
-        select.add_order_by(sql_builder.column('sort_order', temp_table_name))
+        select.add_order_by(sql_builder.column('sort_order', sql_builder.SEARCH_RESULTS_ALIAS))
     else:
         # This is for a cart
         order_params, order_descending_params = parse_order_slug(all_order)
@@ -1740,7 +1790,7 @@ def get_search_results_chunk(
         assert order_mult_tables is not None
         assert order_obs_tables is not None
 
-        select = _results_column_select(column_names)
+        select = _results_column_select(column_names, selector_columns, None)
         from_source = select.add_from('obs_general')
 
         # All the column tables are LEFT JOINs because if the table doesn't
@@ -1748,7 +1798,7 @@ def get_search_results_chunk(
         # just full of NULLs.
         add_obs_table_joins(from_source, sorted(tables | order_obs_tables))
 
-        # Now JOIN in all the mult_ tables.
+        # Now JOIN mult once for each mult column.
         # If is_multigroup is True, this must have been from order_mult_tables.
         # This is OK, because a multigroup field will never show up in mult_tables
         # (see above), so this field will only be used for sorting.
@@ -1802,25 +1852,10 @@ def get_search_results_chunk(
 
     log.debug('get_search_results_chunk SQL (%.2f secs): %r', time.time() - time1, sql)
 
-    if drop_temp_table:
-        # drop_temp_table is set only where the temporary table was named.
-        assert temp_table_name is not None
-        sql = sql_builder.drop_table(temp_table_name)
-        try:
-            cursor.execute(sql)
-        except DatabaseError:  # pragma: no cover - database error
-            log.exception('get_search_results_chunk: "%r" failed', sql)
-            return error_return(500, http500_database_error(request))
-
     if return_opusids:
         # Return a simple list of opus_ids
         opus_id_index = column_names.index('obs_general.opus_id')
         opus_ids = [o[opus_id_index] for o in results]
-
-    if return_ringobsids:
-        # And for backwards compatibility, ring_obs_ids
-        ring_obs_id_index = column_names.index('obs_general.ring_obs_id')
-        ring_obs_ids = [o[ring_obs_id_index] for o in results]
 
     if return_cart_states:
         # For retrieving cart states
@@ -1851,7 +1886,7 @@ def get_search_results_chunk(
 
     # There might be real None entries, which means the join returned null
     # data. Replace these so they look prettier.
-    results = [[x if x is not None else 'N/A' for x in r] for r in results]
+    results = [[x if x is not None else NULL_RESULT for x in r] for r in results]
 
     # If pi_form_type has format, we format the results
     # This is also where we make pretty lists for MULTIGROUPs
@@ -1872,7 +1907,7 @@ def get_search_results_chunk(
                     param_info, json.loads(entry[idx]), cvt_null=True
                 )
                 entry[idx] = result
-            if entry[idx] != 'N/A':
+            if entry[idx] != NULL_RESULT:
                 # Result is returned in proper format converted to
                 # the given unit
                 entry[idx] = format_unit_value(
@@ -1882,8 +1917,6 @@ def get_search_results_chunk(
     aux_dict: dict[str, Any] = {}
     if return_opusids:
         aux_dict['opus_ids'] = opus_ids
-    if return_ringobsids:
-        aux_dict['ring_obs_ids'] = ring_obs_ids
     if return_cart_states:
         aux_dict['cart_states'] = cart_states
 
@@ -1975,6 +2008,10 @@ def _get_metadata_by_slugs(
         raise Http404(http404_unknown_format(fmt, request))
 
 
+#: The selector field whose selected bodies trigger their surface geometry categories.
+_SURFACE_GEOMETRY_SELECTOR = 'obs_surface_geometry_name.target_name'
+
+
 def get_triggered_tables(
     selections: dict[str, list[Any]], extras: dict[str, Any], api_code: int | None = None
 ) -> list[str] | None:
@@ -1987,17 +2024,18 @@ def get_triggered_tables(
 
     Returns:
         The names of the triggered tables, in the order they are displayed in, or
-        the base tables sorted by name when there are no selections. It is None when
-        the search's cache table could not be created.
+        the base tables sorted by name when there are no selections. A surface
+        geometry body's category is among them when the body is one of the bodies the
+        search selects, named by its label or its value. It is None when the search's
+        results could not be built.
     """
     if not selections:
         return sorted(settings.BASE_TABLES)
 
-    user_query_table = get_user_query_table(selections, extras, api_code=api_code)
-    if not user_query_table:  # pragma: no cover - database error
+    search_id = get_search_id(selections, extras, api_code=api_code)
+    if search_id is None:  # pragma: no cover - database error
         log.error(
-            'get_triggered_tables: get_user_query_table failed '
-            + '*** Selections %r *** Extras %r',
+            'get_triggered_tables: get_search_id failed ' + '*** Selections %r *** Extras %r',
             str(selections),
             str(extras),
         )
@@ -2007,7 +2045,7 @@ def get_triggered_tables(
         settings.CACHE_SERVER_PREFIX
         + settings.CACHE_KEY_PREFIX
         + ':triggered_tables:'
-        + user_query_table
+        + str(search_id)
     )
     # This cache holds the table lists this function built earlier.
     cached_val: list[str] | None = cache.get(cache_key)
@@ -2016,9 +2054,17 @@ def get_triggered_tables(
 
     triggered_tables = settings.BASE_TABLES[:]
 
+    # A surface geometry trigger holds its body's mult id, and a selected body may be
+    # named by its label or its value, so both sides compare as ids.
+    selected_bodies: set[int] = set()
+    if _SURFACE_GEOMETRY_SELECTOR in selections:
+        selected_bodies = set(
+            mult_table(_SURFACE_GEOMETRY_SELECTOR).ids_for(selections[_SURFACE_GEOMETRY_SELECTOR])
+        )
+
     # Now see if any more tables are triggered from query
     queries: dict[str, list[Any]] = {}
-    for partable in Partables.objects.all():
+    for partable in partables():
         # We are joining the results of a user's query - the single column
         # table of ids - with the trigger_tab listed in the partable
         trigger_tab = partable.trigger_tab
@@ -2036,22 +2082,16 @@ def get_triggered_tables(
             continue  # Already triggered, no need to check
 
         if trigger_tab == 'obs_surface_geometry_name':
-            # Surface geometry has multiple targets per observation
-            # so we just want to know if our val is in the result
-            # (not the only result)
-            if (
-                'obs_surface_geometry_name.target_name' in selections
-                and trigger_val.upper()
-                == selections['obs_surface_geometry_name.target_name'][0].upper()
-            ):
-                # If the selected surfacegeo target has no result, we
-                # still want to have the related menu item displayed.
+            # An observation has geometry for many bodies, so a body's category is
+            # triggered by the body being selected rather than by the search's
+            # results; a selected body with no results still has its menu item.
+            if int(trigger_val) in selected_bodies:
                 triggered_tables.append(partable_name)
         else:
             if trigger_tab + trigger_col in queries:
                 results = queries[trigger_tab + trigger_col]
             else:
-                # We are joining the search's cache table, which has no model,
+                # We are joining the search's results, which have no model,
                 # so this is raw SQL rather than an ORM query. The model is
                 # still what resolves the trigger column's name, because a field
                 # declared with db_column is not named by its column.
@@ -2060,13 +2100,14 @@ def get_triggered_tables(
                 # and surface geometry (which is handled separately above), so
                 # only the obs_general arm of the join condition is reachable
                 # from here.
-                trigger_model = apps.get_model('search', ''.join(trigger_tab.title().split('_')))
-                trigger_column = trigger_model._meta.get_field(trigger_col).column
+                trigger = resolve_category(trigger_tab)
+                trigger_column = trigger.model._meta.get_field(trigger_col).column
                 select = sql_builder.Select(distinct=True)
                 select.add_column(sql_builder.column(trigger_column, trigger_tab))
-                select.add_from(trigger_tab)
-                select.add_from(user_query_table)
-                select.add_where(search_cache_join_condition(trigger_tab, user_query_table))
+                select.add_from(trigger.source)
+                select.add_from(sql_builder.search_results_source(search_id))
+                select.add_where(search_results_join_condition(trigger_tab))
+                trigger.restrict(select)
                 sql, sql_params = select.build()
                 log.debug('get_triggered_tables SQL: %r *** PARAMS %r', sql, str(sql_params))
                 cursor = connection.cursor()
@@ -2078,13 +2119,9 @@ def get_triggered_tables(
                 triggered_tables.append(partable_name)
 
     # Now hack in the proper ordering of tables
-    final_table_list: list[str] = []
-    for table in (
-        TableNames.objects.filter(table_name__in=triggered_tables)
-        .values('table_name')
-        .order_by('disp_order')
-    ):
-        final_table_list.append(table['table_name'])
+    final_table_list = [
+        row.table_name for row in table_names() if row.table_name in triggered_tables
+    ]
 
     cache.set(cache_key, final_table_list)
 
@@ -2111,7 +2148,7 @@ def labels_for_slugs(slugs: list[str], units: bool = True) -> list[str] | None:
             log.error('labels_for_slugs: Could not find param_info ' + 'for %r', slug)
             return None
 
-        # append units if pi_units has unit stored
+        # The unit the column's values are shown in, when the caller asked for units.
         unit = None
         if units:
             unit = pi.get_units(override_unit=desired_units)

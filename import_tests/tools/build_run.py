@@ -16,6 +16,8 @@ of the run.
 
 from __future__ import annotations
 
+import contextlib
+import math
 import os
 import pickle
 import re
@@ -23,17 +25,19 @@ import shutil
 import site
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import coverage
 
 from import_tests.tools import fixture_layout, golden_io, holdings_survey, shelf_manifests
 from import_tests.tools.golden_io import DatabaseCredentials
+from opus_import import generations
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Mapping, Sequence
 
 #: The environment variable the pipeline reads its configuration file from.
 CONFIG_ENV_VAR = 'OPUS_CONFIG'
@@ -59,22 +63,43 @@ COVERAGE_PTH_CONTENT = 'import coverage; coverage.process_startup()\n'
 #: The pipeline's own steps, in the order the integration import script runs them. The
 #: goldens encode the row ids these produce, and the ids are handed out in the order
 #: rows are inserted, so this order is part of the fixture rather than a convenience.
-DROP_ARGS = ('--drop-permanent-tables', '--scorched-earth')
-IMPORT_ARGS = ('--do-all-import',)
-AUX_ARGS = ('--cleanup-aux-tables',)
+DROP_ARGS = ('--scorched-earth', '--yes')
+IMPORT_ARGS = ('--import',)
+AUX_ARGS = ('--finalize',)
 DICTIONARY_ARGS = ('--import-dictionary',)
-VALIDATE_ARGS = ('--validate-perm',)
+VALIDATE_ARGS = ('--validate',)
+VERSION_ARGS = ('--write-schema-version',)
+
+#: The registration of a whole bundle list, and one queue importer, which several
+#: processes can run at once against one schema.
+REGISTER_ARGS = ('--register-bundles',)
+JOIN_ARGS = ('--join',)
+
+#: The Django migration's command line after the interpreter, run in the checkout.
+MIGRATE_ARGS = ('manage.py', 'migrate')
+
+#: The interpreter a step runs with unless the caller names another: this process's own,
+#: so the code under test is the checkout this suite was started from.
+THIS_PYTHON = Path(sys.executable)
 
 #: The log file names the pipeline's warning and error handlers write under the run's
 #: log directory. The run's real gate is what these hold, not the exit status.
 ERRORS_LOG = 'ERRORS.log'
 WARNINGS_LOG = 'WARNINGS.log'
 
-#: What `reimport_bundle` writes beside the first run's, under the run's own directory.
-#: The log directory is its own because pdslogger appends: sharing one would put the
-#: re-import's records in front of the assertions that read the first run's.
-REIMPORT_LOG_DIRNAME = 'logs_reimport'
-REIMPORT_CONFIG_NAME = 'opus_reimport.toml'
+#: The information-level log the run's configuration names under its log directory.
+#: Each invocation writes a file of its own, the name's stem followed by the time it
+#: started (``opus_import_2026-11-06T22-13-27.log``), so `import_logs` finds them.
+IMPORT_LOG = 'opus_import.log'
+
+#: What a queue importer's log names carry after the time, before its computer and process
+#: id (``opus_import_2026-11-06T22-13-27_join_<host>_<pid>.log``), as
+#: `opus_import.cli.JOIN_LOG_SUFFIX` names it.
+JOIN_LOG_SUFFIX = 'join'
+
+#: What `reimport_bundle` names the configuration and logs it writes beside the first
+#: run's (`sibling_paths`).
+REIMPORT_NAME = 'reimport'
 
 
 @dataclass(frozen=True)
@@ -123,6 +148,11 @@ class RunPaths:
     def warnings_log(self) -> Path:
         """The file every logged warning ends up in."""
         return self.log_dir / WARNINGS_LOG
+
+    @property
+    def import_logs(self) -> list[Path]:
+        """The files the pipeline's information-level records went to (`import_logs`)."""
+        return import_logs(self.log_dir)
 
 
 @dataclass(frozen=True)
@@ -250,21 +280,75 @@ def build_holdings_tree(paths: RunPaths, *, overlay: Path | None = None) -> None
         _copy_tree(overlay / fixture_layout.PDS4_ROOT_NAME, paths.pds4_holdings)
 
 
-def _toml_string(value: str) -> str:
-    """Return a value with the two characters a TOML basic string cannot hold escaped.
+def toml_string(value: str) -> str:
+    """Return a value with every character a TOML basic string cannot hold escaped.
 
     Parameters:
         value: The value to interpolate -- a path, a schema name, or a password, none of
             which this suite controls the contents of.
 
     Returns:
-        The value with backslashes and double quotes escaped, so that a Windows path or a
-        password holding either produces a configuration the loader can read.
+        The value with backslashes and double quotes escaped, and every control
+        character written as a ``\\uXXXX`` escape, so that a Windows path, a password, or
+        a path holding a newline produces a configuration the loader can read.
     """
-    return value.replace('\\', '\\\\').replace('"', '\\"')
+    escaped = value.replace('\\', '\\\\').replace('"', '\\"')
+    return ''.join(
+        f'\\u{ord(character):04x}' if ord(character) < 0x20 or ord(character) == 0x7F else character
+        for character in escaped
+    )
 
 
-def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredentials) -> None:
+def import_logs(log_dir: Path) -> list[Path]:
+    """Return the information-level import logs in a log directory, oldest first.
+
+    The pipeline names each invocation's log after `IMPORT_LOG` and the time it
+    started, so the names sort in the order the invocations ran; a queue importer's
+    name also carries `JOIN_LOG_SUFFIX`, its computer and its process id.
+
+    Parameters:
+        log_dir: The run's log directory.
+
+    Returns:
+        The logs; none when the directory holds none.
+    """
+    stem = Path(IMPORT_LOG).stem
+    pattern = re.compile(
+        rf'{re.escape(stem)}(_\d{{4}}-\d{{2}}-\d{{2}}T[\d-]+)?(_{JOIN_LOG_SUFFIX}_[^/]+)?\.log'
+    )
+    return sorted(path for path in log_dir.glob('*.log') if pattern.fullmatch(path.name))
+
+
+def toml_value(value: object) -> str:
+    """Return a value as TOML writes it.
+
+    Parameters:
+        value: A boolean, a whole number, a finite decimal number or a string.
+
+    Returns:
+        The value's TOML spelling.
+
+    Raises:
+        TypeError: For any other type, or a decimal number that is not finite.
+    """
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float) and math.isfinite(value):
+        return repr(value)
+    if isinstance(value, str):
+        return f'"{toml_string(value)}"'
+    raise TypeError(f'no TOML spelling for {value!r}')
+
+
+def write_opus_config(
+    paths: RunPaths,
+    schema: str,
+    credentials: DatabaseCredentials,
+    *,
+    extra_import: Mapping[str, object] | None = None,
+) -> None:
     """Write the configuration file the run reads, with every key the loader requires.
 
     It goes to ``paths.config_file``, which is what every caller passes to the pipeline.
@@ -273,19 +357,29 @@ def write_opus_config(paths: RunPaths, schema: str, credentials: DatabaseCredent
         paths: Where the run's tree and logs are.
         schema: The database schema to import into.
         credentials: How to reach the database server.
+        extra_import: Further ``[import]`` keys and their values, for a session that
+            sets one; None for none. A key the file sets by default, such as
+            ``log_file``, takes the value given here instead.
     """
     for directory in (paths.log_dir, paths.root / 'tar', paths.root / 'manifest'):
         directory.mkdir(parents=True, exist_ok=True)
     text = _CONFIG_TEMPLATE.format(
-        host=_toml_string(credentials.host),
-        user=_toml_string(credentials.user),
-        password=_toml_string(credentials.password),
-        schema=_toml_string(schema),
-        pds3_holdings=_toml_string(paths.pds3_holdings.as_posix()),
-        pds4_holdings=_toml_string(paths.pds4_holdings.as_posix()),
-        run_root=_toml_string(paths.root.as_posix()),
-        log_dir=_toml_string(paths.log_dir.as_posix()),
+        host=toml_string(credentials.host),
+        user=toml_string(credentials.user),
+        password=toml_string(credentials.password),
+        schema=toml_string(schema),
+        pds3_holdings=toml_string(paths.pds3_holdings.as_posix()),
+        pds4_holdings=toml_string(paths.pds4_holdings.as_posix()),
+        run_root=toml_string(paths.root.as_posix()),
+        log_dir=toml_string(paths.log_dir.as_posix()),
     )
+    import_keys: dict[str, object] = {
+        'log_file': f'{paths.log_dir.as_posix()}/opus_import.log',
+        'debug_log_file': f'{paths.log_dir.as_posix()}/opus_import_debug.log',
+        **(extra_import or {}),
+    }
+    for key, value in import_keys.items():
+        text += f'{key} = {toml_value(value)}\n'
     paths.config_file.write_text(text, encoding='utf-8')
 
 
@@ -316,6 +410,10 @@ secret_key = "mini-holdings-throwaway-key"
 debug = false
 allowed_hosts = ["127.0.0.1", "localhost", "testserver"]
 cache_server_prefix = "mini_holdings"
+# A port nothing listens on. The run's `manage.py migrate` imports the settings, whose
+# memcached probe would otherwise write to whichever memcached the machine runs on the
+# default port; refused, the settings fall back to the local-memory cache.
+cache_location = "127.0.0.1:1"
 public_url = "https://opus.invalid/"
 product_http_path = "https://opus.invalid/"
 viewmaster_url = "https://viewmaster.invalid/"
@@ -328,9 +426,6 @@ fake_error404_probability = 0.0
 fake_error500_probability = 0.0
 
 [import]
-table_temp_prefix = "imp_"
-log_file = "{log_dir}/opus_import.log"
-debug_log_file = "{log_dir}/opus_import_debug.log"
 """
 
 
@@ -398,19 +493,51 @@ def run_environment(config_file: Path) -> dict[str, str]:
         directory for nobody to combine.
     """
     environment = dict(os.environ)
-    environment[CONFIG_ENV_VAR] = str(config_file)
+    # Absolute, since the subprocess may run in another checkout.
+    environment[CONFIG_ENV_VAR] = str(config_file.resolve())
     environment[HASH_SEED_ENV_VAR] = HASH_SEED
     if coverage.Coverage.current() is not None:
         environment[COVERAGE_ENV_VAR] = str(fixture_layout.REPO_ROOT / 'pyproject.toml')
     return environment
 
 
-def run_pipeline_step(config_file: Path, arguments: Sequence[str]) -> StepResult:
+class StepObserver(Protocol):
+    """Something told about each invocation `perform_run` makes, as it makes it.
+
+    The benchmark harness is the one implementation: it times each invocation and
+    samples its memory between the two calls, and checks the database after each one.
+    """
+
+    def step_started(self, arguments: Sequence[str]) -> None:
+        """Hear that an invocation is about to start.
+
+        Parameters:
+            arguments: The invocation's command line after the interpreter.
+        """
+
+    def step_finished(self, result: StepResult) -> None:
+        """Hear that an invocation has finished.
+
+        Parameters:
+            result: What the invocation did.
+        """
+
+
+def run_pipeline_step(
+    config_file: Path,
+    arguments: Sequence[str],
+    *,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+) -> StepResult:
     """Run one ``opus_import`` invocation against a built tree.
 
     Parameters:
         config_file: The run's configuration file.
         arguments: The command-line arguments after ``python -m opus_import``.
+        python: The interpreter to run it with, which decides whose ``opus_import``
+            runs: the default is this process's own.
+        repo_root: The checkout to run it in, as its working directory.
 
     Returns:
         What the invocation did. The status is not the gate -- several steps report
@@ -418,8 +545,8 @@ def run_pipeline_step(config_file: Path, arguments: Sequence[str]) -> StepResult
         step that stopped before it logged anything leaves the log silent.
     """
     finished = subprocess.run(
-        [sys.executable, '-m', 'opus_import', *arguments],
-        cwd=fixture_layout.REPO_ROOT,
+        [str(python), '-m', 'opus_import', *arguments],
+        cwd=repo_root,
         env=run_environment(config_file),
         capture_output=True,
         text=True,
@@ -433,19 +560,28 @@ def run_pipeline_step(config_file: Path, arguments: Sequence[str]) -> StepResult
     )
 
 
-def run_migrate(config_file: Path) -> StepResult:
+def run_migrate(
+    config_file: Path,
+    *,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+) -> StepResult:
     """Create Django's own contrib tables in the run's schema.
 
     Parameters:
         config_file: The run's configuration file.
+        python: The interpreter to run ``manage.py`` with; the default is this
+            process's own.
+        repo_root: The checkout whose ``manage.py`` runs, which is also the working
+            directory.
 
     Returns:
         What the invocation did.
     """
-    arguments = ['manage.py', 'migrate']
+    arguments = list(MIGRATE_ARGS)
     finished = subprocess.run(
-        [sys.executable, *arguments],
-        cwd=fixture_layout.REPO_ROOT,
+        [str(python), *arguments],
+        cwd=repo_root,
         env=run_environment(config_file),
         capture_output=True,
         text=True,
@@ -467,66 +603,117 @@ def perform_run(
     overlay: Path | None = None,
     bundle_groups: Sequence[Sequence[str]] | None = None,
     extra_import_args: Iterable[str] = (),
+    extra_import: Mapping[str, object] | None = None,
     finalize: bool = True,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+    drop_args: Sequence[str] = DROP_ARGS,
+    import_args: Sequence[str] = IMPORT_ARGS,
+    aux_args: Sequence[str] = AUX_ARGS,
+    dictionary_args: Sequence[str] = DICTIONARY_ARGS,
+    validate_args: Sequence[str] = VALIDATE_ARGS,
+    version_args: Sequence[str] = VERSION_ARGS,
+    observer: StepObserver | None = None,
 ) -> ImportRun:
     """Build a tree and run the pipeline against it -- the whole sequence unless
     `finalize` says otherwise.
 
     The sequence is the one the integration import script runs: drop everything, import
-    each bundle on its own, clean up the auxiliary tables, import the dictionary,
-    migrate Django's tables, validate. Importing one bundle per invocation is what
-    produces the on-top-of-previous-import warnings the whitelist expects, and it fixes
-    the order row ids are handed out in, which the goldens encode.
+    each bundle on its own, finalize, import the dictionary, migrate Django's tables,
+    validate, write the schema version row. Importing one bundle per invocation into
+    the emptied schema makes each a fresh import, and fixes the order row ids are handed
+    out in, which the goldens encode.
 
     Parameters:
         root: The run's directory.
         schema: The schema to import into.
         credentials: How to reach the database server.
         overlay: A tree copied over the built one, for a negative case.
-        bundle_groups: The bundles each ``--do-all-import`` invocation imports, or None
-            for one invocation per fixture bundle. Naming two bundles in one invocation
-            is what puts them in the same import tables, which is where a duplicate OPUS
-            id between them can be seen at all.
-        extra_import_args: Arguments added to each ``--do-all-import`` invocation.
-        finalize: Whether to run the four steps after the imports -- the auxiliary
-            tables, the dictionary, the Django migration and the validation. True is the
-            production sequence and what the main run uses. False stops after the
-            imports, which is all a negative case needs: ``--do-all-import`` already
-            copies to the permanent tables, so ``obs_general`` and the mult tables the
-            negative assertions read exist without any of the four, and none of those
-            assertions reads a table only a later step creates. A run that stops early
-            leaves `ImportRun.django_tables` empty, so it can never be goldened.
+        bundle_groups: The bundles each ``--import`` invocation imports, or None
+            for one invocation per fixture bundle.
+        extra_import_args: Arguments added to each ``--import`` invocation.
+        extra_import: Further ``[import]`` configuration keys every invocation reads
+            (`write_opus_config`), or None for none.
+        finalize: Whether to run the steps after the imports -- the finalization, the
+            dictionary, the Django migration, the validation and the schema version.
+            True is the production sequence and what the main run uses. False stops
+            after the imports, which is all a negative case needs: a fresh import writes
+            the observation tables directly, so ``obs_general`` and the mult rows the
+            negative assertions read exist without any of the later steps, and none of
+            those assertions reads a table only a later step creates. A run
+            that stops early leaves `ImportRun.django_tables` empty, so it can never be
+            goldened.
+        python: The interpreter every invocation runs with; the default is this
+            process's own.
+        repo_root: The checkout every invocation runs in.
+        drop_args: The erase that starts the sequence.
+        import_args: The options of each bundle-import invocation, before
+            `extra_import_args` and the bundles.
+        aux_args: The step that builds the auxiliary tables after the imports.
+        dictionary_args: The step that imports the dictionary.
+        validate_args: The validation that follows the migration.
+        version_args: The step that writes the schema version row, last; empty to skip
+            it, for an interpreter whose import does not have it. It is skipped too when
+            any invocation before it exited with failure, as ``opus_import_all`` stops
+            there.
+        observer: Told about each invocation as it starts and as it finishes, the
+            migration included, or None.
 
     Returns:
         The completed run.
     """
-    paths = RunPaths.under(root)
+    # Absolute, since every invocation runs in repo_root rather than the caller's directory.
+    paths = RunPaths.under(root.resolve())
     build_holdings_tree(paths, overlay=overlay)
-    write_opus_config(paths, schema, credentials)
+    write_opus_config(paths, schema, credentials, extra_import=extra_import)
 
     groups = [[bundle] for bundle in fixture_bundles()] if bundle_groups is None else bundle_groups
     run = ImportRun(
         paths=paths, schema=schema, bundles=[bundle for group in groups for bundle in group]
     )
 
-    run.steps.append(run_pipeline_step(paths.config_file, DROP_ARGS))
+    extra = tuple(extra_import_args)
+
+    def step(arguments: Sequence[str]) -> None:
+        """Run one ``opus_import`` invocation of the sequence and record it.
+
+        Parameters:
+            arguments: Its command line after ``python -m opus_import``.
+        """
+        if observer is not None:
+            observer.step_started(arguments)
+        result = run_pipeline_step(paths.config_file, arguments, python=python, repo_root=repo_root)
+        run.steps.append(result)
+        if observer is not None:
+            observer.step_finished(result)
+
+    step(drop_args)
     for group in groups:
-        run.steps.append(
-            run_pipeline_step(
-                paths.config_file, [*IMPORT_ARGS, *extra_import_args, ','.join(group)]
-            )
-        )
+        step([*import_args, *extra, ','.join(group)])
     if not finalize:
         return run
-    run.steps.append(run_pipeline_step(paths.config_file, AUX_ARGS))
-    run.steps.append(run_pipeline_step(paths.config_file, DICTIONARY_ARGS))
-    run.django_tables = _migrate_and_diff(paths, schema, credentials, run)
-    run.steps.append(run_pipeline_step(paths.config_file, VALIDATE_ARGS))
+    step(aux_args)
+    step(dictionary_args)
+    run.django_tables = _migrate_and_diff(
+        paths, schema, credentials, run, python=python, repo_root=repo_root, observer=observer
+    )
+    step(validate_args)
+    # As opus_import_all does: any step that failed leaves the schema unmarked.
+    failed = any(result.returncode != 0 for result in run.steps)
+    if len(version_args) > 0 and not failed:
+        step(version_args)
     return run
 
 
 def _migrate_and_diff(
-    paths: RunPaths, schema: str, credentials: DatabaseCredentials, run: ImportRun
+    paths: RunPaths,
+    schema: str,
+    credentials: DatabaseCredentials,
+    run: ImportRun,
+    *,
+    python: Path = THIS_PYTHON,
+    repo_root: Path = fixture_layout.REPO_ROOT,
+    observer: StepObserver | None = None,
 ) -> frozenset[str]:
     """Run the Django migration and report exactly which tables it created.
 
@@ -539,47 +726,119 @@ def _migrate_and_diff(
         schema: The schema being imported into.
         credentials: How to reach the database server.
         run: The run being performed, which the migration is recorded on.
+        python: The interpreter to run ``manage.py`` with.
+        repo_root: The checkout whose ``manage.py`` runs.
+        observer: Told about the migration as it starts and as it finishes, or None.
 
     Returns:
         The table names ``manage.py migrate`` added.
     """
     before = golden_io.list_tables(credentials, schema)
-    run.steps.append(run_migrate(paths.config_file))
+    if observer is not None:
+        observer.step_started(MIGRATE_ARGS)
+    result = run_migrate(paths.config_file, python=python, repo_root=repo_root)
+    run.steps.append(result)
+    if observer is not None:
+        observer.step_finished(result)
     after = golden_io.list_tables(credentials, schema)
     return frozenset(after) - frozenset(before)
 
 
-def reimport_paths(run: ImportRun) -> RunPaths:
-    """Return where a re-import of one run's bundles writes.
+def sibling_paths(run: ImportRun, name: str) -> RunPaths:
+    """Return where a further invocation against one run's built tree writes.
 
-    The built tree is the finished run's, because re-importing means importing the same
-    files again. The log directory is the re-import's own, because pdslogger appends and
-    the first run's logs are what the log assertions read; the configuration file is its
-    own because that is what points the invocation at that log directory.
+    The built tree is the finished run's, because importing into the run's schema again
+    means importing the same files. The log directory is the invocation's own, because
+    pdslogger appends and the first run's logs are what the log assertions read; the
+    configuration file is its own because that is what points the invocation at that log
+    directory, and at a schema of its own when the caller writes one there.
 
     Parameters:
-        run: The completed run to re-import into.
+        run: The completed run whose tree to use.
+        name: What distinguishes the configuration file and the log directory.
 
     Returns:
-        The paths, so that the caller running the re-import and the caller reading its
+        The paths, so that the caller running the invocation and the caller reading its
         log agree about where it went without either of them spelling out the layout.
     """
     return RunPaths(
         root=run.paths.root,
         pds3_holdings=run.paths.pds3_holdings,
         pds4_holdings=run.paths.pds4_holdings,
-        config_file=run.paths.root / REIMPORT_CONFIG_NAME,
-        log_dir=run.paths.root / REIMPORT_LOG_DIRNAME,
+        config_file=run.paths.root / f'opus_{name}.toml',
+        log_dir=run.paths.root / f'logs_{name}',
     )
 
 
-def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredentials) -> StepResult:
-    """Import one bundle a second time into the schema that already holds it.
+def reimport_paths(run: ImportRun) -> RunPaths:
+    """Return where a re-import of one run's bundles writes (`sibling_paths`).
 
-    This is the only thing in the suite that executes the update half of every upsert --
-    the documented re-import operational mode -- so it is run against the finished
-    database rather than a fresh one. It writes its logs into a directory of its own,
-    because pdslogger appends and the first run's logs are what the log assertions read.
+    Parameters:
+        run: The completed run to re-import into.
+
+    Returns:
+        The paths.
+    """
+    return sibling_paths(run, REIMPORT_NAME)
+
+
+def closing_steps(config_file: Path) -> list[StepResult]:
+    """Run the invocations that follow an append: finalize, validate, mark it ready.
+
+    They stop at the first that exits with failure, as ``opus_import_all`` stops there.
+
+    Parameters:
+        config_file: The configuration naming the schema.
+
+    Returns:
+        What each invocation that ran did, in order.
+    """
+    results: list[StepResult] = []
+    for arguments in (AUX_ARGS, VALIDATE_ARGS, VERSION_ARGS):
+        results.append(run_pipeline_step(config_file, arguments))
+        if results[-1].returncode != 0:
+            break
+    return results
+
+
+#: The registered type whose fixture volume is imported a second time. Imaging carries
+#: the widest set of tables of any single volume, so re-importing it exercises the update
+#: half of the most upserts for one bundle's worth of work.
+REIMPORT_INSTRUMENT_CLASS = 'ObsVolumeCOISS12xxx'
+
+
+def reimport_bundle_id(run: ImportRun) -> str:
+    """Return the fixture bundle imported a second time.
+
+    Parameters:
+        run: The completed run.
+
+    Returns:
+        The bundle id representing `REIMPORT_INSTRUMENT_CLASS`.
+
+    Raises:
+        ValueError: If the fixture carries no bundle for that type.
+    """
+    for entry in holdings_survey.registry_entries():
+        if entry.instrument_class_name != REIMPORT_INSTRUMENT_CLASS:
+            continue
+        for bundle in run.bundles:
+            if re.fullmatch(entry.pattern, bundle):
+                return bundle
+    raise ValueError(f'The fixture carries no bundle for {REIMPORT_INSTRUMENT_CLASS}')
+
+
+def reimport_bundle(
+    run: ImportRun, bundle: str, credentials: DatabaseCredentials
+) -> list[StepResult]:
+    """Import one bundle a second time into the finished schema that already holds it.
+
+    The schema has a version row, so this is an append, and like every append it is
+    followed by the invocations that finalize the schema and mark it ready again
+    (`closing_steps`). This is the only thing in the main run's schema that executes the
+    update half of every upsert, which is why it runs against the finished database
+    rather than a fresh one. It writes its logs into a directory of its own, because
+    pdslogger appends and the first run's logs are what the log assertions read.
 
     Parameters:
         run: The completed run whose schema and built tree to reuse.
@@ -587,14 +846,108 @@ def reimport_bundle(run: ImportRun, bundle: str, credentials: DatabaseCredential
         credentials: How to reach the database server.
 
     Returns:
-        What the invocation did. Its status is worth reading: a re-import that never ran
-        leaves the database as the first import left it, which is what all three of the
-        re-import assertions also accept, so nothing downstream can tell it from a
-        re-import that worked.
+        What each invocation did, the import first. Their statuses are worth reading: a
+        re-import that never ran leaves the database as the first import left it, which
+        is what all three of the re-import assertions also accept, so nothing downstream
+        can tell it from a re-import that worked.
     """
     paths = reimport_paths(run)
     write_opus_config(paths, run.schema, credentials)
-    return run_pipeline_step(paths.config_file, [*IMPORT_ARGS, bundle])
+    imported = run_pipeline_step(paths.config_file, [*IMPORT_ARGS, bundle])
+    if imported.returncode != 0:
+        return [imported]
+    return [imported, *closing_steps(paths.config_file)]
+
+
+@dataclass
+class SchemaCopy:
+    """A copy of a finished run's schema, with a configuration and logs of its own.
+
+    Attributes:
+        schema: The copy.
+        paths: Its configuration file and log directory, over the run's tree.
+    """
+
+    schema: str
+    paths: RunPaths
+
+    def step(self, *arguments: str) -> StepResult:
+        """Run one ``opus_import`` invocation against the copy.
+
+        Parameters:
+            arguments: The options.
+
+        Returns:
+            What the invocation did.
+        """
+        return run_pipeline_step(self.paths.config_file, arguments)
+
+    def errors(self) -> str:
+        """Return what the copy's error log holds so far."""
+        path = self.paths.errors_log
+        return path.read_text(encoding='utf-8') if path.exists() else ''
+
+
+def copy_run_schema(
+    run: ImportRun,
+    credentials: DatabaseCredentials,
+    created_schemas: list[str],
+    case: str,
+    *,
+    source: str | None = None,
+) -> SchemaCopy:
+    """Copy a finished run's schema, or a schema built from it, for one case.
+
+    Parameters:
+        run: The finished run, usually the main run, whose built tree the copy reads.
+        credentials: How to reach the server.
+        created_schemas: The session's schemas, which the copy joins, so the session
+            drops it.
+        case: What distinguishes the copy's schema, configuration and logs.
+        source: The schema to copy, when not the run's own: one that invocations against
+            the run's tree have taken further, so that several cases start from it.
+
+    Returns:
+        The copy.
+    """
+    schema = fixture_layout.schema_name(os.getpid(), case)
+    created_schemas.append(schema)
+    clone_schema(credentials, run.schema if source is None else source, schema)
+    paths = sibling_paths(run, case)
+    write_opus_config(paths, schema, credentials)
+    return SchemaCopy(schema, paths)
+
+
+def clone_schema(credentials: DatabaseCredentials, source: str, target: str) -> None:
+    """Copy every table of a schema, keys, foreign keys and rows, into a new schema.
+
+    Each table is created from ``SHOW CREATE TABLE`` on the source, which carries its
+    keys and foreign keys, with ``foreign_key_checks`` off so that tables may be created
+    and filled in any order. Each view is then created from ``SHOW CREATE VIEW``, its
+    source schema's name replaced by the target's and its definer left out. The target is
+    dropped first if it exists.
+
+    Parameters:
+        credentials: How to reach the database server.
+        source: The schema to copy.
+        target: The new schema.
+    """
+    drop_schema(credentials, target)
+    golden_io.execute(credentials, None, f'CREATE DATABASE `{target}`')
+    with contextlib.closing(golden_io.connect(credentials, target)) as connection:
+        with contextlib.closing(connection.cursor()) as cursor:
+            cursor.execute('SET SESSION foreign_key_checks = 0')
+            for listed in golden_io.list_tables(credentials, source):
+                table = generations.physical_table_name(listed)
+                cursor.execute(f'SHOW CREATE TABLE `{source}`.`{table}`')
+                cursor.execute(cursor.fetchall()[0][1])
+                cursor.execute(f'INSERT INTO `{table}` SELECT * FROM `{source}`.`{table}`')
+            for view in golden_io.list_views(credentials, source):
+                cursor.execute(f'SHOW CREATE VIEW `{source}`.`{view}`')
+                definition = str(cursor.fetchall()[0][1]).replace(f'`{source}`.', f'`{target}`.')
+                cursor.execute(re.sub(r' DEFINER=`[^`]*`@`[^`]*`', '', definition))
+            cursor.execute('SET SESSION foreign_key_checks = 1')
+        connection.commit()
 
 
 def drop_schema(credentials: DatabaseCredentials, schema: str) -> None:
@@ -608,3 +961,86 @@ def drop_schema(credentials: DatabaseCredentials, schema: str) -> None:
         schema: The schema to drop.
     """
     golden_io.execute(credentials, None, f'DROP DATABASE IF EXISTS `{schema}`')
+
+
+def communicate_all(processes: Sequence[subprocess.Popen[str]]) -> list[tuple[str, str]]:
+    """Wait for every process to exit, draining all of their pipes at once.
+
+    Draining one process's pipes at a time would leave the others' undrained, and a
+    process that fills a pipe then blocks, holding whatever it holds -- a claimed bundle,
+    or a lock another of the processes waits for -- until its turn comes.
+
+    Parameters:
+        processes: Processes started with their standard output and error piped, as text.
+
+    Returns:
+        Each process's standard output and error, in the order of `processes`.
+    """
+    if len(processes) == 0:
+        return []
+    with ThreadPoolExecutor(max_workers=len(processes)) as executor:
+        return list(executor.map(lambda process: process.communicate(), processes))
+
+
+def run_concurrently(
+    config_files: Sequence[Path],
+    arguments: Sequence[str],
+    *,
+    extra_environment: Mapping[str, str] | None = None,
+    while_running: Callable[[], None] | None = None,
+) -> list[StepResult]:
+    """Start one ``opus_import`` invocation per configuration at once, and wait for all.
+
+    Parameters:
+        config_files: Each process's configuration, which names its own log directory.
+        arguments: The command line every process runs, after ``python -m opus_import``.
+        extra_environment: Variables added to every process's environment, or None.
+        while_running: Called once the processes have started, while their pipes are
+            drained, or None. If it raises, every process is killed and the exception
+            propagates.
+
+    Returns:
+        What each invocation did, in the order of `config_files`.
+
+    Raises:
+        OSError: A process could not be started; the ones already started are killed
+            and reaped first.
+    """
+    processes: list[subprocess.Popen[str]] = []
+    try:
+        for config_file in config_files:
+            environment = {**run_environment(config_file), **(extra_environment or {})}
+            processes.append(
+                subprocess.Popen(  # nosec B603 - this interpreter and the pipeline's own module
+                    [str(THIS_PYTHON), '-m', 'opus_import', *arguments],
+                    cwd=fixture_layout.REPO_ROOT,
+                    env=environment,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+            )
+    except BaseException:
+        for process in processes:
+            process.kill()
+            process.communicate()
+        raise
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        drained = executor.submit(communicate_all, processes)
+        try:
+            if while_running is not None:
+                while_running()
+        except BaseException:
+            for process in processes:
+                process.kill()
+            raise
+        outputs = drained.result()
+    return [
+        StepResult(
+            arguments=tuple(arguments),
+            returncode=process.returncode,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        for process, (stdout, stderr) in zip(processes, outputs, strict=True)
+    ]

@@ -9,8 +9,8 @@ A bare `pytest` does **not** run any of them: `testpaths` selects `tests/`, the
 holdings-free unit suite, so this tree is only ever reached by naming it.
 
 **Run this tree serially.** Do not add `-n` to any command below. The suites mutate
-shared state in the one database they share -- one of them drops the `cache_*` tables
-between tests -- so two workers would answer each other's queries. The unit suite in
+shared state in the one database they share -- some of them empty `user_searches`
+and `search_results` between tests -- so two workers would answer each other's queries. The unit suite in
 `tests/` is the one that runs under `-n auto --dist loadscope`.
 
 ## Running the suites

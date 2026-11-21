@@ -10,11 +10,10 @@
 """Assemble raw SQL from structure instead of from string concatenation.
 
 Most of the OPUS API is served by hand-written SQL rather than by the ORM: the
-search results live in a per-search cache table whose name is computed at runtime
-(``cache_<n>``) and which therefore has no Django model, so any query that joins a
-search to its results cannot be expressed with the ORM at all. The queries that
-remain are wide joins over the generated ``obs_*`` tables that are far clearer as
-SQL than as ORM expressions.
+search results live in ``search_results``, which has no Django model and is joined as
+one search's rows (:func:`search_results_source`), and the queries that join a search
+to its results are wide joins over the generated ``obs_*`` tables that are far clearer
+as SQL than as ORM expressions.
 
 This module is the one place allowed to turn Python values into SQL text. Every
 call site elsewhere describes the *structure* of its statement -- these columns,
@@ -27,17 +26,15 @@ by inspection:
   ``[A-Za-z0-9_]`` before handing the name to the database backend's quoting.
   Django's ``quote_name`` wraps a name in backticks but does not escape a backtick
   *inside* it, so validation, not quoting, is what closes that hole. It matters
-  here because several identifiers are computed at runtime: the cache table name
-  (``cache_<n>``), the temporary table names built from a session id and a pid, and
-  the column names that come from the ``param_info`` table.
+  here because several identifiers are computed at runtime: the column names that come
+  from the ``param_info`` table.
 * **Values are always parameters.** Anything that is data is rendered as ``%s``
   and collected into a parameter list; the module never formats a value into SQL
   text. There are exactly **two** exceptions, and both are numbers that shape the
   statement rather than data it operates on, so both are checked with
   ``isinstance(..., int)`` before being rendered literally: ``LIMIT``/``OFFSET``
   (see :meth:`Select.limit`) and the ``MAX_EXECUTION_TIME`` optimizer hint (given to
-  the :class:`Select` constructor). A third raw-text path exists for one caller -- see
-  :func:`create_table_from_select_sql` -- and takes no values at all.
+  the :class:`Select` constructor).
 
   Note that "MySQL will not accept a placeholder there" would be the wrong reason,
   at least for ``LIMIT``: the server takes one, and so does mysqlclient given an
@@ -63,10 +60,15 @@ constructs those call sites do not use.
 """
 
 import re
+import unicodedata
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, NamedTuple
 
 from django.db import connection
+
+from opus_import import list_junctions
+from opus_support import UNSTORED_ASCII_CHARACTER
 
 #: The only identifier shape OPUS uses. Table, column and alias names come from
 #: the generated models, from the `param_info` table, and from names computed at
@@ -82,15 +84,10 @@ _BINARY_OPERATORS = frozenset(['=', '<', '<=', '>', '>=', '+', '-', 'LIKE', 'NOT
 #: text of statements built here, so the separator is pinned rather than free.
 _SEPARATOR = ','
 
-#: The column definitions of a search cache table. Both the durable `cache_<n>`
-#: table and the short-lived temporary table the cart's range editor builds use
-#: exactly these, because both are consumed the same way: `sort_order` gives the
-#: result ordering and `id` joins back to `obs_general`.
-CACHE_TABLE_COLUMN_DEFS = (
-    'sort_order INT NOT NULL AUTO_INCREMENT, '
-    'PRIMARY KEY(sort_order), id INT UNSIGNED, '
-    'UNIQUE KEY(id)'
-)
+#: The alias one search's rows of ``search_results`` are joined under
+#: (`search_results_source`), whose ``id`` is the observation's ``obs_general.id`` and
+#: whose ``sort_order`` is the observation's position in the search's order, 1, 2, 3, ....
+SEARCH_RESULTS_ALIAS = 'results'
 
 
 class SQLIdentifierError(ValueError):
@@ -147,6 +144,62 @@ def value(val: Any) -> Expr:
     return Expr('%s', [val])
 
 
+def ascii_comparable(text: str, *, compatibility: bool = True) -> str:
+    """Return text as it may be compared with a column in the ASCII character set.
+
+    MySQL refuses to compare an ASCII column with text holding any other character
+    ("illegal mix of collations"). The text is folded toward ASCII as the accent-blind
+    ``utf8mb4_0900_ai_ci`` compares it: decomposed (NFKD), with the combining marks
+    dropped, so ``Müller`` compares as ``Muller``, the ligature U+FB01 as ``fi`` and the
+    full-width U+FF21 as ``A``, and the ASCII column's own collation ignores the case. A
+    character that still has no ASCII form becomes
+    `opus_support.UNSTORED_ASCII_CHARACTER`, which the import refuses in an ASCII column
+    and ``LIKE`` and a regular expression read as itself, so it matches nothing and the
+    comparison finds what it finds for any value the column does not hold: ``=`` and
+    ``LIKE`` no row with the character, ``NOT LIKE`` every row.
+
+    A regular expression is folded with canonical decomposition alone (NFD,
+    `compatibility` False): the accents still go, but a compatibility character is not
+    mapped onto its ASCII form, which may be an operator (the full-width full stop U+FF0E
+    would be ``.``, which matches any character). Such a character becomes
+    `opus_support.UNSTORED_ASCII_CHARACTER` and matches only itself, which no stored
+    value holds.
+
+    Parameters:
+        text: A value the caller gave, to be bound as a parameter.
+        compatibility: True to decompose compatibility characters as well (NFKD), for a
+            value compared literally; False for canonical decomposition alone (NFD), for
+            a regular expression.
+
+    Returns:
+        The folded text, in ASCII.
+    """
+    decomposed = unicodedata.normalize('NFKD' if compatibility else 'NFD', text)
+    return ''.join(
+        c if c.isascii() else UNSTORED_ASCII_CHARACTER
+        for c in decomposed
+        if not unicodedata.combining(c)
+    )
+
+
+def ascii_collation_key(text: str) -> str:
+    """Return the form of text that a comparison with an ASCII column sees.
+
+    Two strings have equal keys exactly when an ASCII column's collation
+    (`opus_support.ASCII_COLLATION`) calls their `ascii_comparable` forms equal: the folded text, its trailing
+    spaces dropped (the collation pads with spaces) and its letters in lower case (the
+    collation ignores case). A value read from such a column is its own folded form, so
+    a stored OPUS ID and every caller's spelling that finds it have the same key.
+
+    Parameters:
+        text: A value the caller gave, or one read from an ASCII column.
+
+    Returns:
+        The key, in ASCII.
+    """
+    return ascii_comparable(text).rstrip(' ').lower()
+
+
 def count_star() -> Expr:
     """Return `COUNT(*)`."""
     return Expr('COUNT(*)', [])
@@ -179,15 +232,6 @@ def min_of(expr: Expr) -> Expr:
 def max_of(expr: Expr) -> Expr:
     """Return `MAX(expr)`."""
     return _function('MAX', expr)
-
-
-def json_contains(expr: Expr, val: Any) -> Expr:
-    """Return `JSON_CONTAINS(expr, %s)`, testing membership of a JSON array.
-
-    MULTIGROUP fields hold a JSON list of mult ids, so a search for one value has
-    to ask whether the list contains it rather than whether the column equals it.
-    """
-    return _function('JSON_CONTAINS', expr, value(val))
 
 
 def json_extract_first(expr: Expr) -> Expr:
@@ -264,6 +308,50 @@ def in_sequence(expr: Expr, vals: list[Any] | tuple[Any, ...]) -> Expr:
     return Expr(f'{expr.sql} IN %s', [*expr.params, vals])
 
 
+def between(expr: Expr, low: Any, high: Any) -> Expr:
+    """Return `expr BETWEEN %s AND %s`, the two bounds as parameters."""
+    return Expr(f'{expr.sql} BETWEEN %s AND %s', [*expr.params, low, high])
+
+
+def sort_order_range(table: str, offset: int, count: int) -> Expr:
+    """Return the condition selecting one page of an ordered list by its `sort_order`.
+
+    In a search's results (`search_results_source`), and in the cart listed in a sort
+    order with `row_number`, `sort_order` is each row's position, counting 1, 2, 3, ...
+    with no gaps. So the `count` rows after the first `offset` are exactly those whose
+    `sort_order` lies in the range, and a key on `sort_order` reads only them.
+
+    Parameters:
+        table: The table, or the alias of the derived table, whose `sort_order` is
+            meant.
+        offset: How many rows come before the window.
+        count: How many rows the window holds.
+    """
+    return between(column('sort_order', table), offset + 1, offset + count)
+
+
+def row_number(order_terms: Sequence[tuple[Expr, bool | None]]) -> Expr:
+    """Return `ROW_NUMBER() OVER (ORDER BY ...)`, numbering rows from 1 in that order.
+
+    Parameters:
+        order_terms: The sort, as `(expression, descending)` pairs; descending is
+            True for DESC, False for ASC, or None for no keyword, as in
+            `Select.add_order_by`. With none, the rows are numbered in no stated order,
+            as `ROW_NUMBER() OVER ()`.
+    """
+    if not order_terms:
+        return Expr('ROW_NUMBER() OVER ()', [])
+    terms: list[str] = []
+    params: list[Any] = []
+    for expr, descending in order_terms:
+        term = expr.sql
+        if descending is not None:
+            term += ' DESC' if descending else ' ASC'
+        terms.append(term)
+        params += expr.params
+    return Expr(f'ROW_NUMBER() OVER (ORDER BY {_SEPARATOR.join(terms)})', params)
+
+
 def parenthesize(expr: Expr) -> Expr:
     """Return `(expr)`."""
     return Expr(f'({expr.sql})', list(expr.params))
@@ -312,57 +400,160 @@ class Subquery:
         return f'({sql}) AS {quote_identifier(self.alias)}', params
 
 
-@dataclass(frozen=True)
-class JSONTable:
-    """A `JSON_TABLE(...)` table source that unpacks a JSON array into rows.
+def scalar_subquery(select: 'Select') -> Expr:
+    """Return a `Select` of one column and at most one row as a value, `(SELECT ...)`.
 
-    Renders `JSON_TABLE(<column>, "$[*]" COLUMNS (<value_column> TEXT PATH "$"))`,
-    which turns each element of a MULTIGROUP column's JSON list into its own row
-    so the elements can be counted.
+    Parameters:
+        select: The statement, which may name the outer statement's tables.
+
+    Returns:
+        An `Expr` whose SQL is the statement's in parentheses and whose parameters are
+        the statement's, in order.
+    """
+    sql, params = select.build()
+    return Expr(f'({sql})', params)
+
+
+def search_results_source(search_id: int) -> Subquery:
+    """Return one search's rows of ``search_results``, as a source to join.
+
+    The source is ``(SELECT obs_general_id AS id, sort_order FROM search_results WHERE
+    search_id = %s)`` under `SEARCH_RESULTS_ALIAS`. The server merges a derived table
+    this simple into the statement that names it, so a join on ``id`` reads the table's
+    ``(search_id, obs_general_id)`` key and a range of ``sort_order`` its primary key.
+
+    Parameters:
+        search_id: The search's ``user_searches`` row.
+    """
+    select = Select()
+    select.add_column(column('obs_general_id', 'search_results'), 'id')
+    select.add_column(column('sort_order', 'search_results'))
+    select.add_from('search_results')
+    select.add_where(binary_op(column('search_id', 'search_results'), '=', value(search_id)))
+    return Subquery(select, SEARCH_RESULTS_ALIAS)
+
+
+@dataclass(frozen=True)
+class AliasedTable:
+    """A table joined under an alias, rendered `<table> AS <alias>`.
+
+    The ``mult`` table is joined once for each mult column a statement reads, each time
+    under its own alias, and ``obs_surface_geometry_target`` once for each surface geometry
+    category, under the category's name.
+
+    `ignore_for_group_by` names keys the server is not to use for the statement's
+    grouping, rendered as MySQL's `IGNORE INDEX FOR GROUP BY (...)` after the alias.
     """
 
-    source_column: Expr
-    value_column: str
+    table: str
     alias: str
+    ignore_for_group_by: tuple[str, ...] = ()
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this source as it appears in a FROM clause."""
-        return (
-            f'JSON_TABLE({self.source_column.sql}, "$[*]" COLUMNS '
-            f'({quote_identifier(self.value_column)} TEXT PATH "$")) '
-            f'{quote_identifier(self.alias)}',
-            list(self.source_column.params),
-        )
+        sql = f'{quote_identifier(self.table)} AS {quote_identifier(self.alias)}'
+        if self.ignore_for_group_by:
+            keys = ','.join(quote_identifier(key) for key in self.ignore_for_group_by)
+            sql += f' IGNORE INDEX FOR GROUP BY ({keys})'
+        return sql, []
 
 
-def _render_source(source: str | Subquery | JSONTable) -> tuple[str, list[Any]]:
-    """Return the `(sql, params)` for a table name, a `Subquery` or a `JSONTable`."""
+TableSource = str | Subquery | AliasedTable
+"""The sources a FROM clause or a join can name -- a table, a `Subquery` or an
+`AliasedTable`."""
+
+
+def _render_source(source: TableSource) -> tuple[str, list[Any]]:
+    """Return the `(sql, params)` for a table name or any other `TableSource`."""
     if isinstance(source, str):
         return quote_identifier(source), []
     return source.render()
+
+
+def exists(source: TableSource, where: Expr) -> Expr:
+    """Return a condition that holds when a source has a row meeting another condition.
+
+    Renders `EXISTS (SELECT 1 FROM <source> WHERE <where>)`. A condition on a table that
+    can hold several rows of one observation is put this way rather than as a join, which
+    would repeat the observation once for each row it matched.
+
+    Parameters:
+        source: The table, or other `TableSource`, the rows are looked for in.
+        where: The condition a row must meet, which may name the outer statement's
+            tables.
+
+    Returns:
+        An `Expr` whose parameters are the source's followed by the condition's, in the
+        order their placeholders appear.
+    """
+    source_sql, params = _render_source(source)
+    # The source is rendered from identifiers validated by quote_identifier, and the
+    # condition's own values are %s placeholders in where.params.
+    return Expr(
+        f'EXISTS (SELECT 1 FROM {source_sql} WHERE {where.sql})',  # nosec B608
+        params + list(where.params),
+    )
+
+
+def list_contains_any(table: str, column_name: str, mult_ids: Sequence[int]) -> Expr:
+    """Return the condition that an observation's ``mult_list`` column holds any of some ids.
+
+    The column's junction table (`opus_import.list_junctions`) holds one row per id of
+    each observation's list, so the condition is a semi-join on it: `EXISTS (SELECT 1 FROM
+    <junction> WHERE <junction>.obs_general_id=obs_general.id AND <junction>.mult_id IN
+    (%s,...))`, one placeholder per id, which reads the junction table's
+    ``(mult_id, obs_general_id)`` primary key. The statement it goes into names
+    ``obs_general``.
+
+    Parameters:
+        table: The table holding the column.
+        column_name: The ``mult_list`` column.
+        mult_ids: The ids, any of which the list must hold, bound as the integers they
+            are.
+
+    Returns:
+        An `Expr` whose parameters are the ids, in order.
+    """
+    junction = list_junctions.junction_table(table, column_name)
+    where = join_exprs(
+        [
+            columns_equal(
+                column(list_junctions.JUNCTION_OBSERVATION_COLUMN, junction),
+                column('id', 'obs_general'),
+            ),
+            in_values(
+                column(list_junctions.JUNCTION_MULT_COLUMN, junction),
+                list(mult_ids),
+            ),
+        ],
+        'AND',
+    )
+    return exists(junction, where)
+
+
+#: The SQL each join kind renders as.
+_JOIN_KEYWORDS = {'INNER': 'INNER JOIN', 'LEFT': 'LEFT JOIN', 'STRAIGHT': 'STRAIGHT_JOIN'}
 
 
 @dataclass(frozen=True)
 class Join:
     """One join onto a table source."""
 
-    #: 'INNER' or 'LEFT'.
+    #: 'INNER', 'LEFT', or 'STRAIGHT' for MySQL's ``STRAIGHT_JOIN``, an inner join that
+    #: reads the source it is hung on before the one it joins.
     kind: str
-    #: The table name, `Subquery` or `JSONTable` being joined in.
-    source: str | Subquery | JSONTable
-    #: The ON condition, or None for a `JSON_TABLE` join, which has none.
-    on: Expr | None = None
+    #: The table name, or other `TableSource`, being joined in.
+    source: TableSource
+    #: The ON condition.
+    on: Expr
 
     def render(self) -> tuple[str, list[Any]]:
         """Return the `(sql, params)` of this join."""
-        if self.kind not in ('INNER', 'LEFT'):
+        if self.kind not in _JOIN_KEYWORDS:
             raise ValueError(f'Unsupported join kind: {self.kind!r}')
         source_sql, params = _render_source(self.source)
-        sql = f' {self.kind} JOIN {source_sql}'
-        if self.on is not None:
-            sql += f' ON {self.on.sql}'
-            params = params + list(self.on.params)
-        return sql, params
+        keyword = _JOIN_KEYWORDS[self.kind]
+        return f' {keyword} {source_sql} ON {self.on.sql}', params + list(self.on.params)
 
 
 @dataclass
@@ -372,17 +563,20 @@ class FromSource:
     A statement may have more than one of these, rendered comma-separated. The
     comma binds more loosely than JOIN, so `a, b INNER JOIN c ON ...` joins c to b
     and then cross-joins the result with a -- which is what the cart's download
-    summary and the queries that join a search to its cache table rely on.
+    summary and the queries that join a search to its results rely on.
     """
 
-    source: str | Subquery | JSONTable
+    source: TableSource
     joins: list[Join] = field(default_factory=list)
 
-    def add_join(
-        self, kind: str, source: str | Subquery | JSONTable, on: Expr | None = None
-    ) -> 'FromSource':
+    def add_join(self, kind: str, source: TableSource, on: Expr) -> 'FromSource':
         """Append a join to this source and return self."""
         self.joins.append(Join(kind, source, on))
+        return self
+
+    def append_join(self, join: Join) -> 'FromSource':
+        """Append a join built elsewhere, such as by `mult_join`, and return self."""
+        self.joins.append(join)
         return self
 
     def render(self) -> tuple[str, list[Any]]:
@@ -393,6 +587,55 @@ class FromSource:
             sql += join_sql
             params = params + join_params
         return sql, params
+
+
+#: The served observations, a view of the rows of the import generation the schema
+#: serves (`opus_import.generations`). A child table carries no generation, so while the
+#: schema holds another generation's rows, a statement reading a child's rows outside a
+#: search's results reaches them through this view.
+OBS_GENERAL_TABLE = 'obs_general'
+
+
+def served_observations_join(table: str) -> Join:
+    """Return the join that keeps a child table's rows to the served observations.
+
+    Renders `STRAIGHT_JOIN obs_general ON obs_general.id = <table>.obs_general_id`: an
+    inner join that drops the rows of a generation the schema does not serve, and that
+    reads the child first, so the statement keeps the child's own access path and the
+    order its rows come in, and reads each row's observation through the view's primary
+    key. A caller hangs it only while the schema holds such rows
+    (`opus_app.apps.tools.db_utils.unserved_observations_exist`); otherwise it drops
+    nothing and costs each child row the lookup.
+
+    Parameters:
+        table: The child table, or the alias its columns are read under.
+    """
+    return Join(
+        'STRAIGHT',
+        OBS_GENERAL_TABLE,
+        columns_equal(column('id', OBS_GENERAL_TABLE), column('obs_general_id', table)),
+    )
+
+
+#: The table holding every mult field's values, keyed ``(field_id, id)``.
+MULT_TABLE = 'mult'
+
+
+def mult_join(alias: str, field_id: int, mult_column: Expr) -> Join:
+    """Return the join that reads one mult column's labels.
+
+    Renders `LEFT JOIN mult AS <alias> ON <alias>.field_id = %s AND <alias>.id =
+    <mult_column>`, the field id as a parameter, so a statement reads each mult column's
+    rows of ``mult`` through the table's primary key, under an alias of its own.
+
+    Parameters:
+        alias: The alias the join's columns are read under, such as ``<alias>.label``.
+        field_id: The ``mult_field`` id of the column's field.
+        mult_column: The column holding the id, or an expression giving it.
+    """
+    on = binary_op(column('field_id', alias), '=', value(field_id))
+    on = join_exprs([on, columns_equal(column('id', alias), mult_column)], 'AND')
+    return Join('LEFT', AliasedTable(MULT_TABLE, alias), on)
 
 
 class _OrderBy(NamedTuple):
@@ -447,7 +690,7 @@ class Select:
         self._columns.append(expr)
         return self
 
-    def add_from(self, source: str | Subquery | JSONTable) -> FromSource:
+    def add_from(self, source: TableSource) -> FromSource:
         """Add a comma-separated table source and return the `FromSource` for it.
 
         The return value is the `FromSource`, not the statement, so that joins can
@@ -553,67 +796,6 @@ class Select:
         return sql, params
 
 
-def create_table_from_select_sql(
-    table_name: str, select_sql: str, column_defs: str | None = None, temporary: bool = False
-) -> str:
-    """Return the SQL of a CREATE TABLE ... SELECT, given the SELECT as text.
-
-    This is for the one caller that receives its SELECT already rendered --
-    `construct_query_string` returns the search query as `(sql, params)` -- and
-    that text must itself have come from this module.
-
-    Parameters:
-        table_name: The table to create.
-        select_sql: The rendered SELECT whose result becomes the table's contents.
-        column_defs: Literal column definitions to declare ahead of the SELECT,
-            or None to let the columns come from the SELECT alone. The only value
-            ever passed is `CACHE_TABLE_COLUMN_DEFS`.
-        temporary: True to create a TEMPORARY table, which the session drops for
-            us if the process dies before the explicit DROP runs.
-    """
-    keyword = 'CREATE TEMPORARY TABLE' if temporary else 'CREATE TABLE'
-    statement = f'{keyword} {quote_identifier(table_name)}'
-    if column_defs is not None:
-        statement += f'({column_defs}) '
-    else:
-        statement += ' '
-    return statement + select_sql
-
-
-def create_table_as_select(
-    table_name: str, select: Select, column_defs: str | None = None, temporary: bool = False
-) -> tuple[str, list[Any]]:
-    """Return the `(sql, params)` of a CREATE TABLE ... SELECT.
-
-    Parameters:
-        table_name: The table to create.
-        select: The `Select` whose result becomes the table's contents.
-        column_defs: See `create_table_from_select_sql`.
-        temporary: See `create_table_from_select_sql`.
-    """
-    select_sql, params = select.build()
-    return (
-        create_table_from_select_sql(
-            table_name, select_sql, column_defs=column_defs, temporary=temporary
-        ),
-        params,
-    )
-
-
-def drop_table(table_name: str) -> str:
-    """Return the SQL of a DROP TABLE."""
-    return f'DROP TABLE {quote_identifier(table_name)}'
-
-
-def count_rows(table_name: str) -> str:
-    """Return the SQL of `SELECT COUNT(*) FROM <table>`."""
-    select = Select()
-    select.add_column(count_star())
-    select.add_from(table_name)
-    sql, _params = select.build()
-    return sql
-
-
 def delete_from(table_name: str, where: Expr) -> tuple[str, list[Any]]:
     """Return the `(sql, params)` of a DELETE from one table.
 
@@ -675,6 +857,17 @@ def replace_into_values(table_name: str, column_names: tuple[str, ...] | list[st
     return (
         f'REPLACE INTO {quote_identifier(table_name)}'
         f' ({_quoted_column_list(column_names)}) VALUES ({placeholders})'
+    )
+
+
+def insert_into_select(
+    table_name: str, column_names: tuple[str, ...] | list[str], select: Select
+) -> tuple[str, list[Any]]:
+    """Return the `(sql, params)` of an `INSERT INTO <table> (...) SELECT ...`."""
+    sql, params = select.build()
+    return (
+        f'INSERT INTO {quote_identifier(table_name)} ({_quoted_column_list(column_names)}) {sql}',
+        params,
     )
 
 

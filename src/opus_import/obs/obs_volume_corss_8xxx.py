@@ -79,8 +79,8 @@ class ObsVolumeCORSS8xxx(ObsVolumeCassiniOccCommon):
         return self._create_mult(band)
 
     def field_obs_profile_source(self) -> MultFieldRet:
-        # disp_order '!Cassini' is to force Cassini to be before all stars
-        return self._create_mult(col_val='CASSINI', disp_name='Cassini', disp_order='!Cassini')
+        # Pinned, so Cassini is listed before every star
+        return self._create_mult(col_val='CASSINI', disp_name='Cassini', pin=0)
 
     def field_obs_profile_host(self) -> MultFieldRet:
         dsn = self._supp_index_col('DSN_STATION_NUMBER')

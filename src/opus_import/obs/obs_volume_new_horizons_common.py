@@ -71,15 +71,6 @@ class ObsVolumeNewHorizonsCommon(ObsCommonPDS3):
     ### FIELD METHODS FOR THIS TABLE ###
     ####################################
 
-    def field_obs_mission_new_horizons_opus_id(self) -> StrField:
-        return self.opus_id
-
-    def field_obs_mission_new_horizons_bundle_id(self) -> StrField:
-        return self.bundle
-
-    def field_obs_mission_new_horizons_instrument_id(self) -> StrField:
-        return self.instrument_id
-
     def field_obs_mission_new_horizons_spacecraft_clock_count1(self) -> FloatField:
         partition = self._supp_index_col('SPACECRAFT_CLOCK_COUNT_PARTITION')
         start_time = self._supp_index_col('SPACECRAFT_CLOCK_START_COUNT')

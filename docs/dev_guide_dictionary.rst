@@ -24,15 +24,14 @@ A line with any other number of fields **stops the read**, so nothing is written
 whole build fails. That is deliberate: a context tree assembled from a partly-read file
 would give a term the wrong parent rather than no parent.
 
-:func:`~opus_import.steps.do_dictionary.create_import_contexts_table` reads it, and it
-runs before the definitions builder because ``definitions`` carries a foreign key onto
-``contexts``.
+:func:`~opus_import.steps.do_dictionary.fill_contexts` reads it, and it runs before the
+definitions fill because ``definitions`` carries a foreign key onto ``contexts``.
 
 Where a definition comes from
 -----------------------------
 
 The **table schemas**, which is where OPUS's own parameters are described.
-:func:`~opus_import.steps.do_dictionary.create_import_definitions_table` reads every
+:func:`~opus_import.steps.do_dictionary.fill_definitions` reads every
 packaged schema file matching three globs -- ``obs*.json``, ``internal_def*.json`` and
 ``mult_tooltips*.json`` -- and, for every column that carries one, turns a
 ``definition`` key into a row.
@@ -84,20 +83,22 @@ one is not set.
 A missing definition is logged as an error **except** for a context beginning ``MULT_``,
 because a mult value legitimately has no tooltip.
 
-The build and the copy
+The build and the swap
 ----------------------
 
-:func:`~opus_import.steps.do_dictionary.do_dictionary` drops both import tables, builds
-contexts and then definitions, and copies both over the permanent tables **only if both
-builds succeeded**. It drops the import tables again afterwards, so a failed build
-leaves nothing behind.
+:func:`~opus_import.steps.do_dictionary.do_dictionary` builds ``contexts__new`` and then
+``definitions__new`` beside the live tables, and swaps both in with one atomic rename
+**only if both fills succeeded** (:ref:`dev_guide_import_steps_table_swap`). A reader
+never finds the dictionary missing or partly filled, and a failed build leaves the live
+tables as the previous run wrote them. ``definitions__new``'s foreign key points at
+``contexts__new`` while the two are built, and follows the rename onto the live
+``contexts``.
 
-The copy order is the reverse of the drop order, for the foreign key: ``definitions`` is
-dropped first and created last.
-
-**A failed dictionary import does not change the run's exit status.** It reports through
-the log, like :mod:`~opus_import.steps.do_validate`; see
-:ref:`dev_guide_import_verifying`.
+**A failed dictionary import stops the schema being marked ready.** It is logged, and the
+invocation exits with failure once its other steps have run, so ``opus_import_all`` stops
+before its version step; see :ref:`dev_guide_import_verifying`. ``--ignore-errors``
+on the same invocation overrides both, for a debugging run; ``opus_import_all`` never
+passes it to its finishing steps.
 
 Adding a term
 -------------
@@ -110,8 +111,9 @@ Adding a term
    field should read differently beside a result.
 3. **Rebuild.** ``opus_import --import-dictionary`` rewrites both tables from scratch;
    nothing incremental is possible, and nothing else needs re-running.
-4. **Restart the web application.** The definition lookup is a database query rather than
-   a process-local cache, so this is only needed if you also changed ``param_info``.
+4. **Restart the web application.** Each worker process reads ``definitions`` once and
+   keeps it (:ref:`dev_guide_webapp_caching`), so a rebuilt dictionary reaches the
+   tooltips only once the workers restart.
 
 :mod:`opus_import.util.dump_pds_definitions` prints a PDS index label's own field
 descriptions in exactly the form a ``definition`` key wants, which is the quickest way to

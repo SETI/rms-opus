@@ -1,0 +1,16 @@
+# The new-target case, which pins that a body the database has never held surface
+# geometry for needs no code: one observation's rows for one body of a summary are renamed
+# to a body that appears nowhere else in the fixture, and after the import and its
+# finalization the web application serves the body's category and searches its fields.
+#
+# The type is named rather than the volume: which volume represents Voyager ISS is the
+# recorder's choice. Its moon summary holds one observation's rows, one per moon, so the
+# renamed body is that observation's alone.
+#
+# YMIR is described by the target tables and fits the ten-byte TARGET_NAME column.
+instrument_class	ObsVolumeVGISS5678xxx
+operation	rename_body
+summary	moon_summary
+column	TARGET_NAME
+body	PAN
+value	YMIR

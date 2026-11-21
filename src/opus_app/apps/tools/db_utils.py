@@ -4,27 +4,43 @@
 #
 ################################################################################
 
-"""Model lookup by table name, and the labels behind the mult tables.
+"""Model lookup by category name, and the labels behind the mult ids.
 
 The observation tables share a naming convention (`obs_pds` holds the rows of the
 `ObsPds` model), so code that has to work across all of them looks a model class up
-by table name instead of importing it. A mult field stores the id of a row in its
-own small table rather than a value, so displaying one means a second lookup; the
-labels those lookups produce are cached here for the life of the process.
+by table name instead of importing it. A ``param_info`` category is usually a table of its
+own, but the surface geometry categories are not: each body's category,
+``obs_surface_geometry__<target>``, is the rows of ``obs_surface_geometry_target`` holding
+the body's id, and the selector category, ``obs_surface_geometry_name``, is the whole of
+that table. `resolve_category` turns a category into the table, the alias a statement
+names the table by, and the body's id, from ``table_names``. A mult field stores the id of a ``mult`` row
+rather than a value, so displaying one means a second lookup, which reads the process's
+copy of the field's rows from `import_constants`.
 
 The MySQL error numbers are the failures that callers of these tables catch when
-they inspect a database exception.
+they inspect a database exception; `is_lock_timeout_error` and `is_deadlock_error` are
+the places that read the numbers of a lock wait that timed out and of a broken deadlock.
+
+`unserved_observations_exist` reads the version row to say whether the schema holds rows
+of a generation it does not serve, which decides whether a statement reading a child table
+joins the served observations (`sql_builder.served_observations_join`).
 """
 
 from __future__ import annotations
 
+import functools
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from django.apps import apps
 from django.conf import settings
+from django.db import DatabaseError, connection
 
-from opus_app.apps.tools.app_utils import get_mult_name
-from opus_support import parse_form_type
+from opus_app.apps.tools import sql_builder
+from opus_app.apps.tools.import_constants import mult_table, table_names
+from opus_import.generations import PENDING_GENERATION_COLUMN, REVERTIBLE_COLUMN
+from opus_import.schema_version import SCHEMA_VERSION_TABLE
+from opus_support import ASCII_COLLATION, parse_form_type
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -34,8 +50,73 @@ if TYPE_CHECKING:
     from opus_app.apps.paraminfo.models import ParamInfo
 
 MYSQL_TABLE_NOT_EXISTS = 1146
-MYSQL_TABLE_ALREADY_EXISTS = 1050
 MYSQL_EXECUTION_TIME_EXCEEDED = 3024
+MYSQL_LOCK_WAIT_TIMEOUT = 1205
+MYSQL_DEADLOCK = 1213
+
+
+def is_lock_timeout_error(exc: BaseException) -> bool:
+    """Return whether a database exception is a lock wait that timed out.
+
+    Parameters:
+        exc: The exception, as Django raises it, which carries the driver's error
+            number as its first argument.
+
+    Returns:
+        True for MySQL's error 1205.
+    """
+    return bool(exc.args) and exc.args[0] == MYSQL_LOCK_WAIT_TIMEOUT
+
+
+def is_deadlock_error(exc: BaseException) -> bool:
+    """Return whether a database exception is a deadlock the server broke.
+
+    Parameters:
+        exc: The exception, as Django raises it, which carries the driver's error
+            number as its first argument.
+
+    Returns:
+        True for MySQL's error 1213.
+    """
+    return bool(exc.args) and exc.args[0] == MYSQL_DEADLOCK
+
+
+def unserved_observations_exist() -> bool:
+    """Return whether the schema holds observation rows of a generation it does not serve.
+
+    Such rows exist while a generation is pending, and from a switch until the purge has
+    deleted the rows it retired: exactly while the version row names a pending generation
+    or has ``revertible`` set (`opus_import.steps.do_generation`). A statement that reads a
+    child table's rows outside a search's results joins the served observations only then,
+    since otherwise the join drops no row and costs each child row a lookup into
+    ``obs_general_rows``.
+
+    The row is read on every call and never kept: a generation is begun while the site
+    serves, and a process that went on answering from an earlier read would show the
+    pending generation's child rows.
+
+    Returns:
+        True while a generation is pending or a switch is revertible; False otherwise,
+        and when the schema has no version row or no version table, either of which
+        leaves it one generation.
+
+    Raises:
+        django.db.DatabaseError: If the version table exists but cannot be read.
+    """
+    select = sql_builder.Select()
+    select.add_column(sql_builder.column(PENDING_GENERATION_COLUMN))
+    select.add_column(sql_builder.column(REVERTIBLE_COLUMN))
+    select.add_from(SCHEMA_VERSION_TABLE)
+    sql, params = select.build()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+    except DatabaseError as error:
+        if error.args and error.args[0] == MYSQL_TABLE_NOT_EXISTS:
+            return False
+        raise
+    return any(pending is not None or revertible == 1 for pending, revertible in rows)
 
 
 def table_model_from_name(table_name: str) -> type[Any]:
@@ -57,35 +138,209 @@ def table_model_from_name(table_name: str) -> type[Any]:
     return apps.get_model('search', model_name)
 
 
-def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
-    """Return all rows containing opus_id in table_name (better be only one!).
+def is_ascii_column(table_name: str, column_name: str) -> bool:
+    """Return whether a table's column holds ASCII, as its generated model declares.
+
+    A column in the ASCII character set compares only with ASCII text
+    (`sql_builder.ascii_comparable`).
 
     Parameters:
-        table_name: The name of the observation table to search.
+        table_name: The table, such as a `ResolvedCategory.table`.
+        column_name: The column.
+
+    Returns:
+        True if the model's field names the ASCII collation.
+
+    Raises:
+        LookupError: If the `search` app has no model for the table.
+        django.core.exceptions.FieldDoesNotExist: If the model has no such field.
+    """
+    field = table_model_from_name(table_name)._meta.get_field(column_name)
+    return getattr(field, 'db_collation', None) == ASCII_COLLATION
+
+
+#: The column of a surface geometry category's table holding the body's id.
+TARGET_COLUMN = 'target_name'
+
+
+@dataclass(frozen=True)
+class ResolvedCategory:
+    """Where a category's rows are, as a statement or the ORM reads them.
+
+    Attributes:
+        model: The model class of the table.
+        table: The table holding the category's rows.
+        alias: The name statements give the table, which is the category's name, so that
+            every ``<category>.<column>`` reference reads the category's rows.
+        target_name: The body's id in the surface geometry selector's mult field, which
+            the table's ``target_name`` column holds in the category's rows, or None for a
+            category holding every row of its table.
+    """
+
+    model: type[Any]
+    table: str
+    alias: str
+    target_name: int | None
+
+    @property
+    def source(self) -> sql_builder.TableSource:
+        """The table as a FROM clause or a join names it, under the alias when it differs.
+
+        Returns:
+            The table's name when the alias is the table's own name; otherwise an
+            `opus_app.apps.tools.sql_builder.AliasedTable` naming the table under the
+            alias.
+        """
+        if self.table == self.alias:
+            return self.table
+        return sql_builder.AliasedTable(self.table, self.alias)
+
+    @property
+    def is_selector(self) -> bool:
+        """Whether the category is the selector, every row of a table under another name.
+
+        Several of an observation's rows can be in such a category, so joining it onto
+        ``obs_general`` would repeat the observation.
+
+        Returns:
+            True when the category reads a table under another name and keeps to no
+            body's rows; False for a table of its own and for a body's category.
+        """
+        return self.table != self.alias and self.target_name is None
+
+    def target_condition(self) -> sql_builder.Expr | None:
+        """Return the condition that limits the table's rows to the category's.
+
+        Returns:
+            ``<alias>.target_name = %s`` with the body's id, or None for a category holding
+            every row of its table.
+        """
+        if self.target_name is None:
+            return None
+        return sql_builder.binary_op(
+            sql_builder.column(TARGET_COLUMN, self.alias), '=', sql_builder.value(self.target_name)
+        )
+
+    def restrict(self, select: sql_builder.Select) -> None:
+        """Keep a statement reading the category to the category's rows.
+
+        Parameters:
+            select: A statement whose FROM clause names `source`; `target_condition` is
+                added to its WHERE clause, when there is one.
+        """
+        condition = self.target_condition()
+        if condition is not None:
+            select.add_where(condition)
+
+
+@functools.cache
+def _category_tables() -> dict[str, tuple[str, int | None]]:
+    """Return the table and body id of every category that is not a table of its own.
+
+    Returns:
+        The ``table_names`` rows that name a ``physical_table``, as a mapping from the
+        category to that table and the row's ``target_name``, which is None for a
+        category holding every row of the table. A category that is a table of its own
+        has no entry.
+    """
+    return {
+        row.table_name: (row.physical_table, row.target_name)
+        for row in table_names()
+        if row.physical_table is not None
+    }
+
+
+def resolve_category(category: str) -> ResolvedCategory:
+    """Return the table, alias, body id and model a category's rows are read through.
+
+    Parameters:
+        category: A ``param_info`` category, such as ``obs_general``,
+            ``obs_surface_geometry__saturn`` or ``obs_surface_geometry_name``.
+
+    Returns:
+        For a category whose ``table_names`` row names a ``physical_table``, that table
+        under the category's name with the row's ``target_name``; for any other, the
+        table of the category's name with no body.
+
+    Raises:
+        LookupError: If the `search` app has no model for the table.
+    """
+    table, target_name = _category_tables().get(category, (category, None))
+    return ResolvedCategory(table_model_from_name(table), table, category, target_name)
+
+
+def query_table_for_opus_id(table_name: str, opus_id: str) -> QuerySet[Any]:
+    """Return a category's rows of one observation.
+
+    Parameters:
+        table_name: The category, resolved by `resolve_category`.
         opus_id: The observation whose rows are wanted.
 
     Returns:
-        A queryset of that table's rows for the observation.
+        A queryset of the category's rows for the observation, which holds at most one
+        row except for the surface geometry selector category, which holds one per body.
 
     Raises:
-        LookupError: If the `search` app has no model for that table.
+        LookupError: If the `search` app has no model for the category's table.
     """
     # This can throw LookupError
-    table_model = table_model_from_name(table_name)
-    # opus_id is the primary key for obs_general, but a foreign key for all
-    # other tables. Due to Django's design, we have to handle these cases
-    # separately.
+    resolved = resolve_category(table_name)
+    opus_id = sql_builder.ascii_comparable(opus_id)
+    # obs_general holds opus_id itself; every other table reaches it through its
+    # obs_general relation, so the two need different lookups.
     # The model class is chosen by name, so its manager and everything that comes
-    # off it are untyped; both returns are that table's queryset.
+    # off it are untyped; every return is that table's queryset.
     if table_name == 'obs_general':
-        return table_model.objects.filter(opus_id=opus_id)  # type: ignore[no-any-return]
-    return table_model.objects.filter(obs_general__opus_id=opus_id)  # type: ignore[no-any-return]
+        return resolved.model.objects.filter(opus_id=opus_id)  # type: ignore[no-any-return]
+    rows = resolved.model.objects.filter(obs_general__opus_id=opus_id)
+    if resolved.target_name is not None:
+        rows = rows.filter(**{TARGET_COLUMN: resolved.target_name})
+    return rows  # type: ignore[no-any-return]
 
 
-# Looking up entries in the mult tables is slow, so cache them in memory as they
-# are retrieved. There aren't that many mult tables or values, so this won't take
-# much memory even in the worst case.
-_PRETTY_MULT_CACHE: dict[tuple[str, Any], dict[str, str | None]] = {}
+def observation_has_body(
+    category: ResolvedCategory, opus_id: str, targets: dict[str, frozenset[int]]
+) -> bool:
+    """Return whether one observation has rows of a surface geometry body's category.
+
+    Parameters:
+        category: A body's category, whose `ResolvedCategory.target_name` is not None.
+        opus_id: The observation.
+        targets: The bodies the observation has rows of, per table, which this fills from
+            `targets_for_opus_id` the first time a table is asked about, so one query
+            answers for every body's category of the table.
+
+    Returns:
+        True if the observation has a row holding the category's body.
+
+    Raises:
+        LookupError: If the `search` app has no model for the category's table.
+    """
+    if category.table not in targets:
+        targets[category.table] = targets_for_opus_id(category.table, opus_id)
+    return category.target_name in targets[category.table]
+
+
+def targets_for_opus_id(table: str, opus_id: str) -> frozenset[int]:
+    """Return the bodies one observation has rows of in a table the bodies' categories share.
+
+    One query answers for every body's category of the table, which
+    `query_table_for_opus_id` would answer one category at a time.
+
+    Parameters:
+        table: The table, a `ResolvedCategory.table` of a body's category.
+        opus_id: The observation.
+
+    Returns:
+        The ``target_name`` of each of the observation's rows.
+
+    Raises:
+        LookupError: If the `search` app has no model for the table.
+    """
+    rows = table_model_from_name(table).objects.filter(
+        obs_general__opus_id=sql_builder.ascii_comparable(opus_id)
+    )
+    return frozenset(rows.values_list(TARGET_COLUMN, flat=True))
 
 
 def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bool) -> str | None:
@@ -93,14 +348,14 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bo
 
     Parameters:
         param_info: The field the value belongs to.
-        value: What the observation's column holds, which is the id of a row in the
-            field's mult table.
-        cvt_null: Whether the mult table's null row should be reported by its label
+        value: What the observation's column holds, which is the id of one of the
+            field's ``mult`` rows.
+        cvt_null: Whether the field's absent value should be reported by its label
             rather than as nothing at all.
 
     Returns:
         The label to display, or None when the field is not a mult one, when the
-        mult table has no such row, or when the row is the null one and `cvt_null`
+        field has no such row, or when the row is the absent value and `cvt_null`
         is false.
     """
     if param_info.form_type is None:  # pragma: no cover - import error
@@ -111,21 +366,13 @@ def lookup_pretty_value_for_mult(param_info: ParamInfo, value: Any, cvt_null: bo
     if form_type not in settings.MULT_FORM_TYPES:  # pragma: no cover - import error
         return None
 
-    key = (param_info.param_qualified_name(), value)
-    if key in _PRETTY_MULT_CACHE:
-        result = _PRETTY_MULT_CACHE[key]
-    else:
-        mult_param = get_mult_name(param_info.param_qualified_name())
-        model = apps.get_model('search', mult_param.title().replace('_', ''))
-
-        results = model.objects.filter(id=value).values('value', 'label')
-        if not results:  # pragma: no cover - import error
-            return None
-        result = results[0]
-        _PRETTY_MULT_CACHE[key] = result
-    if not cvt_null and result['value'] is None:
+    rows = mult_table(param_info.param_qualified_name()).rows
+    row = rows.get(int(value)) if value is not None else None
+    if row is None:  # pragma: no cover - import error
         return None
-    return result['label']
+    if not cvt_null and row.is_absent:
+        return None
+    return row.label
 
 
 def lookup_pretty_value_for_mult_list(
@@ -135,9 +382,9 @@ def lookup_pretty_value_for_mult_list(
 
     Parameters:
         param_info: The field the values belong to.
-        mult_vals: What the observation's column holds, which is the ids of rows in
-            the field's mult table.
-        cvt_null: Whether the mult table's null row should be reported by its label
+        mult_vals: What the observation's column holds, which is the ids of the
+            field's ``mult`` rows.
+        cvt_null: Whether the field's absent value should be reported by its label
             rather than as nothing at all.
 
     Returns:
@@ -147,7 +394,7 @@ def lookup_pretty_value_for_mult_list(
     for mult_val in mult_vals:
         ret = lookup_pretty_value_for_mult(param_info, mult_val, cvt_null=cvt_null)
         result_list.append(ret)
-    # lookup_pretty_value_for_mult returns None for a mult table's null row when
+    # lookup_pretty_value_for_mult returns None for a field's absent value when
     # cvt_null is false, and joining a None raises TypeError. That is a real fault
     # rather than a typing artifact, and choosing what a null should display as
     # belongs to the caller that passes cvt_null, so the declaration is left honest
