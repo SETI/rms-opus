@@ -462,7 +462,8 @@ def safe_pdstable_read_pds3(
         return None, None
 
     rows = table.dicts_by_row()
-    label = table.info.label.as_dict()
+    table_label = table.info.label
+    label = table_label if isinstance(table_label, dict) else table_label.as_dict()
 
     return rows, label
 
